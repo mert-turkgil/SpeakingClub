@@ -3,7 +3,7 @@
 <form id="language-selector" asp-controller="Home" asp-action="SetLanguage" asp-route-returnUrl="@Context.Request.Path" method="post" class="d-flex align-items-center">
     <div class="dropdown">
         <!-- Display the currently selected language in the button -->
-        <button class="btn btn-outline-danger dropdown-toggle btn-sm" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <button class="btn btn-outline-success dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
             <img src="~/img/@(Model.FirstOrDefault(m => m.Selected)?.Value.Split('-')[1].Substring(0, 2).ToUpper()).png" width="20" alt=""/>
             @Model.FirstOrDefault(m => m.Selected)?.Value.Split('-')[1].Substring(0, 2).ToUpper()
         </button>
