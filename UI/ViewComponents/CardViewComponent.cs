@@ -10,6 +10,7 @@ namespace UI.ViewComponents
 {
     public class CardViewComponent : ViewComponent
     {
+        #nullable disable
         private readonly IBlogRepository _blogRepository;
         private readonly LanguageService _localization;
 

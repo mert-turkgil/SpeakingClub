@@ -1,0 +1,72 @@
+@model UI.ViewComponents.InstagramViewComponent.InstagramData
+
+<div class="instagram-profile">
+    <div class="profile-header">
+        <img src="@Model.ProfilePicture" alt="@Model.Username's profile picture" class="profile-picture">
+        <h3>@Model.Username</h3>
+    </div>
+
+    <div class="stories">
+        <h4>Stories</h4>
+        <div class="stories-carousel">
+            @foreach (var story in Model.Stories)
+            {
+                <img src="@story" alt="Story image" class="story-image">
+            }
+        </div>
+    </div>
+
+    <div class="posts">
+        <h4>Posts</h4>
+        <div class="posts-grid">
+            @foreach (var post in Model.Posts)
+            {
+                <img src="@post" alt="Post image" class="post-image">
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .instagram-profile {
+        max-width: 600px;
+        margin: auto;
+        font-family: Arial, sans-serif;
+    }
+
+    .profile-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .profile-picture {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+
+    .stories-carousel {
+        display: flex;
+        overflow-x: scroll;
+        gap: 10px;
+    }
+
+    .story-image {
+        width: 100px;
+        height: 100px;
+        border-radius: 10px;
+    }
+
+    .posts-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .post-image {
+        width: 100%;
+        border-radius: 5px;
+    }
+</style>
