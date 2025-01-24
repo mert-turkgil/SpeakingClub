@@ -20,10 +20,12 @@ namespace UI.Data.Concrete
         }
         public DbSet<Quiz> Quiz { get; set; }    
         public DbSet<Blog> Blog { get; set; }
+        public DbSet<Carousel> Carousels { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new QuizConfiguration());
             modelBuilder.ApplyConfiguration(new BlogConfiguration());
+            modelBuilder.ApplyConfiguration(new CarouselConfiguration());
             modelBuilder.Seed(); // Fully qualified if needed
         }
 

@@ -12,8 +12,8 @@ using UI.Identity;
 namespace UI.Data.Migrations.ApplicationDbContextMigrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241028183719_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250124162431_InitialCreateForIdentity")]
+    partial class InitialCreateForIdentity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

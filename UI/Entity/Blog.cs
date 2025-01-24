@@ -16,6 +16,7 @@ namespace UI.Entity
         [StringLength(200)]
         public string Title { get; set; }
 
+        public string Url { get; set; } = string.Empty;
         [Required]
         public string Content { get; set; } // Stores HTML content from CKEditor
 

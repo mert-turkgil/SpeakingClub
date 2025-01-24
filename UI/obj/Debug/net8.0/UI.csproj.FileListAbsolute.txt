@@ -165,3 +165,4 @@ C:\Users\mertu\Desktop\Web\UI\bin\Debug\net8.0\Microsoft.Extensions.FileProvider
 C:\Users\mertu\Desktop\Web\UI\obj\Debug\net8.0\UI.MvcApplicationPartsAssemblyInfo.cs
 C:\Users\mertu\Desktop\Web\UI\bin\Debug\net8.0\package-lock.json
 C:\Users\mertu\Desktop\Web\UI\bin\Debug\net8.0\package.json
+C:\Users\mertu\Desktop\Web\UI\obj\Debug\net8.0\UI.sourcelink.json

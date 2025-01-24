@@ -22,6 +22,7 @@ namespace Data.Configuration
                 {
                     Id = 1,
                     Title = "Die Bedeutung der deutschen Artikel: Der, Die, Das",
+                    Url = "sampleurl",
                     Content = "<p>In diesem Beitrag werden wir die Verwendung der deutschen Artikel <strong>der</strong>, <strong>die</strong> und <strong>das</strong> untersuchen. Diese kleinen Wörter sind entscheidend für das Verständnis und die korrekte Verwendung der deutschen Sprache.</p><p><strong>Der</strong> wird für maskuline Nomen verwendet, <strong>die</strong> für feminine und <strong>das</strong> für neutrale Nomen. Zum Beispiel:</p><ul><li>Der Mann</li><li>Die Frau</li><li>Das Kind</li></ul><p>Es ist wichtig, die Artikel mit den Nomen auswendig zu lernen, da sie keinen festen Regeln folgen.</p>",
                     Author = "Frau Müller",
                     DateCreated = DateTime.UtcNow
@@ -30,10 +31,43 @@ namespace Data.Configuration
                 {
                     Id = 2,
                     Title = "Türkçe'de Fiillerin Çekimi: Şimdiki Zaman",
+                    Url = "sampleurl2",
                     Content = "<p>Bu yazıda Türkçe'de fiillerin şimdiki zaman çekimini ele alacağız. Şimdiki zaman, şu anda gerçekleşen eylemleri ifade etmek için kullanılır.</p><p>Örnekler:</p><ul><li>Ben <strong>yazıyorum</strong>.</li><li>Sen <strong>okuyorsun</strong>.</li><li>O <strong>konuşuyor</strong>.</li></ul><p>Fiilin köküne uygun ekleri ekleyerek fiili çekimleyebiliriz.</p>",
                     Author = "Mehmet Hoca",
                     DateCreated = DateTime.UtcNow
                 });
+             builder.Entity<Carousel>().HasData(
+                new Carousel(){
+                    CarouselId=1,
+                    CarouselTitle = "Test",
+                    CarouselImage="cover1.jpg",
+                    CarouselImage600w="cover1.jpg",
+                    CarouselImage1200w = "cover1.jpg",
+                    CarouselDescription = "Test",
+                    CarouselLink = "About",
+                    CarouselLinkText = "Learn More",
+                },
+                new Carousel(){
+                    CarouselId=2,
+                    CarouselTitle = "Test2",
+                    CarouselImage="cover2.jpg",
+                    CarouselImage600w="cover2.jpg",
+                    CarouselImage1200w = "cover2.jpg",
+                    CarouselDescription = "Test2",
+                    CarouselLink = "About",
+                    CarouselLinkText = "Learn More",
+                },
+                new Carousel(){
+                    CarouselId=3,
+                    CarouselTitle = "Test3",
+                    CarouselImage="cover3.jpg",
+                    CarouselImage600w="cover3.jpg",
+                    CarouselImage1200w = "cover3.jpg",
+                    CarouselDescription = "Test",
+                    CarouselLink = "About",
+                    CarouselLinkText = "Learn More",
+                }
+             );
         }
     }
 }

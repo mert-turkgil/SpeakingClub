@@ -10,6 +10,8 @@ using UI.Identity;
 using Microsoft.AspNetCore.Identity;
 using UI.Data.Abstract;
 using UI.Data.Conrete;
+using Data.Abstract;
+using Data.Concrete.EfCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -84,6 +86,7 @@ builder.Configuration.AddUserSecrets<Program>();
     string resourcesPath = Path.Combine(Directory.GetCurrentDirectory(), "Resources");
     builder.Services.AddScoped<INavbarService, NavbarService>();
     builder.Services.AddScoped<IBlogRepository, BlogRepository>();
+    builder.Services.AddScoped<ICarouselRepository, CarouselRepository>();
     builder.Services.AddScoped<IQuizRepository, QuizRepository>();
     builder.Services.AddSingleton<IFileProvider>(new PhysicalFileProvider(resourcesPath));
     builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();

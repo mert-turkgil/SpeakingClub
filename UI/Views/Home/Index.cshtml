@@ -1,56 +1,91 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
 }
+@section Css{
+  <link rel="stylesheet" href="~/css/Carousel.css" />
+}
+@section Scripts {
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+    <script>
+      (function(){
+          const carousel = document.getElementById('Alpha75Carousel');
+          if(!carousel) return;
 
+          const slides  = carousel.querySelectorAll('.fancy-slide');
+          const prevBtn = carousel.querySelector('.fancy-prev');
+          const nextBtn = carousel.querySelector('.fancy-next');
+          const bubbles = carousel.querySelectorAll('.fancy-bubble');
+
+          let currentIndex = 0;
+          const totalSlides = slides.length;
+          let autoPlayTimer = null;
+          const intervalMs = 5000; // auto-play every 5s
+
+          function showSlide(idx) {
+              if (idx < 0) idx = totalSlides - 1;
+              if (idx >= totalSlides) idx = 0;
+              currentIndex = idx;
+
+              slides.forEach(s => s.classList.remove('active'));
+              bubbles.forEach(b => b.classList.remove('thumb-active'));
+
+              slides[idx].classList.add('active');
+              bubbles[idx].classList.add('thumb-active');
+          }
+
+          function nextSlide() {
+              showSlide(currentIndex + 1);
+          }
+
+          function prevSlide() {
+              showSlide(currentIndex - 1);
+          }
+
+          function startAutoPlay() {
+              autoPlayTimer = setInterval(nextSlide, intervalMs);
+          }
+
+          function stopAutoPlay() {
+              clearInterval(autoPlayTimer);
+              autoPlayTimer = null;
+          }
+
+          // Navigation
+          if (nextBtn) {
+              nextBtn.addEventListener('click', () => {
+                  stopAutoPlay();
+                  nextSlide();
+              });
+          }
+          if (prevBtn) {
+              prevBtn.addEventListener('click', () => {
+                  stopAutoPlay();
+                  prevSlide();
+              });
+          }
+
+          // Thumbnails
+          bubbles.forEach((bubble, i) => {
+              bubble.addEventListener('click', () => {
+                  stopAutoPlay();
+                  showSlide(i);
+              });
+          });
+
+          // Init
+          showSlide(currentIndex);
+          startAutoPlay();
+      })();
+    </script>
+}
 <main>
- <div id="myCarousel" class="carousel slide my-6" data-bs-ride="carousel">
-    <div class="carousel-indicators">
-        <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-        <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
-        <button type="button" data-bs-target="#myCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
-    </div>
-    <div class="carousel-inner">
-        <div class="carousel-item active">
-            <img src="~/img/cover1.jpg" class="d-block w-100">
-            <div class="container">
-                <div id="carousel-caption-1" style="background-color: rgba(61, 57, 52, 0.445);" class="carousel-caption text-start">
-                    <h1>Example headline.</h1>
-                    <p class="opacity-75">Some representative placeholder content for the first slide of the carousel.</p>
-                    <p><a class="btn btn-lg btn-primary" href="#">Sign up today</a></p>
-                </div>
-            </div>
-        </div>
-        <div class="carousel-item">
-            <img src="~/img/cover2.jpg" class="d-block w-100">
-            <div class="container">
-                <div id="carousel-caption-2" style="background-color: rgba(61, 57, 52, 0.445);" class="carousel-caption">
-                    <h1>Another example headline.</h1>
-                    <p>Some representative placeholder content for the second slide of the carousel.</p>
-                    <p><a class="btn btn-lg btn-primary" href="#">Learn more</a></p>
-                </div>
-            </div>
-        </div>
-        <div class="carousel-item">
-            <img src="~/img/cover3.jpg" class="d-block w-100">
-            <div class="container">
-                <div id="carousel-caption-3" style="background-color: rgba(61, 57, 52, 0.445);" class="carousel-caption text-end">
-                    <h1>One more for good measure.</h1>
-                    <p>Some representative placeholder content for the third slide of this carousel.</p>
-                    <p><a class="btn btn-lg btn-primary" href="#">Browse gallery</a></p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <button class="carousel-control-prev" type="button" data-bs-target="#myCarousel" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Previous</span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#myCarousel" data-bs-slide="next">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Next</span>
-    </button>
-</div>
-
+  <section>
+          <div data-aos="fade-down">
+            @await Component.InvokeAsync("Carousel")
+          </div>
+  </section>
 
   <!-- Marketing messaging and featurettes
   ================================================== -->

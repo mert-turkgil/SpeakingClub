@@ -54,6 +54,9 @@ namespace UI.Data.Migrations.ShopContextMigrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("Url")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("VideoUrl")
                         .HasColumnType("nvarchar(max)");
 
@@ -69,16 +72,97 @@ namespace UI.Data.Migrations.ShopContextMigrations
                             Id = 1,
                             Author = "Frau Müller",
                             Content = "<p>In diesem Beitrag werden wir die Verwendung der deutschen Artikel <strong>der</strong>, <strong>die</strong> und <strong>das</strong> untersuchen. Diese kleinen Wörter sind entscheidend für das Verständnis und die korrekte Verwendung der deutschen Sprache.</p><p><strong>Der</strong> wird für maskuline Nomen verwendet, <strong>die</strong> für feminine und <strong>das</strong> für neutrale Nomen. Zum Beispiel:</p><ul><li>Der Mann</li><li>Die Frau</li><li>Das Kind</li></ul><p>Es ist wichtig, die Artikel mit den Nomen auswendig zu lernen, da sie keinen festen Regeln folgen.</p>",
-                            DateCreated = new DateTime(2024, 10, 27, 19, 14, 18, 986, DateTimeKind.Utc).AddTicks(8978),
-                            Title = "Die Bedeutung der deutschen Artikel: Der, Die, Das"
+                            DateCreated = new DateTime(2025, 1, 24, 16, 24, 39, 401, DateTimeKind.Utc).AddTicks(5853),
+                            Title = "Die Bedeutung der deutschen Artikel: Der, Die, Das",
+                            Url = "sampleurl"
                         },
                         new
                         {
                             Id = 2,
                             Author = "Mehmet Hoca",
                             Content = "<p>Bu yazıda Türkçe'de fiillerin şimdiki zaman çekimini ele alacağız. Şimdiki zaman, şu anda gerçekleşen eylemleri ifade etmek için kullanılır.</p><p>Örnekler:</p><ul><li>Ben <strong>yazıyorum</strong>.</li><li>Sen <strong>okuyorsun</strong>.</li><li>O <strong>konuşuyor</strong>.</li></ul><p>Fiilin köküne uygun ekleri ekleyerek fiili çekimleyebiliriz.</p>",
-                            DateCreated = new DateTime(2024, 10, 27, 19, 14, 18, 986, DateTimeKind.Utc).AddTicks(8980),
-                            Title = "Türkçe'de Fiillerin Çekimi: Şimdiki Zaman"
+                            DateCreated = new DateTime(2025, 1, 24, 16, 24, 39, 401, DateTimeKind.Utc).AddTicks(5855),
+                            Title = "Türkçe'de Fiillerin Çekimi: Şimdiki Zaman",
+                            Url = "sampleurl2"
+                        });
+                });
+
+            modelBuilder.Entity("UI.Entity.Carousel", b =>
+                {
+                    b.Property<int>("CarouselId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CarouselId"));
+
+                    b.Property<string>("CarouselDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CarouselImage")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("CarouselImage1200w")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CarouselImage600w")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CarouselLink")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CarouselLinkText")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CarouselTitle")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateAdded")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.HasKey("CarouselId");
+
+                    b.ToTable("Carousels");
+
+                    b.HasData(
+                        new
+                        {
+                            CarouselId = 1,
+                            CarouselDescription = "Test",
+                            CarouselImage = "cover1.jpg",
+                            CarouselImage1200w = "cover1.jpg",
+                            CarouselImage600w = "cover1.jpg",
+                            CarouselLink = "About",
+                            CarouselLinkText = "Learn More",
+                            CarouselTitle = "Test",
+                            DateAdded = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            CarouselId = 2,
+                            CarouselDescription = "Test2",
+                            CarouselImage = "cover2.jpg",
+                            CarouselImage1200w = "cover2.jpg",
+                            CarouselImage600w = "cover2.jpg",
+                            CarouselLink = "About",
+                            CarouselLinkText = "Learn More",
+                            CarouselTitle = "Test2",
+                            DateAdded = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            CarouselId = 3,
+                            CarouselDescription = "Test",
+                            CarouselImage = "cover3.jpg",
+                            CarouselImage1200w = "cover3.jpg",
+                            CarouselImage600w = "cover3.jpg",
+                            CarouselLink = "About",
+                            CarouselLinkText = "Learn More",
+                            CarouselTitle = "Test3",
+                            DateAdded = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
 
@@ -120,7 +204,7 @@ namespace UI.Data.Migrations.ShopContextMigrations
                         {
                             Id = 1,
                             Cevap = "Text4",
-                            Date = new DateTime(2024, 10, 27, 22, 14, 18, 986, DateTimeKind.Local).AddTicks(8811),
+                            Date = new DateTime(2025, 1, 24, 19, 24, 39, 401, DateTimeKind.Local).AddTicks(5676),
                             Soru = "S1-S1P",
                             Text = "[\"Text1\",\"Text2\",\"Text3\",\"Text4\"]",
                             Zaman = 60
@@ -129,7 +213,7 @@ namespace UI.Data.Migrations.ShopContextMigrations
                         {
                             Id = 2,
                             Cevap = "Text1",
-                            Date = new DateTime(2024, 10, 27, 22, 14, 18, 986, DateTimeKind.Local).AddTicks(8827),
+                            Date = new DateTime(2025, 1, 24, 19, 24, 39, 401, DateTimeKind.Local).AddTicks(5690),
                             Soru = "S2-S2P",
                             Text = "[\"Text1\",\"Text2\",\"Text3\",\"Text4\"]",
                             Zaman = 60
