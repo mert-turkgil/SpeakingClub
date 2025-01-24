@@ -1,0 +1,79 @@
+footer {
+    flex-shrink: 0;
+    background-color: #162415;
+    color: white;
+    padding: 1rem 0;
+    text-align: center;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+  }
+  
+ #orta .nav-link {
+    color: black;
+    position: relative;
+    text-decoration: none;
+  }
+  
+  #orta .nav-link:hover,
+  #orta .nav-link:focus {
+    color: green; /* Turns green on hover */
+  }
+  
+  #orta .nav-link.active {
+    color: green; /* Keeps "active" link green */
+    text-decoration: underline;
+  }
+  
+  #orta .nav-link::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 2px;
+    background-color: green;
+    bottom: -3px;
+    left: 0;
+    transition: width 0.3s ease-in-out;
+  }
+  
+  #orta .nav-link:hover::after {
+    width: 100%;
+  }
+  
+  .btn-success {
+    background-color: green;
+    border: none;
+  }
+  
+  .btn-success:hover {
+    background-color: darkgreen;
+  }
+
+          /* Initial styles for carousel */
+          #myCarousel {
+            overflow: hidden;
+        }
+        .carousel-item img {
+            object-fit: cover; /* Ensure the entire image is visible */
+            max-height: 75vh; /* Limit the height to prevent overflow */
+        }
+        
+
+        .storeLink {
+            position: relative;
+            display: inline-block;
+            width: 240px;
+            height: 80px;
+            border-radius: 16px;
+            overflow: hidden;
+            background-color: black;
+        }
+        .storeLink > img {
+            --width: 100%;
+            position: absolute;
+            width: var(--width);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }

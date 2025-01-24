@@ -1,0 +1,81 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\UI.bundle.scp.css",
+      "PackagePath": "staticwebassets\\UI.bundle.scp.css"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\css\\custom.css",
+      "PackagePath": "staticwebassets\\css\\custom.css"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\css\\site.css",
+      "PackagePath": "staticwebassets\\css\\site.css"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\favicon.ico",
+      "PackagePath": "staticwebassets\\favicon.ico"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\DE.png",
+      "PackagePath": "staticwebassets\\img\\DE.png"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\TR.png",
+      "PackagePath": "staticwebassets\\img\\TR.png"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\cover1.jpg",
+      "PackagePath": "staticwebassets\\img\\cover1.jpg"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\cover2.jpg",
+      "PackagePath": "staticwebassets\\img\\cover2.jpg"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\cover3.jpg",
+      "PackagePath": "staticwebassets\\img\\cover3.jpg"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\header_logo.png",
+      "PackagePath": "staticwebassets\\img\\header_logo.png"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\js\\owl.carousel.js",
+      "PackagePath": "staticwebassets\\js\\owl.carousel.js"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\js\\site.js",
+      "PackagePath": "staticwebassets\\js\\site.js"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\js\\type-writer.js",
+      "PackagePath": "staticwebassets\\js\\type-writer.js"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\scss\\_override.scss",
+      "PackagePath": "staticwebassets\\scss\\_override.scss"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\scss\\custom.scss",
+      "PackagePath": "staticwebassets\\scss\\custom.scss"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.UI.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.UI.props",
+      "PackagePath": "build\\UI.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.UI.props",
+      "PackagePath": "buildMultiTargeting\\UI.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.UI.props",
+      "PackagePath": "buildTransitive\\UI.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

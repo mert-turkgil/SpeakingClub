@@ -1,0 +1,13 @@
+﻿@using Newtonsoft.Json
+@using Microsoft.Extensions.Localization
+@using UI
+@using UI.Models
+@using UI.Services
+@using UI.Extensions
+@using UI.Identity
+
+@inject IStringLocalizer<SharedResource> Localizer
+@inject INavbarService NavbarService
+@inject LanguageService _localization;
+
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers

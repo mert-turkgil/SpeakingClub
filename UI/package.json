@@ -1,0 +1,32 @@
+{
+  
+"scripts": {
+  
+  
+"scss": "node-sass --watch wwwroot/scss/ -o wwwroot/css/ --output-style compressed"
+  
+},
+  
+"dependencies": {
+  
+  
+"@juggle/resize-observer": "^3.4.0",
+  
+  
+"bootstrap": "^5.3.3",
+  
+  
+"jquery": "^3.7.1",
+  
+  
+"resize-observer-polyfill": "^1.5.1"
+  
+},
+  
+"devDependencies": {
+  
+  
+"node-sass": "^9.0.0"
+  
+}
+}

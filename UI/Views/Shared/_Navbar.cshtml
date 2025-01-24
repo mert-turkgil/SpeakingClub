@@ -1,0 +1,157 @@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<User> _signInManager;
+@inject UserManager<User> _userManager;
+
+<div class="container-xxl ">
+    <!-- #region logo-->
+    <div class="justify-content-start">
+      <a href="/" class="navbar-nav text-dark text-decoration-none">
+        <span id="Logo" class="fa-stack fa-2x">
+          <i class="fa-solid fa-message fa-stack-1x fa-flip-horizontal"style="color: #FFD43B;"></i>
+          <i class="fa-solid fa-message fa-sm "></i>
+          <i class="fa-solid fa-book-open fa-stack-1x fa-2xs fa-bounce" style="color: #e21212;"></i>
+        </span>
+        <h1 class="fs-4 m-1 d-none d-lg-block">@Model.Logo
+          <br>
+          <span 
+                    class="typewrite" 
+                    data-period="1000" 
+                    data-type='["@Model.tanitim1","@Model.tanitim2","@Model.tanitim3"]'>
+                    </span>
+        </h1>
+      </a>
+    </div>
+      <!-- #endregion -->
+      <!-- #region orta-->
+    <div class="collapse navbar-collapse d-none d-lg-block justify-content-center" id="navbarNav">
+      <ul class="navbar-nav">
+        <li id="orta" class="nav-item">
+          <a class="nav-link fw-semibold" href="/">Home</a>
+        </li>
+        <li id="orta" class="nav-item">
+          <a asp-controller="Home" asp-action="About"  class="nav-link fw-semibold">About</a>
+        </li>
+        <li id="orta" class="nav-item">
+          <a asp-controller="Home" asp-action="Services" class="nav-link fw-semibold">Services</a>
+        </li>
+        <li id="orta" class="nav-item">
+          <a asp-controller="Home" asp-action="WeDo" class="nav-link fw-semibold">How It Works</a>
+        </li>
+        <li id="orta" class="nav-item">
+          <a asp-controller="Home" asp-action="Privacy" class="nav-link fw-semibold">Privacy</a>
+        </li>
+      </ul>
+      <a asp-controller="Home" asp-action="Contact" style="border-radius: 0px;" class="btn btn-outline-success btn-lg fw-semibold ms-3">Contact</a>
+    </div> 
+    <!-- #endregion -->
+    <!-- #giriş çıkış -->
+        @if (User.Identity.IsAuthenticated)
+        {
+          <div class="dropdown">
+          <button class="btn btn-outline-dark btn-sm rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              
+                @{
+                    var userId = _userManager.GetUserId(User);
+                    var user = await _userManager.FindByIdAsync(userId);
+                }     
+            @User.Identity.Name
+          </button>
+          <ul class="dropdown-menu">
+            <li class="nav-item mx-1"><a class="dropdown-item" asp-controller="Account" asp-action="Manage" >Profile</a></li>
+            @if (User.IsInRole("Admin"))
+            {
+              <li class="nav-item mx-1"><a asp-controller="Admin" asp-action="RoleList" class="dropdown-item">Roles</a></li>
+              <li class="nav-item mx-1"><a asp-controller="Admin" asp-action="UserList" class="dropdown-item">Users</a></li>
+              <li class="nav-item mx-1"><a asp-controller="Admin" asp-action="Dashboard" class="dropdown-item"><i class="fa-solid fa-gauge-high"></i>Dashboard</a></li>
+            }
+            <li class="nav-item mx-1"><a class="dropdown-item" href="/account/logout">Log Out</a></li>
+          </ul>
+        </div>
+        }
+        else
+        {
+           <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+            <span class="justify-content-end" style="color: gray;" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Log-in / Sign-up"> 
+              <i class="fa-solid fa-ghost fa-lg fa-fade"></i>
+                  Account
+              </span>  
+           </div>
+        }
+     <!-- #endregion -->  
+     <!-- #region buton -->
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="offcanvas"
+          data-bs-target="#offcanvasNavbar"
+          aria-controls="offcanvasNavbar"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+     <!-- #endregion -->  
+     <!-- #region OffCanvas-->
+     <div class="offcanvas offcanvas-end d-block d-lg-none" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+      <div class="offcanvas-header">
+        <img src="~/img/header_logo.png">
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <ul class="nav nav-pills nav-justified flex-column flex-grow-1 pe-3">
+            <li id="ofcanva" class="nav-item">
+                <a class="nav-link fw-semibold @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" href="/">Home</a>
+            </li>
+            <li id="ofcanva" class="nav-item">
+                <a asp-controller="Home" asp-action="About" class="nav-link fw-semibold @(ViewContext.RouteData.Values["action"]?.ToString() == "About" ? "active" : "")">About</a>
+            </li>
+            <li id="ofcanva" class="nav-item">
+                <a asp-controller="Home" asp-action="Services" class="nav-link fw-semibold @(ViewContext.RouteData.Values["action"]?.ToString() == "Services" ? "active" : "")">Services</a>
+            </li>
+            <li id="ofcanva" class="nav-item">
+                <a asp-controller="Home" asp-action="WeDo" class="nav-link fw-semibold @(ViewContext.RouteData.Values["action"]?.ToString() == "WeDo" ? "active" : "")">How It Works</a>
+            </li>
+            <li id="ofcanva" class="nav-item">
+                <a asp-controller="Home" asp-action="Privacy" class="nav-link fw-semibold @(ViewContext.RouteData.Values["action"]?.ToString() == "Privacy" ? "active" : "")">Privacy</a>
+            </li>
+            <!-- #region OfCanva giriş-->
+              @if (User.Identity.IsAuthenticated)
+              {
+                <li class="nav-item dropdown">
+                <button class="btn btn-outline-dark btn-sm rounded-pill dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    
+                      @{
+                          var userId = _userManager.GetUserId(User);
+                          var user = await _userManager.FindByIdAsync(userId);
+                      }     
+                  @User.Identity.Name
+                </button>
+                <ul class="dropdown-menu">
+                  <li class="nav-item mx-1"><a class="dropdown-item" asp-controller="Account" asp-action="Manage" >Profile</a></li>
+                  @if (User.IsInRole("Admin"))
+                  {
+                    <li class="nav-item mx-1"><a asp-controller="Admin" asp-action="RoleList" class="dropdown-item">Roles</a></li>
+                    <li class="nav-item mx-1"><a asp-controller="Admin" asp-action="UserList" class="dropdown-item">Users</a></li>
+                    <li class="nav-item mx-1"><a asp-controller="Admin" asp-action="Dashboard" class="dropdown-item"><i class="fa-solid fa-gauge-high"></i>Dashboard</a></li>
+                  }
+                  <li class="nav-item mx-1"><a class="dropdown-item" href="/account/logout">Log Out</a></li>
+                </ul>
+              </li>
+              }
+              else
+              {
+                <br>
+                  <li class="nav-item">
+                  <span class="justify-content-end" style="color: gray;" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Log-in / Sign-up"> 
+                    <i class="fa-solid fa-ghost fa-lg fa-fade"></i>
+                        Account
+                    </span>  
+                  </li>
+              }
+        <!-- #endregion -->
+      </ul>
+     </div>
+    </div>
+     <!-- #endregion -->
+</div>
+
