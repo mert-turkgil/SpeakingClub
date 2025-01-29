@@ -1,0 +1,62 @@
+@model CardModel
+
+<div class="container marketing mt-2">
+    <!-- Three columns of text below the carousel -->
+    <div class="row row-cols-1 row-cols-lg-3 align-items-stretch g-4 py-5">
+        @if (Model.Images == null || Model.Images.Count == 0)
+        {
+            @for (int i = 1; i <= 3; i++)
+            {
+                <div class="col">
+                    <div class="card card-cover h-100 overflow-hidden text-bg-dark rounded-4 shadow-lg" 
+                        style="background-image: url('@Url.Content("~/img/card"+i+".jpg")'); background-position: center; background-size: cover;">
+                        <div class="d-flex flex-column h-100 p-5 pb-3 text-white text-shadow-1">
+                            <h3 class="pt-5 mt-5 mb-4 display-6 lh-1 fw-bold"></h3>
+                            <ul class="d-flex list-unstyled mt-auto">
+                                <li class="me-auto">
+                                    <img src="https://github.com/twbs.png" alt="Bootstrap" width="32" height="32" class="rounded-circle border border-white">
+                                </li>
+                                <li class="d-flex align-items-center me-3">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                    <small></small>
+                                </li>
+                                <li class="d-flex align-items-center">
+                                    <i class="fa-regular fa-calendar-days"></i>
+                                    <small></small>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <!-- Use images from the Unsplash API -->
+            @for (int i = 0; i < Model.Images.Count; i++)
+            {
+                <div class="col">
+                    <div class="card card-cover h-100 overflow-hidden text-bg-dark rounded-4 shadow-lg" 
+                         style="background-image: url('@Model.Images[i]'); background-position: center; background-size: cover;">
+                        <div class="d-flex flex-column h-100 p-5 pb-3 text-white text-shadow-1">
+                            <h3 class="pt-5 mt-5 mb-4 display-6 lh-1 fw-bold"></h3>
+                            <ul class="d-flex list-unstyled mt-auto">
+                                <li class="me-auto">
+                                    <img src="https://github.com/twbs.png" alt="Bootstrap" width="32" height="32" class="rounded-circle border border-white">
+                                </li>
+                                <li class="d-flex align-items-center me-3">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                    <small></small>
+                                </li>
+                                <li class="d-flex align-items-center">
+                                    <i class="fa-regular fa-calendar-days"></i>
+                                    <small></small>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

@@ -49,6 +49,15 @@ namespace UI.Data.Concrete
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<List<Blog>> GetNewBlogsAsync(int count)
+        {
+            return await _context.Blog
+                .OrderByDescending(b => b.DateCreated)
+                .Take(count)
+                .ToListAsync();
+        }
+
         
     }
 }

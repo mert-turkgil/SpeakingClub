@@ -87,106 +87,15 @@
           </div>
   </section>
 
-  <!-- Marketing messaging and featurettes
-  ================================================== -->
-  <!-- Wrap the rest of the page in another container to center all the content. -->
+  <section>
+      @await Component.InvokeAsync("Card")
+  </section>
 
-  <div class="container marketing mt-2">
-
-    <!-- Three columns of text below the carousel -->
-<div class="row row-cols-1 row-cols-lg-3 align-items-stretch g-4 py-5">
-  <div class="col">
-    <div class="card card-cover h-100 overflow-hidden text-bg-dark rounded-4 shadow-lg" style="background-image: url('@Url.Content("~/img/photo-1.jpg")'); background-position: center; background-size: cover;">
-      <div class="d-flex flex-column h-100 p-5 pb-3 text-white text-shadow-1">
-        <h3 class="pt-5 mt-5 mb-4 display-6 lh-1 fw-bold">Much longer title that wraps to multiple lines</h3>
-        <ul class="d-flex list-unstyled mt-auto">
-          <li class="me-auto">
-            <img src="https://github.com/twbs.png" alt="Bootstrap" width="32" height="32" class="rounded-circle border border-white">
-          </li>
-          <li class="d-flex align-items-center me-3">
-            <i class="fa-solid fa-location-dot"></i>
-            <small>Turkey</small>
-          </li>
-          <li class="d-flex align-items-center">
-            <i class="fa-regular fa-calendar-days"></i>
-            <small>4d</small>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="col">
-    <div class="card card-cover h-100 overflow-hidden text-bg-dark rounded-4 shadow-lg" style="background-image: url('@Url.Content("~/img/photo-2.jpg")'); background-position: center; background-size: cover;">
-      <div class="d-flex flex-column h-100 p-5 pb-3 text-white text-shadow-1">
-        <h3 class="pt-5 mt-5 mb-4 display-6 lh-1 fw-bold">Much longer title that wraps to multiple lines</h3>
-        <ul class="d-flex list-unstyled mt-auto">
-          <li class="me-auto">
-            <img src="https://github.com/twbs.png" alt="Bootstrap" width="32" height="32" class="rounded-circle border border-white">
-          </li>
-          <li class="d-flex align-items-center me-3">
-            <i class="fa-solid fa-location-dot"></i>
-            <small>Greece</small>
-          </li>
-          <li class="d-flex align-items-center">
-            <i class="fa-regular fa-calendar-days"></i>
-            <small>4d</small>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="col">
-    <div class="card card-cover h-100 overflow-hidden text-bg-dark rounded-4 shadow-lg" style="background-image: url('@Url.Content("~/img/photo-3.jpg")');background-position: center; background-size: cover;">
-      <div class="d-flex flex-column h-100 p-5 pb-3 text-shadow-1">
-        <h3 class="pt-5 mt-5 mb-4 display-6 lh-1 fw-bold">Another longer title belongs here</h3>
-        <ul class="d-flex list-unstyled mt-auto">
-          <li class="me-auto">
-            <img src="https://github.com/twbs.png" alt="Bootstrap" width="32" height="32" class="rounded-circle border border-white">
-          </li>
-          <li class="d-flex align-items-center me-3">
-            <i class="fa-solid fa-location-dot"></i>
-            <small>California</small>
-          </li>
-          <li class="d-flex align-items-center">
-            <i class="fa-regular fa-calendar-days"></i>
-            <small>5d</small>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
 <hr class="featurette-divider">
     <!-- YOUTUBE -->
     <iframe class="w-100" height="600" src="https://www.youtube-nocookie.com/embed/6QFOrTio-xY?si=8a7Ac3qXG3B8_P37&amp;controls=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
     <!-- START THE FEATURETTES -->
-
-    <hr class="featurette-divider">
-
-    <div class="row featurette">
-      <div class="col-md-7">
-        <h2 class="featurette-heading fw-normal lh-1">First featurette heading. <span class="text-body-secondary">It’ll blow your mind.</span></h2>
-        <p class="lead">Some great placeholder content for the first featurette here. Imagine some exciting prose here.</p>
-      </div>
-      <div class="col-md-5">
-        <svg class="bd-placeholder-img bd-placeholder-img-lg featurette-image img-fluid mx-auto" width="500" height="500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: 500x500" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="var(--bs-secondary-bg)"></rect><text x="50%" y="50%" fill="var(--bs-secondary-color)" dy=".3em">500x500</text></svg>
-      </div>
-    </div>
-
-    <hr class="featurette-divider">
-
-    <div class="row featurette">
-      <div class="col-md-7 order-md-2">
-        <h2 class="featurette-heading fw-normal lh-1">Oh yeah, it’s that good. <span class="text-body-secondary">See for yourself.</span></h2>
-        <p class="lead">Another featurette? Of course. More placeholder content here to give you an idea of how this layout would work with some actual real-world content in place.</p>
-      </div>
-      <div class="col-md-5 order-md-1">
-        <svg class="bd-placeholder-img bd-placeholder-img-lg featurette-image img-fluid mx-auto" width="500" height="500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: 500x500" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="var(--bs-secondary-bg)"></rect><text x="50%" y="50%" fill="var(--bs-secondary-color)" dy=".3em">500x500</text></svg>
-      </div>
-    </div>
 
     <hr class="featurette-divider">
 
@@ -203,6 +112,4 @@
     <hr class="featurette-divider">
      <!-- /END THE FEATURETTES -->
   </div><!-- /.container -->
- <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6353018.876914759!2d29.845564403493757!3d38.9682979715114!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14b0155c964f2671%3A0x40d9dbd42a625f2a!2zVMO8cmtpeWU!5e0!3m2!1str!2str!4v1733328748299!5m2!1str!2str" style="width: 100%; margin-bottom: 0px;" height="600" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-  
 </main>

@@ -8,6 +8,7 @@ namespace UI.Data.Abstract
 {
     public interface IBlogRepository
     {
+        Task<List<Blog>> GetNewBlogsAsync(int count);
         Task<Blog> GetByIdAsync(int id);
         Task<List<Blog>> GetAllAsync();
         Task CreateAsync(Blog entity);
