@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using UI.Data.Abstract;
 using UI.Data.Concrete;
 using UI.Models;
@@ -16,6 +17,8 @@ namespace UI.ViewComponents
     public class CardViewComponent : ViewComponent
     {
         #nullable disable
+        private static List<string> _cachedImages;
+        private static DateTime _lastFetched = DateTime.MinValue;
         private readonly IBlogRepository _blogRepository;
         private readonly IConfiguration _configuration;
         private readonly HttpClient _httpClient;
@@ -31,7 +34,10 @@ namespace UI.ViewComponents
 
         public async Task<IViewComponentResult> InvokeAsync()
         {
-            var images = await GetUnsplashImagesAsync(3);
+            List<string> images = await GetUnsplashImagesAsync(3);
+            Console.WriteLine("------------------------------------------------");
+            string list = string.Join(",",images);
+            Console.WriteLine(list);
             var blogs = await _blogRepository.GetAllAsync();
             
             var model = new CardModel
@@ -53,29 +59,26 @@ namespace UI.ViewComponents
                 return new List<string>(); // Return an empty list
             }
 
+            // Caching Mechanism
+            if (_cachedImages != null && (DateTime.Now - _lastFetched).TotalMinutes < 30)
+            {
+                return _cachedImages;
+            }
+
             var baseUrl = "https://api.unsplash.com/";
             var requestUrl = $"{baseUrl}photos/random?count={count}&query=textures-patterns&client_id={accessKey}";
 
             try
             {
-                var response = await _httpClient.GetAsync(requestUrl);
-                
-                if (!response.IsSuccessStatusCode)
+                // Create a list to hold all the image URLs
+                List<string> imageUrls = new List<string>();
+                List<UnsplashImage> photos = await _httpClient.GetFromJsonAsync<List<UnsplashImage>>(requestUrl);
+                foreach (var photo in photos)
                 {
-                    _logger.LogError($"Unsplash API request failed: {response.StatusCode}");
-                    return new List<string>(); // Return an empty list
+                    imageUrls.Add(photo.Urls.Full);
                 }
 
-                var json = await response.Content.ReadAsStringAsync();
-                var images = JsonSerializer.Deserialize<List<UnsplashImage>>(json);
-                
-                // Filter out null or empty URLs
-                var validUrls = images?
-                    .Select(img => img.Urls?.Regular)
-                    .Where(url => !string.IsNullOrEmpty(url))
-                    .ToList();
-
-                return validUrls ?? new List<string>(); // Return valid URLs or an empty list
+                return imageUrls;
             }
             catch (Exception ex)
             {
@@ -83,15 +86,19 @@ namespace UI.ViewComponents
                 return new List<string>(); // Return an empty list
             }
         }
+
     }
 
     public class UnsplashImage
     {
-        public UnsplashUrls Urls { get; set; }
+        public Urls Urls { get; set; }
     }
 
-    public class UnsplashUrls
+    public class Urls
     {
+        public string Thumb { get; set; }
+        public string Small { get; set; }
         public string Regular { get; set; }
+        public string Full { get; set; }
     }
 }
