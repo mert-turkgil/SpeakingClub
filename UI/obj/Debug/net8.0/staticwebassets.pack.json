@@ -29,6 +29,18 @@
       "PackagePath": "staticwebassets\\img\\TR.png"
     },
     {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\card1.jpg",
+      "PackagePath": "staticwebassets\\img\\card1.jpg"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\card2.jpg",
+      "PackagePath": "staticwebassets\\img\\card2.jpg"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\card3.jpg",
+      "PackagePath": "staticwebassets\\img\\card3.jpg"
+    },
+    {
       "Id": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\cover1.jpg",
       "PackagePath": "staticwebassets\\img\\cover1.jpg"
     },

@@ -54,7 +54,7 @@ namespace UI.ViewComponents
             }
 
             var baseUrl = "https://api.unsplash.com/";
-            var requestUrl = $"{baseUrl}photos/random?count={count}&client_id={accessKey}";
+            var requestUrl = $"{baseUrl}photos/random?count={count}&query=textures-patterns&client_id={accessKey}";
 
             try
             {
