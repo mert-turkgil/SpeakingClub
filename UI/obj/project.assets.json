@@ -5067,11 +5067,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\mertu\\Desktop\\Web\\UI\\UI.csproj",
+      "projectUniqueName": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\UI.csproj",
       "projectName": "UI",
-      "projectPath": "C:\\Users\\mertu\\Desktop\\Web\\UI\\UI.csproj",
+      "projectPath": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\UI.csproj",
       "packagesPath": "C:\\Users\\mertu\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\mertu\\Desktop\\Web\\UI\\obj\\",
+      "outputPath": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

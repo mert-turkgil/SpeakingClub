@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "wNhp9uUd+0W70eLgaq/l2DuoeSjWGSWfeOmg8ZpHovE=",
+  "Hash": "DNtfXvkkPwGaqkxP/QgW22qBdeBx04lhQ+zmCrd244M=",
   "Source": "UI",
   "BasePath": "_content/UI",
   "Mode": "Default",
@@ -10,7 +10,7 @@
     {
       "Name": "UI\\wwwroot",
       "Source": "UI",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "Pattern": "**"
     }
@@ -1157,10 +1157,10 @@
       "OriginalItemSpec": "C:\\Users\\mertu\\.nuget\\packages\\microsoft.aspnetcore.identity.ui\\8.0.10\\staticwebassets\\V5\\lib\\jquery\\LICENSE.txt"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\obj\\Debug\\net8.0\\scopedcss\\bundle\\UI.styles.css",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\obj\\Debug\\net8.0\\scopedcss\\bundle\\UI.styles.css",
       "SourceId": "UI",
       "SourceType": "Computed",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\obj\\Debug\\net8.0\\scopedcss\\bundle\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\obj\\Debug\\net8.0\\scopedcss\\bundle\\",
       "BasePath": "_content/UI",
       "RelativePath": "UI.styles.css",
       "AssetKind": "All",
@@ -1173,13 +1173,13 @@
       "AssetTraitValue": "ApplicationBundle",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "C:\\Users\\mertu\\Desktop\\Web\\UI\\obj\\Debug\\net8.0\\scopedcss\\bundle\\UI.styles.css"
+      "OriginalItemSpec": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\obj\\Debug\\net8.0\\scopedcss\\bundle\\UI.styles.css"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\UI.bundle.scp.css",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\UI.bundle.scp.css",
       "SourceId": "UI",
       "SourceType": "Computed",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\",
       "BasePath": "_content/UI",
       "RelativePath": "UI.bundle.scp.css",
       "AssetKind": "All",
@@ -1192,13 +1192,13 @@
       "AssetTraitValue": "ProjectBundle",
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "C:\\Users\\mertu\\Desktop\\Web\\UI\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\UI.bundle.scp.css"
+      "OriginalItemSpec": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\UI.bundle.scp.css"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\css\\Carousel.css",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\css\\Carousel.css",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "css/Carousel.css",
       "AssetKind": "All",
@@ -1214,10 +1214,10 @@
       "OriginalItemSpec": "wwwroot\\css\\Carousel.css"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\css\\custom.css",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\css\\custom.css",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "css/custom.css",
       "AssetKind": "All",
@@ -1233,10 +1233,10 @@
       "OriginalItemSpec": "wwwroot\\css\\custom.css"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\css\\site.css",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\css\\site.css",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "css/site.css",
       "AssetKind": "All",
@@ -1252,10 +1252,10 @@
       "OriginalItemSpec": "wwwroot\\css\\site.css"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\favicon.ico",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\favicon.ico",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "favicon.ico",
       "AssetKind": "All",
@@ -1271,10 +1271,10 @@
       "OriginalItemSpec": "wwwroot\\favicon.ico"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\card1.jpg",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\img\\card1.jpg",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "img/card1.jpg",
       "AssetKind": "All",
@@ -1290,10 +1290,10 @@
       "OriginalItemSpec": "wwwroot\\img\\card1.jpg"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\card2.jpg",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\img\\card2.jpg",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "img/card2.jpg",
       "AssetKind": "All",
@@ -1309,10 +1309,10 @@
       "OriginalItemSpec": "wwwroot\\img\\card2.jpg"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\card3.jpg",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\img\\card3.jpg",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "img/card3.jpg",
       "AssetKind": "All",
@@ -1328,10 +1328,10 @@
       "OriginalItemSpec": "wwwroot\\img\\card3.jpg"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\cover1.jpg",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\img\\cover1.jpg",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "img/cover1.jpg",
       "AssetKind": "All",
@@ -1347,10 +1347,10 @@
       "OriginalItemSpec": "wwwroot\\img\\cover1.jpg"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\cover2.jpg",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\img\\cover2.jpg",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "img/cover2.jpg",
       "AssetKind": "All",
@@ -1366,10 +1366,10 @@
       "OriginalItemSpec": "wwwroot\\img\\cover2.jpg"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\cover3.jpg",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\img\\cover3.jpg",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "img/cover3.jpg",
       "AssetKind": "All",
@@ -1385,10 +1385,10 @@
       "OriginalItemSpec": "wwwroot\\img\\cover3.jpg"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\DE.png",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\img\\DE.png",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "img/DE.png",
       "AssetKind": "All",
@@ -1404,10 +1404,10 @@
       "OriginalItemSpec": "wwwroot\\img\\DE.png"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\header_logo.png",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\img\\header_logo.png",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "img/header_logo.png",
       "AssetKind": "All",
@@ -1423,10 +1423,10 @@
       "OriginalItemSpec": "wwwroot\\img\\header_logo.png"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\img\\TR.png",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\img\\TR.png",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "img/TR.png",
       "AssetKind": "All",
@@ -1442,10 +1442,10 @@
       "OriginalItemSpec": "wwwroot\\img\\TR.png"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\js\\owl.carousel.js",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\js\\owl.carousel.js",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "js/owl.carousel.js",
       "AssetKind": "All",
@@ -1461,10 +1461,10 @@
       "OriginalItemSpec": "wwwroot\\js\\owl.carousel.js"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\js\\site.js",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\js\\site.js",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "js/site.js",
       "AssetKind": "All",
@@ -1480,10 +1480,10 @@
       "OriginalItemSpec": "wwwroot\\js\\site.js"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\js\\type-writer.js",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\js\\type-writer.js",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "js/type-writer.js",
       "AssetKind": "All",
@@ -1499,10 +1499,10 @@
       "OriginalItemSpec": "wwwroot\\js\\type-writer.js"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\scss\\_override.scss",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\scss\\_override.scss",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "scss/_override.scss",
       "AssetKind": "All",
@@ -1518,10 +1518,10 @@
       "OriginalItemSpec": "wwwroot\\scss\\_override.scss"
     },
     {
-      "Identity": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\scss\\custom.scss",
+      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\scss\\custom.scss",
       "SourceId": "UI",
       "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\Web\\UI\\wwwroot\\",
+      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\wwwroot\\",
       "BasePath": "_content/UI",
       "RelativePath": "scss/custom.scss",
       "AssetKind": "All",

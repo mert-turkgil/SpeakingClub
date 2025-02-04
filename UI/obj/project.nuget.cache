@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "wJFht5gUQyI=",
+  "dgSpecHash": "Hqk4Dw1k6oI=",
   "success": true,
-  "projectFilePath": "C:\\Users\\mertu\\Desktop\\Web\\UI\\UI.csproj",
+  "projectFilePath": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\UI\\UI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\mertu\\.nuget\\packages\\animate.css\\3.3.0\\animate.css.3.3.0.nupkg.sha512",
     "C:\\Users\\mertu\\.nuget\\packages\\azure.core\\1.35.0\\azure.core.1.35.0.nupkg.sha512",
