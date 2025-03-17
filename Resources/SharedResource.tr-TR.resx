@@ -1,0 +1,297 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--  
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SplashMessage" xml:space="preserve">
+    <value>Öğrenmeye başlamadan önce bir tane kahve alın</value>
+    <comment>Splash</comment>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Anasayfa</value>
+    <comment>Nav</comment>
+  </data>
+  <data name="Blog" xml:space="preserve">
+    <value>Blog</value>
+    <comment>Nav</comment>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>Hakkında</value>
+    <comment>Nav</comment>
+  </data>
+  <data name="Sözlük" xml:space="preserve">
+    <value>Sözlük</value>
+    <comment>Nav</comment>
+  </data>
+  <data name="Login" xml:space="preserve">
+    <value>Hesap</value>
+    <comment>Nav</comment>
+  </data>
+  <data name="Logo" xml:space="preserve">
+    <value>Almanca Konuşma Kulubü</value>
+    <comment>Logo</comment>
+  </data>
+  <data name="FooterBrand" xml:space="preserve">
+    <value>Almanca Konuşma Kulübü</value>
+    <comment>Footer</comment>
+  </data>
+  <data name="FooterDescription" xml:space="preserve">
+    <value>Almanca konuşma topluluğumuz ile bağlantı kurun, öğrenin ve kendinizden emin bir şekilde konuşun.</value>
+    <comment>Footer</comment>
+  </data>
+  <data name="ContactUs" xml:space="preserve">
+    <value>İletişim</value>
+    <comment>Footer</comment>
+  </data>
+  <data name="FollowUs" xml:space="preserve">
+    <value>Bizi Takip Edin</value>
+    <comment>Footer</comment>
+  </data>
+  <data name="Copyright" xml:space="preserve">
+    <value>© 2025 Almanca Konuşma Kulübü. Tüm hakları saklıdır.</value>
+    <comment>Footer</comment>
+  </data>
+  <data name="Carousel_1_Description" xml:space="preserve">
+    <value>Kulüplerde farklı konular işlenir, seviyeye göre sunum ve tartışma teknikleri uygulanırken, öğrencinin verdiği cümleye alternatif cümleler verilir, gerekiyorsa gramer konularına değinir.</value>
+    <comment>Carousel</comment>
+  </data>
+  <data name="Carousel_2_Description" xml:space="preserve">
+    <value>Bu blogda Almanca öğrenme sürecine dair deneyimlerimi, konuşma önerilerini ve faydalı kaynakları paylaşıyor; böylece yeni fikirler ve motivasyon kazanabilirsiniz.</value>
+    <comment>Carousel</comment>
+  </data>
+  <data name="Carousel_2_Title" xml:space="preserve">
+    <value>Blog</value>
+  </data>
+  <data name="Carousel_1_Title" xml:space="preserve">
+    <value>Hakkında</value>
+  </data>
+  <data name="Carousel_2_LinkText" xml:space="preserve">
+    <value>Daha Fazla Öğren</value>
+  </data>
+  <data name="Carousel_1_LinkText" xml:space="preserve">
+    <value>Daha Fazla Öğren</value>
+  </data>
+    <data name="PageTitle" xml:space="preserve">
+    <value>Hakkımda</value>
+  </data>
+  <data name="HeroGreeting" xml:space="preserve">
+    <value><![CDATA[Merhaba, <span class="color-animation-2">Ben</span> <span class="color-animation">Suna</span>!]]></value>
+  </data>
+  <data name="HeroSubtitle" xml:space="preserve">
+    <value>Almanca Konuşma Kulübü</value>
+  </data>
+  <data name="HeroImageAlt" xml:space="preserve">
+    <value>Suna</value>
+  </data>
+  <data name="AboutSectionTitle" xml:space="preserve">
+    <value>Hakkımda</value>
+  </data>
+  <data name="AboutParagraph1" xml:space="preserve">
+    <value><![CDATA[Merhaba, ben <strong>Suna!</strong> 1965 yılında Bremen, Almanya’da doğdum, orada büyüdüm ve okudum. Birkaç yıl çalıştıktan sonra eşimle tanışıp Türkiye’ye kesin dönüş yaptım. Kısa bir süreliğine devlet okulunda çalıştıktan sonra yolculuğuma özel eğitim kurumlarında devam ettim.]]></value>
+  </data>
+  <data name="AboutParagraph2" xml:space="preserve">
+    <value>Emekliliğe ayrıldıktan sonra sosyal medyaya ağırlık verip özel ders ve konuşma kulüplerine yoğunlaştım. Farklı Almanca seviyelerine yönelik konuşma kulüplerini hizmetinize sunuyorum. Kulüplerde farklı konular işlenir, seviyeye göre sunum ve tartışma teknikleri uygulanır, alternatif cümle önerileri ve gerektiğinde gramer desteği sağlanır.</value>
+  </data>
+  <data name="AboutImageAlt" xml:space="preserve">
+    <value>Suna Hoca</value>
+  </data>
+  <data name="ProcessSectionTitle" xml:space="preserve">
+    <value>Online Almanca Konuşma Kulübü Nasıl İşliyor?</value>
+  </data>
+  <data name="Step1_Title" xml:space="preserve">
+    <value>Seviye Belirleme</value>
+  </data>
+  <data name="Step1_Description" xml:space="preserve">
+    <value>Size uygun seviyeyi belirleyip gruplara yerleştiriyoruz.</value>
+  </data>
+  <data name="Step1_Link" xml:space="preserve">
+    <value>DETAY →</value>
+  </data>
+  <data name="Step2_Title" xml:space="preserve">
+    <value>Konuşma Partneri</value>
+  </data>
+  <data name="Step2_Description" xml:space="preserve">
+    <value>En iyi öğrenme deneyimi için partner eşleşmeleri.</value>
+  </data>
+  <data name="Step2_Link" xml:space="preserve">
+    <value>DETAY →</value>
+  </data>
+  <data name="Step3_Title" xml:space="preserve">
+    <value>Partnerlerin Seçimi</value>
+  </data>
+  <data name="Step3_Description" xml:space="preserve">
+    <value>Gruplar seviyeye uygun partnerlerle oluşturulur.</value>
+  </data>
+  <data name="Step3_Link" xml:space="preserve">
+    <value>DETAY →</value>
+  </data>
+  <data name="Step4_Title" xml:space="preserve">
+    <value>Sorularınız</value>
+  </data>
+  <data name="Step4_Description" xml:space="preserve">
+    <value>Tüm sorularınız eğitmen tarafından cevaplanır.</value>
+  </data>
+  <data name="Step4_Link" xml:space="preserve">
+    <value>DETAY →</value>
+  </data>
+  <data name="Step5_Title" xml:space="preserve">
+    <value>Seviye Belirleme Hakkındaki Sorularınız</value>
+  </data>
+  <data name="Step5_Description" xml:space="preserve">
+    <value>Tüm sorularınız cevaplanır ve destek sağlanır.</value>
+  </data>
+  <data name="Step5_Link" xml:space="preserve">
+    <value>DETAY →</value>
+  </data>
+  <data name="FAQSectionTitle" xml:space="preserve">
+    <value>Sıkça Sorulan Sorular</value>
+  </data>
+  <data name="FAQ1_Question" xml:space="preserve">
+    <value>Konuşma derslerini ne şekilde yapıyorsunuz?</value>
+  </data>
+  <data name="FAQ1_Answer" xml:space="preserve">
+    <value>Derslerimizde sürekli siz aktif rol alıyorsunuz ve öğretmenlerimiz cümleleri sizlere kurduruyor.</value>
+  </data>
+  <data name="FAQ2_Question" xml:space="preserve">
+    <value>Gruplarınız kaç kişiden oluşuyor?</value>
+  </data>
+  <data name="FAQ2_Answer" xml:space="preserve">
+    <value>Gruplarımız en az 4, en fazla 6 kişiden oluşuyor. Daha fazlası herkesin yeteri kadar konuşabilmesi için uygun değildir.</value>
+  </data>
+  <data name="FAQ3_Question" xml:space="preserve">
+    <value>Grammar dersleri veriyor musunuz?</value>
+  </data>
+  <data name="FAQ3_Answer" xml:space="preserve">
+    <value>Evet. Ancak sadece cümleleri doğru şekilde kurabilmeniz için kısaca değiniyoruz. Yanlış yapılarla cümle kurmamanız için öğretmenlerimiz sadece o haftaki grammer konusunu özet geçiyor.
+                         Vaktin çoğunu daha ziyade sizleri konuşturmaya ve sizlere yeni cümleler kurdurmaya ayırıyoruz.</value>
+  </data>
+  <data name="ContactSectionTitle" xml:space="preserve">
+    <value>İletişime Geçin</value>
+  </data>
+  <data name="Contact_NameLabel" xml:space="preserve">
+    <value>İsim</value>
+  </data>
+  <data name="Contact_EmailLabel" xml:space="preserve">
+    <value>E-posta Adresi</value>
+  </data>
+  <data name="Contact_MessageLabel" xml:space="preserve">
+    <value>Mesajınız</value>
+  </data>
+  <data name="Contact_ButtonText" xml:space="preserve">
+    <value>Gönder</value>
+  </data>
+</root>

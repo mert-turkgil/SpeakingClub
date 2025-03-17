@@ -1,0 +1,29 @@
+@model List<SelectListItem>
+
+<form id="language-selector" asp-controller="Home" asp-action="SetLanguage" 
+      asp-route-returnUrl="@Context.Request.Path" method="post">
+
+    <div class="input-group" style="width: fit-content;">
+        <span class="input-group-text bg-white">
+            <i class="fa-solid fa-globe me-1"></i>
+        </span>
+        <select class="form-select" name="culture" id="culture" onchange="this.form.submit()">
+            @foreach (var culture in Model.Where(c => c.Value == "en-US" || c.Value == "tr-TR" || c.Value == "de-DE"))
+            {
+                // Strip out anything in parentheses, if present
+                var displayText = culture.Text.Contains("(")
+                    ? culture.Text.Split('(')[0].Trim()
+                    : culture.Text;
+
+                if (culture.Selected)
+                {
+                    <option value="@culture.Value" selected>@displayText</option>
+                }
+                else
+                {
+                    <option value="@culture.Value">@displayText</option>
+                }
+            }
+        </select>
+    </div>
+</form>

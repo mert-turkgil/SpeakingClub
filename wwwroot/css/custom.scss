@@ -1,0 +1,152 @@
+/*
+ * custom.scss
+ *
+ * This file loads Bootstrap with custom color overrides and defines additional classes
+ * using your color palette:
+ *   - Light Peach:  #FFF5E4
+ *   - Soft Peach:   #FFE3E1
+ *   - Light Pink:   #FFD1D1
+ *   - Soft Red:     #FF9494
+ *
+ * Note: Many deprecation warnings come from Bootstrap’s own SCSS.
+ *       To suppress them during compilation, run:
+ *         sass --quiet-deps wwwroot/css/custom.scss wwwroot/css/custom.css
+ */
+
+// 1. Import Sass's color module for color manipulation.
+@use "sass:color";
+
+// 2. Load Bootstrap as a module and override key variables with your palette.
+//    Adjust the relative path as needed.
+@use "../lib/bootstrap/scss/bootstrap" with (
+  $primary:   #FF9494,   // Soft Red for primary elements
+  $secondary: #FFD1D1,   // Light Pink for secondary elements
+  $body-bg:   #FFF5E4    // Light Peach for the body background
+  // Additional overrides can be added here.
+);
+
+// 3. Define your full custom color palette.
+$first:  #FFF5E4;  // Light Peach
+$second: #FFE3E1;  // Soft Peach
+$third:  #FFD1D1;  // Light Pink
+$fourth: #FF9494;  // Soft Red
+
+// -------------------------------------------------------------
+// Custom Button Classes
+// -------------------------------------------------------------
+.btn-first {
+  background-color: $first;
+  color: #000;
+  border: 1px solid $first;
+  &:hover {
+    background-color: color.scale($first, $lightness: -10%);
+  }
+}
+
+.btn-second {
+  background-color: $second;
+  color: #000;
+  border: 1px solid $second;
+  &:hover {
+    background-color: color.scale($second, $lightness: -10%);
+  }
+}
+
+.btn-third {
+  background-color: $third;
+  color: #000;
+  border: 1px solid $third;
+  &:hover {
+    background-color: color.scale($third, $lightness: -10%);
+  }
+}
+
+.btn-fourth {
+  background-color: $fourth;
+  color: #fff;
+  border: 1px solid $fourth;
+  &:hover {
+    background-color: color.scale($fourth, $lightness: -10%);
+  }
+}
+
+// -------------------------------------------------------------
+// Background Utility Classes
+// -------------------------------------------------------------
+.bg-first {
+  background-color: $first !important;
+}
+.bg-second {
+  background-color: $second !important;
+}
+.bg-third {
+  background-color: $third !important;
+}
+.bg-fourth {
+  background-color: $fourth !important;
+}
+
+// -------------------------------------------------------------
+// Text Color Utility Classes
+// -------------------------------------------------------------
+.text-first {
+  color: $first !important;
+}
+.text-second {
+  color: $second !important;
+}
+.text-third {
+  color: $third !important;
+}
+.text-fourth {
+  color: $fourth !important;
+}
+
+// -------------------------------------------------------------
+// Border Color Utility Classes
+// -------------------------------------------------------------
+.border-first {
+  border-color: $first !important;
+}
+.border-second {
+  border-color: $second !important;
+}
+.border-third {
+  border-color: $third !important;
+}
+.border-fourth {
+  border-color: $fourth !important;
+}
+
+// -------------------------------------------------------------
+// Navbar Customization
+// -------------------------------------------------------------
+.navbar-custom {
+  background-color: $first !important;
+  .navbar-brand,
+  .navbar-nav .nav-link {
+    color: #000 !important;
+  }
+}
+
+// -------------------------------------------------------------
+// Card Customization
+// -------------------------------------------------------------
+.card-custom {
+  border: 1px solid $fourth;
+  background-color: $second;
+  color: #000;
+}
+
+// -------------------------------------------------------------
+// Compatibility Fix for 'appearance'
+// -------------------------------------------------------------
+// Ensure that vendor-prefixed appearance properties have the standard property.
+.form-select,
+input[type="search"],
+input[type="text"],
+textarea {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}

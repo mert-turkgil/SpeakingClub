@@ -1,0 +1,195 @@
+@model SpeakingClub.Models.BlogFilterViewModel
+
+@{
+    ViewData["Title"] = Model.BlogList_Title;
+}
+
+@section Css {
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
+    <style>
+            :root {
+        --color-lightest: #FFF5E4;
+        --color-light:    #FFE3E1;
+        --color-medium:   #FFD1D1;
+        --color-accent:   #FF9494;
+        }        
+        /* Blog card styling */
+        .blog-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #FFF5E4;
+        }
+        .blog-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .blog-card img {
+            object-fit: cover;
+            height: 200px;
+            width: 100%;
+        }
+        .blog-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin: 10px 0;
+            color: var(--color-lightest);
+            transition: color 0.3s ease;
+        }
+        .blog-title:hover {
+            color: #FF9494;
+        }
+        .blog-meta {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .blog-content {
+            font-size: 1rem;
+            color: #555;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: var(--color-lightest);
+            border-color: var(--color-lightest);
+        }
+    </style>
+}
+
+<!-- Blog Header Section -->
+<section class="py-5 bg-second text-center" data-aos="fade-down">
+    <div class="container">
+        <h1 class="display-4 text-fourth fw-bold text-uppercase">@Model.BlogList_Title</h1>
+        <p class="lead text-muted">@Model.BlogList_Description</p>
+    </div>
+</section>
+
+<!-- Main Content Section -->
+<div class="container my-5">
+    <div class="row">
+        <!-- Filter Section -->
+        <div class="col-lg-3 col-md-4 mb-4" data-aos="fade-right">
+            <h4 class="text-fourth fw-bold mb-3">@Model.BlogList_SearchLabel</h4>
+            <form method="get" action="@Url.Action("Blog", "Home")">
+                <!-- Category Filter -->
+                <div class="mb-3">
+                    <label for="category" class="form-label">@Model.BlogList_AllCategories</label>
+                    <select class="form-select" id="category" name="category">
+                        @foreach (var cat in Model.Categories)
+                        {
+                            <option value="@cat" selected="@(cat == Model.Category ? "selected" : null)">@cat</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Tag Filter as Toggle Buttons -->
+                <div class="mb-3">
+                    <label class="form-label">@Model.BlogList_TagLabel</label>
+                    <div class="btn-group" role="group" aria-label="Tag Filter">
+                        @if(Model.AvailableTags == null || !Model.AvailableTags.Any())
+                        {
+                            <div>404</div>
+                        }
+                        else{
+                            @foreach (var tag in Model.AvailableTags)
+                            {
+                                <input type="radio" class="btn-check" name="tag" id="tag_@tag" value="@tag" autocomplete="off" @(tag == Model.Tag ? "checked" : "")>
+                                <label class="btn btn-outline-success" for="tag_@tag">@tag</label>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Search Filter -->
+                <div class="mb-3">
+                    <label for="searchTerm" class="form-label">@Model.BlogList_SearchLabel</label>
+                    <input type="text" class="form-control" id="searchTerm" name="searchTerm" value="@Model.SearchTerm" placeholder="@Model.BlogList_SearchLabel" />
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-success w-100">@Model.BlogList_ApplyFiltersButton</button>
+            </form>
+        </div>
+
+        <!-- Blog Content Section -->
+        <div class="col-lg-9 col-md-8">
+            <div class="row g-4">
+                @if (Model.Blogs != null && Model.Blogs.Any())
+                {
+                    foreach (var blog in Model.Blogs)
+                    {
+                        <div class="col-md-6 col-lg-4" data-aos="fade-up">
+                            <div class="card blog-card h-100 shadow-sm">
+                                <!-- Blog Image -->
+                                <img src="~/img/@(string.IsNullOrEmpty(blog.Image) ? "default-image.jpg" : blog.Image)"
+                                     alt="@blog.Title"
+                                     class="card-img-top"
+                                     onerror="this.onerror=null;this.src='https://via.placeholder.com/300x200?text=Image+Unavailable';" />
+
+                                <!-- Blog Body -->
+                                <div class="card-body">
+                                    <div class="blog-meta mb-2">
+                                        <small>
+                                            <i class="fa fa-calendar text-success"></i> @blog.Date.ToString("MMMM dd, yyyy")
+                                            &nbsp; | &nbsp;
+                                            <i class="fa fa-user text-success"></i> @blog.Author
+                                        </small>
+                                    </div>
+                                    <h5 class="blog-title">
+                                        <a href="@Url.Action("BlogDetails", "Home", new { id = blog.BlogId, type = "blog" })" class="text-decoration-none">
+                                            @blog.Title
+                                        </a>
+                                    </h5>
+                                    <div class="blog-content">
+                                        @if (blog.Content.Length > 100)
+                                        {
+                                            @Html.Raw(SpeakingClub.Services.HtmlUtility.GetExcerpt(blog.Content))
+                                        }
+                                        else
+                                        {
+                                            @Html.Raw(blog.Content)
+                                        }
+                                    </div>
+                                    <a href="@Url.Action("BlogDetails", "Home", new { id = blog.BlogId, type = "blog" })" class="btn btn-outline-success btn-sm">
+                                        @Model.BlogList_ReadMore
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12 text-center py-5">
+                        <h4 class="text-muted">@Model.BlogList_NoPostsMessage</h4>
+                    </div>
+                }
+            </div>
+
+            <!-- Pagination -->
+            <div class="row mt-5">
+                <div class="col-12 d-flex justify-content-center">
+                    <nav aria-label="Blog Pagination">
+                        <ul class="pagination">
+                            @for (var i = 1; i <= Model.TotalPages; i++)
+                            {
+                                <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                                    <a class="page-link" href="@Url.Action("Blog", new { page = i, category = Model.Category, tag = Model.Tag, searchTerm = Model.SearchTerm })">@i</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 1000,
+            once: true
+        });
+    </script>
+}

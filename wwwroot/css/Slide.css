@@ -1,0 +1,251 @@
+
+/**************************************************/
+/* 1) MAIN CONTAINER: FULL-WIDTH, 75% HEIGHT      */
+/**************************************************/
+#Alpha75Carousel {
+    width: 100%;       /* now covers the full screen width */
+    height: 75vh;      /* 75% of viewport height */
+    position: relative;
+    margin: 0 auto;
+    overflow: hidden;
+    font-family: sans-serif;
+  }
+  
+  /* 
+     The wrapper that holds slides, nav, thumbs.
+     We'll make it fill the parent fully.
+  */
+  #Alpha75Carousel .fancy-carousel-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  
+  /**************************************************/
+  /* 2) SLIDES CONTAINER & SLIDES                   */
+  /**************************************************/
+  #Alpha75Carousel .fancy-slides {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  
+  #Alpha75Carousel .fancy-slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    z-index: 0;
+  
+    display: flex;
+    align-items: center;     /* vertically center content */
+    justify-content: center;
+  
+    /* Fade + Zoom animation */
+    transform: scale(0.9);
+    transition:
+      opacity 0.8s ease,
+      transform 0.8s ease;
+  }
+  
+  #Alpha75Carousel .fancy-slide.active {
+    opacity: 1;
+    transform: scale(1);
+    z-index: 1;
+  }
+  
+  /**************************************************/
+  /* 3) MAIN IMAGE                                  */
+  /**************************************************/
+  #Alpha75Carousel .fancy-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;     /* fill the container, no black bars */
+    display: block;
+    position: absolute;    /* so overlay can stack above */
+    top: 0;
+    left: 0;
+    z-index: 0;
+  }
+  
+  /**************************************************/
+  /* 4) OVERLAY (TEXT + BUTTON)                     */
+  /**************************************************/
+  #Alpha75Carousel .fancy-overlay {
+    position: relative;
+    z-index: 1;
+    width: 80%;             /* narrower content area */
+    max-width: 600px;       /* limit the content width on large screens */
+    margin: 0 auto;
+    background-color: rgba(0,0,0,0.5);
+    color: #fff;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    text-align: center;
+  
+    /* Slight offset from the center if you prefer:
+     * margin-top: -2rem;
+     */
+  }
+  
+  #Alpha75Carousel .fancy-title {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+  }
+  .fancy-desc {
+    /* The standard property (rarely supported yet) */
+    line-clamp: 3;
+  
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  
+  #Alpha75Carousel .fancy-desc {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+  
+    /* multiline ellipsis clamp for small screens */
+    display: -webkit-box;
+    line-clamp: 3;       /* show up to 3 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  #Alpha75Carousel .fancy-btn {
+    font-size: 1rem;
+    color: #fff;
+    background: transparent;
+    border: 2px solid #fff;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  #Alpha75Carousel .fancy-btn:hover {
+    background-color: #fff;
+    color: #000;
+  }
+  
+  /**************************************************/
+  /* 5) NAVIGATION ARROWS                           */
+  /**************************************************/
+  #Alpha75Carousel .fancy-nav {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    z-index: 99;           /* on top of everything */
+    pointer-events: none;
+    padding: 0 1rem;       /* space from edges */
+  }
+  
+  #Alpha75Carousel .fancy-arrow {
+    pointer-events: all;
+    font-size: 3rem;
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.3s ease, color 0.3s ease;
+    background-color: rgba(0,0,0,0.4);
+    border-radius: 50%;
+    padding: 0.3rem;
+  }
+  #Alpha75Carousel .fancy-arrow:hover {
+    transform: scale(1.2);
+    color: #FF9494; /* green on hover */
+  }
+  
+  /**************************************************/
+  /* 6) THUMBNAILS (BUBBLES)                        */
+  /**************************************************/
+  #Alpha75Carousel .fancy-thumbs {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 1rem;
+    z-index: 98;
+  }
+  
+  #Alpha75Carousel .fancy-bubble {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-position: center center;
+    background-size: cover;
+    cursor: pointer;
+    border: 3px solid #fff;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+  }
+  
+  #Alpha75Carousel .fancy-bubble:hover {
+    transform: scale(1.15);
+    border-color: #FF9494; 
+  }
+  
+  /* Active bubble has a green effect */
+  #Alpha75Carousel .thumb-active {
+    border-color: #FF9494;
+    transform: scale(1.1);
+  }
+  
+  /**************************************************/
+  /* 7) MEDIA QUERIES                               */
+  /**************************************************/
+  @media (max-width: 900px) {
+    #Alpha75Carousel .fancy-title {
+      font-size: 1.6rem;
+    }
+    #Alpha75Carousel .fancy-desc {
+      font-size: 0.95rem;
+      line-clamp: 3;
+    }
+    #Alpha75Carousel .fancy-btn {
+      font-size: 0.95rem;
+    }
+    #Alpha75Carousel .fancy-bubble {
+      width: 70px;
+      height: 70px;
+    }
+  }
+  
+  @media (max-width: 600px) {
+    #Alpha75Carousel .fancy-title {
+      font-size: 1.3rem;
+    }
+    #Alpha75Carousel .fancy-desc {
+      font-size: 0.85rem;
+      line-clamp: 3; /* still 3 lines */
+    }
+    #Alpha75Carousel .fancy-btn {
+      font-size: 0.85rem;
+    }
+    #Alpha75Carousel .fancy-arrow {
+      font-size: 2rem;
+    }
+    #Alpha75Carousel .fancy-bubble {
+      width: 60px;
+      height: 60px;
+    }
+  }
+  .fancy-desc {
+    /* Future standard property (not widely supported yet): */
+    line-clamp: 3;
+  
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }

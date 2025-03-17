@@ -1,0 +1,446 @@
+using System;
+using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using SpeakingClub.Data.Abstract;
+using SpeakingClub.Entity;
+using SpeakingClub.Models;
+using SpeakingClub.Services;
+
+namespace SpeakingClub.Controllers
+{
+    public class HomeController : Controller
+    {
+        private readonly ILogger<HomeController> _logger;
+        private readonly LanguageService _localization;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IEmailSender _emailSender;
+        private readonly IDictionaryService _dictionaryService;
+        private readonly IDeeplService _deeplService;
+
+        public HomeController(
+            ILogger<HomeController> logger,
+            LanguageService localization,
+            IUnitOfWork unitOfWork,
+            IEmailSender emailSender,
+            IDeeplService deeplService,
+            IDictionaryService dictionaryService)
+        {
+            _logger = logger;
+            _localization = localization;
+            _unitOfWork = unitOfWork;
+            _emailSender = emailSender;
+            _deeplService = deeplService;
+            _dictionaryService = dictionaryService;
+        }
+
+        #region SetLanguage
+        public IActionResult SetLanguage(string culture, string returnUrl)
+        {
+            Response.Cookies.Append(
+                CookieRequestCultureProvider.DefaultCookieName,
+                CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
+                new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
+            );
+            return Redirect(Request.Headers["Referer"].ToString());
+        }
+        #endregion
+
+        #region Anasayfa
+        public async Task<IActionResult> Index()
+        {
+            var entityBlogs = await _unitOfWork.Blogs.GetAllAsync();
+            var selectedBlogs = entityBlogs.Where(b => b.isHome == true).ToList();
+
+            var model = new IndexModel 
+            {
+                BlogItems = selectedBlogs.Any() ?
+                    selectedBlogs.Select(b => new SpeakingClub.Entity.Blog
+                    {
+                        BlogId = b.BlogId,
+                        Title = _localization.GetKey($"Blog_{b.BlogId}_Title")?.Value ?? b.Title,
+                        Content = _localization.GetKey($"Blog_{b.BlogId}_Content")?.Value ?? b.Content,
+                        Date = b.Date,
+                        Author = b.Author,
+                        Tags = b.Tags
+                    }).ToList() :
+                    entityBlogs.Select(b => new SpeakingClub.Entity.Blog
+                    {
+                        BlogId = b.BlogId,
+                        Title = _localization.GetKey($"Blog_{b.BlogId}_Title")?.Value ?? b.Title,
+                        Content = _localization.GetKey($"Blog_{b.BlogId}_Content")?.Value ?? b.Content,
+                        Date = b.Date,
+                        Author = b.Author,
+                        Tags = b.Tags
+                    }).ToList()
+            };
+
+            return View(model);
+        }
+        #endregion
+
+        #region Gizlilik
+        public IActionResult Privacy()
+        {
+            return View();
+        }
+        #endregion
+
+        #region Hakkında
+        public IActionResult About()
+        {
+            var model = CreateAboutPageViewModel();
+            return View(model);
+        }
+        #endregion
+
+        #region Contact Form İşlemleri
+        // POST: /Home/Contact
+        [HttpPost]
+        public async Task<IActionResult> Contact(AboutPageViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                // If validation fails, return the About view with the current model data.
+                return View("About", model);
+            }
+
+            // Access the ContactForm properties from the model.
+            var contact = model.ContactForm;
+            var name = contact.Name;
+            var email = contact.Email;
+            var message = contact.Message;
+
+            // Administrator's email address.
+            string adminEmail = "suna.almancakonusmakulubu@gmail.com";
+
+            // Define file paths for your templates.
+            // Adjust the paths if your EmailTemplates folder is in a different location.
+            string adminTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "AdminNotification.html");
+            // Determine the current culture (for example, "en-US", "de-DE", or "tr-TR")
+            var currentCulture = CultureInfo.CurrentCulture.Name; // or use RequestCulture if available
+
+            string userTemplatePath;
+            if (currentCulture.StartsWith("en", StringComparison.OrdinalIgnoreCase))
+            {
+                userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserNotification_en.html");
+            }
+            else if (currentCulture.StartsWith("de", StringComparison.OrdinalIgnoreCase))
+            {
+                userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserNotification_de.html");
+            }
+            else
+            {
+                userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserNotification_tr.html");
+            }
+            
+            // Read the HTML template content from files.
+            string adminEmailBodyTemplate = await System.IO.File.ReadAllTextAsync(adminTemplatePath);
+            string userEmailBodyTemplate = await System.IO.File.ReadAllTextAsync(userTemplatePath);
+
+            // Replace placeholders in the admin template.
+            string adminEmailBody = adminEmailBodyTemplate
+                .Replace("{UserName}", name)
+                .Replace("{UserEmail}", email)
+                .Replace("{UserMessage}", message);
+
+            // For the user email template, you might not need to replace placeholders if it’s static.
+            string userEmailBody = userEmailBodyTemplate;
+
+            // Set subjects (you can hardcode these or load from configuration)
+            string adminSubject = "New Contact Message Received";
+            string userSubject = "Thank You for Your Message";
+
+            try
+            {
+                // Send email to the administrator.
+                await _emailSender.SendEmailAsync(adminEmail, adminSubject, adminEmailBody);
+                // Send automatic response email to the user.
+                await _emailSender.SendEmailAsync(email, userSubject, userEmailBody);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Contact form email sending failed.");
+                TempData["ContactError"] = "An error occurred while sending your message. Please try again later.";
+                return RedirectToAction("About");
+            }
+
+            TempData["ContactSuccess"] = "Your message was sent successfully!";
+            return RedirectToAction("About");
+        }
+
+        // Contact form gönderimi sonrası onay sayfası
+        public IActionResult ContactConfirmation()
+        {
+            return View();
+        }
+
+        // Hakkında sayfası için model oluşturma (ContactForm alanını da içerir)
+        private AboutPageViewModel CreateAboutPageViewModel()
+        {
+            var model = new AboutPageViewModel
+            {
+                PageTitle = _localization.GetKey("PageTitle").Value,
+                HeroSection = new HeroSectionModel
+                {
+                    Greeting = _localization.GetKey("HeroGreeting").Value,
+                    Subtitle = _localization.GetKey("HeroSubtitle").Value,
+                    ImageAlt = _localization.GetKey("HeroImageAlt").Value,
+                },
+                AboutSection = new AboutSectionModel
+                {
+                    Title = _localization.GetKey("AboutSectionTitle").Value,
+                    Paragraph1 = _localization.GetKey("AboutParagraph1").Value,
+                    Paragraph2 = _localization.GetKey("AboutParagraph2").Value,
+                    ImageAlt = _localization.GetKey("AboutImageAlt").Value
+                },
+                ProcessSection = new ProcessSectionModel
+                {
+                    Title = _localization.GetKey("ProcessSectionTitle").Value,
+                    Steps = new System.Collections.Generic.List<ProcessStepModel>
+                    {
+                        new ProcessStepModel 
+                        {
+                            Id = 1,
+                            Title = _localization.GetKey("Step1_Title").Value,
+                            Description = _localization.GetKey("Step1_Description").Value,
+                            LinkText = _localization.GetKey("Step1_Link").Value,
+                            IconClass = "fa-regular fa-clipboard"
+                        },
+                        new ProcessStepModel 
+                        {
+                            Id = 2,
+                            Title = _localization.GetKey("Step2_Title").Value,
+                            Description = _localization.GetKey("Step2_Description").Value,
+                            LinkText = _localization.GetKey("Step2_Link").Value,
+                            IconClass ="fa-regular fa-hand-point-up" 
+                        },
+                        new ProcessStepModel 
+                        {
+                            Id = 3,
+                            Title = _localization.GetKey("Step3_Title").Value,
+                            Description = _localization.GetKey("Step3_Description").Value,
+                            LinkText = _localization.GetKey("Step3_Link").Value,
+                            IconClass = "fa-regular fa-handshake"
+                        },
+                        new ProcessStepModel 
+                        {
+                            Id = 4,
+                            Title = _localization.GetKey("Step4_Title").Value,
+                            Description = _localization.GetKey("Step4_Description").Value,
+                            LinkText = _localization.GetKey("Step4_Link").Value,
+                            IconClass = "fa-regular fa-circle-question" 
+                        },
+                        new ProcessStepModel 
+                        {
+                            Id = 5,
+                            Title = _localization.GetKey("Step5_Title").Value,
+                            Description = _localization.GetKey("Step5_Description").Value,
+                            LinkText = _localization.GetKey("Step5_Link").Value,
+                            IconClass = "fa-solid fa-list-check"
+                        }
+                    }
+                },
+                FAQSection = new FAQSectionModel
+                {
+                    Title = _localization.GetKey("FAQSectionTitle").Value,
+                    FAQItems = new System.Collections.Generic.List<FAQItemModel>
+                    {
+                        new FAQItemModel 
+                        {
+                            Question = _localization.GetKey("FAQ1_Question").Value,
+                            Answer = _localization.GetKey("FAQ1_Answer").Value
+                        },
+                        new FAQItemModel 
+                        {
+                            Question = _localization.GetKey("FAQ2_Question").Value,
+                            Answer = _localization.GetKey("FAQ2_Answer").Value
+                        },
+                        new FAQItemModel 
+                        {
+                            Question = _localization.GetKey("FAQ3_Question").Value,
+                            Answer = _localization.GetKey("FAQ3_Answer").Value
+                        }
+                    }
+                },
+                ContactSection = new ContactSectionModel
+                {
+                    Title = _localization.GetKey("ContactSectionTitle").Value,
+                    NameLabel = _localization.GetKey("Contact_NameLabel").Value,
+                    EmailLabel = _localization.GetKey("Contact_EmailLabel").Value,
+                    MessageLabel = _localization.GetKey("Contact_MessageLabel").Value,
+                    ButtonText = _localization.GetKey("Contact_ButtonText").Value
+                },
+                // ContactForm alanını boş olarak oluşturuyoruz.
+                ContactForm = new ContactFormViewModel()
+            };
+
+            return model;
+        }
+        #endregion
+
+        #region Blog
+        [HttpGet]
+        public async Task<IActionResult> Blog(string category, string tag, string searchTerm, int page = 1)
+        {
+            // Retrieve all blogs from the database and convert to IQueryable for filtering.
+            var entityBlogs = await _unitOfWork.Blogs.GetAllAsync();
+            var blogsQuery = entityBlogs.AsQueryable();
+
+            // Filter by category if provided.
+            if (!string.IsNullOrEmpty(category) && category != "All Categories")
+            {
+                blogsQuery = blogsQuery.Where(b => b.Category != null && b.Category.Name == category);
+            }
+
+            // Filter by tag if provided.
+            if (!string.IsNullOrEmpty(tag))
+            {
+                blogsQuery = blogsQuery.Where(b => b.Tags.Any(t => t.Name.ToLower().Contains(tag.ToLower())));
+            }
+
+            // Filter by search term on title or content.
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                blogsQuery = blogsQuery.Where(b => b.Title.Contains(searchTerm) || b.Content.Contains(searchTerm));
+            }
+
+            // Paging logic.
+            int pageSize = 9;
+            int totalBlogs = blogsQuery.Count();
+            int totalPages = (int)Math.Ceiling(totalBlogs / (double)pageSize);
+
+            var blogs = blogsQuery
+                .OrderByDescending(b => b.Date)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            // Get the list of categories.
+            var categoriesFromRepo = await _unitOfWork.Categories.GetAllAsync();
+            var categoryNames = categoriesFromRepo.Select(c => c.Name).ToList();
+            categoryNames.Insert(0, "All Categories");
+
+            // Get the list of available tags from all blogs (distinct)
+            var availableTags = entityBlogs
+                .SelectMany(b => b.Tags.Select(t => t.Name))
+                .Distinct()
+                .OrderBy(t => t)
+                .ToList();
+
+            // Build the view model.
+            var model = new BlogFilterViewModel
+            {
+                Category = category,
+                Tag = tag,
+                SearchTerm = searchTerm,
+                CurrentPage = page,
+                TotalPages = totalPages,
+                Blogs = blogs, // Blogs are of type SpeakingClub.Entity.Blog
+                Categories = categoryNames,
+                AvailableTags = availableTags,
+
+                // UI text labels (static or from configuration)
+                BlogList_Title = "Our Blog",
+                BlogList_Description = "Check out our latest posts...",
+                BlogList_SearchLabel = "Search",
+                BlogList_AllCategories = "All Categories",
+                BlogList_TagLabel = "Tag",              // New label for tag filter
+                BlogList_TagPlaceholder = "Select a tag", // Optional placeholder text
+                BlogList_ApplyFiltersButton = "Apply Filters",
+                BlogList_NoPostsMessage = "No posts found.",
+                BlogList_ReadMore = "Read More"
+            };
+
+            return View(model);
+        }
+
+        #endregion
+
+        #region Sözlük
+        [HttpGet]
+        public async Task<IActionResult> Words(string searchTerm)
+        {
+            var currentCulture = CultureInfo.CurrentCulture.Name;
+            var langCode = currentCulture.Substring(0, 2).ToUpper();
+
+
+            var model = new WordViewModel
+            {
+                SearchTerm = searchTerm ?? string.Empty
+            };
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                // First, check your local database (case-insensitive search).
+                var wordFromDb = await _unitOfWork.Words.GetWordByTermAsync(searchTerm);
+
+                if (wordFromDb != null && !string.IsNullOrWhiteSpace(wordFromDb.Definition))
+                {
+                    var eksikolabilir = await _dictionaryService.GetWordDetailsAsync(wordFromDb.Term.ToLower());
+                    model.Word = new Word {
+                    Definition = wordFromDb.Definition ?? eksikolabilir?.Word?.Definition ?? "Error:404",
+                    Origin = wordFromDb.Origin ?? eksikolabilir?.Word?.Origin??"Error:404" ,
+                    Pronunciation = wordFromDb.Pronunciation ?? eksikolabilir?.Word?.Pronunciation??"Error404",
+                    Synonyms=wordFromDb.Synonyms ?? eksikolabilir?.Word?.Synonyms??"Error404",
+                    Example = wordFromDb.Example ?? eksikolabilir?.Word?.Example??"Error404",
+                    IsFromApi = false,
+                    Term = wordFromDb.Term ?? eksikolabilir?.Word?.Term??"Error404"
+                    };
+                }
+                else
+                {
+                    // Try fetching details from the Free Dictionary API.
+                    var dictionaryResult = await _dictionaryService.GetWordDetailsAsync(searchTerm);
+
+                    if (dictionaryResult?.Word != null)
+                    {
+                        model.Word = new Word
+                        {
+                            Term = dictionaryResult.Word.Term,
+                            Definition = dictionaryResult.Word.Definition,
+                            IsFromApi = true,
+                            Pronunciation = dictionaryResult.Word.Pronunciation,
+                            Example = dictionaryResult.Word.Example,
+                            Origin = dictionaryResult.Word.Origin,
+                            Synonyms = dictionaryResult.Word.Synonyms
+                        };
+                    }
+                    else
+                    {
+                        // Use DeepL API as a fallback for translation.
+                        var deeplTranslation = await _deeplService.GetDefinitionAsync(searchTerm);
+
+                        if (!string.IsNullOrEmpty(deeplTranslation))
+                        {
+                            model.Word = new Word
+                            {
+                                Term = searchTerm,
+                                Definition = deeplTranslation,
+                                IsFromApi = true
+                            };
+                        }
+                        else
+                        {
+                            model.WarningMessage = "We are working on it. No definition available at this time.";
+                        }
+                    }
+                }
+            }
+
+            return View(model);
+        }
+
+        #endregion
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+    }
+}

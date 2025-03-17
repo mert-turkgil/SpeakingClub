@@ -1,0 +1,196 @@
+﻿@model IndexModel
+@{
+    ViewData["Title"] = "Home Page";
+}
+@section Css{
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
+    <link rel="stylesheet" href="~/css/Slide.css" />
+    <style>
+      .video-container {
+        position: relative;
+        width: 100%;
+        padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+        height: 0;
+        overflow: hidden;
+      }
+      .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+    <style>
+    .blog-card-link {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .blog-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 20px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      overflow: hidden;
+      height: 100%;
+    }
+    .blog-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    }
+    .blog-content-preview {
+      max-height: 60px;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .blog-card:hover .blog-content-preview {
+      max-height: 200px; /* Adjust as needed to show more text */
+    }
+    .blog-date {
+      display: block;
+      margin-top: 10px;
+      font-size: 0.9em;
+      color: #888;
+    }
+</style>
+    }
+<main>
+<section>
+        <div data-aos="fade-down">
+           @await Component.InvokeAsync("Slide")
+        </div>
+</section>
+<!-- Hero Section: Introduction -->
+<section class="hero pb-5" style="position:relative; overflow:hidden;">
+  <div id="Isik" class="container-fluid" style="position:relative; height:600px;">
+    <!-- Metin solda başlasın -->
+    <div id="overlayText" style="">
+      Almanca Konuşma Kulübü<br>
+      <span style="font-size:0.6em;">Practice speaking German interactively.</span><br>
+      <a href="#" class="btn btn-light">Join Now</a>
+    </div>
+    <canvas id="three-canvas" style="
+        position:absolute; top:0; left:0; width:100%; height:100%; z-index:0;">
+    </canvas>
+  </div>
+</section>
+<!-- Video Grid Section -->
+<section class="video-grid py-5 bg-alt">
+  <div class="container">
+    <div class="row">
+      <div class="col-12 col-md-4 mb-4">
+        <div class="video-container">
+          <iframe src="https://www.youtube.com/embed/GghnZjCahX0?si=XbEyDDN6ky9QKKQx" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+      </div>
+      <div class="col-12 col-md-4 mb-4">
+        <div class="video-container">
+          <iframe src="https://www.youtube.com/embed/x-tX7WTu08o?si=ug28IJvh3GKNCCfH" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+      </div>
+      <div class="col-12 col-md-4 mb-4">
+        <div class="video-container">
+          <iframe src="https://www.youtube.com/embed/KbYtsT-596U?si=GMu_NW5fJLD_Htl-" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="blog-grid-section py-5">
+    <div class="container">
+        <div class="row">
+            @foreach (var blog in Model.BlogItems)
+            {
+                @await Html.PartialAsync("_blogCart", blog)
+            }
+        </div>
+    </div>
+</section>
+</main>
+  @section Scripts {
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script type="module" src="~/js/anime.js"></script> 
+    <script src="~/js/owl.carousel.js"></script>
+        <script>
+        AOS.init({
+        duration: 800,
+        once: true,
+        easing: 'ease-in-out',
+        });
+    </script>
+    <script>
+    (function(){
+        const carousel = document.getElementById('Alpha75Carousel');
+        if(!carousel) return;
+
+        const slides  = carousel.querySelectorAll('.fancy-slide');
+        const prevBtn = carousel.querySelector('.fancy-prev');
+        const nextBtn = carousel.querySelector('.fancy-next');
+        const bubbles = carousel.querySelectorAll('.fancy-bubble');
+
+        let currentIndex = 0;
+        const totalSlides = slides.length;
+        let autoPlayTimer = null;
+        const intervalMs = 5000; // auto-play every 5s
+
+        function showSlide(idx) {
+            if (idx < 0) idx = totalSlides - 1;
+            if (idx >= totalSlides) idx = 0;
+            currentIndex = idx;
+
+            slides.forEach(s => s.classList.remove('active'));
+            bubbles.forEach(b => b.classList.remove('thumb-active'));
+
+            slides[idx].classList.add('active');
+            bubbles[idx].classList.add('thumb-active');
+        }
+
+        function nextSlide() {
+            showSlide(currentIndex + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentIndex - 1);
+        }
+
+        function startAutoPlay() {
+            autoPlayTimer = setInterval(nextSlide, intervalMs);
+        }
+
+        function stopAutoPlay() {
+            clearInterval(autoPlayTimer);
+            autoPlayTimer = null;
+        }
+
+        // Navigation
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                stopAutoPlay();
+                nextSlide();
+            });
+        }
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                stopAutoPlay();
+                prevSlide();
+            });
+        }
+
+        // Thumbnails
+        bubbles.forEach((bubble, i) => {
+            bubble.addEventListener('click', () => {
+                stopAutoPlay();
+                showSlide(i);
+            });
+        });
+
+        // Init
+        showSlide(currentIndex);
+        startAutoPlay();
+    })();
+    </script>
+  }
