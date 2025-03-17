@@ -1,0 +1,844 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
+namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
+{
+    /// <inheritdoc />
+    public partial class InitialSpeakingClubMigration : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "Categories",
+                columns: table => new
+                {
+                    CategoryId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Categories", x => x.CategoryId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "QuizAnalyses",
+                columns: table => new
+                {
+                    QuizId = table.Column<int>(type: "int", nullable: false),
+                    TotalSubmissions = table.Column<int>(type: "int", nullable: false),
+                    AverageScore = table.Column<double>(type: "float", nullable: false)
+                },
+                constraints: table =>
+                {
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Tags",
+                columns: table => new
+                {
+                    TagId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Tags", x => x.TagId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "User",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Age = table.Column<int>(type: "int", nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    LockoutEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    AccessFailedCount = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_User", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Words",
+                columns: table => new
+                {
+                    WordId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Term = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Definition = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Example = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsFromApi = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Words", x => x.WordId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Blogs",
+                columns: table => new
+                {
+                    BlogId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Url = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Author = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    RawYT = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RawMaps = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CategoryId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Blogs", x => x.BlogId);
+                    table.ForeignKey(
+                        name: "FK_Blogs_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "CategoryId",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Articles",
+                columns: table => new
+                {
+                    ArticleId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TeacherId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    Url = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CategoryId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Articles", x => x.ArticleId);
+                    table.ForeignKey(
+                        name: "FK_Articles_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "CategoryId",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Articles_User_TeacherId",
+                        column: x => x.TeacherId,
+                        principalTable: "User",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Quizzes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AudioUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    YouTubeVideoUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TeacherId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    CategoryId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Quizzes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Quizzes_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "CategoryId",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Quizzes_User_TeacherId",
+                        column: x => x.TeacherId,
+                        principalTable: "User",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BlogTag",
+                columns: table => new
+                {
+                    BlogsBlogId = table.Column<int>(type: "int", nullable: false),
+                    TagsTagId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BlogTag", x => new { x.BlogsBlogId, x.TagsTagId });
+                    table.ForeignKey(
+                        name: "FK_BlogTag_Blogs_BlogsBlogId",
+                        column: x => x.BlogsBlogId,
+                        principalTable: "Blogs",
+                        principalColumn: "BlogId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BlogTag_Tags_TagsTagId",
+                        column: x => x.TagsTagId,
+                        principalTable: "Tags",
+                        principalColumn: "TagId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ArticleTag",
+                columns: table => new
+                {
+                    ArticlesArticleId = table.Column<int>(type: "int", nullable: false),
+                    TagsTagId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ArticleTag", x => new { x.ArticlesArticleId, x.TagsTagId });
+                    table.ForeignKey(
+                        name: "FK_ArticleTag_Articles_ArticlesArticleId",
+                        column: x => x.ArticlesArticleId,
+                        principalTable: "Articles",
+                        principalColumn: "ArticleId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ArticleTag_Tags_TagsTagId",
+                        column: x => x.TagsTagId,
+                        principalTable: "Tags",
+                        principalColumn: "TagId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BlogQuiz",
+                columns: table => new
+                {
+                    BlogsBlogId = table.Column<int>(type: "int", nullable: false),
+                    QuizId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BlogQuiz", x => new { x.BlogsBlogId, x.QuizId });
+                    table.ForeignKey(
+                        name: "FK_BlogQuiz_Blogs_BlogsBlogId",
+                        column: x => x.BlogsBlogId,
+                        principalTable: "Blogs",
+                        principalColumn: "BlogId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BlogQuiz_Quizzes_QuizId",
+                        column: x => x.QuizId,
+                        principalTable: "Quizzes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BlogQuizzes",
+                columns: table => new
+                {
+                    BlogId = table.Column<int>(type: "int", nullable: false),
+                    QuizId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BlogQuizzes", x => new { x.BlogId, x.QuizId });
+                    table.ForeignKey(
+                        name: "FK_BlogQuizzes_Blogs_BlogId",
+                        column: x => x.BlogId,
+                        principalTable: "Blogs",
+                        principalColumn: "BlogId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BlogQuizzes_Quizzes_QuizId",
+                        column: x => x.QuizId,
+                        principalTable: "Quizzes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Comments",
+                columns: table => new
+                {
+                    CommentId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    BlogId = table.Column<int>(type: "int", nullable: true),
+                    QuizId = table.Column<int>(type: "int", nullable: true),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Comments", x => x.CommentId);
+                    table.ForeignKey(
+                        name: "FK_Comments_Blogs_BlogId",
+                        column: x => x.BlogId,
+                        principalTable: "Blogs",
+                        principalColumn: "BlogId");
+                    table.ForeignKey(
+                        name: "FK_Comments_Quizzes_QuizId",
+                        column: x => x.QuizId,
+                        principalTable: "Quizzes",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Comments_User_UserId",
+                        column: x => x.UserId,
+                        principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "QuizAnswers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    QuizId = table.Column<int>(type: "int", nullable: false),
+                    AnswerText = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsCorrect = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_QuizAnswers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_QuizAnswers_Quizzes_QuizId",
+                        column: x => x.QuizId,
+                        principalTable: "Quizzes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "QuizSubmissions",
+                columns: table => new
+                {
+                    QuizSubmissionId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    QuizId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    SubmissionDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Score = table.Column<int>(type: "int", nullable: false),
+                    AttemptNumber = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_QuizSubmissions", x => x.QuizSubmissionId);
+                    table.ForeignKey(
+                        name: "FK_QuizSubmissions_Quizzes_QuizId",
+                        column: x => x.QuizId,
+                        principalTable: "Quizzes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_QuizSubmissions_User_UserId",
+                        column: x => x.UserId,
+                        principalTable: "User",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "QuizTag",
+                columns: table => new
+                {
+                    QuizzesId = table.Column<int>(type: "int", nullable: false),
+                    TagsTagId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_QuizTag", x => new { x.QuizzesId, x.TagsTagId });
+                    table.ForeignKey(
+                        name: "FK_QuizTag_Quizzes_QuizzesId",
+                        column: x => x.QuizzesId,
+                        principalTable: "Quizzes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_QuizTag_Tags_TagsTagId",
+                        column: x => x.TagsTagId,
+                        principalTable: "Tags",
+                        principalColumn: "TagId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "QuizWord",
+                columns: table => new
+                {
+                    QuizzesId = table.Column<int>(type: "int", nullable: false),
+                    WordsWordId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_QuizWord", x => new { x.QuizzesId, x.WordsWordId });
+                    table.ForeignKey(
+                        name: "FK_QuizWord_Quizzes_QuizzesId",
+                        column: x => x.QuizzesId,
+                        principalTable: "Quizzes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_QuizWord_Words_WordsWordId",
+                        column: x => x.WordsWordId,
+                        principalTable: "Words",
+                        principalColumn: "WordId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Ratings",
+                columns: table => new
+                {
+                    RatingId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Score = table.Column<int>(type: "int", nullable: false),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    BlogId = table.Column<int>(type: "int", nullable: true),
+                    QuizId = table.Column<int>(type: "int", nullable: true),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Ratings", x => x.RatingId);
+                    table.ForeignKey(
+                        name: "FK_Ratings_Blogs_BlogId",
+                        column: x => x.BlogId,
+                        principalTable: "Blogs",
+                        principalColumn: "BlogId");
+                    table.ForeignKey(
+                        name: "FK_Ratings_Quizzes_QuizId",
+                        column: x => x.QuizId,
+                        principalTable: "Quizzes",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Ratings_User_UserId",
+                        column: x => x.UserId,
+                        principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserQuizzes",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    QuizId = table.Column<int>(type: "int", nullable: false),
+                    TotalAttempts = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserQuizzes", x => new { x.UserId, x.QuizId });
+                    table.ForeignKey(
+                        name: "FK_UserQuizzes_Quizzes_QuizId",
+                        column: x => x.QuizId,
+                        principalTable: "Quizzes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserQuizzes_User_UserId",
+                        column: x => x.UserId,
+                        principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "QuizResponses",
+                columns: table => new
+                {
+                    QuizResponseId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    QuizSubmissionId = table.Column<int>(type: "int", nullable: false),
+                    QuizAnswerId = table.Column<int>(type: "int", nullable: true),
+                    AnswerText = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_QuizResponses", x => x.QuizResponseId);
+                    table.ForeignKey(
+                        name: "FK_QuizResponses_QuizAnswers_QuizAnswerId",
+                        column: x => x.QuizAnswerId,
+                        principalTable: "QuizAnswers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_QuizResponses_QuizSubmissions_QuizSubmissionId",
+                        column: x => x.QuizSubmissionId,
+                        principalTable: "QuizSubmissions",
+                        principalColumn: "QuizSubmissionId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "Categories",
+                columns: new[] { "CategoryId", "Name" },
+                values: new object[,]
+                {
+                    { 1, "General" },
+                    { 2, "Science" },
+                    { 3, "Technology" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Tags",
+                columns: new[] { "TagId", "Name" },
+                values: new object[,]
+                {
+                    { 1, "Grammar" },
+                    { 2, "Vocabulary" },
+                    { 3, "Listening" },
+                    { 4, "Reading" },
+                    { 5, "Writing" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "User",
+                columns: new[] { "Id", "AccessFailedCount", "Age", "ConcurrencyStamp", "Email", "EmailConfirmed", "FirstName", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
+                values: new object[,]
+                {
+                    { "teacher1", 0, 35, "concurrency_stamp_teacher1", "teacher1@example.com", true, "Teacher", "One", false, null, "TEACHER1@EXAMPLE.COM", "TEACHER1", "FakeHash", "1234567890", true, "security_stamp_teacher1", false, "teacher1" },
+                    { "teacher2", 0, 40, "concurrency_stamp_teacher2", "teacher2@example.com", true, "Teacher", "Two", false, null, "TEACHER2@EXAMPLE.COM", "TEACHER2", "FakeHash", "1234567890", true, "security_stamp_teacher2", false, "teacher2" },
+                    { "user1", 0, 25, "concurrency_stamp_user1", "user1@example.com", true, "User", "One", false, null, "USER1@EXAMPLE.COM", "USER1", "FakeHash", "1234567890", true, "security_stamp_user1", false, "user1" },
+                    { "user2", 0, 30, "concurrency_stamp_user2", "user2@example.com", true, "User", "Two", false, null, "USER2@EXAMPLE.COM", "USER2", "FakeHash", "1234567890", true, "security_stamp_user2", false, "user2" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Words",
+                columns: new[] { "WordId", "Definition", "Example", "IsFromApi", "Term" },
+                values: new object[,]
+                {
+                    { 1, "A deviation from the norm", "The color aberration was noticeable.", false, "Aberration" },
+                    { 2, "Kind and generous", "She had a benevolent smile.", false, "Benevolent" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Articles",
+                columns: new[] { "ArticleId", "CategoryId", "Content", "Date", "Image", "TeacherId", "Title", "Url" },
+                values: new object[,]
+                {
+                    { 1, 1, "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "image1.jpg", "teacher1", "Introduction to English", "http://example.com/article1" },
+                    { 2, 2, "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), "image2.jpg", "teacher2", "Advanced English Techniques", "http://example.com/article2" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Blogs",
+                columns: new[] { "BlogId", "Author", "CategoryId", "Content", "Date", "Image", "RawMaps", "RawYT", "Title", "Url" },
+                values: new object[,]
+                {
+                    { 1, "Author1", 1, "Content of blog post 1.", new DateTime(2025, 2, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "blog1.jpg", "", "", "Blog Post 1", "http://example.com/blog1" },
+                    { 2, "Author2", 2, "Content of blog post 2.", new DateTime(2025, 3, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "blog2.jpg", "", "", "Blog Post 2", "http://example.com/blog2" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Quizzes",
+                columns: new[] { "Id", "AudioUrl", "CategoryId", "Description", "TeacherId", "Title", "YouTubeVideoUrl" },
+                values: new object[,]
+                {
+                    { 1, "http://example.com/audio1.mp3", 1, "Description for quiz 1.", "teacher1", "Quiz 1", "http://youtube.com/vid1" },
+                    { 2, "http://example.com/audio2.mp3", 2, "Description for quiz 2.", "teacher2", "Quiz 2", "http://youtube.com/vid2" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "ArticleTag",
+                columns: new[] { "ArticlesArticleId", "TagsTagId" },
+                values: new object[,]
+                {
+                    { 1, 1 },
+                    { 1, 2 },
+                    { 2, 3 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "BlogQuizzes",
+                columns: new[] { "BlogId", "QuizId" },
+                values: new object[,]
+                {
+                    { 1, 1 },
+                    { 2, 2 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "BlogTag",
+                columns: new[] { "BlogsBlogId", "TagsTagId" },
+                values: new object[,]
+                {
+                    { 1, 2 },
+                    { 2, 4 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Comments",
+                columns: new[] { "CommentId", "BlogId", "Content", "Date", "QuizId", "UserId" },
+                values: new object[,]
+                {
+                    { 1, 1, "Great blog!", new DateTime(2025, 2, 20, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "user1" },
+                    { 2, null, "Challenging quiz!", new DateTime(2025, 3, 20, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, "user2" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "QuizAnswers",
+                columns: new[] { "Id", "AnswerText", "IsCorrect", "QuizId" },
+                values: new object[,]
+                {
+                    { 1, "Answer 1", true, 1 },
+                    { 2, "Answer 2", false, 1 },
+                    { 3, "Answer A", false, 2 },
+                    { 4, "Answer B", true, 2 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "QuizSubmissions",
+                columns: new[] { "QuizSubmissionId", "AttemptNumber", "QuizId", "Score", "SubmissionDate", "UserId" },
+                values: new object[,]
+                {
+                    { 1, 1, 1, 80, new DateTime(2025, 2, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), "user1" },
+                    { 2, 1, 1, 90, new DateTime(2025, 2, 16, 0, 0, 0, 0, DateTimeKind.Unspecified), "user2" },
+                    { 3, 1, 2, 75, new DateTime(2025, 3, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), "user1" },
+                    { 4, 2, 2, 85, new DateTime(2025, 3, 16, 0, 0, 0, 0, DateTimeKind.Unspecified), "user1" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "QuizTag",
+                columns: new[] { "QuizzesId", "TagsTagId" },
+                values: new object[,]
+                {
+                    { 1, 1 },
+                    { 2, 5 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "QuizWord",
+                columns: new[] { "QuizzesId", "WordsWordId" },
+                values: new object[,]
+                {
+                    { 2, 1 },
+                    { 2, 2 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Ratings",
+                columns: new[] { "RatingId", "BlogId", "Date", "QuizId", "Score", "UserId" },
+                values: new object[,]
+                {
+                    { 1, 1, new DateTime(2025, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified), null, 5, "user2" },
+                    { 2, null, new DateTime(2025, 3, 21, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, 4, "user1" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "UserQuizzes",
+                columns: new[] { "QuizId", "UserId", "TotalAttempts" },
+                values: new object[,]
+                {
+                    { 1, "user1", 1 },
+                    { 2, "user1", 2 },
+                    { 1, "user2", 1 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "QuizResponses",
+                columns: new[] { "QuizResponseId", "AnswerText", "QuizAnswerId", "QuizSubmissionId" },
+                values: new object[] { 1, "User1 answer to Quiz1", 1, 1 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Articles_CategoryId",
+                table: "Articles",
+                column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Articles_TeacherId",
+                table: "Articles",
+                column: "TeacherId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ArticleTag_TagsTagId",
+                table: "ArticleTag",
+                column: "TagsTagId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BlogQuiz_QuizId",
+                table: "BlogQuiz",
+                column: "QuizId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BlogQuizzes_QuizId",
+                table: "BlogQuizzes",
+                column: "QuizId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Blogs_CategoryId",
+                table: "Blogs",
+                column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BlogTag_TagsTagId",
+                table: "BlogTag",
+                column: "TagsTagId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Comments_BlogId",
+                table: "Comments",
+                column: "BlogId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Comments_QuizId",
+                table: "Comments",
+                column: "QuizId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Comments_UserId",
+                table: "Comments",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QuizAnswers_QuizId",
+                table: "QuizAnswers",
+                column: "QuizId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QuizResponses_QuizAnswerId",
+                table: "QuizResponses",
+                column: "QuizAnswerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QuizResponses_QuizSubmissionId",
+                table: "QuizResponses",
+                column: "QuizSubmissionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QuizSubmissions_QuizId",
+                table: "QuizSubmissions",
+                column: "QuizId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QuizSubmissions_UserId",
+                table: "QuizSubmissions",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QuizTag_TagsTagId",
+                table: "QuizTag",
+                column: "TagsTagId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QuizWord_WordsWordId",
+                table: "QuizWord",
+                column: "WordsWordId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Quizzes_CategoryId",
+                table: "Quizzes",
+                column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Quizzes_TeacherId",
+                table: "Quizzes",
+                column: "TeacherId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ratings_BlogId",
+                table: "Ratings",
+                column: "BlogId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ratings_QuizId",
+                table: "Ratings",
+                column: "QuizId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ratings_UserId",
+                table: "Ratings",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserQuizzes_QuizId",
+                table: "UserQuizzes",
+                column: "QuizId");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "ArticleTag");
+
+            migrationBuilder.DropTable(
+                name: "BlogQuiz");
+
+            migrationBuilder.DropTable(
+                name: "BlogQuizzes");
+
+            migrationBuilder.DropTable(
+                name: "BlogTag");
+
+            migrationBuilder.DropTable(
+                name: "Comments");
+
+            migrationBuilder.DropTable(
+                name: "QuizAnalyses");
+
+            migrationBuilder.DropTable(
+                name: "QuizResponses");
+
+            migrationBuilder.DropTable(
+                name: "QuizTag");
+
+            migrationBuilder.DropTable(
+                name: "QuizWord");
+
+            migrationBuilder.DropTable(
+                name: "Ratings");
+
+            migrationBuilder.DropTable(
+                name: "UserQuizzes");
+
+            migrationBuilder.DropTable(
+                name: "Articles");
+
+            migrationBuilder.DropTable(
+                name: "QuizAnswers");
+
+            migrationBuilder.DropTable(
+                name: "QuizSubmissions");
+
+            migrationBuilder.DropTable(
+                name: "Tags");
+
+            migrationBuilder.DropTable(
+                name: "Words");
+
+            migrationBuilder.DropTable(
+                name: "Blogs");
+
+            migrationBuilder.DropTable(
+                name: "Quizzes");
+
+            migrationBuilder.DropTable(
+                name: "Categories");
+
+            migrationBuilder.DropTable(
+                name: "User");
+        }
+    }
+}

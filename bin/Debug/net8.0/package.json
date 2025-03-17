@@ -1,0 +1,26 @@
+{
+  "name": "speakingclub",
+  "version": "1.0.0",
+  "description": "German Speaking Club",
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.2",
+    "@popperjs/core": "^2.11.8",
+    "animate.css": "^4.1.1",
+    "bootstrap": "^5.2.3",
+    "gsap": "^3.12.7",
+    "jquery": "^3.7.1",
+    "jquery-validation": "^1.21.0",
+    "jquery-validation-unobtrusive": "^4.0.0",
+    "sass": "^1.85.1",
+    "swiper": "^11.2.5"
+  },
+  "scripts": {
+    "copy:libs": "copyfiles -u 2 \"node_modules/bootstrap/**/*\" \"wwwroot/lib/bootstrap\" && copyfiles -u 2 \"node_modules/animate.css/animate.min.css\" wwwroot/lib/animate && copyfiles -u 2 \"node_modules/three/**/*\" wwwroot/lib/three && copyfiles -u 3 \"node_modules/gsap/dist/*.min.js\" wwwroot/lib/gsap && copyfiles -u 4 \"node_modules/@fortawesome/fontawesome-free/css/*.min.css\" wwwroot/lib/fontawesome/css && copyfiles -u 4 \"node_modules/@fortawesome/fontawesome-free/webfonts/*\" wwwroot/lib/fontawesome/webfonts && copyfiles -u 2 \"node_modules/swiper/swiper-bundle.min.css\" wwwroot/lib/swiper && copyfiles -u 2 \"node_modules/swiper/swiper-bundle.min.js\" wwwroot/lib/swiper && copyfiles -u 5 \"node_modules/@popperjs/core/dist/umd/popper.min.js\" wwwroot/lib/popper"
+  },
+  "devDependencies": {
+    "@types/three": "^0.174.0",
+    "copyfiles": "^2.4.1",
+    "three": "^0.174.0",
+    "vite": "^6.2.1"
+  }
+}

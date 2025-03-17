@@ -1,0 +1,260 @@
+@using SpeakingClub.Models
+@model AboutPageViewModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Model.PageTitle;
+}
+@section Css{
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <style>
+        :root {
+            --first:  #FFF5E4;
+            --second: #FFE3E1;
+            --third:  #FFD1D1;
+            --fourth: #FF9494;
+        }
+        .process-card {
+            background-color: var(--second);
+            padding: 30px;
+            border-radius: 10px;
+            height: 100%;
+            transition: all .3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.377);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .process-card:hover {
+            background-color: var(--fourth);
+            color: white;
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(255,148,148,.5);
+        }
+        .step-icon {
+            font-size: 3rem;
+            color: var(--fourth);
+            transition: all .3s ease;
+        }
+        .process-card:hover .step-icon {
+            color: white;
+        }
+        .detail-link {
+            color: var(--fourth);
+            font-weight: bold;
+            margin-top: auto;
+            transition: color .3s ease;
+        }
+        .process-card:hover .detail-link {
+            color: white;
+        }
+        .swiper-slide {
+            display: flex;
+            height: auto;
+        }
+    </style>
+    <style>
+        .accordion-item{
+            background-color: #FFD1D1;
+        }
+        @@keyframes colorChange {
+            from { color: rgb(0, 60, 255); }
+            to { color: #FF9494; }
+        }
+        @@keyframes colorChange2 {
+            from { color: rgb(214, 41, 41); }
+            to { color: #FF9494; }
+        }
+        .color-animation {
+            animation: colorChange 2s infinite alternate;
+        }
+        .color-animation-2 {
+            animation: colorChange2 2s infinite alternate;
+        }
+    </style>
+}
+
+<!-- Hero Section -->
+<section class="py-5 bg-first">
+    <div class="container text-center">
+        <!-- HTML içeriğinde span etiketlerini korumak için Html.Raw kullanıyoruz -->
+        <h1 class="display-4 fw-bold animate__animated animate__fadeInDown text-fourth fw-bold">
+            @Html.Raw(Model.HeroSection.Greeting)
+        </h1>
+        <h2 class="lead animate__animated animate__fadeInUp">
+            @Model.HeroSection.Subtitle
+        </h2>
+        <img src="~/img/about-group317216.png" alt="@Model.HeroSection.ImageAlt" class="img-fluid rounded my-1 profile-pic" style="max-height: 400px;" data-aos="zoom-in">
+    </div>
+</section>
+
+<!-- Hakkımda Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-5" data-aos="fade-right">
+                <img src="~/img/left-pic444015.png" class="img-fluid rounded" alt="@Model.AboutSection.ImageAlt">
+            </div>
+            <div class="col-md-7" data-aos="fade-left">
+                <h2 class="fw-bold mb-4" style="color: #FF9494;">@Model.AboutSection.Title</h2>
+                <p>@Html.Raw(Model.AboutSection.Paragraph1)</p>
+                <p>@Model.AboutSection.Paragraph2</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Almanca Kursu Nasıl İşliyor Section -->
+<section class="py-5 bg-first">
+    <div class="container">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="fw-bold" style="color: #FF9494;">@Model.ProcessSection.Title</h2>
+        </div>
+        <div class="swiper processSwiper" data-aos="fade-up">
+            <div class="swiper-wrapper pb-5">
+                @for (int i = 0; i < Model.ProcessSection.Steps.Count; i++)
+                {
+                    var step = Model.ProcessSection.Steps[i];
+                    <div class="swiper-slide">
+                        @if (step.Id == 1)
+                        {
+                            <a asp-controller="Account" asp-action="Quiz" asp-route-id="1" class="text-decoration-none">
+                                <div class="process-card text-center">
+                                    <i class="@step.IconClass step-icon"></i>
+                                    <h4 class="fw-bold mt-3">@step.Title</h4>
+                                    <p>@step.Description</p>
+                                    <span class="detail-link">@step.LinkText</span>
+                                </div>
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="#contact-form" class="text-decoration-none contact-scroll">
+                                <div class="process-card text-center">
+                                    <i class="@step.IconClass step-icon"></i>
+                                    <h4 class="fw-bold mt-3">@step.Title</h4>
+                                    <p>@step.Description</p>
+                                    <span class="detail-link">@step.LinkText</span>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="swiper-pagination"></div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-button-next"></div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="py-5 bg-first">
+    <div class="container">
+        <h2 class="fw-bold mb-5 text-center" style="color: #FF9494;" data-aos="fade-up">@Model.FAQSection.Title</h2>
+        <div class="accordion accordion-flush" id="faqAccordion">
+            @foreach (var faq in Model.FAQSection.FAQItems)
+            {
+                var faqId = faq.Question.GetHashCode();
+                <div class="accordion-item" data-aos="fade-up">
+                    <h2 class="accordion-header" id="faqHeading-@faqId">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse-@faqId">
+                            @faq.Question
+                        </button>
+                    </h2>
+                    <div id="faqCollapse-@faqId" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            @faq.Answer
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+<!-- Contact Form -->
+<section id="contact-form" class="py-5">
+    <div class="container">
+        <h2 class="fw-bold mb-5 text-center" style="color: #FF9494;" data-aos="fade-up">
+            @Model.ContactSection.Title
+        </h2>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <form method="post" asp-controller="Home" asp-action="Contact" data-aos="fade-up">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                    <div class="mb-3">
+                        <label asp-for="ContactForm.Name" class="form-label">
+                            @Model.ContactSection.NameLabel
+                        </label>
+                        <input asp-for="ContactForm.Name" class="form-control" required />
+                        <span asp-validation-for="ContactForm.Name" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ContactForm.Email" class="form-label">
+                            @Model.ContactSection.EmailLabel
+                        </label>
+                        <input asp-for="ContactForm.Email" class="form-control" required />
+                        <span asp-validation-for="ContactForm.Email" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ContactForm.Message" class="form-label">
+                            @Model.ContactSection.MessageLabel
+                        </label>
+                        <textarea asp-for="ContactForm.Message" class="form-control" rows="5" required></textarea>
+                        <span asp-validation-for="ContactForm.Message" class="text-danger"></span>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-lg text-white" style="background-color: #FF9494;">
+                            @Model.ContactSection.ButtonText
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script>
+        const swiperInstance  = new Swiper(".processSwiper", {
+            slidesPerView: 1,
+            spaceBetween: 20,
+            grabCursor: true,
+            loop: true,
+            autoplay: { delay: 3000 },
+            pagination: {
+                el: ".swiper-pagination",
+                clickable: true,
+            },
+            navigation: {
+                nextEl: ".swiper-button-next",
+                prevEl: ".swiper-button-prev",
+            },
+            breakpoints: {
+                768: { slidesPerView: 2 },
+                992: { slidesPerView: 3 },
+            }
+        });
+    </script>
+    <script>
+        document.querySelectorAll('.contact-scroll').forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script>
+        AOS.init({ duration: 1000, once: true });
+    </script>
+}

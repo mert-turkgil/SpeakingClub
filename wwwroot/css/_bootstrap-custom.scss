@@ -1,0 +1,22 @@
+// _bootstrap-custom.scss
+
+// 1. Load Bootstrap’s functions first
+@use "../lib/bootstrap/scss/functions";
+
+// 2. (Optional) Load breakpoints mixin if needed for variable checks
+@use "../lib/bootstrap/scss/mixins/breakpoints";
+
+// 3. Override Bootstrap variables before they’re finalized.
+//    Here we set some theme colors using your palette.
+//    You can override additional variables as needed.
+@use "../lib/bootstrap/scss/variables" with (
+  $primary: #FF9494,   // Soft Red (used for primary buttons, links, etc.)
+  $secondary: #FFD1D1, // Light Pink (used for secondary elements)
+  $body-bg: #FFF5E4,   // Light Peach (background color)
+  // Optionally override text colors, borders, etc.
+);
+
+// 4. Load the rest of Bootstrap’s partials
+@use "../lib/bootstrap/scss/mixins";
+@use "../lib/bootstrap/scss/utilities";
+@use "../lib/bootstrap/scss/bootstrap";

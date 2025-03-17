@@ -1,0 +1,289 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--  
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SplashMessage" xml:space="preserve">
+    <value>Have a coffee before you start learning </value>
+    <comment>Splash</comment>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
+    <comment>Nav</comment>
+  </data>
+  <data name="Blog" xml:space="preserve">
+    <value>Blog</value>
+    <comment>Nav</comment>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>About</value>
+    <comment>Nav</comment>
+  </data>
+  <data name="Sözlük" xml:space="preserve">
+    <value>Dictionary</value>
+    <comment>Nav</comment>
+  </data>
+  <data name="Login" xml:space="preserve">
+    <value>Account</value>
+    <comment>Nav</comment>
+  </data>
+  <data name="Logo" xml:space="preserve">
+    <value>German Speaking Club</value>
+    <comment>Nav</comment>
+  </data>
+  <data name="FooterBrand" xml:space="preserve">
+    <value>German Conversation Club</value>
+  </data>
+  <data name="FooterDescription" xml:space="preserve">
+    <value>Connect, learn, and speak confidently with our German conversation community.</value>
+  </data>
+  <data name="ContactUs" xml:space="preserve">
+    <value>Contact Us</value>
+  </data>
+  <data name="FollowUs" xml:space="preserve">
+    <value>Follow Us</value>
+  </data>
+  <data name="Copyright" xml:space="preserve">
+    <value>© 2025 German Conversation Club. All rights reserved.</value>
+  </data>
+  <data name="Carousel_1_Description" xml:space="preserve">
+    <value>In these clubs, various topics are covered; presentation and discussion techniques are applied according to the level, and alternative sentences are provided for those given by students. If necessary, grammar points are also addressed.</value>
+  </data>
+  <data name="Carousel_2_Description" xml:space="preserve">
+    <value>In this blog, I share my experiences learning German, offer speaking tips, and provide helpful resources so that you can gain new ideas and motivation.</value>
+  </data>
+  <data name="Carousel_2_Title" xml:space="preserve">
+    <value>Blog </value>
+  </data>
+  <data name="Carousel_1_Title" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="Carousel_1_LinkText" xml:space="preserve">
+    <value>Learn More</value>
+  </data>
+  <data name="Carousel_2_LinkText" xml:space="preserve">
+    <value>Learn More</value>
+  </data>
+    <data name="PageTitle" xml:space="preserve">
+    <value>About Me</value>
+  </data>
+  <data name="HeroGreeting" xml:space="preserve">
+    <value><![CDATA[Hello, <span class="color-animation-2">I'm</span> <span class="color-animation">Suna</span>!]]></value>
+  </data>
+  <data name="HeroSubtitle" xml:space="preserve">
+    <value>German Conversation Club</value>
+  </data>
+  <data name="HeroImageAlt" xml:space="preserve">
+    <value>Suna</value>
+  </data>
+  <data name="AboutSectionTitle" xml:space="preserve">
+    <value>About Me</value>
+  </data>
+  <data name="AboutParagraph1" xml:space="preserve">
+    <value><![CDATA[Hello, I'm <strong>Suna!</strong> I was born in 1965 in Bremen, Germany, where I grew up and studied. After working for a few years, I met my spouse and permanently moved to Turkey. After a short stint at a public school, I continued my journey in private educational institutions.]]></value>
+  </data>
+  <data name="AboutParagraph2" xml:space="preserve">
+    <value>After retiring, I focused on social media, private lessons, and conversation clubs. I offer conversation clubs tailored to different levels of German proficiency. In these clubs, various topics are discussed, with presentations and debate techniques adapted to the level, along with alternative sentence suggestions and grammar support when needed.</value>
+  </data>
+  <data name="AboutImageAlt" xml:space="preserve">
+    <value>Suna, the Instructor</value>
+  </data>
+  <data name="ProcessSectionTitle" xml:space="preserve">
+    <value>How Does the Online German Conversation Club Work?</value>
+  </data>
+  <data name="Step1_Title" xml:space="preserve">
+    <value>Level Assessment</value>
+  </data>
+  <data name="Step1_Description" xml:space="preserve">
+    <value>We determine the appropriate level for you and place you in groups.</value>
+  </data>
+  <data name="Step1_Link" xml:space="preserve">
+    <value>DETAIL →</value>
+  </data>
+  <data name="Step2_Title" xml:space="preserve">
+    <value>Conversation Partner</value>
+  </data>
+  <data name="Step2_Description" xml:space="preserve">
+    <value>Partner matching for the best learning experience.</value>
+  </data>
+  <data name="Step2_Link" xml:space="preserve">
+    <value>DETAIL →</value>
+  </data>
+  <data name="Step3_Title" xml:space="preserve">
+    <value>Selection of Partners</value>
+  </data>
+  <data name="Step3_Description" xml:space="preserve">
+    <value>Groups are formed with partners suitable for your level.</value>
+  </data>
+  <data name="Step3_Link" xml:space="preserve">
+    <value>DETAIL →</value>
+  </data>
+  <data name="Step4_Title" xml:space="preserve">
+    <value>Your Questions</value>
+  </data>
+  <data name="Step4_Description" xml:space="preserve">
+    <value>All your questions are answered by the instructor.</value>
+  </data>
+  <data name="Step4_Link" xml:space="preserve">
+    <value>DETAIL →</value>
+  </data>
+  <data name="Step5_Title" xml:space="preserve">
+    <value>Questions About Level Assessment</value>
+  </data>
+  <data name="Step5_Description" xml:space="preserve">
+    <value>All your questions are answered and support is provided.</value>
+  </data>
+  <data name="Step5_Link" xml:space="preserve">
+    <value>DETAIL →</value>
+  </data>
+  <data name="FAQSectionTitle" xml:space="preserve">
+    <value>Frequently Asked Questions</value>
+  </data>
+  <data name="FAQ1_Question" xml:space="preserve">
+    <value>How are the conversation classes conducted?</value>
+  </data>
+  <data name="FAQ1_Answer" xml:space="preserve">
+    <value>In our classes, you actively participate and our instructors have you construct sentences.</value>
+  </data>
+  <data name="FAQ2_Question" xml:space="preserve">
+    <value>How many people are in your groups?</value>
+  </data>
+  <data name="FAQ2_Answer" xml:space="preserve">
+    <value>Our groups consist of at least 4 and at most 6 people. More than that is not suitable for everyone to speak sufficiently.</value>
+  </data>
+  <data name="FAQ3_Question" xml:space="preserve">
+    <value>Do you offer grammar lessons?</value>
+  </data>
+  <data name="FAQ3_Answer" xml:space="preserve">
+    <value>Yes. However, we only briefly cover grammar to ensure you construct sentences correctly. Our instructors summarize only that week's grammar topic to prevent you from forming sentences with incorrect structures. We devote most of the time to encouraging you to speak and helping you form new sentences.</value>
+  </data>
+  <data name="ContactSectionTitle" xml:space="preserve">
+    <value>Contact Us</value>
+  </data>
+  <data name="Contact_NameLabel" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Contact_EmailLabel" xml:space="preserve">
+    <value>Email Address</value>
+  </data>
+  <data name="Contact_MessageLabel" xml:space="preserve">
+    <value>Your Message</value>
+  </data>
+  <data name="Contact_ButtonText" xml:space="preserve">
+    <value>Send</value>
+  </data>
+</root>

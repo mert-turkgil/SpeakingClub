@@ -1,0 +1,49 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using SpeakingClub.Data.Abstract;
+using SpeakingClub.Entity;
+
+namespace SpeakingClub.Data.Concrete
+{
+    public class QuizRepository : GenericRepository<Quiz>, IQuizRepository
+    {
+        public QuizRepository(SpeakingClubContext context) : base(context)
+        {
+        }
+        
+        public async Task<IEnumerable<Quiz>> GetQuizzesByTeacherIdAsync(string teacherId)
+        {
+            return await _dbSet
+                .Where(q => q.TeacherId == teacherId)
+                .ToListAsync();
+        }
+        
+        public async Task<QuizAnalysis> GetQuizAnalysisAsync(int quizId)
+        {
+            // This uses the context's QuizSubmissions DbSet to calculate analytics.
+            var submissions = await _context.Set<QuizSubmission>()
+                .Where(qs => qs.QuizId == quizId)
+                .ToListAsync();
+            
+            int totalSubmissions = submissions.Count;
+            double averageScore = totalSubmissions > 0 ? submissions.Average(qs => qs.Score) : 0;
+            
+            return new QuizAnalysis
+            {
+                QuizId = quizId,
+                TotalSubmissions = totalSubmissions,
+                AverageScore = averageScore
+            };
+        }
+        
+        public async Task<IEnumerable<Quiz>> SearchQuizzesByKeywordAsync(string keyword)
+        {
+            return await _dbSet
+                .Where(q => q.Title!.Contains(keyword) || (q.Description != null && q.Description.Contains(keyword)))
+                .ToListAsync();
+        }
+    }
+}

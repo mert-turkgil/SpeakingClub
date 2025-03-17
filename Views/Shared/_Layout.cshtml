@@ -1,0 +1,268 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SpeakingClub</title>
+    <!-- Site-specific CSS -->
+    <link rel="stylesheet" href="~/css/custom.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="~/lib/animate/animate.min.css" />
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Font Awesome (all icons) -->
+    <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" />
+
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" />
+
+    <!-- Site-specific CSS -->
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" 
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" />
+     <link rel="stylesheet" href="~/css/splash.css" /> 
+     @await RenderSectionAsync("Css", required: false)
+</head>
+<body>
+  @{
+    var Home = _localization.GetKey("Home").Value;
+    var Blog = _localization.GetKey("Blog").Value;
+    var About = _localization.GetKey("About").Value;
+    var Sözlük = _localization.GetKey("Sözlük").Value;
+    var Login = _localization.GetKey("Login").Value;
+    var Logo = _localization.GetKey("Logo").Value;
+    var Copyright = _localization.GetKey("Copyright").Value;
+    var FollowUs = _localization.GetKey("FollowUs").Value;
+    var ContactUs = _localization.GetKey("ContactUs").Value;
+    var FooterDescription = _localization.GetKey("FooterDescription").Value;
+    var FooterBrand = _localization.GetKey("FooterBrand").Value;
+    var currentPath = Context.Request.Path;
+    var currentController = ViewContext.RouteData.Values["controller"] as string;
+    var currentAction = ViewContext.RouteData.Values["action"] as string;
+  }
+  <header class="sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+      <div class="container-xxl">
+        <!-- Brand (Left) -->
+        <a class="navbar-brand d-none d-sm-block" href="/">
+          <i class="fa-solid fa-comments me-2"></i> @Logo
+        </a>
+        <!-- Offcanvas Toggler (visible on mobile) -->
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <!-- Standard Navbar (visible on large screens) -->
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <!-- Nav Links (Center) -->
+          <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+            <li class="nav-item d-none d-xxl-block">
+              <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-controller="Home" asp-action="Index">
+                <i class="fa-solid fa-house me-1"></i> @Home
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")" asp-controller="Home" asp-action="Blog">
+                <i class="fa-solid fa-newspaper me-1"></i> @Blog
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")" asp-controller="Home" asp-action="About">
+                <i class="fa-solid fa-circle-info me-1"></i> @About
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link @(currentController == "Home" && currentAction == "Words" ? "active" : "")" asp-controller="Home" asp-action="Words">
+                <i class="fa-solid fa-envelope me-1"></i> @Sözlük
+              </a>
+            </li>
+          </ul>
+          <!-- Account & Language (Right) -->
+          <div class="d-flex align-items-center gap-3">
+            <a href="#" class="btn btn-custom">
+              <i class="fa-solid fa-user me-1"></i> @Login
+            </a>
+            <div class="dropdown">
+              @await Component.InvokeAsync("LanguageSelector")
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+        @if (TempData["ContactSuccess"] != null)
+        {
+           <div class="container mt-3">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fa fa-check-circle"></i> @TempData["ContactSuccess"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            </div>
+        }
+        @if (TempData["ContactError"] != null)
+        {
+          <div class="container mt-3">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fa fa-exclamation-triangle"></i> @TempData["ContactError"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          </div>
+        }
+
+    <!-- Offcanvas for Mobile Menu -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasNavbarLabel">
+          @Logo
+        </h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+        <!-- Offcanvas Nav Links -->
+        <ul class="navbar-nav mb-3">
+          <li class="nav-item">
+            <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-controller="Home" asp-action="Index">
+              <i class="fa-solid fa-house me-1"></i> @Home
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")" asp-controller="Home" asp-action="Blog">
+              <i class="fa-solid fa-newspaper me-1"></i> @Blog
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")" asp-controller="Home" asp-action="About">
+              <i class="fa-solid fa-circle-info me-1"></i> @About
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link @(currentController == "Home" && currentAction == "Words" ? "active" : "")" asp-controller="Home" asp-action="Words">
+              <i class="fa-solid fa-envelope me-1"></i> @Sözlük
+            </a>
+          </li>
+        </ul>
+        <!-- Offcanvas: Account & Language -->
+        <a href="#" class="btn btn-custom w-100 mb-2">
+          <i class="fa-solid fa-user me-1"></i> @Login
+        </a>
+        <div class="dropdown w-100">
+          @await Component.InvokeAsync("LanguageSelector")
+        </div>
+      </div>
+    </div>
+  </header>
+  <!-- SPLASH SCREEN -->
+  <div id="splashScreen" style="display:none; position: absolite;">
+    <div id="splashContent">
+      <div id="threeContainer"></div>
+      <div id="splashMessage">Grab Your Coffee For Learning</div>
+      <div id="progressBar">
+        <div id="progressBarFill"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="mainContent" class="m-0">
+      <main role="main" class="pb-3">
+        @RenderBody()
+      </main>
+  </div>
+
+  <footer class="py-4">
+    <div class="container">
+      <div class="row">
+        <!-- Footer Brand and Description -->
+        <div class="col-md-4 mb-4">
+          <a href="#" class="d-flex align-items-center mb-2 text-dark text-decoration-none">
+            <img src="~/img/footer_logo.png" alt="AKK Logo" style="height:40px;" class="me-2" />
+            <span class="fs-5">@Logo</span>
+          </a>
+          <p class="text-muted">
+            @FooterDescription
+          </p>
+        </div>
+        <!-- Contact Information -->
+        <div class="col-md-4 mb-4">
+          <h5>@ContactUs</h5>
+          <ul class="list-unstyled">
+            <li>Email: <a href="mailto:info@almancakulubu.com">info@almancakulubu.com</a></li>
+            <li>Phone: +90 555 123 4567</li>
+            <li>Address: Istanbul, Turkey</li>
+          </ul>
+        </div>
+        <!-- Social Media Links -->
+        <div class="col-md-4 mb-4">
+          <h5>@FollowUs</h5>
+          <a href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" target="_blank" class="me-2 text-dark"><i class="fa-brands fa-square-facebook fa-2xl"></i></a>
+          <a href="https://www.instagram.com/almanca_konusma_kulubu_" target="_blank" class="me-2 text-dark"><i class="fa-brands fa-square-instagram fa-2xl"></i></i></a>
+          <a href="https://www.youtube.com/@@almanca_konusma_kulubu_" target="_blank" class="text-dark"><i class="fa-brands fa-square-youtube fa-2xl"></i></i></a>
+        </div>
+      </div>
+      <div class="text-center text-muted">
+        @Copyright
+      </div>
+    </div>
+  </footer>
+    <!-- Three.js -->
+      <script type="importmap">
+      {
+        "imports": {
+          "three": "/lib/three/build/three.module.js"
+        }
+      }
+    </script>
+    <script>
+      window.localizedSplashMessage = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(_localization.GetKey("SplashMessage").Value));
+    </script>
+    <!-- Load splash.js as an ES Module -->
+    <script type="module" src="~/js/splash.js"></script>
+    <!-- GSAP -->
+    <script src="~/lib/gsap/gsap.min.js"></script>
+    <!-- Bootstrap Bundle (includes Popper) -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Swiper JS -->
+    <script src="~/lib/swiper/swiper-bundle.min.js"></script>
+    <!-- If you need separate Popper (only if not using the bundle) -->
+    <script src="~/lib/popper/popper.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <!-- Site-specific JS -->
+    <script src="~/js/site.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+        <script>
+        var swiper = new Swiper('.blog-card .swiper', {
+            loop: true,
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+        });
+
+        gsap.from('.blog-card', {
+            opacity: 0,
+            y: 30,
+            duration: 0.8,
+            ease: "power2.out",
+            scrollTrigger: {
+                trigger: '.blog-card',
+                start: "top 90%"
+            }
+        });
+
+        document.querySelectorAll('.blog-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                gsap.to(card, { scale: 1.03, duration: 0.3 });
+            });
+            card.addEventListener('mouseleave', () => {
+                gsap.to(card, { scale: 1, duration: 0.3 });
+            });
+        });
+    </script>
+</body>
+</html>

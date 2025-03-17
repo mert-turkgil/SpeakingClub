@@ -1,0 +1,120 @@
+    /* Color Palette */
+    :root {
+      --color-lightest: #FFF5E4;
+      --color-light:    #FFE3E1;
+      --color-medium:   #FFD1D1;
+      --color-accent:   #FF9494;
+    }
+    
+    /* Global Styles */
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0; 
+      padding: 0;
+      background-color: var(--color-lightest);
+    }
+    :focus {
+      outline: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Navbar Styles */
+    .navbar {
+      background-color: #fff; /* Clean white background */
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    .navbar-brand {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #333 !important;
+    }
+    /* Center nav links with subtle hover underline */
+    .navbar-nav .nav-link {
+      color: #333 !important;
+      position: relative;
+      transition: color 0.2s ease;
+    }
+    .navbar-nav .nav-link:hover {
+      text-shadow: #333 0 0 1px;
+      font-weight: bold;
+      color: #FF9494 !important; /* Bootstrap primary on hover */
+    }
+    .nav-link.active {
+      font-weight: bold;
+      color: #FF9494 !important; /* Bootstrap primary */
+    }
+    .navbar-nav .nav-link::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -2px;
+      width: 0;
+      height: 2px;
+      background-color: #FF9494;
+      transition: width 0.2s ease;
+    }
+    .navbar-nav .nav-link:hover::after {
+      width: 100%;
+    }
+    /* Custom button style for Login & Language */
+    .btn-custom {
+      border: 1px solid #ccc;
+      background-color: #f9f9f9;
+      color: #333;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .btn-custom:hover {
+      background-color: #0d6efd;
+      color: #fff;
+      border-color: #0d6efd;
+    }
+    /* Offcanvas custom styles */
+    .offcanvas {
+      background-color: #fff;
+    }
+    .offcanvas-header {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    .offcanvas-title {
+      font-weight: 600;
+    }
+    .offcanvas-body .nav-link {
+      padding-left: 0;
+    }
+    /* Footer styling */
+    footer {
+      background-color: var(--color-medium);
+      color: #333;
+    }
+    footer a {
+      color: #333;
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background: transparent;
+    }
+    
+    .hero .container {
+      position: relative;
+      height: 600px; /* or adjust as needed */
+    }
+    
+    #overlayText .btn {
+      pointer-events: all; /* allow clicks on button */
+    }
+    
+    #three-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    

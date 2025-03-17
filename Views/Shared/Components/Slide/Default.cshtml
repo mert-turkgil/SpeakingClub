@@ -1,0 +1,87 @@
+@model SlideItemModel
+
+<div id="Alpha75Carousel">
+    <div class="fancy-carousel-wrapper">
+        <!-- Slides Container -->
+        <div class="fancy-slides">
+            @if (Model != null && Model.SlideItems.Any())
+            {
+                foreach (var item in Model.SlideItems)
+                {
+                    var isActive = item == Model.SlideItems.First() ? "active" : "";
+                    <div class="fancy-slide @isActive" data-index="@item.SlideId">
+                        <!-- The main image with object-fit: cover -->
+                        <img 
+                        style="object-fit: cover; object-position: center;"
+                            src="@Url.Content("~/img/" + item.CarouselImage)"       
+                            alt="@item.CarouselTitle"
+                            class="fancy-img"
+                            srcset="
+                                @Url.Content("~/img/" + item.CarouselImage600w) 600w,
+                                @Url.Content("~/img/" + item.CarouselImage1200w) 1200w,
+                                @Url.Content("~/img/" + item.CarouselImage) 1600w
+                            "
+                            sizes="(max-width: 600px) 100vw, (max-width: 1200px) 75vw, 1600px"
+                        />
+
+                        <!-- Overlay with text & button -->
+                        <div class="fancy-overlay">
+                            <h2 class="fancy-title">@item.CarouselTitle</h2>
+                            <p class="fancy-desc">@item.CarouselDescription</p>
+                            @if (!string.IsNullOrEmpty(item.CarouselLink))
+                            {
+                                <button type="button"
+                                        class="fancy-btn"
+                                        onclick="window.location='@item.CarouselLink'">
+                                    @item.CarouselLinkText
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <!-- Fallback if no carousel items -->
+                <div class="fancy-slide active">
+                    <img src="https://via.placeholder.com/1200x800?text=No+Items"
+                         alt="Placeholder"
+                         class="fancy-img" />
+                    <div class="fancy-overlay">
+                        <h2 class="fancy-title">No Carousel Items</h2>
+                        <p class="fancy-desc">Please add items to the carousel.</p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Navigation Arrows -->
+        <div class="fancy-nav">
+            <i  name="arrow-back-circle-outline" class="fa-solid fa-arrow-left fancy-arrow fancy-prev"></i>
+            <i name="arrow-forward-circle-outline" class="fa-solid fa-arrow-right fancy-arrow fancy-next"></i>
+        </div>
+
+        <!-- Thumbnail Bubbles at bottom -->
+        <div class="d-none d-sm-block">
+        <div class="fancy-thumbs">
+            @if (Model != null && Model.SlideItems.Any())
+            {
+                var thumbIndex = 0;
+                foreach (var item in Model.SlideItems)
+                {
+                    var isThumbActive = item == Model.SlideItems.First() ? "thumb-active" : "";
+                    <div class="fancy-bubble @isThumbActive" data-thumb="@thumbIndex"
+                         style="background-image: url('@Url.Content("~/img/" + item.CarouselImage)');">
+                    </div>
+                    thumbIndex++;
+                }
+            }
+            else
+            {
+                <div class="fancy-bubble thumb-active" data-thumb="0"
+                     style="background-image: url('https://via.placeholder.com/1200x800?text=No+Items');">
+                </div>
+            }
+        </div>
+        </div>
+    </div>
