@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Please Confirm Your Email</title>
+  <style type="text/css">
+    body { margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f7f7f7; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; }
+    .header { text-align: center; padding: 10px 0; }
+    .logo { max-width: 150px; }
+    .content { padding: 20px; }
+    .content h2 { color: #FF9494; }
+    .confirm-btn { background-color: #FF9494; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+    .footer { text-align: center; padding: 10px 0; font-size: 12px; color: #888888; }
+    @media only screen and (max-width: 600px) {
+      .container { width: 100% !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="http://localhost:5049/img/header_logo.png" alt="Speaking Club Logo" class="logo">
+    </div>
+    <div class="content">
+      <h2>Please Confirm Your Email</h2>
+      <p>Click the button below to confirm your email address and activate your account.</p>
+      <p><a href="{{ConfirmationLink}}" class="confirm-btn">Confirm Email</a></p>
+      <p>If the button doesn't work, please copy and paste this link into your browser:<br>{{ConfirmationLink}}</p>
+    </div>
+    <div class="footer">
+      <p>&copy; 2025 Speaking Club. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -366,8 +366,7 @@ namespace SpeakingClub.Controllers
         public async Task<IActionResult> Words(string searchTerm)
         {
             var currentCulture = CultureInfo.CurrentCulture.Name;
-            var langCode = currentCulture.Substring(0, 2).ToUpper();
-
+            var langCode = currentCulture.Substring(0, 2).ToLower();
 
             var model = new WordViewModel
             {
@@ -381,7 +380,7 @@ namespace SpeakingClub.Controllers
 
                 if (wordFromDb != null && !string.IsNullOrWhiteSpace(wordFromDb.Definition))
                 {
-                    var eksikolabilir = await _dictionaryService.GetWordDetailsAsync(wordFromDb.Term.ToLower());
+                    var eksikolabilir = await _dictionaryService.GetWordDetailsAsync(wordFromDb.Term.ToLower(),langCode,"de");
                     model.Word = new Word {
                     Definition = wordFromDb.Definition ?? eksikolabilir?.Word?.Definition ?? "Error:404",
                     Origin = wordFromDb.Origin ?? eksikolabilir?.Word?.Origin??"Error:404" ,
@@ -395,32 +394,29 @@ namespace SpeakingClub.Controllers
                 else
                 {
                     // Try fetching details from the Free Dictionary API.
-                    var dictionaryResult = await _dictionaryService.GetWordDetailsAsync(searchTerm);
+                    var dictionaryResult = await _dictionaryService.GetWordDetailsAsync(searchTerm,langCode,"de");
 
                     if (dictionaryResult?.Word != null)
                     {
                         model.Word = new Word
                         {
                             Term = dictionaryResult.Word.Term,
-                            Definition = dictionaryResult.Word.Definition,
+                            Definition = dictionaryResult.Word.Definition.ToString(),
                             IsFromApi = true,
-                            Pronunciation = dictionaryResult.Word.Pronunciation,
-                            Example = dictionaryResult.Word.Example,
-                            Origin = dictionaryResult.Word.Origin,
-                            Synonyms = dictionaryResult.Word.Synonyms
                         };
                     }
                     else
                     {
+
                         // Use DeepL API as a fallback for translation.
-                        var deeplTranslation = await _deeplService.GetDefinitionAsync(searchTerm);
+                        var deeplTranslation = await _deeplService.GetDefinitionByCultureAsync(searchTerm,langCode);
 
                         if (!string.IsNullOrEmpty(deeplTranslation))
                         {
                             model.Word = new Word
                             {
                                 Term = searchTerm,
-                                Definition = deeplTranslation,
+                                Definition = deeplTranslation.ToString(),
                                 IsFromApi = true
                             };
                         }

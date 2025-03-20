@@ -286,4 +286,37 @@
   <data name="Contact_ButtonText" xml:space="preserve">
     <value>Senden</value>
   </data>
+  <data name="PageTitleD" xml:space="preserve">
+  <value>Wörterbuch</value>
+</data>
+<data name="PageSubtitle" xml:space="preserve">
+  <value>Entdecke Bedeutungen, Aussprachen, Beispiele und mehr.</value>
+</data>
+<data name="SearchPlaceholder" xml:space="preserve">
+  <value>Suche nach einem Wort...</value>
+</data>
+<data name="SearchButton" xml:space="preserve">
+  <value><i class="fa-solid fa-magnifying-glass"></i> Suchen</value>
+</data>
+<data name="DefinitionLabel" xml:space="preserve">
+  <value>Definition:</value>
+</data>
+<data name="PronunciationLabel" xml:space="preserve">
+  <value>Aussprache:</value>
+</data>
+<data name="ExampleLabel" xml:space="preserve">
+  <value>Beispiel:</value>
+</data>
+<data name="OriginLabel" xml:space="preserve">
+  <value>Herkunft:</value>
+</data>
+<data name="SynonymsLabel" xml:space="preserve">
+  <value>Synonyme:</value>
+</data>
+<data name="ExternalSourceNote" xml:space="preserve">
+  <value>*Aus externen Quellen abgerufen.</value>
+</data>
+<data name="WarningMessage" xml:space="preserve">
+  <value>Wir arbeiten daran. Zurzeit ist keine Definition verfügbar.</value>
+</data>
 </root>

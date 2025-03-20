@@ -61,7 +61,7 @@ namespace SpeakingClub.Services
             try
             {
                 // Build the request URL.
-                var requestUrl = $"https://api-free.deepl.com/v2/translate?auth_key={_apiKey}&text={Uri.EscapeDataString(term)}&target_lang={culture}";
+                var requestUrl = $"https://api-free.deepl.com/v2/translate?auth_key={_apiKey}&text={Uri.EscapeDataString(term)}&target_lang=DE&source_lang={culture}";
 
                 // Call the API.
                 var response = await _httpClient.GetAsync(requestUrl);
