@@ -286,4 +286,37 @@
   <data name="Contact_ButtonText" xml:space="preserve">
     <value>Send</value>
   </data>
+  <data name="PageTitleD" xml:space="preserve">
+  <value>Dictionary</value>
+</data>
+<data name="PageSubtitle" xml:space="preserve">
+  <value>Discover meanings, pronunciations, examples, and more.</value>
+</data>
+<data name="SearchPlaceholder" xml:space="preserve">
+  <value>Search for a word...</value>
+</data>
+<data name="SearchButton" xml:space="preserve">
+  <value><i class="fa-solid fa-magnifying-glass"></i> Search</value>
+</data>
+<data name="DefinitionLabel" xml:space="preserve">
+  <value>Definition:</value>
+</data>
+<data name="PronunciationLabel" xml:space="preserve">
+  <value>Pronunciation:</value>
+</data>
+<data name="ExampleLabel" xml:space="preserve">
+  <value>Example:</value>
+</data>
+<data name="OriginLabel" xml:space="preserve">
+  <value>Origin:</value>
+</data>
+<data name="SynonymsLabel" xml:space="preserve">
+  <value>Synonyms:</value>
+</data>
+<data name="ExternalSourceNote" xml:space="preserve">
+  <value>*Retrieved from external sources.</value>
+</data>
+<data name="WarningMessage" xml:space="preserve">
+  <value>We are working on it. No definition available at this time.</value>
+</data>
 </root>

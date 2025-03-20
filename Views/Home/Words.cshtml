@@ -1,38 +1,35 @@
 @model SpeakingClub.Models.WordViewModel
-@{
-    ViewData["Title"] = "Dictionary";
-}
+@using SpeakingClub.Services
+@inject LanguageService Localizer
 
+@{
+    ViewData["Title"] = Localizer.GetKey("PageTitleD").Value;
+}
 @section Css {
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f8ff;
+            background-color: #FFF5E4;
         }
-
         .dictionary-container {
             max-width: 850px;
-            margin: 50px auto;
             padding: 30px;
             background: #ffffff;
             border-radius: 15px;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
-
         .search-box input {
             height: 55px;
             border-radius: 50px 0 0 50px;
             border-right: none;
             font-size: 1.2rem;
         }
-
         .search-box button {
             border-radius: 0 50px 50px 0;
             font-size: 1.2rem;
         }
-
         .word-card {
             background: linear-gradient(135deg, #8ec5fc, #e0c3fc);
             border-radius: 15px;
@@ -41,18 +38,15 @@
             color: #333;
             animation: fadeInUp 1s ease;
         }
-
         .word-term {
             font-size: 2.5rem;
             font-weight: 700;
             margin-bottom: 15px;
         }
-
         .word-meta {
             font-size: 1.2rem;
             margin-top: 10px;
         }
-
         .warning-card {
             background-color: #ffcdd2;
             color: #c62828;
@@ -64,67 +58,68 @@
     </style>
 }
 
-<section style="height: 80vh;">
-<div class="dictionary-container animate__animated animate__fadeIn">
-    <h1 class="text-center fw-bold">Dictionary</h1>
-    <p class="text-center text-muted">Discover meanings, pronunciations, examples, and more.</p>
+<section class="bg-first position-relative container-fluid" style="height: 80vh; background-image: url('@Url.Content("~/img/Library.jpg")'); background-position: center; background-size: cover;">
+    <div class="dictionary-container animate__animated animate__fadeIn position-absolute top-50 start-50 translate-middle w-100">
+        <h1 class="text-center fw-bold">@Localizer.GetKey("PageTitleD").Value</h1>
+        <p class="text-center text-muted">@Localizer.GetKey("PageSubtitle").Value</p>
 
-    <form method="get" asp-action="Words" asp-controller="Home" class="search-box mt-4">
-        @Html.AntiForgeryToken()
-        <div class="input-group">
-            <input type="text" class="form-control" placeholder="Search for a word..." name="searchTerm" value="@Model.SearchTerm" required>
-            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-        </div>
-    </form>
+        <form method="get" asp-action="Words" asp-controller="Home" class="search-box mt-4">
+            @Html.AntiForgeryToken()
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="@Localizer.GetKey("SearchPlaceholder").Value" name="searchTerm" value="@Model.SearchTerm" required>
+                <button type="submit" class="btn btn-primary">@Localizer.GetKey("SearchButton").Value</button>
+            </div>
+        </form>
 
-    @if (!string.IsNullOrEmpty(Model.SearchTerm))
-    {
-        if (Model.Word != null)
+        @if (!string.IsNullOrEmpty(Model.SearchTerm))
         {
-            <div class="word-card" data-aos="fade-up">
-                <div class="word-term">@Model.Word.Term</div>
-                <div class="word-meta">
-                    <strong>Definition:</strong> @Model.Word.Definition
+            if (Model.Word != null)
+            {
+                <div class="word-card" data-aos="fade-up">
+                    <div class="word-term">@Model.Word.Term</div>
+                    <div class="word-meta">
+                        <strong>@Localizer.GetKey("DefinitionLabel").Value</strong> @Model.Word.Definition
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.Word.Pronunciation))
+                    {
+                        <div class="word-meta">
+                            <strong>@Localizer.GetKey("PronunciationLabel").Value</strong> @Model.Word.Pronunciation
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Word.Example))
+                    {
+                        <div class="word-meta">
+                            <strong>@Localizer.GetKey("ExampleLabel").Value</strong> @Model.Word.Example
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Word.Origin))
+                    {
+                        <div class="word-meta">
+                            <strong>@Localizer.GetKey("OriginLabel").Value</strong> @Model.Word.Origin
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Word.Synonyms))
+                    {
+                        <div class="word-meta">
+                            <strong>@Localizer.GetKey("SynonymsLabel").Value</strong> @Model.Word.Synonyms
+                        </div>
+                    }
+                    @if (Model.Word.IsFromApi)
+                    {
+                        <small class="text-muted">* @Localizer.GetKey("ExternalSourceNote").Value</small>
+                    }
                 </div>
-                @if (!string.IsNullOrEmpty(Model.Word.Pronunciation))
-                {
-                    <div class="word-meta">
-                        <strong>Pronunciation:</strong> @Model.Word.Pronunciation
-                    </div>
-                }
-                @if (!string.IsNullOrEmpty(Model.Word.Example))
-                {
-                    <div class="word-meta">
-                        <strong>Example:</strong> @Model.Word.Example
-                    </div>
-                }
-                @if (!string.IsNullOrEmpty(Model.Word.Origin))
-                {
-                    <div class="word-meta">
-                        <strong>Origin:</strong> @Model.Word.Origin
-                    </div>
-                }
-                @if (!string.IsNullOrEmpty(Model.Word.Synonyms))
-                {
-                    <div class="word-meta">
-                        <strong>Synonyms:</strong> @Model.Word.Synonyms
-                    </div>
-                }
-                @if (Model.Word.IsFromApi)
-                {
-                    <small class="text-muted">*Retrieved from external sources.</small>
-                }
-            </div>
+            }
+            else if (!string.IsNullOrEmpty(Model.WarningMessage))
+            {
+                <div class="warning-card">
+                    @Model.WarningMessage
+                </div>
+            }
         }
-        else if (!string.IsNullOrEmpty(Model.WarningMessage))
-        {
-            <div class="warning-card">
-                @Model.WarningMessage
-            </div>
-        }
-    }
-</div>
+    </div>
 </section>
+
 @section Scripts {
     <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
     <script src="https://kit.fontawesome.com/a076d05399.js"></script>

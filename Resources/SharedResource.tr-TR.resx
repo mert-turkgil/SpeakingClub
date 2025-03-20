@@ -294,4 +294,37 @@
   <data name="Contact_ButtonText" xml:space="preserve">
     <value>Gönder</value>
   </data>
+  <data name="PageTitleD" xml:space="preserve">
+  <value>Sözlük</value>
+</data>
+<data name="PageSubtitle" xml:space="preserve">
+  <value>Anlamları, telaffuzları, örnekleri ve daha fazlasını keşfedin.</value>
+</data>
+<data name="SearchPlaceholder" xml:space="preserve">
+  <value>Bir kelime ara...</value>
+</data>
+<data name="SearchButton" xml:space="preserve">
+  <value><i class="fa-solid fa-magnifying-glass"></i> Ara</value>
+</data>
+<data name="DefinitionLabel" xml:space="preserve">
+  <value>Tanım:</value>
+</data>
+<data name="PronunciationLabel" xml:space="preserve">
+  <value>Telaffuz:</value>
+</data>
+<data name="ExampleLabel" xml:space="preserve">
+  <value>Örnek:</value>
+</data>
+<data name="OriginLabel" xml:space="preserve">
+  <value>Köken:</value>
+</data>
+<data name="SynonymsLabel" xml:space="preserve">
+  <value>Eşanlamlılar:</value>
+</data>
+<data name="ExternalSourceNote" xml:space="preserve">
+  <value>*Harici kaynaklardan alındı.</value>
+</data>
+<data name="WarningMessage" xml:space="preserve">
+  <value>Üzerinde çalışıyoruz. Şu anda tanım mevcut değil.</value>
+</data>
 </root>

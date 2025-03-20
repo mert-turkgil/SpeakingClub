@@ -1,0 +1,108 @@
+@model SpeakingClub.Models.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Register";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+}
+
+@section Css {
+<style>
+    .animated-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        max-width: 600px;
+        margin: auto;
+    }
+
+    .animated-title {
+        font-size: 28px;
+        color: royalblue;
+        font-weight: 600;
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .animated-title::before, .animated-title::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        left: 0;
+        background-color: royalblue;
+    }
+
+    .animated-title::before {
+        width: 18px;
+        height: 18px;
+    }
+
+    .animated-title::after {
+        width: 18px;
+        height: 18px;
+        animation: pulse 1.2s infinite ease-in-out;
+    }
+
+    @@keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(2); opacity: 0; }
+    }
+</style>
+}
+
+<div class="container py-5">
+    <form method="post" class="animated-form">
+        <h2 class="animated-title">Register</h2>
+        <p class="text-muted">Signup now and get full access to our platform.</p>
+
+        <div class="row">
+            <div class="col-md-6">
+                <label asp-for="FirstName" class="form-label">First Name</label>
+                <input asp-for="FirstName" class="form-control" placeholder="Enter your first name">
+                <span asp-validation-for="FirstName" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="LastName" class="form-label">Last Name</label>
+                <input asp-for="LastName" class="form-control" placeholder="Enter your last name">
+                <span asp-validation-for="LastName" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div>
+            <label asp-for="Age" class="form-label">Age</label>
+            <input asp-for="Age" class="form-control" type="number" min="1" max="120">
+            <span asp-validation-for="Age" class="text-danger"></span>
+        </div>
+
+        <div>
+            <label asp-for="Email" class="form-label">Email</label>
+            <input asp-for="Email" class="form-control" placeholder="name@example.com">
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div>
+            <label asp-for="Password" class="form-label">Password</label>
+            <input asp-for="Password" type="password" class="form-control" placeholder="••••••">
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+        <div>
+            <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+            <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="••••••">
+            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mt-2">Create Account</button>
+
+        <div class="text-center mt-3">
+            Already have an account? <a asp-action="Login" asp-route-returnUrl="@returnUrl">Login here</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

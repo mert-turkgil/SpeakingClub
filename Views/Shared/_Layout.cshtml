@@ -1,4 +1,8 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@using SpeakingClub.Identity
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -81,9 +85,45 @@
           </ul>
           <!-- Account & Language (Right) -->
           <div class="d-flex align-items-center gap-3">
-            <a href="#" class="btn btn-custom">
-              <i class="fa-solid fa-user me-1"></i> @Login
-            </a>
+          @if (SignInManager.IsSignedIn(User))
+          {
+              var currentUser = await UserManager.GetUserAsync(User);
+              var fullName = $"{currentUser?.FirstName} {currentUser?.LastName}";
+
+              <div class="dropdown">
+                  <button class="btn btn-custom bg-fourth dropdown-toggle" 
+                          type="button" 
+                          id="userDropdown" 
+                          data-bs-toggle="dropdown" 
+                          aria-expanded="false">
+                      <i class="fa-solid fa-user me-1"></i> @fullName
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                      @if (User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root"))
+                      {
+                          <li>
+                              <a class="dropdown-item" asp-controller="Account" asp-action="Account">
+                                  <i class="fa-solid fa-cog me-2"></i> Manage Account
+                              </a>
+                          </li>
+                      }
+                      <li>
+                          <form asp-controller="Account" asp-action="Logout" method="post">
+                              <button type="submit" class="dropdown-item">
+                                  <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
+                              </button>
+                          </form>
+                      </li>
+                  </ul>
+              </div>
+          }
+          else
+          {
+              <a asp-controller="Account" asp-action="Login" class="btn btn-custom bg-fourth">
+                  <i class="fa-solid fa-user me-1"></i> @Login
+              </a>
+          }
+
             <div class="dropdown">
               @await Component.InvokeAsync("LanguageSelector")
             </div>
@@ -142,10 +182,40 @@
             </a>
           </li>
         </ul>
-        <!-- Offcanvas: Account & Language -->
-        <a href="#" class="btn btn-custom w-100 mb-2">
-          <i class="fa-solid fa-user me-1"></i> @Login
-        </a>
+        @if (SignInManager.IsSignedIn(User))
+        {
+            var currentUser = await UserManager.GetUserAsync(User);
+            var fullName = $"{currentUser?.FirstName} {currentUser?.LastName}";
+
+            <div class="dropdown w-100">
+              <button class="btn btn-custom bg-fourth dropdown-toggle w-100 mb-2" type="button" data-bs-toggle="dropdown">
+                  <i class="fa-solid fa-user me-1"></i> @fullName
+              </button>
+              <ul class="dropdown-menu w-100">
+                @if (User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root"))
+                {
+                  <li>
+                    <a class="dropdown-item" asp-controller="Account" asp-action="Account">
+                      <i class="fa-solid fa-cog me-2"></i> Account
+                    </a>
+                  </li>
+                }
+                <li>
+                  <form asp-controller="Account" asp-action="Logout" method="post" class="dropdown-item">
+                    <button type="submit" class="btn btn-link p-0 m-0 text-decoration-none text-dark">
+                      <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
+                    </button>
+                  </form>
+                </li>
+              </ul>
+            </div>
+        }
+        else
+        {
+            <a asp-controller="Account" asp-action="Login" class="btn btn-custom bg-fourth w-100 mb-2">
+              <i class="fa-solid fa-user me-1"></i> @Login
+            </a>
+        }
         <div class="dropdown w-100">
           @await Component.InvokeAsync("LanguageSelector")
         </div>
@@ -164,8 +234,8 @@
   </div>
 
 
-  <div id="mainContent" class="m-0">
-      <main role="main" class="pb-3">
+  <div style="height: max-content;" id="mainContent" class="m-0">
+      <main role="main" class="bg-first">
         @RenderBody()
       </main>
   </div>
@@ -225,8 +295,11 @@
     <!-- Swiper JS -->
     <script src="~/lib/swiper/swiper-bundle.min.js"></script>
     <!-- If you need separate Popper (only if not using the bundle) -->
-    <script src="~/lib/popper/popper.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <!-- Bootstrap Bundle (includes Popper) -->
+    <!-- REMOVE THESE LINES: -->
+    <!-- <script src="~/lib/popper/popper.min.js"></script> -->
+    <!-- <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script> -->
+
     <!-- Site-specific JS -->
     <script src="~/js/site.js"></script>
 

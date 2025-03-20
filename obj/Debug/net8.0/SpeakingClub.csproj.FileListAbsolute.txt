@@ -469,3 +469,4 @@ C:\Users\mertu\Desktop\SpeakingClub\bin\Debug\net8.0\Microsoft.Extensions.Primit
 C:\Users\mertu\Desktop\SpeakingClub\bin\Debug\net8.0\Polly.dll
 C:\Users\mertu\Desktop\SpeakingClub\bin\Debug\net8.0\Polly.Extensions.Http.dll
 C:\Users\mertu\Desktop\SpeakingClub\bin\Debug\net8.0\System.Diagnostics.DiagnosticSource.dll
+C:\Users\mertu\Desktop\SpeakingClub\obj\Debug\net8.0\SpeakingClub.sourcelink.json
