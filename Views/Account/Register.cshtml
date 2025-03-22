@@ -1,7 +1,8 @@
 @model SpeakingClub.Models.RegisterViewModel
+@inject LanguageService Localizer
 
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = Localizer.GetKey("Register_Title");
     var returnUrl = ViewData["ReturnUrl"] as string;
 }
 
@@ -55,51 +56,58 @@
 
 <div class="container py-5">
     <form method="post" class="animated-form">
-        <h2 class="animated-title">Register</h2>
-        <p class="text-muted">Signup now and get full access to our platform.</p>
+        <h2 class="animated-title">@Localizer.GetKey("Register_Header")</h2>
+        <p class="text-muted">@Localizer.GetKey("Register_Subtitle")</p>
 
         <div class="row">
             <div class="col-md-6">
-                <label asp-for="FirstName" class="form-label">First Name</label>
-                <input asp-for="FirstName" class="form-control" placeholder="Enter your first name">
+                <label asp-for="FirstName" class="form-label">@Localizer.GetKey("Label_FirstName")</label>
+                <input asp-for="FirstName" class="form-control" placeholder="@Localizer.GetKey("Placeholder_FirstName")">
                 <span asp-validation-for="FirstName" class="text-danger"></span>
             </div>
             <div class="col-md-6">
-                <label asp-for="LastName" class="form-label">Last Name</label>
-                <input asp-for="LastName" class="form-control" placeholder="Enter your last name">
+                <label asp-for="LastName" class="form-label">@Localizer.GetKey("Label_LastName")</label>
+                <input asp-for="LastName" class="form-control" placeholder="@Localizer.GetKey("Placeholder_LastName")">
                 <span asp-validation-for="LastName" class="text-danger"></span>
             </div>
         </div>
 
         <div>
-            <label asp-for="Age" class="form-label">Age</label>
+            <label asp-for="Age" class="form-label">@Localizer.GetKey("Label_Age")</label>
             <input asp-for="Age" class="form-control" type="number" min="1" max="120">
             <span asp-validation-for="Age" class="text-danger"></span>
         </div>
 
         <div>
-            <label asp-for="Email" class="form-label">Email</label>
-            <input asp-for="Email" class="form-control" placeholder="name@example.com">
+            <label asp-for="Email" class="form-label">@Localizer.GetKey("Label_Email")</label>
+            <input asp-for="Email" class="form-control" placeholder="@Localizer.GetKey("Placeholder_Email")">
             <span asp-validation-for="Email" class="text-danger"></span>
         </div>
 
         <div>
-            <label asp-for="Password" class="form-label">Password</label>
+            <label asp-for="Password" class="form-label">@Localizer.GetKey("Label_Password")</label>
             <input asp-for="Password" type="password" class="form-control" placeholder="••••••">
             <span asp-validation-for="Password" class="text-danger"></span>
         </div>
 
         <div>
-            <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+            <label asp-for="ConfirmPassword" class="form-label">@Localizer.GetKey("Label_ConfirmPassword")</label>
             <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="••••••">
             <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100 mt-2">Create Account</button>
+        <button type="submit" class="btn btn-primary w-100 mt-2">@Localizer.GetKey("Button_CreateAccount")</button>
 
         <div class="text-center mt-3">
-            Already have an account? <a asp-action="Login" asp-route-returnUrl="@returnUrl">Login here</a>
+            @Localizer.GetKey("AlreadyHaveAccount") <a asp-action="Login" asp-route-returnUrl="@returnUrl">@Localizer.GetKey("Link_LoginHere")</a>
         </div>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-warning mt-3">
+                @Localizer.GetKey("WarningMessage_Login_UnderDevelopment")
+            </div>
+        }
     </form>
 </div>
 

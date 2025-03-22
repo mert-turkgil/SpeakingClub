@@ -20,5 +20,7 @@ namespace SpeakingClub.Entity
         
         // New: Attempt counter if a user can attempt the quiz multiple times
         public int AttemptNumber { get; set; }
+
+        public ICollection<QuizResponse> QuizResponses { get; set; } = new List<QuizResponse>();
     }
 }

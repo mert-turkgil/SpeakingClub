@@ -12,6 +12,7 @@ namespace SpeakingClub.Entity
     {
         public Quiz()
         {
+            Questions = new List<Question>();
             Blogs = new HashSet<Blog>();
             Tags = new List<Tag>();
             Words = new List<Word>();
@@ -33,12 +34,14 @@ namespace SpeakingClub.Entity
         public string TeacherId { get; set; }
         public User Teacher { get; set; }
 
+        public ICollection<Question> Questions { get; set; }
+
         public ICollection<QuizAnswer> Answers { get; set; }
         // One-to-many relationship with Blog
         public virtual ICollection<Blog> Blogs { get; set; } 
         
         // New: Category relationship (optional)
-        public int CategoryId { get; set; }
+        public int? CategoryId { get; set; }
         public Category Category { get; set; }
         
         // New: Many-to-many relationship with Tags

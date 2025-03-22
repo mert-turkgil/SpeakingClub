@@ -17,6 +17,7 @@ namespace SpeakingClub.Data
         public DbSet<Blog> Blogs { get; set; }
         public DbSet<BlogQuiz> BlogQuizzes { get; set; }
         public DbSet<Quiz> Quizzes { get; set; }
+        public DbSet<Question> Questions {get; set;}
         public DbSet<QuizAnalysis> QuizAnalyses { get; set; }
         public DbSet<QuizAnswer> QuizAnswers { get; set; }
         public DbSet<QuizResponse> QuizResponses { get; set; }
@@ -58,9 +59,16 @@ namespace SpeakingClub.Data
                 .WithMany(t => t.Blogs);
 
             modelBuilder.Entity<Quiz>()
-                .HasMany(q => q.Tags)
-                .WithMany(t => t.Quizzes);
+                .HasMany(q => q.Questions)
+                .WithOne(qs => qs.Quiz)
+                .HasForeignKey(qs => qs.QuizId)
+                .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Question>()
+                .HasMany(q => q.Answers)
+                .WithOne(a => a.Question)
+                .HasForeignKey(a => a.QuestionId)
+                .OnDelete(DeleteBehavior.Cascade);
             // Configure many-to-many relationship between Quiz and Word
             modelBuilder.Entity<Quiz>()
                 .HasMany(q => q.Words)

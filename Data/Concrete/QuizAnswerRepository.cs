@@ -16,7 +16,8 @@ namespace SpeakingClub.Data.Concrete
         public async Task<IEnumerable<QuizAnswer>> GetCorrectAnswersForQuizAsync(int quizId)
         {
             return await _dbSet
-                .Where(a => a.QuizId == quizId && a.IsCorrect)
+                .Include(a => a.Question) // Ensure the Question is loaded (if not using lazy loading)
+                .Where(a => a.Question.QuizId == quizId && a.IsCorrect)
                 .ToListAsync();
         }
     }

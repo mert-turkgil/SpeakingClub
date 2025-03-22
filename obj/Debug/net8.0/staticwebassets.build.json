@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "5t+LvmZuATXLkgQXCyonV1a8YwBG35/rxDsG0LmzXFE=",
+  "Hash": "Eoieya7zChE9oBi2eKGuWB0IbYPYSS6QEd41ueJFopQ=",
   "Source": "SpeakingClub",
   "BasePath": "_content/SpeakingClub",
   "Mode": "Default",
@@ -1649,25 +1649,6 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\js\\anime.js"
-    },
-    {
-      "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\js\\owl.carousel.js",
-      "SourceId": "SpeakingClub",
-      "SourceType": "Discovered",
-      "ContentRoot": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\",
-      "BasePath": "_content/SpeakingClub",
-      "RelativePath": "js/owl.carousel.js",
-      "AssetKind": "All",
-      "AssetMode": "All",
-      "AssetRole": "Primary",
-      "AssetMergeBehavior": "PreferTarget",
-      "AssetMergeSource": "",
-      "RelatedAsset": "",
-      "AssetTraitName": "",
-      "AssetTraitValue": "",
-      "CopyToOutputDirectory": "Never",
-      "CopyToPublishDirectory": "PreserveNewest",
-      "OriginalItemSpec": "wwwroot\\js\\owl.carousel.js"
     },
     {
       "Identity": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\js\\site.js",

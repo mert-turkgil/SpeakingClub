@@ -1,87 +1,92 @@
 @model SlideItemModel
 
-<div id="Alpha75Carousel">
-    <div class="fancy-carousel-wrapper">
-        <!-- Slides Container -->
-        <div class="fancy-slides">
-            @if (Model != null && Model.SlideItems.Any())
+<!-- Swiper Container -->
+<div class="swiper alpha-carousel">
+    <div class="swiper-wrapper">
+        @if (Model?.SlideItems?.Any() == true)
+        {
+            foreach (var item in Model.SlideItems)
             {
-                foreach (var item in Model.SlideItems)
-                {
-                    var isActive = item == Model.SlideItems.First() ? "active" : "";
-                    <div class="fancy-slide @isActive" data-index="@item.SlideId">
-                        <!-- The main image with object-fit: cover -->
-                        <img 
-                        style="object-fit: cover; object-position: center;"
-                            src="@Url.Content("~/img/" + item.CarouselImage)"       
-                            alt="@item.CarouselTitle"
-                            class="fancy-img"
-                            srcset="
-                                @Url.Content("~/img/" + item.CarouselImage600w) 600w,
-                                @Url.Content("~/img/" + item.CarouselImage1200w) 1200w,
-                                @Url.Content("~/img/" + item.CarouselImage) 1600w
-                            "
-                            sizes="(max-width: 600px) 100vw, (max-width: 1200px) 75vw, 1600px"
-                        />
+                <div class="swiper-slide">
+                    <img class="slide-image"
+                         src="@Url.Content($"~/img/{item.CarouselImage}")"
+                         alt="@item.CarouselTitle"
+                         srcset="
+                             @Url.Content($"~/img/{item.CarouselImage600w}") 600w,
+                             @Url.Content($"~/img/{item.CarouselImage1200w}") 1200w,
+                             @Url.Content($"~/img/{item.CarouselImage}") 1600w"
+                         sizes="(max-width: 600px) 100vw, (max-width: 1200px) 75vw, 1600px" />
 
-                        <!-- Overlay with text & button -->
-                        <div class="fancy-overlay">
-                            <h2 class="fancy-title">@item.CarouselTitle</h2>
-                            <p class="fancy-desc">@item.CarouselDescription</p>
-                            @if (!string.IsNullOrEmpty(item.CarouselLink))
-                            {
-                                <button type="button"
-                                        class="fancy-btn"
-                                        onclick="window.location='@item.CarouselLink'">
-                                    @item.CarouselLinkText
-                                </button>
-                            }
-                        </div>
-                    </div>
-                }
-            }
-            else
-            {
-                <!-- Fallback if no carousel items -->
-                <div class="fancy-slide active">
-                    <img src="https://via.placeholder.com/1200x800?text=No+Items"
-                         alt="Placeholder"
-                         class="fancy-img" />
-                    <div class="fancy-overlay">
-                        <h2 class="fancy-title">No Carousel Items</h2>
-                        <p class="fancy-desc">Please add items to the carousel.</p>
+                    <div class="slide-overlay">
+                        <h2>@item.CarouselTitle</h2>
+                        <p>@item.CarouselDescription</p>
+                        @if (!string.IsNullOrEmpty(item.CarouselLink))
+                        {
+                            <a href="@item.CarouselLink" class="slide-button">@item.CarouselLinkText</a>
+                        }
                     </div>
                 </div>
             }
-        </div>
-
-        <!-- Navigation Arrows -->
-        <div class="fancy-nav">
-            <i  name="arrow-back-circle-outline" class="fa-solid fa-arrow-left fancy-arrow fancy-prev"></i>
-            <i name="arrow-forward-circle-outline" class="fa-solid fa-arrow-right fancy-arrow fancy-next"></i>
-        </div>
-
-        <!-- Thumbnail Bubbles at bottom -->
-        <div class="d-none d-sm-block">
-        <div class="fancy-thumbs">
-            @if (Model != null && Model.SlideItems.Any())
-            {
-                var thumbIndex = 0;
-                foreach (var item in Model.SlideItems)
-                {
-                    var isThumbActive = item == Model.SlideItems.First() ? "thumb-active" : "";
-                    <div class="fancy-bubble @isThumbActive" data-thumb="@thumbIndex"
-                         style="background-image: url('@Url.Content("~/img/" + item.CarouselImage)');">
-                    </div>
-                    thumbIndex++;
-                }
-            }
-            else
-            {
-                <div class="fancy-bubble thumb-active" data-thumb="0"
-                     style="background-image: url('https://via.placeholder.com/1200x800?text=No+Items');">
+        }
+        else
+        {
+            <div class="swiper-slide">
+                <img src="https://via.placeholder.com/1200x800?text=No+Items" alt="Placeholder" class="slide-image" />
+                <div class="slide-overlay">
+                    <h2>No Carousel Items</h2>
+                    <p>Please add items to the carousel.</p>
                 </div>
-            }
-        </div>
-        </div>
+            </div>
+        }
     </div>
+
+    <!-- Navigation buttons -->
+    <div class="swiper-button-prev"></div>
+    <div class="swiper-button-next"></div>
+
+    <!-- Pagination with thumbnails -->
+    <div class="swiper-pagination"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+    const carousel = document.querySelector('.alpha-carousel');
+    const slideImages = JSON.parse(carousel.getAttribute('data-slide-images'));
+
+    const swiper = new Swiper('.alpha-carousel', {
+        loop: slideImages.length > 1,
+        effect: 'fade',
+        autoplay: { delay: 5000, disableOnInteraction: false },
+        navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true,
+            renderBullet: (index, className) => {
+                const imageUrl = `/img/${slideImages[index]}`;
+                return `<span class="${className}" style="background-image:url('${imageUrl}')"></span>`;
+            }
+        },
+        on: {
+            slideChangeTransitionStart: () => {
+                gsap.fromTo('.swiper-slide-active .slide-overlay',
+                    { opacity: 0, y: 30 },
+                    { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' });
+            }
+        }
+    });
+
+    gsap.utils.toArray('.slide-overlay').forEach(card => {
+        card.addEventListener('mouseenter', () => gsap.to(card, { scale: 1.03, duration: 0.3 }));
+        card.addEventListener('mouseleave', () => gsap.to(card, { scale: 1, duration: 0.3 }));
+    });
+
+    gsap.registerPlugin(ScrollTrigger);
+    gsap.from('.swiper-slide', {
+        opacity: 0, y: 30, duration: 0.8, ease: "power2.out",
+        scrollTrigger: {
+            trigger: '.alpha-carousel',
+            start: "top 90%"
+        }
+    });
+});
+</script>

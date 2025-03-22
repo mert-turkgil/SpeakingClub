@@ -16,7 +16,7 @@ namespace SpeakingClub.Data.Abstract
         IQuizResponseRepository QuizResponses { get; }
         IWordRepository  Words { get; }
         ISlideRepository Slides { get; }
-        
+        IQuestionRepository Questions {get;}
         ICategoryRepository Categories { get; }
         IGenericRepository<T> GenericRepository<T>() where T : class;
         int Save();

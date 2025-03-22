@@ -11,5 +11,6 @@ namespace SpeakingClub.Data.Abstract
         Task<IEnumerable<Quiz>> GetQuizzesByTeacherIdAsync(string teacherId);
         Task<QuizAnalysis> GetQuizAnalysisAsync(int quizId);
         Task<IEnumerable<Quiz>> SearchQuizzesByKeywordAsync(string keyword);
+        Task<Quiz?> GetByIdAsync(int quizId);
     }
 }
