@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using SpeakingClub.Entity;
 using SpeakingClub.Identity;
 
 namespace SpeakingClub.Models
@@ -16,16 +17,15 @@ namespace SpeakingClub.Models
         public string? Title { get; set; }
         public string? Description { get; set; }
 
-        // URL or path to an MP3/sound file.
+        // Optional audio or video resources
         public string? AudioUrl { get; set; }
-
-        // Optional YouTube video URL for the quiz question.
         public string? YouTubeVideoUrl { get; set; }
 
-        // The teacher (user) who created the quiz.
+        // The teacher who created the quiz
         public string? TeacherId { get; set; }
         public User? Teacher { get; set; }
 
-        public ICollection<QuizAnswer>? Answers { get; set; }
+        // ✅ New: Each quiz has multiple questions
+        public ICollection<Question>? Questions { get; set; }
     }
 }

@@ -327,4 +327,56 @@
 <data name="WarningMessage" xml:space="preserve">
   <value>Üzerinde çalışıyoruz. Şu anda tanım mevcut değil.</value>
 </data>
+<data name="Register_Title" xml:space="preserve"><value>Kayıt Ol</value></data>
+<data name="Register_Header" xml:space="preserve"><value>Kayıt Ol</value></data>
+<data name="Register_Subtitle" xml:space="preserve"><value>Hemen kayıt olun ve platformumuza tam erişim sağlayın.</value></data>
+<data name="Label_FirstName" xml:space="preserve"><value>Adınız</value></data>
+<data name="Placeholder_FirstName" xml:space="preserve"><value>Adınızı giriniz</value></data>
+<data name="Label_LastName" xml:space="preserve"><value>Soyadınız</value></data>
+<data name="Placeholder_LastName" xml:space="preserve"><value>Soyadınızı giriniz</value></data>
+<data name="Label_Age" xml:space="preserve"><value>Yaşınız</value></data>
+<data name="Label_Email" xml:space="preserve"><value>E-posta</value></data>
+<data name="Placeholder_Email" xml:space="preserve"><value>isim@ornek.com</value></data>
+<data name="Label_Password" xml:space="preserve"><value>Şifre</value></data>
+<data name="Label_ConfirmPassword" xml:space="preserve"><value>Şifreyi Onayla</value></data>
+<data name="Button_CreateAccount" xml:space="preserve"><value>Hesap Oluştur</value></data>
+<data name="AlreadyHaveAccount" xml:space="preserve"><value>Zaten bir hesabınız var mı?</value></data>
+<data name="Link_LoginHere" xml:space="preserve"><value>Buradan giriş yapın</value></data>
+<data name="WarningMessage_Register_UnderDevelopment" xml:space="preserve">
+  <value>Üzerinde çalışıyoruz. Şu anda mevcut bir tanım yok.</value>
+</data>
+<data name="Login_Title" xml:space="preserve"><value>Giriş Yap</value></data>
+<data name="Login_Header" xml:space="preserve"><value>Giriş Yap</value></data>
+<data name="Login_Subtitle" xml:space="preserve"><value>Hesabınıza erişmek için giriş bilgilerinizi girin.</value></data>
+<data name="Label_RememberMe" xml:space="preserve"><value>Beni hatırla</value></data>
+<data name="Button_Login" xml:space="preserve"><value>Giriş Yap</value></data>
+<data name="NoAccountYet" xml:space="preserve"><value>Henüz hesabınız yok mu?</value></data>
+<data name="Link_RegisterHere" xml:space="preserve"><value>Buradan kayıt olun</value></data>
+<data name="WarningMessage_Login_UnderDevelopment" xml:space="preserve">
+  <value>Üzerinde çalışıyoruz. Şu anda mevcut bir tanım yok.</value>
+</data>
+<data name="MyAccount_Title"><value>Hesabım</value></data>
+<data name="MyAccount_Header"><value>Hesabım</value></data>
+<data name="AccountDetails"><value>Hesap Bilgileri</value></data>
+<data name="FirstName"><value>Adınız</value></data>
+<data name="LastName"><value>Soyadınız</value></data>
+<data name="Age"><value>Yaşınız</value></data>
+<data name="GoToDashboard"><value>Panele Git</value></data>
+<data name="NoQuizData"><value>Henüz hiçbir sınava katılmadınız.</value></data>
+<data name="ManagePassword"><value>Şifre Yönetimi</value></data>
+<data name="ManagePasswordText"><value>Hesabınızı korumak için şifrenizi düzenli olarak güncelleyin.</value></data>
+<data name="ChangePassword"><value>Şifreyi Değiştir</value></data>
+<data name="MyQuizzesLevels"><value>Sınavlarım ve Seviyelerim</value></data>
+<data name="MyQuizzesLevelsText"><value>İlerlemelerinizi ve tamamladığınız sınavları görün.</value></data>
+<data name="GoToQuizzes"><value>Sınavlara Git</value></data>
+<data name="DeleteAccount"><value>Hesabı Sil</value></data>
+<data name="DeleteAccountText"><value>Hesabınızı ve ilişkili verileri kalıcı olarak silin. Bu işlem geri alınamaz.</value></data>
+<data name="DeleteAccountConfirm"><value>Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</value></data>
+<data name="DeleteAccountButton"><value>Hesabımı Sil</value></data>
+<data name="ChangePassword_Title"><value>Şifreyi Değiştir</value></data>
+<data name="CurrentPassword"><value>Mevcut Şifre</value></data>
+<data name="NewPassword"><value>Yeni Şifre</value></data>
+<data name="ConfirmNewPassword"><value>Yeni Şifreyi Onayla</value></data>
+<data name="UpdatePasswordButton"><value>Şifreyi Güncelle</value></data>
+
 </root>

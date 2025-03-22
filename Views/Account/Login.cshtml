@@ -1,7 +1,8 @@
 @model SpeakingClub.Models.LoginViewModel
+@inject LanguageService Localizer
 
 @{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = Localizer.GetKey("Login_Title");
     var returnUrl = ViewData["ReturnUrl"] as string;
 }
 
@@ -55,33 +56,40 @@
 
 <div style="height: 80vh;" class="container py-5">
     <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl" method="post" class="animated-login-form">
-        <h2 class="animated-login-title">Login</h2>
-        <p class="text-muted">Enter your credentials to access your account.</p>
+        <h2 class="animated-login-title">@Localizer.GetKey("Login_Header")</h2>
+        <p class="text-muted">@Localizer.GetKey("Login_Subtitle")</p>
 
         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
         <div>
-            <label asp-for="Email" class="form-label">Email</label>
-            <input asp-for="Email" class="form-control" placeholder="name@example.com">
+            <label asp-for="Email" class="form-label">@Localizer.GetKey("Label_Email")</label>
+            <input asp-for="Email" class="form-control" placeholder="@Localizer.GetKey("Placeholder_Email")">
             <span asp-validation-for="Email" class="text-danger"></span>
         </div>
 
         <div>
-            <label asp-for="Password" class="form-label">Password</label>
+            <label asp-for="Password" class="form-label">@Localizer.GetKey("Label_Password")</label>
             <input asp-for="Password" type="password" class="form-control" placeholder="••••••">
             <span asp-validation-for="Password" class="text-danger"></span>
         </div>
 
         <div class="form-check">
             <input asp-for="RememberMe" class="form-check-input">
-            <label asp-for="RememberMe" class="form-check-label">Remember me</label>
+            <label asp-for="RememberMe" class="form-check-label">@Localizer.GetKey("Label_RememberMe")</label>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100 mt-2">Login</button>
+        <button type="submit" class="btn btn-primary w-100 mt-2">@Localizer.GetKey("Button_Login")</button>
 
         <div class="text-center mt-3">
-            Don't have an account yet? <a asp-action="Register" asp-route-returnUrl="@returnUrl">Register here</a>
+            @Localizer.GetKey("NoAccountYet") <a asp-action="Register" asp-route-returnUrl="@returnUrl">@Localizer.GetKey("Link_RegisterHere")</a>
         </div>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-warning mt-3">
+                @Localizer.GetKey("WarningMessage_Login_UnderDevelopment")
+            </div>
+        }
     </form>
 </div>
 

@@ -19,14 +19,14 @@ namespace SpeakingClub.Data.Concrete
         private IQuizResponseRepository? _quizResponses;
         private IWordRepository? _words;
         private ICategoryRepository? _category;
-
+        private IQuestionRepository ? _questions;
         private ISlideRepository? _slideRepository;
 
         public UnitOfWork(SpeakingClubContext context)
         {
             _context = context;
         }
-
+        public IQuestionRepository Questions => _questions ??= new QuestionRepository(_context);
         public IBlogRepository Blogs => _blogs ??= new BlogRepository(_context);
         public IArticleRepository Articles => _articles ??= new ArticleRepository(_context);
         public IQuizRepository Quizzes => _quizzes ??= new QuizRepository(_context);

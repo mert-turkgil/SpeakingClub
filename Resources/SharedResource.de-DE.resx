@@ -319,4 +319,56 @@
 <data name="WarningMessage" xml:space="preserve">
   <value>Wir arbeiten daran. Zurzeit ist keine Definition verfügbar.</value>
 </data>
+<data name="Register_Title" xml:space="preserve"><value>Registrieren</value></data>
+<data name="Register_Header" xml:space="preserve"><value>Registrieren</value></data>
+<data name="Register_Subtitle" xml:space="preserve"><value>Registrieren Sie sich jetzt und erhalten Sie vollen Zugang zu unserer Plattform.</value></data>
+<data name="Label_FirstName" xml:space="preserve"><value>Vorname</value></data>
+<data name="Placeholder_FirstName" xml:space="preserve"><value>Geben Sie Ihren Vornamen ein</value></data>
+<data name="Label_LastName" xml:space="preserve"><value>Nachname</value></data>
+<data name="Placeholder_LastName" xml:space="preserve"><value>Geben Sie Ihren Nachnamen ein</value></data>
+<data name="Label_Age" xml:space="preserve"><value>Alter</value></data>
+<data name="Label_Email" xml:space="preserve"><value>E-Mail</value></data>
+<data name="Placeholder_Email" xml:space="preserve"><value>name@beispiel.de</value></data>
+<data name="Label_Password" xml:space="preserve"><value>Passwort</value></data>
+<data name="Label_ConfirmPassword" xml:space="preserve"><value>Passwort bestätigen</value></data>
+<data name="Button_CreateAccount" xml:space="preserve"><value>Konto erstellen</value></data>
+<data name="AlreadyHaveAccount" xml:space="preserve"><value>Haben Sie bereits ein Konto?</value></data>
+<data name="Link_LoginHere" xml:space="preserve"><value>Hier anmelden</value></data>
+<data name="WarningMessage_Register_UnderDevelopment" xml:space="preserve">
+  <value>Wir arbeiten daran. Zurzeit ist keine Definition verfügbar.</value>
+</data>
+<data name="Login_Title" xml:space="preserve"><value>Anmelden</value></data>
+<data name="Login_Header" xml:space="preserve"><value>Anmelden</value></data>
+<data name="Login_Subtitle" xml:space="preserve"><value>Geben Sie Ihre Zugangsdaten ein, um auf Ihr Konto zuzugreifen.</value></data>
+<data name="Label_RememberMe" xml:space="preserve"><value>Angemeldet bleiben</value></data>
+<data name="Button_Login" xml:space="preserve"><value>Anmelden</value></data>
+<data name="NoAccountYet" xml:space="preserve"><value>Noch kein Konto?</value></data>
+<data name="Link_RegisterHere" xml:space="preserve"><value>Hier registrieren</value></data>
+<data name="WarningMessage_Login_UnderDevelopment" xml:space="preserve">
+  <value>Wir arbeiten daran. Zurzeit ist keine Definition verfügbar.</value>
+</data>
+<data name="MyAccount_Title"><value>Mein Konto</value></data>
+<data name="MyAccount_Header"><value>Mein Konto</value></data>
+<data name="AccountDetails"><value>Kontodetails</value></data>
+<data name="FirstName"><value>Vorname</value></data>
+<data name="LastName"><value>Nachname</value></data>
+<data name="Age"><value>Alter</value></data>
+<data name="GoToDashboard"><value>Zum Dashboard</value></data>
+<data name="NoQuizData"><value>Sie haben noch keine Quiz abgeschlossen.</value></data>
+<data name="ManagePassword"><value>Passwort verwalten</value></data>
+<data name="ManagePasswordText"><value>Aktualisieren Sie regelmäßig Ihr Passwort, um Ihr Konto zu sichern.</value></data>
+<data name="ChangePassword"><value>Passwort ändern</value></data>
+<data name="MyQuizzesLevels"><value>Meine Quiz &amp; Level</value></data>
+<data name="MyQuizzesLevelsText"><value>Sehen Sie Ihren Fortschritt und abgeschlossene Quiz an.</value></data>
+<data name="GoToQuizzes"><value>Zu den Quiz</value></data>
+<data name="DeleteAccount"><value>Konto löschen</value></data>
+<data name="DeleteAccountText"><value>Löschen Sie dauerhaft Ihr Konto und alle zugehörigen Daten. Diese Aktion kann nicht rückgängig gemacht werden.</value></data>
+<data name="DeleteAccountConfirm"><value>Sind Sie sicher, dass Sie Ihr Konto löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.</value></data>
+<data name="DeleteAccountButton"><value>Mein Konto löschen</value></data>
+<data name="ChangePassword_Title"><value>Passwort ändern</value></data>
+<data name="CurrentPassword"><value>Aktuelles Passwort</value></data>
+<data name="NewPassword"><value>Neues Passwort</value></data>
+<data name="ConfirmNewPassword"><value>Neues Passwort bestätigen</value></data>
+<data name="UpdatePasswordButton"><value>Passwort aktualisieren</value></data>
+
 </root>

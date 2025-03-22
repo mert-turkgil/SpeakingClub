@@ -1,0 +1,58 @@
+@model Quiz
+
+<div class="container my-5">
+    <h2 class="text-center">@Model.Title</h2>
+
+    <form id="quizForm" method="post" asp-action="SubmitQuiz">
+        <input type="hidden" name="QuizId" value="@Model.Id" />
+        <div id="questionsContainer">
+            @foreach (var question in Model.Questions ?? new List<Question>())
+            {
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-body">
+                        <h5>@question.QuestionText</h5>
+                        @foreach (var answer in question.Answers)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="responses[@question.Id]" value="@answer.Id" required>
+                                <label class="form-check-label">@answer.AnswerText</label>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit Quiz</button>
+    </form>
+</div>
+
+<script>
+    // Start Timer
+    let startTime = Date.now();
+    
+    // Request fullscreen on load
+    document.documentElement.requestFullscreen().catch(console.error);
+
+    let warningTimeout;
+    document.addEventListener('mouseleave', () => {
+        warningTimeout = setTimeout(() => {
+            alert("Quiz ended due to mouse leaving the screen.");
+            document.getElementById('quizForm').submit();
+        }, 3000);
+    });
+
+    document.addEventListener('mouseenter', () => {
+        clearTimeout(warningTimeout);
+    });
+
+    // Append elapsed time before submitting
+    document.getElementById('quizForm').addEventListener('submit', () => {
+        const elapsedTime = Math.floor((Date.now() - startTime) / 1000); // seconds
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'ElapsedTime';
+        input.value = elapsedTime;
+        document.getElementById('quizForm').appendChild(input);
+    });
+</script>

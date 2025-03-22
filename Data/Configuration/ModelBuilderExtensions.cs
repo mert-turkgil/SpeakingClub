@@ -11,6 +11,7 @@ namespace SpeakingClub.Data.Configuration
     {
        public static void SeedData(this ModelBuilder modelBuilder)
         {
+            // Seed SlideShow
             modelBuilder.Entity<SlideShow>().HasData(
                 new SlideShow
                 {
@@ -37,6 +38,7 @@ namespace SpeakingClub.Data.Configuration
                     DateAdded = new DateTime(2025, 1, 15)
                 }
             );
+
             // Seed Users (teachers and regular users)
             modelBuilder.Entity<User>().HasData(
                 new User {
@@ -172,7 +174,7 @@ namespace SpeakingClub.Data.Configuration
                     Author = "Author1",
                     RawYT = "",
                     RawMaps = "",
-                    isHome= true,
+                    isHome = true,
                     CategoryId = 1
                 },
                 new Blog
@@ -186,50 +188,94 @@ namespace SpeakingClub.Data.Configuration
                     Author = "Author2",
                     RawYT = "",
                     RawMaps = "",
-                    isHome= true,
+                    isHome = true,
                     CategoryId = 2
                 }
             );
 
-            // Seed Quizzes
+            // Seed a single Quiz with multiple Questions
             modelBuilder.Entity<Quiz>().HasData(
                 new Quiz
                 {
                     Id = 1,
-                    Title = "Quiz 1",
-                    Description = "Description for quiz 1.",
+                    Title = "General Knowledge Quiz",
+                    Description = "A quiz to test your general knowledge.",
                     AudioUrl = "http://example.com/audio1.mp3",
                     YouTubeVideoUrl = "http://youtube.com/vid1",
                     TeacherId = "teacher1",
                     CategoryId = 1
-                },
-                new Quiz
-                {
-                    Id = 2,
-                    Title = "Quiz 2",
-                    Description = "Description for quiz 2.",
-                    AudioUrl = "http://example.com/audio2.mp3",
-                    YouTubeVideoUrl = "http://youtube.com/vid2",
-                    TeacherId = "teacher2",
-                    CategoryId = 2
                 }
             );
 
-            // Seed BlogQuiz join table (Blog-Quiz)
-            modelBuilder.Entity<BlogQuiz>().HasData(
-                new BlogQuiz { BlogId = 1, QuizId = 1 },
-                new BlogQuiz { BlogId = 2, QuizId = 2 }
+            // Seed Questions for the Quiz
+            modelBuilder.Entity<Question>().HasData(
+                new Question
+                {
+                    Id = 1,
+                    QuizId = 1,
+                    QuestionText = "What is 2 + 2?",
+                    ImageUrl = null,
+                    AudioUrl = null,
+                    VideoUrl = null
+                },
+                new Question
+                {
+                    Id = 2,
+                    QuizId = 1,
+                    QuestionText = "What is the capital of France?",
+                    ImageUrl = "http://example.com/images/france.jpg",
+                    AudioUrl = null,
+                    VideoUrl = null
+                },
+                new Question
+                {
+                    Id = 3,
+                    QuizId = 1,
+                    QuestionText = "Identify the instrument in the audio clip.",
+                    ImageUrl = null,
+                    AudioUrl = "http://example.com/audio/instrument.mp3",
+                    VideoUrl = null
+                },
+                new Question
+                {
+                    Id = 4,
+                    QuizId = 1,
+                    QuestionText = "Watch the video and answer: Who is the speaker?",
+                    ImageUrl = null,
+                    AudioUrl = null,
+                    VideoUrl = "http://youtube.com/watch?v=example"
+                }
             );
 
-            // Seed QuizAnswers
+            // Seed QuizAnswers for each Question
             modelBuilder.Entity<QuizAnswer>().HasData(
-                new QuizAnswer { Id = 1, QuizId = 1, AnswerText = "Answer 1", IsCorrect = true },
-                new QuizAnswer { Id = 2, QuizId = 1, AnswerText = "Answer 2", IsCorrect = false },
-                new QuizAnswer { Id = 3, QuizId = 2, AnswerText = "Answer A", IsCorrect = false },
-                new QuizAnswer { Id = 4, QuizId = 2, AnswerText = "Answer B", IsCorrect = true }
+                // Answers for Question 1: What is 2+2?
+                new QuizAnswer { Id = 1, QuestionId = 1, AnswerText = "4", IsCorrect = true },
+                new QuizAnswer { Id = 2, QuestionId = 1, AnswerText = "3", IsCorrect = false },
+                new QuizAnswer { Id = 3, QuestionId = 1, AnswerText = "5", IsCorrect = false },
+
+                // Answers for Question 2: What is the capital of France?
+                new QuizAnswer { Id = 4, QuestionId = 2, AnswerText = "Paris", IsCorrect = true },
+                new QuizAnswer { Id = 5, QuestionId = 2, AnswerText = "Berlin", IsCorrect = false },
+                new QuizAnswer { Id = 6, QuestionId = 2, AnswerText = "Madrid", IsCorrect = false },
+
+                // Answers for Question 3: Identify the instrument in the audio clip.
+                new QuizAnswer { Id = 7, QuestionId = 3, AnswerText = "Piano", IsCorrect = true },
+                new QuizAnswer { Id = 8, QuestionId = 3, AnswerText = "Guitar", IsCorrect = false },
+                new QuizAnswer { Id = 9, QuestionId = 3, AnswerText = "Violin", IsCorrect = false },
+
+                // Answers for Question 4: Who is the speaker?
+                new QuizAnswer { Id = 10, QuestionId = 4, AnswerText = "Dr. Smith", IsCorrect = true },
+                new QuizAnswer { Id = 11, QuestionId = 4, AnswerText = "Mr. Johnson", IsCorrect = false },
+                new QuizAnswer { Id = 12, QuestionId = 4, AnswerText = "Ms. Davis", IsCorrect = false }
             );
 
-            // Seed QuizSubmissions
+            // Update BlogQuiz join table to reference the only quiz (Id = 1)
+            modelBuilder.Entity<BlogQuiz>().HasData(
+                new BlogQuiz { BlogId = 1, QuizId = 1 }
+            );
+
+            // Seed QuizSubmissions (all referencing quiz with Id = 1)
             modelBuilder.Entity<QuizSubmission>().HasData(
                 new QuizSubmission
                 {
@@ -248,38 +294,8 @@ namespace SpeakingClub.Data.Configuration
                     SubmissionDate = new DateTime(2025, 2, 16),
                     Score = 90,
                     AttemptNumber = 1
-                },
-                new QuizSubmission
-                {
-                    QuizSubmissionId = 3,
-                    QuizId = 2,
-                    UserId = "user1",
-                    SubmissionDate = new DateTime(2025, 3, 15),
-                    Score = 75,
-                    AttemptNumber = 1
-                },
-                new QuizSubmission
-                {
-                    QuizSubmissionId = 4,
-                    QuizId = 2,
-                    UserId = "user1",
-                    SubmissionDate = new DateTime(2025, 3, 16),
-                    Score = 85,
-                    AttemptNumber = 2
                 }
             );
-
-            // Seed QuizResponses
-            modelBuilder.Entity<QuizResponse>().HasData(
-                new QuizResponse
-                {
-                    QuizResponseId = 1,
-                    QuizSubmissionId = 1,
-                    QuizAnswerId = 1,
-                    AnswerText = "User1 answer to Quiz1"
-                }
-            );
-
             // Seed Words
             modelBuilder.Entity<Word>().HasData(
                 new Word
@@ -300,51 +316,15 @@ namespace SpeakingClub.Data.Configuration
                 }
             );
 
-            // Seed UserQuiz join table (User-Quiz relationship)
-            modelBuilder.Entity<UserQuiz>().HasData(
-                new UserQuiz { UserId = "user1", QuizId = 1, TotalAttempts = 1 },
-                new UserQuiz { UserId = "user2", QuizId = 1, TotalAttempts = 1 },
-                new UserQuiz { UserId = "user1", QuizId = 2, TotalAttempts = 2 }
-            );
 
-            // Seed Comments
-            modelBuilder.Entity<Comment>().HasData(
-                new Comment
+            // Seed QuizResponses (example response)
+            modelBuilder.Entity<QuizResponse>().HasData(
+                new QuizResponse
                 {
-                    CommentId = 1,
-                    Content = "Great blog!",
-                    Date = new DateTime(2025, 2, 20),
-                    BlogId = 1,
-                    UserId = "user1"
-                },
-                new Comment
-                {
-                    CommentId = 2,
-                    Content = "Challenging quiz!",
-                    Date = new DateTime(2025, 3, 20),
-                    QuizId = 2,
-                    UserId = "user2"
-                }
-            );
-
-
-            // Seed Ratings
-            modelBuilder.Entity<Rating>().HasData(
-                new Rating
-                {
-                    RatingId = 1,
-                    Score = 5,
-                    Date = new DateTime(2025, 2, 21),
-                    BlogId = 1,
-                    UserId = "user2"
-                },
-                new Rating
-                {
-                    RatingId = 2,
-                    Score = 4,
-                    Date = new DateTime(2025, 3, 21),
-                    QuizId = 2,
-                    UserId = "user1"
+                    QuizResponseId = 1,
+                    QuizSubmissionId = 1,
+                    QuizAnswerId = 1,
+                    AnswerText = "User1 answer for Question 1"
                 }
             );
 
@@ -361,16 +341,21 @@ namespace SpeakingClub.Data.Configuration
                 new { BlogsBlogId = 2, TagsTagId = 4 }
             );
 
-            // Seed many-to-many join data for Quiz-Tags
+            // Seed many-to-many join data for Quiz-Tags (only for Quiz Id = 1)
             modelBuilder.Entity("QuizTag").HasData(
-                new { QuizzesId = 1, TagsTagId = 1 },
-                new { QuizzesId = 2, TagsTagId = 5 }
+                new { QuizzesId = 1, TagsTagId = 1 }
             );
 
-            // Seed many-to-many join data for Quiz-Words
+            // Seed many-to-many join data for Quiz-Words (only for Quiz Id = 1)
             modelBuilder.Entity("QuizWord").HasData(
-                new { QuizzesId = 2, WordsWordId = 1 },
-                new { QuizzesId = 2, WordsWordId = 2 }
+                new { QuizzesId = 1, WordsWordId = 1 },
+                new { QuizzesId = 1, WordsWordId = 2 }
+            );
+
+            // Seed UserQuiz join table (User-Quiz relationship)
+            modelBuilder.Entity<UserQuiz>().HasData(
+                new UserQuiz { UserId = "user1", QuizId = 1, TotalAttempts = 1 },
+                new UserQuiz { UserId = "user2", QuizId = 1, TotalAttempts = 1 }
             );
         }
     }

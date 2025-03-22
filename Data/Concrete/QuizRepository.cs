@@ -45,5 +45,13 @@ namespace SpeakingClub.Data.Concrete
                 .Where(q => q.Title!.Contains(keyword) || (q.Description != null && q.Description.Contains(keyword)))
                 .ToListAsync();
         }
+        public async Task<Quiz?> GetByIdAsync(int quizId)
+        {
+            return await _dbSet
+                .Include(q => q.Questions)
+                .ThenInclude(q => q.Answers)
+                .FirstOrDefaultAsync(q => q.Id == quizId);
+        }
+
     }
 }

@@ -115,11 +115,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         {
                             QuizzesId = 1,
                             TagsTagId = 1
-                        },
-                        new
-                        {
-                            QuizzesId = 2,
-                            TagsTagId = 5
                         });
                 });
 
@@ -140,12 +135,12 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.HasData(
                         new
                         {
-                            QuizzesId = 2,
+                            QuizzesId = 1,
                             WordsWordId = 1
                         },
                         new
                         {
-                            QuizzesId = 2,
+                            QuizzesId = 1,
                             WordsWordId = 2
                         });
                 });
@@ -311,11 +306,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         {
                             BlogId = 1,
                             QuizId = 1
-                        },
-                        new
-                        {
-                            BlogId = 2,
-                            QuizId = 2
                         });
                 });
 
@@ -387,23 +377,64 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("SpeakingClub.Entity.Question", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AudioUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("QuestionText")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("QuizId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("VideoUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuizId");
+
+                    b.ToTable("Questions");
 
                     b.HasData(
                         new
                         {
-                            CommentId = 1,
-                            BlogId = 1,
-                            Content = "Great blog!",
-                            Date = new DateTime(2025, 2, 20, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            UserId = "user1"
+                            Id = 1,
+                            QuestionText = "What is 2 + 2?",
+                            QuizId = 1
                         },
                         new
                         {
-                            CommentId = 2,
-                            Content = "Challenging quiz!",
-                            Date = new DateTime(2025, 3, 20, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            QuizId = 2,
-                            UserId = "user2"
+                            Id = 2,
+                            ImageUrl = "http://example.com/images/france.jpg",
+                            QuestionText = "What is the capital of France?",
+                            QuizId = 1
+                        },
+                        new
+                        {
+                            Id = 3,
+                            AudioUrl = "http://example.com/audio/instrument.mp3",
+                            QuestionText = "Identify the instrument in the audio clip.",
+                            QuizId = 1
+                        },
+                        new
+                        {
+                            Id = 4,
+                            QuestionText = "Watch the video and answer: Who is the speaker?",
+                            QuizId = 1,
+                            VideoUrl = "http://youtube.com/watch?v=example"
                         });
                 });
 
@@ -418,7 +449,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.Property<string>("AudioUrl")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("CategoryId")
+                    b.Property<int?>("CategoryId")
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
@@ -448,20 +479,10 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             Id = 1,
                             AudioUrl = "http://example.com/audio1.mp3",
                             CategoryId = 1,
-                            Description = "Description for quiz 1.",
+                            Description = "A quiz to test your general knowledge.",
                             TeacherId = "teacher1",
-                            Title = "Quiz 1",
+                            Title = "General Knowledge Quiz",
                             YouTubeVideoUrl = "http://youtube.com/vid1"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            AudioUrl = "http://example.com/audio2.mp3",
-                            CategoryId = 2,
-                            Description = "Description for quiz 2.",
-                            TeacherId = "teacher2",
-                            Title = "Quiz 2",
-                            YouTubeVideoUrl = "http://youtube.com/vid2"
                         });
                 });
 
@@ -494,10 +515,15 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.Property<bool>("IsCorrect")
                         .HasColumnType("bit");
 
-                    b.Property<int>("QuizId")
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("QuizId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
 
                     b.HasIndex("QuizId");
 
@@ -507,30 +533,86 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         new
                         {
                             Id = 1,
-                            AnswerText = "Answer 1",
+                            AnswerText = "4",
                             IsCorrect = true,
-                            QuizId = 1
+                            QuestionId = 1
                         },
                         new
                         {
                             Id = 2,
-                            AnswerText = "Answer 2",
+                            AnswerText = "3",
                             IsCorrect = false,
-                            QuizId = 1
+                            QuestionId = 1
                         },
                         new
                         {
                             Id = 3,
-                            AnswerText = "Answer A",
+                            AnswerText = "5",
                             IsCorrect = false,
-                            QuizId = 2
+                            QuestionId = 1
                         },
                         new
                         {
                             Id = 4,
-                            AnswerText = "Answer B",
+                            AnswerText = "Paris",
                             IsCorrect = true,
-                            QuizId = 2
+                            QuestionId = 2
+                        },
+                        new
+                        {
+                            Id = 5,
+                            AnswerText = "Berlin",
+                            IsCorrect = false,
+                            QuestionId = 2
+                        },
+                        new
+                        {
+                            Id = 6,
+                            AnswerText = "Madrid",
+                            IsCorrect = false,
+                            QuestionId = 2
+                        },
+                        new
+                        {
+                            Id = 7,
+                            AnswerText = "Piano",
+                            IsCorrect = true,
+                            QuestionId = 3
+                        },
+                        new
+                        {
+                            Id = 8,
+                            AnswerText = "Guitar",
+                            IsCorrect = false,
+                            QuestionId = 3
+                        },
+                        new
+                        {
+                            Id = 9,
+                            AnswerText = "Violin",
+                            IsCorrect = false,
+                            QuestionId = 3
+                        },
+                        new
+                        {
+                            Id = 10,
+                            AnswerText = "Dr. Smith",
+                            IsCorrect = true,
+                            QuestionId = 4
+                        },
+                        new
+                        {
+                            Id = 11,
+                            AnswerText = "Mr. Johnson",
+                            IsCorrect = false,
+                            QuestionId = 4
+                        },
+                        new
+                        {
+                            Id = 12,
+                            AnswerText = "Ms. Davis",
+                            IsCorrect = false,
+                            QuestionId = 4
                         });
                 });
 
@@ -563,7 +645,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         new
                         {
                             QuizResponseId = 1,
-                            AnswerText = "User1 answer to Quiz1",
+                            AnswerText = "User1 answer for Question 1",
                             QuizAnswerId = 1,
                             QuizSubmissionId = 1
                         });
@@ -618,24 +700,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             Score = 90,
                             SubmissionDate = new DateTime(2025, 2, 16, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             UserId = "user2"
-                        },
-                        new
-                        {
-                            QuizSubmissionId = 3,
-                            AttemptNumber = 1,
-                            QuizId = 2,
-                            Score = 75,
-                            SubmissionDate = new DateTime(2025, 3, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            UserId = "user1"
-                        },
-                        new
-                        {
-                            QuizSubmissionId = 4,
-                            AttemptNumber = 2,
-                            QuizId = 2,
-                            Score = 85,
-                            SubmissionDate = new DateTime(2025, 3, 16, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            UserId = "user1"
                         });
                 });
 
@@ -671,24 +735,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Ratings");
-
-                    b.HasData(
-                        new
-                        {
-                            RatingId = 1,
-                            BlogId = 1,
-                            Date = new DateTime(2025, 2, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Score = 5,
-                            UserId = "user2"
-                        },
-                        new
-                        {
-                            RatingId = 2,
-                            Date = new DateTime(2025, 3, 21, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            QuizId = 2,
-                            Score = 4,
-                            UserId = "user1"
-                        });
                 });
 
             modelBuilder.Entity("SpeakingClub.Entity.SlideShow", b =>
@@ -832,12 +878,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             UserId = "user2",
                             QuizId = 1,
                             TotalAttempts = 1
-                        },
-                        new
-                        {
-                            UserId = "user1",
-                            QuizId = 2,
-                            TotalAttempts = 2
                         });
                 });
 
@@ -1179,13 +1219,23 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SpeakingClub.Entity.Question", b =>
+                {
+                    b.HasOne("SpeakingClub.Entity.Quiz", "Quiz")
+                        .WithMany("Questions")
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Quiz");
+                });
+
             modelBuilder.Entity("SpeakingClub.Entity.Quiz", b =>
                 {
                     b.HasOne("SpeakingClub.Entity.Category", "Category")
                         .WithMany("Quizzes")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("SpeakingClub.Identity.User", "Teacher")
                         .WithMany()
@@ -1198,13 +1248,17 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 
             modelBuilder.Entity("SpeakingClub.Entity.QuizAnswer", b =>
                 {
-                    b.HasOne("SpeakingClub.Entity.Quiz", "Quiz")
+                    b.HasOne("SpeakingClub.Entity.Question", "Question")
                         .WithMany("Answers")
-                        .HasForeignKey("QuizId")
+                        .HasForeignKey("QuestionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Quiz");
+                    b.HasOne("SpeakingClub.Entity.Quiz", null)
+                        .WithMany("Answers")
+                        .HasForeignKey("QuizId");
+
+                    b.Navigation("Question");
                 });
 
             modelBuilder.Entity("SpeakingClub.Entity.QuizResponse", b =>
@@ -1214,7 +1268,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         .HasForeignKey("QuizAnswerId");
 
                     b.HasOne("SpeakingClub.Entity.QuizSubmission", "QuizSubmission")
-                        .WithMany()
+                        .WithMany("QuizResponses")
                         .HasForeignKey("QuizSubmissionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1290,11 +1344,23 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.Navigation("Quizzes");
                 });
 
+            modelBuilder.Entity("SpeakingClub.Entity.Question", b =>
+                {
+                    b.Navigation("Answers");
+                });
+
             modelBuilder.Entity("SpeakingClub.Entity.Quiz", b =>
                 {
                     b.Navigation("Answers");
 
+                    b.Navigation("Questions");
+
                     b.Navigation("UserQuizzes");
+                });
+
+            modelBuilder.Entity("SpeakingClub.Entity.QuizSubmission", b =>
+                {
+                    b.Navigation("QuizResponses");
                 });
 #pragma warning restore 612, 618
         }
