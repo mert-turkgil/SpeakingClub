@@ -30,6 +30,8 @@ namespace SpeakingClub.Entity
         // Optional YouTube video URL for the quiz question.
         public string YouTubeVideoUrl { get; set; }
 
+        public string ImageUrl { get; set; }
+
         // The teacher (user) who created the quiz.
         public string TeacherId { get; set; }
         public User Teacher { get; set; }

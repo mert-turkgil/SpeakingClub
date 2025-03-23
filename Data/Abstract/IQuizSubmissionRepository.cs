@@ -11,5 +11,9 @@ namespace SpeakingClub.Data.Abstract
         Task<IEnumerable<QuizSubmission>> GetSubmissionsByUserIdAsync(string userId);
         Task<double> GetAverageScoreByUserAsync(string userId);
         Task<IEnumerable<QuizSubmission>> GetSubmissionsByQuizIdAsync(int quizId);
+
+        Task<IEnumerable<QuizSubmission>> GetAllAtOnceAsync();
+
+        Task<QuizSubmission?> GetLatestSubmissionByUserAndQuiz(string userId, int quizId);
     }
 }

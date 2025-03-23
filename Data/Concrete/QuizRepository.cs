@@ -50,6 +50,10 @@ namespace SpeakingClub.Data.Concrete
             return await _dbSet
                 .Include(q => q.Questions)
                 .ThenInclude(q => q.Answers)
+                .Include(q=>q.Category).Where(q=>q.CategoryId==q.Category.CategoryId)
+                .Include(q=>q.Blogs)
+                .Include(q=>q.Tags)
+                .Include(q=>q.Words)
                 .FirstOrDefaultAsync(q => q.Id == quizId);
         }
 

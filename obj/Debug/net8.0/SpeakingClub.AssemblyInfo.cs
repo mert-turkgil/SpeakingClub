@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SpeakingClub")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f6ade22901aa3b02fb1fe55b4320d831d103ec00")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4b19074e5f6b532b16abdda6bc79522f572cdbeb")]
 [assembly: System.Reflection.AssemblyProductAttribute("SpeakingClub")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SpeakingClub")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

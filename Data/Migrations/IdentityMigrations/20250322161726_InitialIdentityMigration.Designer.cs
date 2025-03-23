@@ -12,7 +12,7 @@ using SpeakingClub.Identity;
 namespace SpeakingClub.Data.Migrations.IdentityMigrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250313133621_InitialIdentityMigration")]
+    [Migration("20250322161726_InitialIdentityMigration")]
     partial class InitialIdentityMigration
     {
         /// <inheritdoc />

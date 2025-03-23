@@ -9,13 +9,13 @@ namespace SpeakingClub.Data.Concrete
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
-        protected readonly SpeakingClubContext _context;
+        protected readonly DbContext _context;
         protected readonly DbSet<T> _dbSet;
 
-        public GenericRepository(SpeakingClubContext context)
+        public GenericRepository(DbContext context)
         {
             _context = context;
-            _dbSet = context.Set<T>();
+            _dbSet = _context.Set<T>();
         }
 
         public async Task<IEnumerable<T>> GetAllAsync()

@@ -1,58 +1,244 @@
-@model Quiz
+@model SpeakingClub.Entity.Quiz
+@inject LanguageService _localization
 
-<div class="container my-5">
+<!-- Fullscreen Quiz Container -->
+<div id="quizContainer" class="fullscreen-container">
     <h2 class="text-center">@Model.Title</h2>
 
+    <!-- Timer -->
+    <div id="overallTimer" class="text-end mb-3">
+        @_localization.GetKey("TotalTimeLabel") <span id="totalTime">00:00</span>
+    </div>
+
     <form id="quizForm" method="post" asp-action="SubmitQuiz">
-        <input type="hidden" name="QuizId" value="@Model.Id" />
+        <input type="hidden" name="QuizId" value="@Model.Id.ToString()" />
+        <input type="hidden" name="ElapsedTime" id="elapsedTime" value="0" />
+
         <div id="questionsContainer">
-            @foreach (var question in Model.Questions ?? new List<Question>())
+            @for (int i = 0; i < Model.Questions.Count; i++)
             {
-                <div class="card mb-3 shadow-sm">
-                    <div class="card-body">
-                        <h5>@question.QuestionText</h5>
-                        @foreach (var answer in question.Answers)
+                var question = Model.Questions.ElementAt(i);
+                var shuffledAnswers = question.Answers.OrderBy(_ => Guid.NewGuid()).ToList(); // Shuffle answers
+
+                <div class="question-panel" data-index="@i" style="display:@(i == 0 ? "block" : "none")">
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">@question.QuestionText</h5>
+
+                            @* Display media if provided *@
+                            @if (!string.IsNullOrEmpty(question.ImageUrl))
+                            {
+                                <img src="@Url.Content(question.ImageUrl)" class="img-fluid mb-3" alt="Question Image" />
+                            }
+                            @if (!string.IsNullOrEmpty(question.AudioUrl))
+                            {
+                                var audioSrc = Url.Content("~/mp3/" + question.AudioUrl);
+                                <audio controls class="w-100 mb-3">
+                                    <source src="@audioSrc" type="audio/mpeg" />
+                                    @_localization.GetKey("AudioNotSupported")
+                                </audio>
+                            }
+                            @if (!string.IsNullOrEmpty(question.VideoUrl))
+                            {
+                                <div class="mb-3">
+                                    <iframe width="100%" height="315" src="@question.VideoUrl" frameborder="0" allowfullscreen></iframe>
+                                </div>
+                            }
+
+                            @* Render answer choices as radio buttons (shuffled) *@
+                            @foreach (var answer in shuffledAnswers)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" 
+                                        name="responses[@question.Id]" 
+                                        value="@answer.Id" required />
+                                    <label class="form-check-label">@answer.AnswerText</label>
+                                </div>
+                            }
+
+                            @* Hidden field to capture time spent on this question (in seconds) *@
+                            <input type="hidden" name="QuestionTimes[@question.Id]" class="question-time" value="0" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        @if (i > 0)
                         {
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="responses[@question.Id]" value="@answer.Id" required>
-                                <label class="form-check-label">@answer.AnswerText</label>
-                            </div>
+                            <button type="button" class="btn btn-secondary prevBtn">@_localization.GetKey("PreviousButton")</button>
+                        }
+                        @if (i < Model.Questions.Count - 1)
+                        {
+                            <button type="button" class="btn btn-primary nextBtn">@_localization.GetKey("NextButton")</button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-success">@_localization.GetKey("SubmitExamButton")</button>
                         }
                     </div>
                 </div>
             }
         </div>
-
-        <button type="submit" class="btn btn-primary">Submit Quiz</button>
     </form>
 </div>
 
-<script>
-    // Start Timer
-    let startTime = Date.now();
-    
-    // Request fullscreen on load
-    document.documentElement.requestFullscreen().catch(console.error);
+<!-- Start Exam Modal -->
+<div id="startExamModal" class="modal fade show d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-4">
+            <h5>@_localization.GetKey("StartQuizModalTitle")</h5>
+            <p>@_localization.GetKey("StartQuizModalMessage")</p>
+            <button class="btn btn-primary" id="startQuizBtn">@_localization.GetKey("StartQuizButton")</button>
+        </div>
+    </div>
+</div>
 
-    let warningTimeout;
-    document.addEventListener('mouseleave', () => {
-        warningTimeout = setTimeout(() => {
-            alert("Quiz ended due to mouse leaving the screen.");
-            document.getElementById('quizForm').submit();
-        }, 3000);
-    });
+@section Css {
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrolling */
+        }
+        .fullscreen-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .modal {
+            background: black;
+            opacity: 1;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+        }
+        .fullscreen-mode .navbar, 
+        .fullscreen-mode .footer, 
+        .fullscreen-mode .header {
+            display: none !important;
+        }
+    </style>
+}
 
-    document.addEventListener('mouseenter', () => {
-        clearTimeout(warningTimeout);
-    });
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let examStartTime;
+            let overallTimerInterval;
+            let currentQuestionIndex = 0;
+            let questionStartTime = Date.now();
+            let warningTimeout;
+            let inactivityTimeout;
 
-    // Append elapsed time before submitting
-    document.getElementById('quizForm').addEventListener('submit', () => {
-        const elapsedTime = Math.floor((Date.now() - startTime) / 1000); // seconds
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'ElapsedTime';
-        input.value = elapsedTime;
-        document.getElementById('quizForm').appendChild(input);
-    });
-</script>
+            // Start Exam Button - Go Fullscreen
+            document.getElementById("startQuizBtn").addEventListener("click", function () {
+                let quizContainer = document.getElementById("quizContainer");
+                quizContainer.style.display = "block";
+
+                // Request fullscreen
+                if (quizContainer.requestFullscreen) {
+                    quizContainer.requestFullscreen();
+                } else if (quizContainer.mozRequestFullScreen) {
+                    quizContainer.mozRequestFullScreen();
+                } else if (quizContainer.webkitRequestFullscreen) {
+                    quizContainer.webkitRequestFullscreen();
+                } else if (quizContainer.msRequestFullscreen) {
+                    quizContainer.msRequestFullscreen();
+                }
+
+                // Start timers
+                examStartTime = Date.now();
+                overallTimerInterval = setInterval(updateOverallTimer, 1000);
+
+                // Hide modal
+                document.getElementById("startExamModal").style.display = "none";
+
+                // Start inactivity timer
+                resetInactivityTimer();
+            });
+
+            // Update the overall timer
+            function updateOverallTimer() {
+                const elapsed = Math.floor((Date.now() - examStartTime) / 1000);
+                document.getElementById("totalTime").textContent = formatTime(elapsed);
+            }
+
+            // Format time in MM:SS format
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return (mins < 10 ? "0" + mins : mins) + ":" + (secs < 10 ? "0" + secs : secs);
+            }
+
+            // Prevent user from leaving fullscreen
+            document.addEventListener("fullscreenchange", function () {
+                if (!document.fullscreenElement) {
+                    alert("@_localization.GetKey("ExamCanceledFullscreenExit")");
+                    window.location.href = "/Account/Quizzes?warning=FullscreenExit"; // Redirect instead of submit
+                }
+            });
+
+            // Auto-redirect if user moves the mouse out of the screen
+            document.addEventListener("mouseleave", () => {
+                warningTimeout = setTimeout(() => {
+                    alert("@_localization.GetKey("ExamCanceledLeaveScreen")");
+                    window.location.href = "/Account/Quizzes?warning=LeaveScreen"; // Redirect instead of submit
+                }, 3000); // 3-second warning before redirect
+            });
+
+            // Clear warning timeout if mouse re-enters the screen
+            document.addEventListener("mouseenter", () => clearTimeout(warningTimeout));
+
+            // Show the current question based on index
+            function showQuestion(index) {
+                const panels = document.querySelectorAll('.question-panel');
+                panels.forEach((panel, i) => {
+                    panel.style.display = (i === index) ? "block" : "none";
+                });
+                questionStartTime = Date.now();
+            }
+
+            // Handle Next and Previous button clicks
+            document.addEventListener('click', function (e) {
+                if (e.target.classList.contains('nextBtn')) {
+                    let currentTime = Math.floor((Date.now() - questionStartTime) / 1000);
+                    let currentPanel = document.querySelector('.question-panel[data-index="' + currentQuestionIndex + '"]');
+                    let timeInput = currentPanel.querySelector('.question-time');
+                    timeInput.value = currentTime;
+
+                    currentQuestionIndex++;
+                    showQuestion(currentQuestionIndex);
+                } else if (e.target.classList.contains('prevBtn')) {
+                    currentQuestionIndex--;
+                    showQuestion(currentQuestionIndex);
+                }
+
+                // Reset inactivity timer on any user interaction
+                resetInactivityTimer();
+            });
+
+            // Handle form submission
+            document.getElementById('quizForm').addEventListener('submit', () => {
+                const totalElapsed = Math.floor((Date.now() - examStartTime) / 1000);
+                document.getElementById('elapsedTime').value = totalElapsed;
+                clearInterval(overallTimerInterval);
+                clearTimeout(inactivityTimeout);
+            });
+
+            // Reset inactivity timer
+            function resetInactivityTimer() {
+                clearTimeout(inactivityTimeout);
+                inactivityTimeout = setTimeout(() => {
+                    alert("@_localization.GetKey("ExamCanceledInactivity")");
+                    window.location.href = "/Account/Quizzes?warning=Inactivity"; // Redirect instead of submit
+                }, 30000); // 30 seconds of inactivity
+            }
+        });
+    </script>
+}

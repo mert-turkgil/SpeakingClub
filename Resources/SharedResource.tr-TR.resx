@@ -378,5 +378,133 @@
 <data name="NewPassword"><value>Yeni Şifre</value></data>
 <data name="ConfirmNewPassword"><value>Yeni Şifreyi Onayla</value></data>
 <data name="UpdatePasswordButton"><value>Şifreyi Güncelle</value></data>
-
+  <data name="ReviewQuiz_Title">
+    <value>İnceleme: {0}</value>
+  </data>
+  <data name="SubmissionDate">
+    <value>Gönderim Tarihi</value>
+  </data>
+  <data name="Score">
+    <value>Puan</value>
+  </data>
+  <data name="TotalTimeTaken">
+    <value>Toplam Süre</value>
+  </data>
+  <data name="QuestionDetails">
+    <value>Soru Detayları</value>
+  </data>
+  <data name="Question">
+    <value>Soru</value>
+  </data>
+  <data name="YourAnswer">
+    <value>Cevabınız</value>
+  </data>
+  <data name="CorrectAnswer">
+    <value>Doğru Cevap</value>
+  </data>
+  <data name="TimeSeconds">
+    <value>Süre (s)</value>
+  </data>
+  <data name="Status">
+    <value>Durum</value>
+  </data>
+  <data name="Correct">
+    <value>Doğru</value>
+  </data>
+  <data name="Incorrect">
+    <value>Yanlış</value>
+  </data>
+  <data name="BackToQuizzes">
+    <value>Quizlere Geri Dön</value>
+  </data>
+    <data name="AvailableQuizzes_Title">
+    <value>Mevcut Sınavlar</value>
+  </data>
+  <data name="NoQuizzesAvailable">
+    <value>Mevcut sınav bulunmamaktadır.</value>
+  </data>
+  <data name="NoDescriptionAvailable">
+    <value>Açıklama mevcut değil.</value>
+  </data>
+  <data name="TeacherLabel">
+    <value>Öğretmen</value>
+  </data>
+  <data name="CategoryLabel">
+    <value>Kategori</value>
+  </data>
+  <data name="AttemptsLabel">
+    <value>Denemeler</value>
+  </data>
+  <data name="LastScoreLabel">
+    <value>Son Puan</value>
+  </data>
+  <data name="LastAttemptLabel">
+    <value>Son Deneme</value>
+  </data>
+  <data name="TakeQuizButton">
+    <value>Sınava Başla</value>
+  </data>
+  <data name="ReviewButton">
+    <value>İncele</value>
+  </data>
+  <data name="ReviewDetailsTitle">
+    <value>İnceleme Detayları</value>
+  </data>
+  <data name="QuestionLabel">
+    <value>Soru</value>
+  </data>
+  <data name="YourAnswerLabel">
+    <value>Cevabınız</value>
+  </data>
+  <data name="CorrectAnswerLabel">
+    <value>Doğru Cevap</value>
+  </data>
+  <data name="TimeSecondsLabel">
+    <value>Süre (s)</value>
+  </data>
+  <data name="StatusLabel">
+    <value>Durum</value>
+  </data>
+  <data name="CorrectStatus">
+    <value>Doğru</value>
+  </data>
+  <data name="IncorrectStatus">
+    <value>Yanlış</value>
+  </data>
+    <data name="QuizTitle">
+    <value>Sınav</value>
+  </data>
+  <data name="TotalTimeLabel">
+    <value>Toplam Süre:</value>
+  </data>
+  <data name="PreviousButton">
+    <value>Önceki</value>
+  </data>
+  <data name="NextButton">
+    <value>Sonraki</value>
+  </data>
+  <data name="SubmitExamButton">
+    <value>Sınavı Gönder</value>
+  </data>
+  <data name="StartQuizModalTitle">
+    <value>Sınava başlamaya hazır mısınız?</value>
+  </data>
+  <data name="StartQuizModalMessage">
+    <value>Başladıktan sonra, sınavı tam ekran modunda tamamlamanız gerekmektedir.</value>
+  </data>
+  <data name="StartQuizButton">
+    <value>Şimdi Başla</value>
+  </data>
+  <data name="ExamCanceledFullscreenExit">
+    <value>Sınav, tam ekran modundan çıkıldığı için iptal edildi.</value>
+  </data>
+  <data name="ExamCanceledLeaveScreen">
+    <value>Sınav, ekran terk edildiği için iptal edildi.</value>
+  </data>
+  <data name="ExamCanceledInactivity">
+    <value>Hareketsizlik nedeniyle sınavınız iptal edildi.</value>
+  </data>
+  <data name="AudioNotSupported">
+    <value>Tarayıcınız ses öğesini desteklemiyor.</value>
+  </data>
 </root>

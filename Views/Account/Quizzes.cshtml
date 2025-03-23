@@ -1,65 +1,123 @@
-@model IEnumerable<SpeakingClub.Entity.Quiz>
-
+@model SpeakingClub.Models.CombinedQuizzesViewModel
+@inject LanguageService _localization
+@section Css{
+    <style>
+        .card.quiz-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+        }
+        .card.quiz-card:hover {
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
+            background-color: #f8f9fa;
+        }
+        .quiz-summary {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+}
 <div class="container my-5">
-    <h2 class="text-center mb-4">Available Quizzes</h2>
+    <h2 class="text-center mb-4">@_localization.GetKey("AvailableQuizzes_Title")</h2>
     <div class="row">
-        @foreach (var quiz in Model)
+    @if (Model.AvailableQuizzes == null || !Model.AvailableQuizzes.Any())
+        {
+            <p>@_localization.GetKey("NoQuizzesAvailable")</p>
+        }
+        else
+    {
+        @foreach (var quiz in Model.AvailableQuizzes)
         {
             <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card h-100 shadow-sm animate__animated animate__fadeInUp">
-                    @* Optionally, add an image at the top of the card (use quiz-specific image or a default placeholder) *@
-                    <img src="~/img/header_logo.png" class="card-img-top" alt="@quiz.Title" />
-                    
+                <div class="card h-100 shadow-sm animate__animated animate__fadeInUp quiz-card">
+                    <img src="@quiz.ImageUrl" class="card-img-top" alt="@quiz.QuizTitle" />
                     <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">@quiz.Title</h5>
+                        <h5 class="card-title">@quiz.QuizTitle</h5>
                         <p class="card-text text-truncate">
-                            @if (!String.IsNullOrEmpty(quiz.Description))
+                            @if (!string.IsNullOrEmpty(quiz.QuizDescription))
                             {
-                                @quiz.Description
+                                @quiz.QuizDescription
                             }
                             else
                             {
-                                <em>No description available.</em>
+                                <em>@_localization.GetKey("NoDescriptionAvailable")</em>
                             }
                         </p>
-                        
                         <ul class="list-unstyled mb-3">
                             <li>
                                 <i class="fas fa-chalkboard-teacher me-1"></i>
-                                <small>
-                                    @if (quiz.Teacher != null)
-                                    {
-                                        @($"{quiz.Teacher.FirstName} {quiz.Teacher.LastName}")
-                                    }
-                                    else
-                                    {
-                                        @("Unknown Instructor")
-                                    }
-                                </small>
+                                <small>@_localization.GetKey("TeacherLabel"): @quiz.TeacherName</small>
                             </li>
                             <li>
                                 <i class="fas fa-layer-group me-1"></i>
-                                <small>
-                                    @if (quiz.Category != null)
-                                    {
-                                        @quiz.Category.Name
-                                    }
-                                    else
-                                    {
-                                        @("General")
-                                    }
-                                </small>
+                                <small>@_localization.GetKey("CategoryLabel"): @quiz.CategoryName</small>
                             </li>
                         </ul>
-
-                        <div class="mt-auto">
-                            <a asp-action="StartQuiz" asp-route-id="@quiz.Id" class="btn btn-primary btn-block">
-                                <i class="fas fa-play me-1"></i> Start Quiz
-                            </a>
+                        
+                        <div class="quiz-summary mb-3">
+                            <p><strong>@_localization.GetKey("AttemptsLabel"):</strong> @quiz.AttemptCount</p>
+                            @if (quiz.AttemptCount > 0)
+                            {
+                                <p><strong>@_localization.GetKey("LastScoreLabel"):</strong> @quiz.LastScore%</p>
+                                <p><strong>@_localization.GetKey("LastAttemptLabel"):</strong> @quiz.LastAttemptDate?.ToLocalTime().ToString("g")</p>
+                            }
                         </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="mt-auto d-flex justify-content-between">
+                            <a asp-action="StartQuiz" asp-route-id="@quiz.QuizId" class="btn btn-primary">
+                                <i class="fas fa-play me-1"></i> @_localization.GetKey("TakeQuizButton")
+                            </a>
+                            @if (quiz.AttemptCount > 0)
+                            {
+                                <a asp-controller="Account" asp-action="ReviewQuiz" asp-route-id="@quiz.QuizId" class="btn btn-secondary">
+                                    <i class="fas fa-eye me-1"></i> @_localization.GetKey("ReviewButton")
+                                </a>
+                            }
+                        </div>
+                        
+                        <!-- Collapsible review details for the most recent attempt -->
+                        @if (quiz.RecentAttemptDetails?.Any() == true)
+                        {
+                            <div class="collapse mt-3" id="details-@quiz.QuizId">
+                                <h6>@_localization.GetKey("ReviewDetailsTitle"):</h6>
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>@_localization.GetKey("QuestionLabel")</th>
+                                            <th>@_localization.GetKey("YourAnswerLabel")</th>
+                                            <th>@_localization.GetKey("CorrectAnswerLabel")</th>
+                                            <th>@_localization.GetKey("TimeSecondsLabel")</th>
+                                            <th>@_localization.GetKey("StatusLabel")</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var detail in quiz.RecentAttemptDetails)
+                                        {
+                                            <tr>
+                                                <td>@detail.QuestionText</td>
+                                                <td>@detail.YourAnswer</td>
+                                                <td>@detail.CorrectAnswer</td>
+                                                <td>@detail.TimeTakenSeconds</td>
+                                                <td>
+                                                    @if (detail.IsCorrect)
+                                                    {
+                                                        <span class="badge bg-success">@_localization.GetKey("CorrectStatus")</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger">@_localization.GetKey("IncorrectStatus")</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
         }
+       } 
     </div>
 </div>

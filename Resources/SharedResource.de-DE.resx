@@ -370,5 +370,133 @@
 <data name="NewPassword"><value>Neues Passwort</value></data>
 <data name="ConfirmNewPassword"><value>Neues Passwort bestätigen</value></data>
 <data name="UpdatePasswordButton"><value>Passwort aktualisieren</value></data>
-
+  <data name="ReviewQuiz_Title">
+    <value>Überprüfung: {0}</value>
+  </data>
+  <data name="SubmissionDate">
+    <value>Einreichungsdatum</value>
+  </data>
+  <data name="Score">
+    <value>Punktzahl</value>
+  </data>
+  <data name="TotalTimeTaken">
+    <value>Gesamtzeit</value>
+  </data>
+  <data name="QuestionDetails">
+    <value>Fragendetails</value>
+  </data>
+  <data name="Question">
+    <value>Frage</value>
+  </data>
+  <data name="YourAnswer">
+    <value>Ihre Antwort</value>
+  </data>
+  <data name="CorrectAnswer">
+    <value>Richtige Antwort</value>
+  </data>
+  <data name="TimeSeconds">
+    <value>Zeit (s)</value>
+  </data>
+  <data name="Status">
+    <value>Status</value>
+  </data>
+  <data name="Correct">
+    <value>Richtig</value>
+  </data>
+  <data name="Incorrect">
+    <value>Falsch</value>
+  </data>
+  <data name="BackToQuizzes">
+    <value>Zurück zu den Quizzen</value>
+  </data>
+    <data name="AvailableQuizzes_Title">
+    <value>Verfügbare Quizze</value>
+  </data>
+  <data name="NoQuizzesAvailable">
+    <value>Keine Quizze verfügbar.</value>
+  </data>
+  <data name="NoDescriptionAvailable">
+    <value>Keine Beschreibung verfügbar.</value>
+  </data>
+  <data name="TeacherLabel">
+    <value>Lehrer</value>
+  </data>
+  <data name="CategoryLabel">
+    <value>Kategorie</value>
+  </data>
+  <data name="AttemptsLabel">
+    <value>Versuche</value>
+  </data>
+  <data name="LastScoreLabel">
+    <value>Letzte Punktzahl</value>
+  </data>
+  <data name="LastAttemptLabel">
+    <value>Letzter Versuch</value>
+  </data>
+  <data name="TakeQuizButton">
+    <value>Quiz starten</value>
+  </data>
+  <data name="ReviewButton">
+    <value>Überprüfen</value>
+  </data>
+  <data name="ReviewDetailsTitle">
+    <value>Überprüfungsdetails</value>
+  </data>
+  <data name="QuestionLabel">
+    <value>Frage</value>
+  </data>
+  <data name="YourAnswerLabel">
+    <value>Ihre Antwort</value>
+  </data>
+  <data name="CorrectAnswerLabel">
+    <value>Richtige Antwort</value>
+  </data>
+  <data name="TimeSecondsLabel">
+    <value>Zeit (s)</value>
+  </data>
+  <data name="StatusLabel">
+    <value>Status</value>
+  </data>
+  <data name="CorrectStatus">
+    <value>Richtig</value>
+  </data>
+  <data name="IncorrectStatus">
+    <value>Falsch</value>
+  </data>
+    <data name="QuizTitle">
+    <value>Quiz</value>
+  </data>
+  <data name="TotalTimeLabel">
+    <value>Gesamtzeit:</value>
+  </data>
+  <data name="PreviousButton">
+    <value>Zurück</value>
+  </data>
+  <data name="NextButton">
+    <value>Weiter</value>
+  </data>
+  <data name="SubmitExamButton">
+    <value>Prüfung abschließen</value>
+  </data>
+  <data name="StartQuizModalTitle">
+    <value>Sind Sie bereit, das Quiz zu starten?</value>
+  </data>
+  <data name="StartQuizModalMessage">
+    <value>Sobald Sie beginnen, müssen Sie das Quiz im Vollbildmodus abschließen.</value>
+  </data>
+  <data name="StartQuizButton">
+    <value>Jetzt starten</value>
+  </data>
+  <data name="ExamCanceledFullscreenExit">
+    <value>Prüfung abgebrochen, weil der Vollbildmodus verlassen wurde.</value>
+  </data>
+  <data name="ExamCanceledLeaveScreen">
+    <value>Prüfung abgebrochen, weil der Bildschirm verlassen wurde.</value>
+  </data>
+  <data name="ExamCanceledInactivity">
+    <value>Ihre Prüfung wurde aufgrund von Inaktivität abgebrochen.</value>
+  </data>
+  <data name="AudioNotSupported">
+    <value>Ihr Browser unterstützt das Audio-Element nicht.</value>
+  </data>
 </root>
