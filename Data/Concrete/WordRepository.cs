@@ -10,16 +10,18 @@ namespace SpeakingClub.Data.Concrete
 {
     public class WordRepository : GenericRepository<Word>, IWordRepository
     {
+        private readonly SpeakingClubContext _appContext;
+
         public WordRepository(SpeakingClubContext context) : base(context)
         {
+            _appContext = context;
         }
         
         public async Task<Word?> GetWordByTermAsync(string term)
         {
-            return await _context.Words
+            return await _appContext.Words
                 .FirstOrDefaultAsync(w => w.Term.ToLower() == term.ToLower());
         }
-
         
         public async Task<IEnumerable<Word>> SearchWordsByDefinitionKeywordAsync(string keyword)
         {

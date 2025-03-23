@@ -18,6 +18,7 @@ namespace SpeakingClub.Data.Abstract
         ISlideRepository Slides { get; }
         IQuestionRepository Questions {get;}
         ICategoryRepository Categories { get; }
+        IUserRepository Users { get; }
         IGenericRepository<T> GenericRepository<T>() where T : class;
         int Save();
         Task<int> SaveAsync();

@@ -1,0 +1,59 @@
+@model SpeakingClub.Models.QuizReviewViewModel
+@inject LanguageService _localization
+
+@section Css {
+    <style>
+        .table-review th,
+        .table-review td {
+            vertical-align: middle;
+        }
+    </style>
+}
+<div style="height: 80vh;" class="container my-5">
+    <h2 class="text-center mb-4">@string.Format(_localization.GetKey("ReviewQuiz_Title"), Model.QuizTitle)</h2>
+    <div class="mb-3 text-center">
+        <strong>@_localization.GetKey("SubmissionDate"):</strong> @Model.SubmissionDate.ToLocalTime().ToString("g") <br />
+        <strong>@_localization.GetKey("Score"):</strong> @Model.Score% <br />
+        <strong>@_localization.GetKey("TotalTimeTaken"):</strong> @Model.TotalTimeTaken @_localization.GetKey("TimeSeconds")
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">@_localization.GetKey("QuestionDetails")</h5>
+            <table class="table table-sm table-review">
+                <thead>
+                    <tr>
+                        <th>@_localization.GetKey("Question")</th>
+                        <th>@_localization.GetKey("YourAnswer")</th>
+                        <th>@_localization.GetKey("CorrectAnswer")</th>
+                        <th>@_localization.GetKey("TimeSeconds")</th>
+                        <th>@_localization.GetKey("Status")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var detail in Model.Details)
+                    {
+                        <tr>
+                            <td>@detail.QuestionText</td>
+                            <td>@detail.YourAnswer</td>
+                            <td>@detail.CorrectAnswer</td>
+                            <td>@detail.TimeTakenSeconds</td>
+                            <td>
+                                @if (detail.IsCorrect)
+                                {
+                                    <span class="badge bg-success">@_localization.GetKey("Correct")</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">@_localization.GetKey("Incorrect")</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="mt-3">
+        <a asp-action="Quizzes" class="btn btn-secondary">@_localization.GetKey("BackToQuizzes")</a>
+    </div>
+</div>

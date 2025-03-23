@@ -186,6 +186,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AudioUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     YouTubeVideoUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     TeacherId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     CategoryId = table.Column<int>(type: "int", nullable: true)
                 },
@@ -363,7 +364,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     QuizSubmissionId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     QuizId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     SubmissionDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Score = table.Column<int>(type: "int", nullable: false),
                     AttemptNumber = table.Column<int>(type: "int", nullable: false)
@@ -377,11 +378,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         principalTable: "Quizzes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_QuizSubmissions_User_UserId",
-                        column: x => x.UserId,
-                        principalTable: "User",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -524,7 +520,8 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     QuizSubmissionId = table.Column<int>(type: "int", nullable: false),
                     QuizAnswerId = table.Column<int>(type: "int", nullable: true),
-                    AnswerText = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    AnswerText = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TimeTakenSeconds = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -613,8 +610,8 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 
             migrationBuilder.InsertData(
                 table: "Quizzes",
-                columns: new[] { "Id", "AudioUrl", "CategoryId", "Description", "TeacherId", "Title", "YouTubeVideoUrl" },
-                values: new object[] { 1, "http://example.com/audio1.mp3", 1, "A quiz to test your general knowledge.", "teacher1", "General Knowledge Quiz", "http://youtube.com/vid1" });
+                columns: new[] { "Id", "AudioUrl", "CategoryId", "Description", "ImageUrl", "TeacherId", "Title", "YouTubeVideoUrl" },
+                values: new object[] { 1, "http://example.com/audio1.mp3", 1, "A quiz to test your general knowledge.", null, "teacher1", "General Knowledge Quiz", "http://youtube.com/vid1" });
 
             migrationBuilder.InsertData(
                 table: "ArticleTag",
@@ -704,8 +701,8 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 
             migrationBuilder.InsertData(
                 table: "QuizResponses",
-                columns: new[] { "QuizResponseId", "AnswerText", "QuizAnswerId", "QuizSubmissionId" },
-                values: new object[] { 1, "User1 answer for Question 1", 1, 1 });
+                columns: new[] { "QuizResponseId", "AnswerText", "QuizAnswerId", "QuizSubmissionId", "TimeTakenSeconds" },
+                values: new object[] { 1, "User1 answer for Question 1", 1, 1, 0 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Articles_CategoryId",
@@ -786,11 +783,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 name: "IX_QuizSubmissions_QuizId",
                 table: "QuizSubmissions",
                 column: "QuizId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_QuizSubmissions_UserId",
-                table: "QuizSubmissions",
-                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_QuizTag_TagsTagId",

@@ -455,6 +455,9 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("TeacherId")
                         .HasColumnType("nvarchar(450)");
 
@@ -633,6 +636,9 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.Property<int>("QuizSubmissionId")
                         .HasColumnType("int");
 
+                    b.Property<int>("TimeTakenSeconds")
+                        .HasColumnType("int");
+
                     b.HasKey("QuizResponseId");
 
                     b.HasIndex("QuizAnswerId");
@@ -647,7 +653,8 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             QuizResponseId = 1,
                             AnswerText = "User1 answer for Question 1",
                             QuizAnswerId = 1,
-                            QuizSubmissionId = 1
+                            QuizSubmissionId = 1,
+                            TimeTakenSeconds = 0
                         });
                 });
 
@@ -672,13 +679,12 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("QuizSubmissionId");
 
                     b.HasIndex("QuizId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("QuizSubmissions");
 
@@ -1286,13 +1292,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SpeakingClub.Identity.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
-
                     b.Navigation("Quiz");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SpeakingClub.Entity.Rating", b =>

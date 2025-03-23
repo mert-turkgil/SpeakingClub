@@ -4,11 +4,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using SpeakingClub.Data.Abstract;
 using SpeakingClub.Entity;
+using SpeakingClub.Identity;
 
 namespace SpeakingClub.Data.Concrete
 {
     public class UnitOfWork : IUnitOfWork
     {
+        private readonly ApplicationDbContext _identityContext;
         private readonly SpeakingClubContext _context;
         private readonly Dictionary<Type, object> _repositories = new Dictionary<Type, object>();
         private IBlogRepository? _blogs;
@@ -21,11 +23,14 @@ namespace SpeakingClub.Data.Concrete
         private ICategoryRepository? _category;
         private IQuestionRepository ? _questions;
         private ISlideRepository? _slideRepository;
+        private IUserRepository? _users;
 
-        public UnitOfWork(SpeakingClubContext context)
+        public UnitOfWork(SpeakingClubContext context, ApplicationDbContext identityContext)
         {
             _context = context;
+            _identityContext = identityContext;
         }
+        public IUserRepository Users => _users ??= new UserRepository(_identityContext);
         public IQuestionRepository Questions => _questions ??= new QuestionRepository(_context);
         public IBlogRepository Blogs => _blogs ??= new BlogRepository(_context);
         public IArticleRepository Articles => _articles ??= new ArticleRepository(_context);

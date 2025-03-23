@@ -36,7 +36,11 @@ namespace SpeakingClub.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
+            // Ignore the navigation property so that only the foreign key is used in this context.
+            modelBuilder.Entity<QuizSubmission>().Ignore(qs => qs.User);
+            modelBuilder.Entity<QuizSubmission>()
+                .Property(qs => qs.UserId)
+                .IsRequired();
             // Configure composite key for BlogQuiz join table
             modelBuilder.Entity<BlogQuiz>()
                 .HasKey(bq => new { bq.BlogId, bq.QuizId });

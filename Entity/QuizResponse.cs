@@ -18,5 +18,6 @@ namespace SpeakingClub.Entity
         
         // For open-text responses, you might store the answer text.
         public string AnswerText { get; set; }
+        public int TimeTakenSeconds { get; internal set; }
     }
 }

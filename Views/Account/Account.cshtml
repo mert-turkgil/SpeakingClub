@@ -111,7 +111,7 @@
                 <p class="text-muted"><strong>@_localization.GetKey("Age"):</strong> @Model.Age</p>
                 @if (canAccessDashboard)
                 {
-                    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn btn-info btn-custom mt-3">@_localization.GetKey("GoToDashboard")</a>
+                    <a asp-controller="Admin" asp-action="Index" class="btn btn-info btn-custom mt-3">@_localization.GetKey("GoToDashboard")</a>
                 }
             </div>
             @if(hasQuizData)

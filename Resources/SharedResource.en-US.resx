@@ -370,5 +370,133 @@
 <data name="NewPassword"><value>New Password</value></data>
 <data name="ConfirmNewPassword"><value>Confirm New Password</value></data>
 <data name="UpdatePasswordButton"><value>Update Password</value></data>
-
+  <data name="ReviewQuiz_Title">
+    <value>Review: {0}</value>
+  </data>
+  <data name="SubmissionDate">
+    <value>Submission Date</value>
+  </data>
+  <data name="Score">
+    <value>Score</value>
+  </data>
+  <data name="TotalTimeTaken">
+    <value>Total Time Taken</value>
+  </data>
+  <data name="QuestionDetails">
+    <value>Question Details</value>
+  </data>
+  <data name="Question">
+    <value>Question</value>
+  </data>
+  <data name="YourAnswer">
+    <value>Your Answer</value>
+  </data>
+  <data name="CorrectAnswer">
+    <value>Correct Answer</value>
+  </data>
+  <data name="TimeSeconds">
+    <value>Time (s)</value>
+  </data>
+  <data name="Status">
+    <value>Status</value>
+  </data>
+  <data name="Correct">
+    <value>Correct</value>
+  </data>
+  <data name="Incorrect">
+    <value>Incorrect</value>
+  </data>
+  <data name="BackToQuizzes">
+    <value>Back to Quizzes</value>
+  </data>
+    <data name="AvailableQuizzes_Title">
+    <value>Available Quizzes</value>
+  </data>
+  <data name="NoQuizzesAvailable">
+    <value>No quizzes available.</value>
+  </data>
+  <data name="NoDescriptionAvailable">
+    <value>No description available.</value>
+  </data>
+  <data name="TeacherLabel">
+    <value>Teacher</value>
+  </data>
+  <data name="CategoryLabel">
+    <value>Category</value>
+  </data>
+  <data name="AttemptsLabel">
+    <value>Attempts</value>
+  </data>
+  <data name="LastScoreLabel">
+    <value>Last Score</value>
+  </data>
+  <data name="LastAttemptLabel">
+    <value>Last Attempt</value>
+  </data>
+  <data name="TakeQuizButton">
+    <value>Take Quiz</value>
+  </data>
+  <data name="ReviewButton">
+    <value>Review</value>
+  </data>
+  <data name="ReviewDetailsTitle">
+    <value>Review Details</value>
+  </data>
+  <data name="QuestionLabel">
+    <value>Question</value>
+  </data>
+  <data name="YourAnswerLabel">
+    <value>Your Answer</value>
+  </data>
+  <data name="CorrectAnswerLabel">
+    <value>Correct Answer</value>
+  </data>
+  <data name="TimeSecondsLabel">
+    <value>Time (s)</value>
+  </data>
+  <data name="StatusLabel">
+    <value>Status</value>
+  </data>
+  <data name="CorrectStatus">
+    <value>Correct</value>
+  </data>
+  <data name="IncorrectStatus">
+    <value>Incorrect</value>
+  </data>
+    <data name="QuizTitle">
+    <value>Quiz</value>
+  </data>
+  <data name="TotalTimeLabel">
+    <value>Total Time:</value>
+  </data>
+  <data name="PreviousButton">
+    <value>Previous</value>
+  </data>
+  <data name="NextButton">
+    <value>Next</value>
+  </data>
+  <data name="SubmitExamButton">
+    <value>Submit Exam</value>
+  </data>
+  <data name="StartQuizModalTitle">
+    <value>Ready to start the quiz?</value>
+  </data>
+  <data name="StartQuizModalMessage">
+    <value>Once you start, you must complete the quiz without leaving fullscreen mode.</value>
+  </data>
+  <data name="StartQuizButton">
+    <value>Start Now</value>
+  </data>
+  <data name="ExamCanceledFullscreenExit">
+    <value>Exam canceled due to fullscreen exit.</value>
+  </data>
+  <data name="ExamCanceledLeaveScreen">
+    <value>Exam canceled due to leaving the screen.</value>
+  </data>
+  <data name="ExamCanceledInactivity">
+    <value>Your exam has been canceled due to inactivity.</value>
+  </data>
+  <data name="AudioNotSupported">
+    <value>Your browser does not support the audio element.</value>
+  </data>
 </root>

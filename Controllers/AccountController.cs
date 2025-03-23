@@ -39,13 +39,137 @@ namespace SpeakingClub.Controllers
         [Authorize]
         public async Task<IActionResult> Quizzes()
         {
-            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-            return View(quizzes);
+            if (Request.Query.TryGetValue("warning", out var warningValue))
+            {
+                string warning = warningValue.ToString(); // Convert to string
+                switch (warning)
+                {
+                    case "FullscreenExit":
+                        TempData["Warning"] = "Exam canceled because you exited fullscreen mode.";
+                        break;
+                    case "LeaveScreen":
+                        TempData["Warning"] = "Exam canceled because you left the screen.";
+                        break;
+                    case "Inactivity":
+                        TempData["Warning"] = "Exam canceled due to inactivity.";
+                        break;
+                }
+            }
+            // Retrieve all quizzes from your repository
+            var allQuizzes = await _unitOfWork.Quizzes.GetAllAsync();
+            
+            // Get the current user.
+            var user = await _userManager.GetUserAsync(User);
+            
+            // Retrieve all quiz submissions
+            var submissions = await _unitOfWork.QuizSubmissions.GetAllAsync();
+            var userSubmissions = submissions.Where(s => s.UserId == user!.Id).ToList();
+
+            // Map each quiz to a QuizSummaryViewModel.
+            Func<SpeakingClub.Entity.Quiz, QuizSummaryViewModel> mapQuiz = q =>
+            {
+                var lastSubmission = userSubmissions
+                    .Where(s => s.QuizId == q.Id)
+                    .OrderByDescending(s => s.SubmissionDate)
+                    .FirstOrDefault();
+
+                IEnumerable<AttemptDetailViewModel>? details = null;
+                if (lastSubmission != null && lastSubmission.QuizResponses != null)
+                {
+                    details = lastSubmission.QuizResponses.Select(r =>
+                    {
+                        var question = r.QuizAnswer?.Question;
+                        var correctAnswer = question?.Answers.FirstOrDefault(a => a.IsCorrect)?.AnswerText ?? "N/A";
+                        var yourAnswer = r.QuizAnswer?.AnswerText ?? r.AnswerText ?? "No answer";
+                        int timeTaken = 0; // Replace with actual timing info if available.
+                        bool isCorrect = r.QuizAnswer != null && r.QuizAnswer.IsCorrect;
+                        return new AttemptDetailViewModel
+                        {
+                            QuestionId = question?.Id ?? 0,
+                            QuestionText = question?.QuestionText ?? "N/A",
+                            YourAnswer = yourAnswer,
+                            CorrectAnswer = correctAnswer,
+                            TimeTakenSeconds = timeTaken,
+                            IsCorrect = isCorrect
+                        };
+                    });
+                }
+
+                return new QuizSummaryViewModel
+                {
+                    QuizId = q.Id,
+                    QuizTitle = q.Title,
+                    QuizDescription = q.Description,
+                    ImageUrl = !string.IsNullOrEmpty(q.ImageUrl) ? q.ImageUrl : Url.Content("~/img/header_logo.png"),
+                    TeacherName = q.Teacher != null ? $"{q.Teacher.FirstName} {q.Teacher.LastName}" : "Unknown Instructor",
+                    CategoryName = q.Category != null ? q.Category.Name : "General",
+                    AttemptCount = userSubmissions.Count(s => s.QuizId == q.Id),
+                    LastScore = lastSubmission?.Score,
+                    LastAttemptDate = lastSubmission?.SubmissionDate,
+                    RecentAttemptDetails = details
+                };
+            };
+
+            var viewModel = new CombinedQuizzesViewModel
+            {
+                AvailableQuizzes = allQuizzes.Select(mapQuiz)
+            };
+
+            return View(viewModel);
         }
+
+        [Authorize]
+        public async Task<IActionResult> ReviewQuiz(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return NotFound("User not found.");
+
+            // Use a repository method that includes navigation properties
+            var submission = await _unitOfWork.QuizSubmissions
+                .GetLatestSubmissionByUserAndQuiz(user.Id, id); // Implement this method
+
+            if (submission == null)
+                return NotFound("No submission found.");
+
+            var details = submission.QuizResponses.Select(r => 
+            {
+                var question = r.QuizAnswer?.Question;
+                return new AttemptDetailViewModel
+                {
+                    QuestionId = question?.Id ?? 0,
+                    QuestionText = question?.QuestionText ?? "N/A",
+                    YourAnswer = r.QuizAnswer?.AnswerText ?? r.AnswerText ?? "No answer",
+                    CorrectAnswer = question?.Answers.FirstOrDefault(a => a.IsCorrect)?.AnswerText ?? "N/A",
+                    TimeTakenSeconds = r.TimeTakenSeconds,
+                    IsCorrect = r.QuizAnswer?.IsCorrect ?? false
+                };
+            }).ToList();
+
+            var viewModel = new QuizReviewViewModel
+            {
+                QuizId = submission.QuizId,
+                QuizTitle = submission.Quiz?.Title,
+                SubmissionDate = submission.SubmissionDate,
+                Score = submission.Score,
+                Details = details,
+                TotalTimeTaken = details.Sum(d => d.TimeTakenSeconds)
+            };
+
+            return View(viewModel);
+        }
+
 
         [Authorize]
         public async Task<IActionResult> StartQuiz(int id)
         {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return NotFound("User not found.");
+
+            // Optionally attach if needed:
+            _unitOfWork.Users.Attach(user);
+
             var quiz = await _unitOfWork.Quizzes.GetByIdAsync(id);
             if (quiz == null)
                 return NotFound();
@@ -53,23 +177,39 @@ namespace SpeakingClub.Controllers
             return View(quiz);
         }
 
-        [Authorize]
         [HttpPost]
-        public async Task<IActionResult> SubmitQuiz(int QuizId, Dictionary<int, int> responses, int ElapsedTime)
+        [Authorize]
+        public async Task<IActionResult> SubmitQuiz(string? QuizId, Dictionary<int, int>? responses, int ElapsedTime)
         {
-            var user = await _userManager.GetUserAsync(User);
-            var quiz = await _unitOfWork.Quizzes.GetByIdAsync(QuizId);
+            // If no responses were provided, redirect back to the quiz page
+            if (responses == null || responses.Count == 0)
+            {
+                TempData["Warning"] = "You must answer at least one question!";
+                return RedirectToAction("Quizzes");
+            }else{
+            // Ensure QuizId is valid
+            if (string.IsNullOrEmpty(QuizId) || !int.TryParse(QuizId, out int quizId))
+            {
+                return BadRequest("Invalid or missing Quiz ID.");
+            }
 
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return NotFound("User not found.");
+
+            var quiz = await _unitOfWork.Quizzes.GetByIdAsync(quizId);
             if (quiz == null)
-                return NotFound();
+                return NotFound("Quiz not found.");
+
+
 
             var submission = new QuizSubmission
             {
-                UserId = user!.Id,
-                QuizId = QuizId,
+                UserId = user.Id,
+                QuizId = quizId,
                 SubmissionDate = DateTime.UtcNow,
-                Score = 0, // initial score
-                AttemptNumber = 1 // handle logic accordingly
+                Score = 0,
+                AttemptNumber = 1
             };
 
             int score = 0;
@@ -80,23 +220,24 @@ namespace SpeakingClub.Controllers
                 var correctAnswer = question.Answers.FirstOrDefault(a => a.IsCorrect);
 
                 if (selectedAnswerId == correctAnswer?.Id)
-                    score += 1;
+                    score++;
 
-                var quizResponse = new QuizResponse
+                submission.QuizResponses.Add(new QuizResponse
                 {
                     QuizAnswerId = selectedAnswerId,
-                    AnswerText = selectedAnswerId == null ? "No answer" : null
-                };
-
-                submission.QuizResponses.Add(quizResponse);
+                    AnswerText = selectedAnswerId == null ? "No answer" : null,
+                    TimeTakenSeconds = ElapsedTime / Math.Max(1, quiz.Questions.Count)
+                });
             }
-
+            
             submission.Score = (int)((double)score / quiz.Questions.Count * 100);
+
             await _unitOfWork.QuizSubmissions.AddAsync(submission);
             await _unitOfWork.SaveAsync();
 
-            TempData["Success"] = $"Quiz completed! Your score is {submission.Score}% (Time: {ElapsedTime}s)";
+            TempData["Success"] = $"Quiz attempt recorded. Your score: {submission.Score}%";
             return RedirectToAction(nameof(Quizzes));
+            }
         }
 
 

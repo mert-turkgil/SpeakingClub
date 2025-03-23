@@ -31,5 +31,26 @@ namespace SpeakingClub.Data.Concrete
         {
             return await _dbSet.Where(qs => qs.QuizId == quizId).ToListAsync();
         }
+        public async Task<IEnumerable<QuizSubmission>> GetAllAtOnceAsync()
+        {
+            return await _dbSet
+                .Include(s => s.QuizResponses)
+                    .ThenInclude(r => r.QuizAnswer)
+                        .ThenInclude(a => a.Question)
+                .Include(s => s.Quiz)
+                .ToListAsync();
+        }
+
+        public async Task<QuizSubmission?> GetLatestSubmissionByUserAndQuiz(string userId, int quizId)
+        {
+            return await _dbSet
+                .Include(s => s.QuizResponses)
+                    .ThenInclude(r => r.QuizAnswer)
+                        .ThenInclude(a => a.Question)
+                .Include(s => s.Quiz)
+                .Where(s => s.UserId == userId && s.QuizId == quizId)
+                .OrderByDescending(s => s.SubmissionDate)
+                .FirstOrDefaultAsync();
+        }
     }
 }
