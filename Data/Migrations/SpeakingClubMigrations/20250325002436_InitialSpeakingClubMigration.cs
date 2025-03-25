@@ -147,36 +147,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Articles",
-                columns: table => new
-                {
-                    ArticleId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    TeacherId = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    Url = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CategoryId = table.Column<int>(type: "int", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Articles", x => x.ArticleId);
-                    table.ForeignKey(
-                        name: "FK_Articles_Categories_CategoryId",
-                        column: x => x.CategoryId,
-                        principalTable: "Categories",
-                        principalColumn: "CategoryId",
-                        onDelete: ReferentialAction.SetNull);
-                    table.ForeignKey(
-                        name: "FK_Articles_User_TeacherId",
-                        column: x => x.TeacherId,
-                        principalTable: "User",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Quizzes",
                 columns: table => new
                 {
@@ -224,30 +194,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_BlogTag_Tags_TagsTagId",
-                        column: x => x.TagsTagId,
-                        principalTable: "Tags",
-                        principalColumn: "TagId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ArticleTag",
-                columns: table => new
-                {
-                    ArticlesArticleId = table.Column<int>(type: "int", nullable: false),
-                    TagsTagId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ArticleTag", x => new { x.ArticlesArticleId, x.TagsTagId });
-                    table.ForeignKey(
-                        name: "FK_ArticleTag_Articles_ArticlesArticleId",
-                        column: x => x.ArticlesArticleId,
-                        principalTable: "Articles",
-                        principalColumn: "ArticleId",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ArticleTag_Tags_TagsTagId",
                         column: x => x.TagsTagId,
                         principalTable: "Tags",
                         principalColumn: "TagId",
@@ -591,15 +537,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 });
 
             migrationBuilder.InsertData(
-                table: "Articles",
-                columns: new[] { "ArticleId", "CategoryId", "Content", "Date", "Image", "TeacherId", "Title", "Url" },
-                values: new object[,]
-                {
-                    { 1, 1, "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "image1.jpg", "teacher1", "Introduction to English", "http://example.com/article1" },
-                    { 2, 2, "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), "image2.jpg", "teacher2", "Advanced English Techniques", "http://example.com/article2" }
-                });
-
-            migrationBuilder.InsertData(
                 table: "Blogs",
                 columns: new[] { "BlogId", "Author", "CategoryId", "Content", "Date", "Image", "RawMaps", "RawYT", "Title", "Url", "isHome" },
                 values: new object[,]
@@ -612,16 +549,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 table: "Quizzes",
                 columns: new[] { "Id", "AudioUrl", "CategoryId", "Description", "ImageUrl", "TeacherId", "Title", "YouTubeVideoUrl" },
                 values: new object[] { 1, "http://example.com/audio1.mp3", 1, "A quiz to test your general knowledge.", null, "teacher1", "General Knowledge Quiz", "http://youtube.com/vid1" });
-
-            migrationBuilder.InsertData(
-                table: "ArticleTag",
-                columns: new[] { "ArticlesArticleId", "TagsTagId" },
-                values: new object[,]
-                {
-                    { 1, 1 },
-                    { 1, 2 },
-                    { 2, 3 }
-                });
 
             migrationBuilder.InsertData(
                 table: "BlogQuizzes",
@@ -703,21 +630,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 table: "QuizResponses",
                 columns: new[] { "QuizResponseId", "AnswerText", "QuizAnswerId", "QuizSubmissionId", "TimeTakenSeconds" },
                 values: new object[] { 1, "User1 answer for Question 1", 1, 1, 0 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Articles_CategoryId",
-                table: "Articles",
-                column: "CategoryId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Articles_TeacherId",
-                table: "Articles",
-                column: "TeacherId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ArticleTag_TagsTagId",
-                table: "ArticleTag",
-                column: "TagsTagId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BlogQuiz_QuizId",
@@ -829,9 +741,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "ArticleTag");
-
-            migrationBuilder.DropTable(
                 name: "BlogQuiz");
 
             migrationBuilder.DropTable(
@@ -863,9 +772,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 
             migrationBuilder.DropTable(
                 name: "UserQuizzes");
-
-            migrationBuilder.DropTable(
-                name: "Articles");
 
             migrationBuilder.DropTable(
                 name: "QuizAnswers");

@@ -10,10 +10,21 @@ namespace SpeakingClub.Data.Concrete
 {
     public class QuizRepository : GenericRepository<Quiz>, IQuizRepository
     {
+        private readonly SpeakingClubContext _database;
+
         public QuizRepository(SpeakingClubContext context) : base(context)
         {
+            _database = context;
         }
-        
+        public override async Task<IEnumerable<Quiz>> GetAllAsync()
+        {
+            return await _database.Quizzes
+                .Include(q => q.Questions)
+                .Include(q => q.Tags)
+                .Include(q => q.Category)
+                .Include(q => q.Words)
+                .ToListAsync();
+        }
         public async Task<IEnumerable<Quiz>> GetQuizzesByTeacherIdAsync(string teacherId)
         {
             return await _dbSet

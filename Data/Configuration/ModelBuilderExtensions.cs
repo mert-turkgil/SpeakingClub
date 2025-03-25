@@ -135,31 +135,6 @@ namespace SpeakingClub.Data.Configuration
                 new Tag { TagId = 5, Name = "Writing" }
             );
 
-            // Seed Articles
-            modelBuilder.Entity<Article>().HasData(
-                new Article
-                {
-                    ArticleId = 1,
-                    Title = "Introduction to English",
-                    Content = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-                    Date = new DateTime(2025, 1, 1),
-                    TeacherId = "teacher1",
-                    Url = "http://example.com/article1",
-                    Image = "image1.jpg",
-                    CategoryId = 1
-                },
-                new Article
-                {
-                    ArticleId = 2,
-                    Title = "Advanced English Techniques",
-                    Content = "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-                    Date = new DateTime(2025, 1, 15),
-                    TeacherId = "teacher2",
-                    Url = "http://example.com/article2",
-                    Image = "image2.jpg",
-                    CategoryId = 2
-                }
-            );
 
             // Seed Blogs
             modelBuilder.Entity<Blog>().HasData(
@@ -326,13 +301,6 @@ namespace SpeakingClub.Data.Configuration
                     QuizAnswerId = 1,
                     AnswerText = "User1 answer for Question 1"
                 }
-            );
-
-            // Seed many-to-many join data for Article-Tags
-            modelBuilder.Entity("ArticleTag").HasData(
-                new { ArticlesArticleId = 1, TagsTagId = 1 },
-                new { ArticlesArticleId = 1, TagsTagId = 2 },
-                new { ArticlesArticleId = 2, TagsTagId = 3 }
             );
 
             // Seed many-to-many join data for Blog-Tags

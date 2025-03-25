@@ -1,0 +1,188 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Admin";
+}
+@section Css{
+    <!-- Try CDN first, fallback to local if unavailable -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" 
+          onerror="this.onerror=null;this.href='/css/dataTables.bootstrap5.min.css'">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" 
+          onerror="this.onerror=null;this.href='/css/responsive.bootstrap5.min.css'">
+}
+@if (User.IsInRole("Admin") || User.IsInRole("Root"))
+{
+<section class="container-xxl" id="RoleManagment">
+    <div class="card shadow mt-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0"><i class="fas fa-tv"></i> Role Managment</h3>
+        </div>
+        <div class="card-body">
+            <!-- Invoke the User Management ViewComponent -->
+            @await Component.InvokeAsync("RoleManagement")
+        </div>
+    </div>
+</section>
+
+<section class="container-xxl" id="UserManagment">
+    <div class="card shadow mt-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0"><i class="fas fa-tv"></i> User Managment</h3>
+        </div>
+        <div class="card-body">
+            <!-- Invoke the User Management ViewComponent -->
+            @await Component.InvokeAsync("UserManagement")
+        </div>
+    </div>
+</section>
+
+<section class="container-xxl" id="UserManagment">
+    <div class="card shadow mt-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0"><i class="fa-solid fa-passport"></i>Resource Managment</h3>
+        </div>
+        <div class="card-body">
+            <!-- Invoke the User Management ViewComponent -->
+            @await Component.InvokeAsync("ResourceManagement")
+        </div>
+    </div>
+</section>
+<hr/>
+}
+@if (User.IsInRole("Admin") || User.IsInRole("Root")||User.IsInRole("Teacher"))
+{
+    <section class="container-xxl" >
+    <div class="card shadow my-3">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0"> <i class="fa-solid fa-square-check"></i> Words Pronunciation Etc.</h3>
+        </div>
+        <div class="card-body">
+            @await Component.InvokeAsync("WordList")
+        </div>
+    </div>
+    </section>
+    <section class="container-xxl" >
+    <div class="card shadow my-3">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0"> <i class="fa-solid fa-clipboard-question"></i> Quizzes List</h3>
+        </div>
+        <div class="card-body">
+            @await Component.InvokeAsync("GenericList", new { entityType = "Quizzes" })
+        </div>
+    </div>
+    </section>
+    <section class="container-xxl" >
+    <div class="card shadow my-3">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0"> <i class="fa-solid fa-square-check"></i> Blog List</h3>
+        </div>
+        <div class="card-body">
+            @await Component.InvokeAsync("GenericList", new { entityType = "Blogs" })
+        </div>
+    </div>
+    </section>
+    <section class="container-xxl" >
+    <div class="card shadow my-3">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0"> <i class="fa-solid fa-square-check"></i> Category List</h3>
+        </div>
+        <div class="card-body">
+            @await Component.InvokeAsync("GenericList", new { entityType = "Categories" })
+        </div>
+    </div>
+    </section>
+    <section class="container-xxl" >
+    <div class="card shadow my-3">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0"> <i class="fa-solid fa-square-check"></i> Tag List</h3>
+        </div>
+        <div class="card-body">
+            @await Component.InvokeAsync("GenericList", new { entityType = "Tags" })
+        </div>
+    </div>
+    </section>
+    
+}
+
+@section Scripts{
+    <script>
+        $(document).ready(function() {
+            $('#QuizList').DataTable();
+            $('#TagList').DataTable();
+            $('#WordList').DataTable();
+            $('#CategoryList').DataTable();
+            $('#BlogList').DataTable();
+            //#localizationTable
+            $('#localizationTable').DataTable();
+
+            $(".edit-translation-form").submit(function (event) {
+                event.preventDefault();
+
+                const form = $(this);
+                const formData = form.serialize();
+                const row = form.closest("tr");
+
+                $.ajax({
+                    type: "POST",
+                    url: form.attr("action"),
+                    data: formData,
+                    success: function (response) {
+                        if (response.success) {
+                            alert(response.message);
+                            row.css("background-color", "#d4edda");
+                            setTimeout(() => row.css("background-color", ""), 1000);
+                        } else {
+                            alert(response.message);
+                            row.css("background-color", "#f8d7da");
+                        }
+                    },
+                    error: function () {
+                        alert("An error occurred while saving the translation.");
+                    }
+                });
+            });
+
+            $("#langSelect").change(function () {
+                window.location.href = `?lang=${this.value}`;
+            });
+            // Users Table
+            $('#usersTable').DataTable({
+                responsive: {
+                    details: {
+                        type: 'column',
+                        target: 'tr'
+                    }
+                },
+                lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
+                order: [],
+                paging: true,
+                searching: true,
+                autoWidth: false,
+                columnDefs: [
+                    { responsivePriority: 1, targets: 1 }, // Email
+                    { responsivePriority: 2, targets: 2 }, // Actions
+                    { responsivePriority: 3, targets: 0 }  // ID
+                ]
+            });
+
+            // Roles Table
+            $('#rolesTable').DataTable({
+                responsive: {
+                    details: {
+                        type: 'column',
+                        target: 'tr'
+                    }
+                },
+                lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
+                order: [],
+                paging: true,
+                searching: true,
+                autoWidth: false,
+                columnDefs: [
+                    { responsivePriority: 1, targets: 0 }, // Name
+                    { responsivePriority: 2, targets: 2 }, // Action
+                    { responsivePriority: 3, targets: 1 }  // ID
+                ]
+            });
+        });
+    </script>
+}

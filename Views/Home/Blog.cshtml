@@ -192,4 +192,43 @@
             once: true
         });
     </script>
+            <!-- GSAP -->
+    <script src="~/lib/gsap/gsap.min.js"></script>
+    <script src="~/lib/gsap/ScrollTrigger.min.js"></script>
+    <script>
+    gsap.registerPlugin(ScrollTrigger); // <-- Register explicitly
+    </script>
+            <script>
+        var swiper = new Swiper('.blog-card .swiper', {
+            loop: true,
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+        });
+
+        gsap.from('.blog-card', {
+            opacity: 0,
+            y: 30,
+            duration: 0.8,
+            ease: "power2.out",
+            scrollTrigger: {
+                trigger: '.blog-card',
+                start: "top 90%"
+            }
+        });
+
+        document.querySelectorAll('.blog-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                gsap.to(card, { scale: 1.03, duration: 0.3 });
+            });
+            card.addEventListener('mouseleave', () => {
+                gsap.to(card, { scale: 1, duration: 0.3 });
+            });
+        });
+    </script>
 }

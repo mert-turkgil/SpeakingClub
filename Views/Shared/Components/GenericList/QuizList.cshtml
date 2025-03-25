@@ -1,0 +1,61 @@
+@using SpeakingClub.Entity
+@model IEnumerable<SpeakingClub.Entity.Quiz>
+@if (Model.Any())
+{
+    <div class="mb-3">
+        <a class="btn btn-outline-success nav-item m-auto w-100" 
+        asp-controller="Admin" 
+        asp-action="QuizCreate">
+            Quiz Create
+        </a> 
+    </div>
+    <div class="table-responsive">
+        <table id="QuizList" class="table table-hover table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Questions</th>
+                    <th>Tags</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var quiz in Model)
+                {
+                    <tr>
+                        <td>@quiz.Title</td>
+                        <td>@(quiz.Description?.Length > 50 ? quiz.Description.Substring(0, 47) + "..." : quiz.Description)</td>
+                        <td>@quiz.Category?.Name</td>
+                        <td>@quiz.Questions.Count</td>
+                        <td>
+                            @foreach (var tag in quiz.Tags.Take(3))
+                            {
+                                <span class="badge bg-primary">@tag.Name</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-action="QuizEdit" asp-controller="Admin" 
+                               asp-route-id="@quiz.Id" class="btn btn-sm btn-warning mb-1">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <form asp-action="QuizDelete" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@quiz.Id" />
+                                <button type="submit" class="btn btn-sm btn-danger" 
+                                        onclick="return confirm('Delete this quiz?')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">No quizzes found</div>
+}

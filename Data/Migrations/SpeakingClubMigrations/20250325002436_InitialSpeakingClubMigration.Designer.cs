@@ -12,7 +12,7 @@ using SpeakingClub.Data;
 namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 {
     [DbContext(typeof(SpeakingClubContext))]
-    [Migration("20250322161703_InitialSpeakingClubMigration")]
+    [Migration("20250325002436_InitialSpeakingClubMigration")]
     partial class InitialSpeakingClubMigration
     {
         /// <inheritdoc />
@@ -24,38 +24,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("ArticleTag", b =>
-                {
-                    b.Property<int>("ArticlesArticleId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TagsTagId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ArticlesArticleId", "TagsTagId");
-
-                    b.HasIndex("TagsTagId");
-
-                    b.ToTable("ArticleTag");
-
-                    b.HasData(
-                        new
-                        {
-                            ArticlesArticleId = 1,
-                            TagsTagId = 1
-                        },
-                        new
-                        {
-                            ArticlesArticleId = 1,
-                            TagsTagId = 2
-                        },
-                        new
-                        {
-                            ArticlesArticleId = 2,
-                            TagsTagId = 3
-                        });
-                });
 
             modelBuilder.Entity("BlogQuiz", b =>
                 {
@@ -145,70 +113,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         {
                             QuizzesId = 1,
                             WordsWordId = 2
-                        });
-                });
-
-            modelBuilder.Entity("SpeakingClub.Entity.Article", b =>
-                {
-                    b.Property<int>("ArticleId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ArticleId"));
-
-                    b.Property<int?>("CategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Content")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Image")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TeacherId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Url")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("ArticleId");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("TeacherId");
-
-                    b.ToTable("Articles");
-
-                    b.HasData(
-                        new
-                        {
-                            ArticleId = 1,
-                            CategoryId = 1,
-                            Content = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-                            Date = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Image = "image1.jpg",
-                            TeacherId = "teacher1",
-                            Title = "Introduction to English",
-                            Url = "http://example.com/article1"
-                        },
-                        new
-                        {
-                            ArticleId = 2,
-                            CategoryId = 2,
-                            Content = "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-                            Date = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Image = "image2.jpg",
-                            TeacherId = "teacher2",
-                            Title = "Advanced English Techniques",
-                            Url = "http://example.com/article2"
                         });
                 });
 
@@ -1087,21 +991,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         });
                 });
 
-            modelBuilder.Entity("ArticleTag", b =>
-                {
-                    b.HasOne("SpeakingClub.Entity.Article", null)
-                        .WithMany()
-                        .HasForeignKey("ArticlesArticleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SpeakingClub.Entity.Tag", null)
-                        .WithMany()
-                        .HasForeignKey("TagsTagId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("BlogQuiz", b =>
                 {
                     b.HasOne("SpeakingClub.Entity.Blog", null)
@@ -1160,22 +1049,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         .HasForeignKey("WordsWordId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("SpeakingClub.Entity.Article", b =>
-                {
-                    b.HasOne("SpeakingClub.Entity.Category", "Category")
-                        .WithMany("Articles")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("SpeakingClub.Identity.User", "Teacher")
-                        .WithMany()
-                        .HasForeignKey("TeacherId");
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("SpeakingClub.Entity.Blog", b =>
@@ -1340,8 +1213,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 
             modelBuilder.Entity("SpeakingClub.Entity.Category", b =>
                 {
-                    b.Navigation("Articles");
-
                     b.Navigation("Blogs");
 
                     b.Navigation("Quizzes");

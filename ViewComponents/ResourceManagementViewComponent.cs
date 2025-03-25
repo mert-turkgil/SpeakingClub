@@ -1,0 +1,54 @@
+using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Xml.Linq;
+using System.Threading.Tasks;
+using SpeakingClub.Models;
+using SpeakingClub.Services;
+using System.Globalization;
+
+public class ResourceManagementViewComponent : ViewComponent
+{
+    private readonly IWebHostEnvironment _env;
+
+    public ResourceManagementViewComponent(IWebHostEnvironment env)
+    {
+        _env = env;
+    }
+
+    public IViewComponentResult Invoke()
+    {
+        var lang = CultureInfo.CurrentCulture.Name;
+        var translations = LoadTranslations(GetResxPath(lang));
+
+        var viewModel = new LocalizationViewModel
+        {
+            CurrentLanguage = lang,
+            AvailableLanguages = new List<string> { "de-DE", "en-US", "tr-TR" },
+            Translations = translations
+        };
+
+        return View(viewModel); // This should match the expected model in Default.cshtml
+    }
+
+    private string GetResxPath(string lang)
+    {
+        var fileName = $"SharedResource.{lang}.resx";
+        return Path.Combine(_env.ContentRootPath, "Resources", fileName);
+    }
+
+    private List<LocalizationModel> LoadTranslations(string resxPath)
+    {
+        if (!System.IO.File.Exists(resxPath))
+            return new List<LocalizationModel>();
+
+        var resxFile = XDocument.Load(resxPath);
+        return resxFile.Root?.Elements("data").Select(x => new LocalizationModel
+        {
+            Key = x.Attribute("name")?.Value ?? "N/A",
+            Value = x.Element("value")?.Value ?? "N/A",
+            Comment = x.Element("comment")?.Value ?? "N/A"
+        }).ToList() ?? new List<LocalizationModel>();
+    }
+}

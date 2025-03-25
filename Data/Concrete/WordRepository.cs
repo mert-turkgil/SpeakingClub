@@ -22,6 +22,13 @@ namespace SpeakingClub.Data.Concrete
             return await _appContext.Words
                 .FirstOrDefaultAsync(w => w.Term.ToLower() == term.ToLower());
         }
+
+        public async Task<Word?> GetByIdAsync(int id)
+        {
+            return await _appContext.Words
+                .Include(w => w.Quizzes)
+                .FirstOrDefaultAsync(w => w.WordId == id);
+        }
         
         public async Task<IEnumerable<Word>> SearchWordsByDefinitionKeywordAsync(string keyword)
         {

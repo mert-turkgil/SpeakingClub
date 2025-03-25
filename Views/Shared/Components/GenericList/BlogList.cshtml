@@ -1,0 +1,47 @@
+@using SpeakingClub.Entity
+@model IEnumerable<Blog>
+@if (Model.Any())
+{
+    <a class="btn btn-outline-success nav-item m-auto w-100" 
+        asp-controller="Admin" 
+            asp-action="UserCreate">
+                Create user
+            </a> 
+    <div class="table-responsive">
+        <table id="BlogList" class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Date</th>
+                    <th>Home</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Title</td>
+                        <td>@item.Author</td>
+                        <td>@item.Date.ToString("d")</td>
+                        <td>@(item.isHome ? "Yes" : "No")</td>
+                        <td>
+                            <a asp-action="Edit" asp-controller="Blog" asp-route-id="@item.BlogId" 
+                               class="btn btn-sm btn-warning">Edit</a>
+                            <form asp-action="Delete" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@item.BlogId" />
+                                <button type="submit" class="btn btn-sm btn-danger" 
+                                        onclick="return confirm('Delete this blog?')">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">No blogs found</div>
+}
