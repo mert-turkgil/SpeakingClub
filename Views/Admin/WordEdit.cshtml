@@ -1,0 +1,167 @@
+@model WordEditViewModel
+@section Css{
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <style>
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #dee2e6;
+            padding: 0.375rem 0.75rem;
+        }
+        .form-floating textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+    </style>
+}
+
+<div style="height: 80vh;" class="container-xxl animate__animated animate__fadeIn">
+    <div style="margin-top: 5vh;" class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0">
+                <i class="fas fa-edit me-2"></i>Edit Word
+            </h3>
+        </div>
+        
+        <div class="card-body">
+            <form id="editForm" asp-action="WordEdit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="WordId" />
+                <div class="row g-4">
+                    <!-- Left Column -->
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <input asp-for="Term" class="form-control" placeholder="Enter term" />
+                            <label asp-for="Term"></label>
+                            <span asp-validation-for="Term" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <textarea asp-for="Definition" class="form-control" 
+                                      placeholder="Enter definition" style="height: 120px"></textarea>
+                            <label asp-for="Definition"></label>
+                            <span asp-validation-for="Definition" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Pronunciation" class="form-control" placeholder="Pronunciation guide" />
+                            <label asp-for="Pronunciation"></label>
+                            <span asp-validation-for="Pronunciation" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <textarea asp-for="Example" class="form-control" 
+                                      placeholder="Example sentence" style="height: 120px"></textarea>
+                            <label asp-for="Example"></label>
+                            <span asp-validation-for="Example" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Synonyms" class="form-control" 
+                                   placeholder="Comma separated synonyms" />
+                            <label asp-for="Synonyms"></label>
+                            <span asp-validation-for="Synonyms" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Origin" class="form-control" placeholder="Word origin" />
+                            <label asp-for="Origin"></label>
+                            <span asp-validation-for="Origin" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Selection -->
+                <div class="mb-4">            
+                    <label class="form-label fw-bold">Associated Quizzes</label>
+                    <span asp-validation-for="SelectedQuizIds" class="text-danger"></span>
+                    <select asp-for="SelectedQuizIds" 
+                            asp-items="Model.AvailableQuizzes" 
+                            class="form-select select2-multiple" 
+                            multiple="multiple" 
+                            data-placeholder="Select related quizzes">
+                    </select>
+                </div>
+
+                <!-- Advanced Options -->
+                <div class="accordion mb-4" id="advancedOptions">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#advancedCollapse">
+                                <i class="fas fa-cogs me-2"></i>Advanced Options
+                            </button>
+                        </h2>
+                        <div id="advancedCollapse" class="accordion-collapse collapse" 
+                             data-bs-parent="#advancedOptions">
+                            <div class="accordion-body">
+                                <div class="form-check form-switch">
+                                    <input asp-for="IsFromApi" class="form-check-input" />
+                                    <label asp-for="IsFromApi" class="form-check-label"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Update Word
+                    </button>
+                    <a asp-action="WordList" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-undo me-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize Select2 with preselected values
+            $('.select2-multiple').select2({
+                width: '100%',
+                theme: 'bootstrap-5',
+                closeOnSelect: false
+            }).val(@Json.Serialize(Model.SelectedQuizIds)).trigger('change');
+
+            // Form validation
+            $('#editForm').validate({
+                rules: {
+                    Term: { required: true, maxlength: 100 },
+                    Definition: { required: true }
+                },
+                errorPlacement: function(error, element) {
+                    error.addClass('small text-danger mt-1');
+                    error.insertAfter(element.closest('.form-floating'));
+                }
+            });
+
+            // GSAP animation
+            gsap.from(".card", {
+                duration: 0.8,
+                y: 50,
+                opacity: 0,
+                ease: "power2.out"
+            });
+
+            // Synonyms tagging
+            $('#Synonyms').on('keypress', function(e) {
+                if (e.which === 13 || e.which === 44) {
+                    e.preventDefault();
+                    const value = $(this).val().trim();
+                    if (value) {
+                        const values = value.split(',').map(v => v.trim());
+                        $(this).val(values.join(', '));
+                    }
+                }
+            });
+        });
+    </script>
+}

@@ -9,11 +9,11 @@ namespace SpeakingClub.Data.Abstract
     public interface IUnitOfWork: IDisposable
     {
         IBlogRepository Blogs { get; }
-        IArticleRepository  Articles { get; }
         IQuizRepository  Quizzes { get; }
         IQuizAnswerRepository QuizAnswers { get; }
         IQuizSubmissionRepository QuizSubmissions { get; }
         IQuizResponseRepository QuizResponses { get; }
+        ITagRepository Tags{get;}
         IWordRepository  Words { get; }
         ISlideRepository Slides { get; }
         IQuestionRepository Questions {get;}

@@ -1,0 +1,189 @@
+@model SpeakingClub.Models.UserEditModel
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Edit User";
+}
+
+<h1 class="h3 text-center mb-4">Edit User</h1>
+<hr />
+<form asp-controller="Admin" asp-action="UserEdit" method="post" class="needs-validation" novalidate>
+    <input type="hidden" asp-for="UserId" />
+    <div class="row">
+        <div class="col-md-8">
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+            
+            <!-- Basic Information -->
+            <div class="mb-3">
+                <label asp-for="FirstName" class="form-label">First Name *</label>
+                <input asp-for="FirstName" class="form-control" required />
+                <span asp-validation-for="FirstName" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="LastName" class="form-label">Last Name *</label>
+                <input asp-for="LastName" class="form-control" required />
+                <span asp-validation-for="LastName" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="Age" class="form-label">Age *</label>
+                <input asp-for="Age" class="form-control" type="number" min="1" max="120" required />
+                <span asp-validation-for="Age" class="text-danger"></span>
+            </div>
+            
+            <!-- Account Information -->
+            <div class="mb-3">
+                <label asp-for="UserName" class="form-label">Username *</label>
+                <input asp-for="UserName" class="form-control" required />
+                <span asp-validation-for="UserName" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label">Email *</label>
+                <input asp-for="Email" class="form-control" type="email" required />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            
+            <!-- Read-only fields -->
+            <div class="mb-3">
+                <label asp-for="CreatedDate" class="form-label">Account Created</label>
+                <input asp-for="CreatedDate" class="form-control" readonly />
+            </div>
+            
+            <!-- Password Management -->
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label">New Password</label>
+                <div class="input-group">
+                    <input asp-for="Password" class="form-control" type="password" 
+                           placeholder="Leave blank to keep current password" 
+                           id="passwordField" minlength="6" />
+                    <button class="btn btn-outline-secondary" type="button" id="generatePassword">Generate</button>
+                    <button class="btn btn-outline-secondary" type="button" id="copyPassword">Copy</button>
+                </div>
+                <small class="form-text text-muted">Minimum 6 characters</small>
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+                <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                <input asp-for="ConfirmPassword" class="form-control" type="password" 
+                       placeholder="Confirm new password" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary btn-block shadow-sm">Save Changes</button>
+                <a style="float: right;" asp-controller="Admin" asp-action="Index" class="btn btn-outline-info mt-4">
+                    <i class="fa-solid fa-arrow-left"></i> Return
+                </a>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Role Management -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">Roles</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.AllRoles != null && Model.AllRoles.Any())
+                    {
+                        foreach (var roleName in Model.AllRoles)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" 
+                                       name="SelectedRoles" value="@roleName" id="role_@roleName"
+                                       @(Model.SelectedRoles != null && Model.SelectedRoles.Contains(roleName) ? "checked" : "") 
+                                       @(Model.IsSelf || Model.IsRootUser ? "disabled" : "") />
+                                <label class="form-check-label" for="role_@roleName">@roleName</label>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-danger">No roles available.</p>
+                    }
+                </div>
+            </div>
+            
+            <!-- Account Status -->
+            <div class="form-check mb-3">
+                @{
+                    var disableEmailConfirmed = Model.IsSelf ? "disabled" : null;
+                }
+                <input asp-for="EmailConfirmed" class="form-check-input" type="checkbox" 
+                    disabled="@disableEmailConfirmed" />
+                <label asp-for="EmailConfirmed" class="form-check-label">Email Confirmed</label>
+            </div>
+            
+            <div class="form-check mb-3">
+                @{
+                    var disableLockout = (Model.IsSelf || Model.IsRootUser) ? "disabled" : null;
+                }
+                <input asp-for="Lockout" class="form-check-input" type="checkbox" 
+                    disabled="@disableLockout" />
+                <label asp-for="Lockout" class="form-check-label">Lock Account</label>
+                @if (Model.IsSelf)
+                {
+                    <small class="form-text text-muted">You cannot lock your own account</small>
+                }
+                @if (Model.IsRootUser)
+                {
+                    <small class="form-text text-muted">Root accounts cannot be locked</small>
+                }
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Random password generator function
+        function generateRandomPassword(length) {
+            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@@#$%^&*()_+~`|}{[]:;?><,./-=";
+            let password = "";
+            for (let i = 0; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * charset.length);
+                password += charset[randomIndex];
+            }
+            return password;
+        }
+
+        // Generate password button
+        document.getElementById("generatePassword").addEventListener("click", function () {
+            const newPassword = generateRandomPassword(12);
+            document.getElementById("passwordField").value = newPassword;
+            document.querySelector("input[name='ConfirmPassword']").value = newPassword;
+        });
+
+        // Copy password button
+        document.getElementById("copyPassword").addEventListener("click", function () {
+            const password = document.getElementById("passwordField").value;
+            if (!password) {
+                alert("Please generate a password first");
+                return;
+            }
+            navigator.clipboard.writeText(password)
+                .then(() => alert("Password copied to clipboard!"))
+                .catch(err => console.error("Copy failed:", err));
+        });
+
+        // Form validation
+        (function () {
+            'use strict';
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
+}

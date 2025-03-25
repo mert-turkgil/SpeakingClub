@@ -1,0 +1,45 @@
+@using SpeakingClub.Entity
+@model IEnumerable<Category>
+@if (Model.Any())
+{
+        <a class="btn btn-outline-success nav-item m-auto w-100" 
+            asp-controller="Admin" 
+            asp-action="UserCreate">
+                Create user
+            </a> 
+    <div class="table-responsive">
+        <table id="CategoryList" class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Blogs</th>
+                    <th>Quizzes</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Name</td>
+                        <td>@item.Blogs.Count</td>
+                        <td>@item.Quizzes.Count</td>
+                        <td>
+                            <a asp-action="Edit" asp-controller="Category" asp-route-id="@item.CategoryId" 
+                               class="btn btn-sm btn-warning">Edit</a>
+                            <form asp-action="Delete" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@item.CategoryId" />
+                                <button type="submit" class="btn btn-sm btn-danger" 
+                                        onclick="return confirm('Delete this category?')">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">No categories found</div>
+}

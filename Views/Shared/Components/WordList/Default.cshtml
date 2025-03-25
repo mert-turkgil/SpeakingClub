@@ -1,0 +1,52 @@
+@using SpeakingClub.Entity
+@model IEnumerable<Word>
+
+<div class="word-management mt-4 container-xxl">
+    <div class="nav table-responsive mb-3">
+        <a class="btn btn-outline-success nav-item m-auto w-100" 
+           asp-controller="Admin" 
+           asp-action="WordCreate">
+            Create New Word
+        </a>
+    </div>
+
+    <table id="WordList" class="table table-striped table-bordered dt-responsive nowrap" style="width:100%">
+        <thead>
+            <tr>
+                <th>Term</th>
+                <th>Definition</th>
+                <th>Example</th>
+                <th>Pronunciation</th>
+                <th>Synonyms</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var word in Model)
+            {
+                <tr>
+                    <td>@word.Term</td>
+                    <td>@word.Definition</td>
+                    <td>@word.Example</td>
+                    <td>@word.Pronunciation</td>
+                    <td>@word.Synonyms</td>
+                    <td>
+                        <a asp-action="WordEdit" asp-controller="Admin" 
+                           asp-route-id="@word.WordId" 
+                           class="btn btn-warning btn-sm w-100 mb-2">
+                            <i class="fa fa-edit"></i> Edit
+                        </a>
+                        <form asp-controller="Admin" asp-action="WordDelete" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@word.WordId" />
+                            <button type="submit" class="btn btn-danger w-100" 
+                                    onclick="return confirm('Are you sure you want to delete this word?')">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

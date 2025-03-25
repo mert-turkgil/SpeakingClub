@@ -13,7 +13,6 @@ namespace SpeakingClub.Data
         }
 
         // DbSets for core entities
-        public DbSet<Article> Articles { get; set; }
         public DbSet<Blog> Blogs { get; set; }
         public DbSet<BlogQuiz> BlogQuizzes { get; set; }
         public DbSet<Quiz> Quizzes { get; set; }
@@ -53,11 +52,6 @@ namespace SpeakingClub.Data
             modelBuilder.Entity<QuizAnalysis>()
                 .HasNoKey();
 
-            // Configure many-to-many relationships for Tags
-            modelBuilder.Entity<Article>()
-                .HasMany(a => a.Tags)
-                .WithMany(t => t.Articles);
-
             modelBuilder.Entity<Blog>()
                 .HasMany(b => b.Tags)
                 .WithMany(t => t.Blogs);
@@ -77,13 +71,6 @@ namespace SpeakingClub.Data
             modelBuilder.Entity<Quiz>()
                 .HasMany(q => q.Words)
                 .WithMany(w => w.Quizzes);
-
-            // Configure relationships for Category (optional)
-            modelBuilder.Entity<Article>()
-                .HasOne(a => a.Category)
-                .WithMany(c => c.Articles)
-                .HasForeignKey(a => a.CategoryId)
-                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Blog>()
                 .HasOne(b => b.Category)

@@ -1,0 +1,52 @@
+@model SpeakingClub.Models.LocalizationViewModel
+
+
+        <div class="mb-3">
+            <select id="langSelect" class="form-select">
+                @foreach (var lang in Model.AvailableLanguages)
+                {
+                    if (lang == Model.CurrentLanguage)
+                    {
+                        <option value="@lang" selected="selected">@lang</option>
+                    }
+                    else
+                    {
+                        <option value="@lang">@lang</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="table-responsive">
+            <table id="localizationTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Value</th>
+                        <th>Comment</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Translations)
+                    {
+                        <tr>
+                            <form method="post" asp-controller="Admin" asp-action="EditTranslation" class="edit-translation-form">
+                                <td>@item.Key</td>
+                                <td>
+                                    <input type="hidden" name="name" value="@item.Key" />
+                                    <input type="hidden" name="lang" value="@Model.CurrentLanguage" />
+                                    <input type="text" name="value" value="@item.Value" class="form-control" />
+                                </td>
+                                <td>
+                                    <input type="text" name="comment" value="@item.Comment" class="form-control" />
+                                </td>
+                                <td>
+                                    <button type="submit" class="btn btn-success btn-sm">Save</button>
+                                </td>
+                            </form>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+

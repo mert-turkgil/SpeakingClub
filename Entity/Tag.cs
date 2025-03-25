@@ -13,7 +13,6 @@ namespace SpeakingClub.Entity
         public string Name { get; set; }
         
         // Many-to-many relationships with content types
-        public ICollection<Article> Articles { get; set; } = new List<Article>();
         public ICollection<Blog> Blogs { get; set; } = new List<Blog>();
         public ICollection<Quiz> Quizzes { get; set; } = new List<Quiz>();
     }
