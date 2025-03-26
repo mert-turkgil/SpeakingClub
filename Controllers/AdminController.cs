@@ -1226,7 +1226,298 @@ namespace SpeakingClub.Controllers
         #endregion
     
         #region Quiz
+        [HttpGet("QuizCreate")]
+        public async Task<IActionResult> QuizCreate()
+        {
+            var model = new QuizCreateViewModel
+            {
+                Title = string.Empty,
+                Description = string.Empty,
+                Categories = (await _unitOfWork.Categories.GetAllAsync())
+                    .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString())),
+                Tags = (await _unitOfWork.Tags.GetAllAsync())
+                    .Select(t => new SelectListItem(t.Name, t.TagId.ToString())),
+                Words = (await _unitOfWork.Words.GetAllAsync())
+                    .Select(w => new SelectListItem(w.Term, w.WordId.ToString()))
+            };
+            model.Questions.Add(new QuestionViewModel
+            {
+                QuestionText = string.Empty, 
+                Answers = new List<AnswerViewModel>
+                {
+                    new AnswerViewModel { AnswerText = string.Empty },
+                    new AnswerViewModel { AnswerText = string.Empty }
+                }
+            });
 
+            return View(model);
+        }
+
+        [HttpPost("QuizCreate")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> QuizCreate(QuizCreateViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            if (ModelState.IsValid)
+            {
+                using var transaction = await _unitOfWork.BeginTransactionAsync();
+                try
+                {
+                    var audioUrl = model.AudioFile != null ? await ProcessAudioUpload(model.AudioFile) : null;
+                    var taglist = await _unitOfWork.Tags.GetAllAsync();
+                    var wordlist = await _unitOfWork.Words.GetAllAsync();
+                    var quiz = new SpeakingClub.Entity.Quiz
+                    {
+                        Title = model.Title,
+                        Description = model.Description,
+                        TeacherId = user.Id,
+                        CategoryId = model.CategoryId,
+                        Tags = taglist.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList(),
+                        Words = wordlist.Where(w => model.SelectedWordIds.Contains(w.WordId)).ToList()
+                    };
+
+                        foreach (var questionModel in model.Questions)
+                        {
+                            var question = new SpeakingClub.Entity.Question // Use Entity namespace
+                            {
+                                QuestionText = questionModel.QuestionText,
+                                ImageUrl = questionModel.ImageUrl,
+                                AudioUrl = questionModel.AudioUrl,
+                                VideoUrl = questionModel.VideoUrl,
+                                Answers = questionModel.Answers.Select(a => new SpeakingClub.Entity.QuizAnswer
+                                {
+                                    AnswerText = a.AnswerText,
+                                    IsCorrect = a.IsCorrect
+                                }).ToList()
+                            };
+                            quiz.Questions.Add(question);
+                        }
+
+                    await _unitOfWork.Quizzes.AddAsync(quiz);
+                    await _unitOfWork.SaveAsync();
+                    await transaction.CommitAsync();
+
+                    TempData["SuccessMessage"] = "Quiz created successfully!";
+                    return RedirectToAction("QuizList");
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    ModelState.AddModelError("", $"Error creating quiz: {ex.Message}");
+                }
+            }
+
+            // Repopulate dropdowns if validation fails
+            model.Categories = (await _unitOfWork.Categories.GetAllAsync())
+                .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
+            model.Tags = (await _unitOfWork.Tags.GetAllAsync())
+                .Select(t => new SelectListItem(t.Name, t.TagId.ToString()));
+            model.Words = (await _unitOfWork.Words.GetAllAsync())
+                .Select(w => new SelectListItem(w.Term, w.WordId.ToString()));
+
+            return View(model);
+        }
+
+        #region Mp3
+        private async Task<string?> ProcessAudioUpload(IFormFile audioFile)
+        {
+            if (audioFile == null || audioFile.Length == 0)
+                return null;
+
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "audio");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(audioFile.FileName)}";
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await audioFile.CopyToAsync(fileStream);
+            }
+
+            return $"/uploads/audio/{uniqueFileName}";
+        }
+        #endregion
+
+        [HttpGet("QuizEdit/{id}")]
+        public async Task<IActionResult> QuizEdit(int id)
+        {
+            var quiz = await _unitOfWork.Quizzes.GetByIdAsync(id);
+
+            if (quiz == null)
+            {
+                return NotFound();
+            }
+
+            var model = new QuizEditViewModel
+            {
+                QuizId = quiz.Id,
+                Title = quiz.Title,
+                Description = quiz.Description,
+                CategoryId = quiz.CategoryId,
+                SelectedTagIds = quiz.Tags.Select(t => t.TagId).ToList(),
+                SelectedWordIds = quiz.Words.Select(w => w.WordId).ToList(),
+                Questions = quiz.Questions.Select(q => new QuestionEditViewModel
+                {
+                    QuestionId = q.Id,
+                    QuestionText = q.QuestionText,
+                    ImageUrl = q.ImageUrl,
+                    AudioUrl = q.AudioUrl,
+                    VideoUrl = q.VideoUrl,
+                    Answers = q.Answers.Select(a => new AnswerEditViewModel
+                    {
+                        AnswerId = a.Id,
+                        AnswerText = a.AnswerText,
+                        IsCorrect = a.IsCorrect
+                    }).ToList()
+                }).ToList(),
+                Categories = (await _unitOfWork.Categories.GetAllAsync())
+                    .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString())),
+                Tags = (await _unitOfWork.Tags.GetAllAsync())
+                    .Select(t => new SelectListItem(t.Name, t.TagId.ToString())),
+                Words = (await _unitOfWork.Words.GetAllAsync())
+                    .Select(w => new SelectListItem(w.Term, w.WordId.ToString()))
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> QuizEdit(QuizEditViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            if (!ModelState.IsValid)
+            {
+                model.Categories = await RepopulateCategories();
+                model.Tags = await RepopulateTags();
+                model.Words = await RepopulateWords();
+                return View(model);
+            }
+
+            using var transaction = await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                var quiz = await _unitOfWork.Quizzes.GetByIdAsync(model.QuizId);
+
+                if (quiz == null)
+                {
+                    return NotFound();
+                }
+
+                // Update basic properties
+                quiz.Title = model.Title;
+                quiz.Description = model.Description;
+                quiz.CategoryId = model.CategoryId;
+                quiz.TeacherId = user.Id;
+
+                // Update relationships
+                await UpdateQuizRelationships(quiz, model);
+
+                // Update questions and answers
+                await UpdateQuestionsAndAnswers(quiz, model);
+
+                _unitOfWork.Quizzes.Update(quiz);
+                await _unitOfWork.SaveAsync();
+                await transaction.CommitAsync();
+
+                TempData["SuccessMessage"] = "Quiz updated successfully!";
+                return RedirectToAction("QuizList");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                ModelState.AddModelError("", $"Error updating quiz: {ex.Message}");
+                model.Categories = await RepopulateCategories();
+                model.Tags = await RepopulateTags();
+                model.Words = await RepopulateWords();
+                return View(model);
+            }
+        }
+        #region helpers for quiz
+        private async Task UpdateQuizRelationships(Entity.Quiz quiz, QuizEditViewModel model)
+        {
+            // Update Tags
+            var tags = await _unitOfWork.Tags.GetAllAsync();
+            var selectedTags = tags.Where(t => model.SelectedTagIds.Contains(t.TagId));
+            quiz.Tags = selectedTags.ToList();
+
+            // Update Words
+            var words = await _unitOfWork.Words.GetAllAsync();
+            var selectedWords = words.Where(w => model.SelectedWordIds.Contains(w.WordId));
+            quiz.Words = selectedWords.ToList();
+        }
+
+        private Task UpdateQuestionsAndAnswers(SpeakingClub.Entity.Quiz quiz, QuizEditViewModel model)
+        {
+            // Remove deleted questions
+            var questionIds = model.Questions.Select(q => q.QuestionId).ToList();
+            var questionsToRemove = quiz.Questions.Where(q => !questionIds.Contains(q.Id)).ToList();
+            foreach (var question in questionsToRemove)
+            {
+                quiz.Questions.Remove(question);
+            }
+
+            foreach (var questionModel in model.Questions)
+            {
+                var question = quiz.Questions.FirstOrDefault(q => q.Id == questionModel.QuestionId) ?? new Entity.Question();
+                
+                question.QuestionText = questionModel.QuestionText;
+                question.ImageUrl = questionModel.ImageUrl;
+                question.AudioUrl = questionModel.AudioUrl;
+                question.VideoUrl = questionModel.VideoUrl;
+
+                // Update answers
+                var answerIds = questionModel.Answers.Select(a => a.AnswerId).ToList();
+                var answersToRemove = question.Answers.Where(a => answerIds.Contains(a.Id)).ToList();
+                foreach (var answer in answersToRemove)
+                {
+                    question.Answers.Remove(answer);
+                }
+
+                foreach (var answerModel in questionModel.Answers)
+                {
+                    var answer = question.Answers.FirstOrDefault(a => a.Id == answerModel.AnswerId) ?? new Entity.QuizAnswer();
+                    answer.AnswerText = answerModel.AnswerText;
+                    answer.IsCorrect = answerModel.IsCorrect;
+                    
+                    if (answer.Id == 0)
+                    {
+                        question.Answers.Add(answer);
+                    }
+                }
+
+                if (question.Id == 0)
+                {
+                    quiz.Questions.Add(question);
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+        private async Task<IEnumerable<SelectListItem>> RepopulateCategories()
+        {
+            return (await _unitOfWork.Categories.GetAllAsync())
+                .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
+        }
+
+        private async Task<IEnumerable<SelectListItem>> RepopulateTags()
+        {
+            return (await _unitOfWork.Tags.GetAllAsync())
+                .Select(t => new SelectListItem(t.Name, t.TagId.ToString()));
+        }
+
+        private async Task<IEnumerable<SelectListItem>> RepopulateWords()
+        {
+            return (await _unitOfWork.Words.GetAllAsync())
+                .Select(w => new SelectListItem(w.Term, w.WordId.ToString()));
+        }
+        #endregion
         #endregion
     }
 }

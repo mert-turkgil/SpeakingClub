@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Storage;
 using SpeakingClub.Entity;
 
 namespace SpeakingClub.Data.Abstract
@@ -22,5 +23,6 @@ namespace SpeakingClub.Data.Abstract
         IGenericRepository<T> GenericRepository<T>() where T : class;
         int Save();
         Task<int> SaveAsync();
+        Task<IDbContextTransaction> BeginTransactionAsync();
     }
 }
