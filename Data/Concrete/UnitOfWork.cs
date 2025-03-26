@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Storage;
 using SpeakingClub.Data.Abstract;
 using SpeakingClub.Entity;
 using SpeakingClub.Identity;
@@ -63,6 +64,10 @@ namespace SpeakingClub.Data.Concrete
         public void Dispose()
         {
             _context.Dispose();
+        }
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _context.Database.BeginTransactionAsync();
         }
     }
 }

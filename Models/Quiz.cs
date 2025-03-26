@@ -27,5 +27,8 @@ namespace SpeakingClub.Models
 
         // ✅ New: Each quiz has multiple questions
         public ICollection<Question>? Questions { get; set; }
+        public int? CategoryId { get; set; }
+        public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
+        public virtual ICollection<Word> Words { get; set; } = new List<Word>();
     }
 }
