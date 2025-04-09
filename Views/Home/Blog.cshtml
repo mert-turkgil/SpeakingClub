@@ -1,4 +1,5 @@
 @model SpeakingClub.Models.BlogFilterViewModel
+@inject LanguageService Localizer
 
 @{
     ViewData["Title"] = Model.BlogList_Title;
@@ -135,7 +136,7 @@
                                         </small>
                                     </div>
                                     <h5 class="blog-title">
-                                        <a href="@Url.Action("BlogDetails", "Home", new { id = blog.BlogId, type = "blog" })" class="text-decoration-none">
+                                        <a href="@Url.Action("BlogDetail", "Home", new { url = blog.Url })" class="text-decoration-none">
                                             @blog.Title
                                         </a>
                                     </h5>
@@ -149,9 +150,9 @@
                                             @Html.Raw(blog.Content)
                                         }
                                     </div>
-                                    <a href="@Url.Action("BlogDetails", "Home", new { id = blog.BlogId, type = "blog" })" class="btn btn-outline-success btn-sm">
-                                        @Model.BlogList_ReadMore
-                                    </a>
+                                        <a asp-controller="Home" asp-action="BlogDetail" asp-route-url="@blog.Url" class="btn btn-outline-success btn-sm">
+                                            @Model.BlogList_ReadMore
+                                        </a>
                                 </div>
                             </div>
                         </div>
