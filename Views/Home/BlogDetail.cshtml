@@ -1,0 +1,146 @@
+@model SpeakingClub.Models.BlogDetailViewModel
+@inject LanguageService Localizer
+@{
+    Layout = "_Layout"; // Your shared layout that loads Bootstrap, FontAwesome, animate.css, GSAP, jQuery, etc.
+}
+
+<div class="container py-5">
+
+    <!-- Title Section (full width) -->
+    <div class="row bg-fourth shadow-lg rounded p-4 mb-4">
+        <div class="col-12 text-center">
+            <h1 class="display-4 fw-bold">@Model.Title</h1>
+        </div>
+    </div>
+
+    <!-- Content and Tags Row -->
+    <div class="row my-4">
+        <!-- Left Column: Blog Content -->
+        <div class="col-md-8">
+            <div class="content-body">
+                @if (!string.IsNullOrEmpty(Model.Content))
+                {
+                    @Html.Raw(Model.Content)
+                }
+                else
+                {
+                    <p class="text-muted">@Localizer.GetKey("Err2").Value</p>
+                }
+            </div>
+        </div>
+        <!-- Right Column: Tags Sidebar -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-tags"></i> @Localizer.GetKey("Tag").Value
+                </div>
+                <div class="card-body">
+                    @if (Model.Tags != null && Model.Tags.Any())
+                    {
+                        <ul class="list-unstyled">
+                            @foreach (var tag in Model.Tags)
+                            {
+                                <li class="badge bg-info text-dark me-1 mb-1">@tag.Name</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0"> @Localizer.GetKey("Err3").Value </p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Section (full width) -->
+    <div class="row my-5">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-question-circle"></i> Quiz
+                </div>
+                <div class="card-body">
+                    @if (Model.QuizQuestion != null)
+                    {
+                        <h5 class="card-title">@Model.QuizQuestion.QuestionText</h5>
+                        <form id="quizForm">
+                            <div class="mb-3">
+                                <input type="text" id="quizAnswer" class="form-control" placeholder="Your Answer" />
+                            </div>
+                            <button type="button" class="btn btn-primary" id="submitQuiz">@Localizer.GetKey("SendButtonQ").Value</button>
+                        </form>
+                        <div id="quizFeedback" class="mt-3" style="display:none;">
+                            @if (Model.QuizQuestion.Answers != null && Model.QuizQuestion.Answers.Any(a => a.IsCorrect))
+                            {
+                                var correctAnswer = Model.QuizQuestion.Answers.First(a => a.IsCorrect);
+                                <div class="alert alert-success" role="alert">
+                                    @Localizer.GetKey("RightAnswer").Value <strong>@correctAnswer.AnswerText</strong>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">@Localizer.GetKey("Err1").Value</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blog Cover Section (full width) -->
+    <div class="row my-5">
+        <div class="col-12 justify-content-center text-center">
+            @if (!string.IsNullOrEmpty(Model.Image))
+            {
+                <img src="~/img/@Url.Content(Model.Image)" alt="@Model.Title" class="img-fluid rounded shadow-lg" />
+            }
+            else
+            {
+                <div class="d-flex align-items-center justify-content-center bg-secondary text-white rounded" style="height: 300px;">
+                    <i class="fas fa-image fa-3x"></i>
+                    <span class="ms-3 fs-2">@Localizer.GetKey("Err4").Value</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Author and Meta Information (full width) -->
+    <div class="row my-4">
+        <div class="col-12 text-center">
+            <p class="text-muted">
+                <i class="far fa-calendar-alt"></i> @Model.Date.ToString("MMMM dd, yyyy")
+                @if (!string.IsNullOrEmpty(Model.Author))
+                {
+                    <span class="ms-3"><i class="far fa-user"></i> @Model.Author</span>
+                }
+            </p>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="~/lib/gsap/gsap.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // GSAP Animations for a modern touch
+            gsap.from(".display-4", { duration: 1, y: -50, opacity: 0, ease: "power2.out" });
+            gsap.from(".content-body", { duration: 1, x: -50, opacity: 0, delay: 0.3, ease: "power2.out" });
+            gsap.from(".card", { duration: 1, opacity: 0, delay: 0.5, ease: "power2.out" });
+            gsap.from("img", { duration: 1, scale: 0.9, opacity: 0, delay: 0.5, ease: "power2.out" });
+            
+            // Quiz answer submission using jQuery
+            $('#submitQuiz').on('click', function () {
+                var userAnswer = $('#quizAnswer').val().trim();
+                if (userAnswer !== "") {
+                    $('#quizFeedback').slideDown();
+                    // Further answer comparison logic can be added here if needed.
+                } else {
+                    alert('Please enter your answer.');
+                }
+            });
+        });
+    </script>
+}

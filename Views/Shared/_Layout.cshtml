@@ -26,7 +26,6 @@
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" 
           href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" />
-     <link rel="stylesheet" href="~/css/splash.css" /> 
      @await RenderSectionAsync("Css", required: false)
 </head>
 <body>
@@ -222,24 +221,22 @@
       </div>
     </div>
   </header>
-  <!-- SPLASH SCREEN -->
-  <div id="splashScreen" style="display:none; position: absolite;">
-    <div id="splashContent">
-      <div id="threeContainer"></div>
-      <div id="splashMessage">Grab Your Coffee For Learning</div>
-      <div id="progressBar">
-        <div id="progressBarFill"></div>
-      </div>
-    </div>
-  </div>
-
 
   <div style="height: max-content;" id="mainContent" class="m-0">
       <main role="main" class="bg-first">
         @RenderBody()
       </main>
   </div>
-
+     <!-- SPLASH SCREEN -->
+  <div id="splashScreen">
+    <div id="splashContent">
+      <div id="threeContainer"></div>
+      <div id="splashMessage"></div>
+      <div id="progressBar">
+        <div id="progressBarFill"></div>
+      </div>
+    </div>
+  </div>
   <footer class="py-4">
     <div class="container">
       <div class="row">
@@ -257,8 +254,12 @@
         <div class="col-md-4 mb-4">
           <h5>@ContactUs</h5>
           <ul class="list-unstyled">
-            <li>Email: <a href="mailto:info@almancakulubu.com">info@almancakulubu.com</a></li>
-            <li>Phone: +90 555 123 4567</li>
+            <li class="contact-item text-truncate">
+              Email: <a href="mailto:info@almancakulubu.com">suna.almancakonusmakulubu@gmail.com</a>
+            </li>
+            <li class="contact-item text-truncate">
+              Phone: <a href="tel:+49 15158813879">+49 15158813879</a>
+            </li>
             <li>Address: Istanbul, Turkey</li>
           </ul>
         </div>
@@ -290,19 +291,6 @@
     <!-- 5. DataTables Responsive -->
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
-    <!-- Three.js -->
-      <script type="importmap">
-      {
-        "imports": {
-          "three": "/lib/three/build/three.module.js"
-        }
-      }
-    </script>
-    <script>
-      window.localizedSplashMessage = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(_localization.GetKey("SplashMessage").Value));
-    </script>
-    <!-- Load splash.js as an ES Module -->
-    <script type="module" src="~/js/splash.js"></script>
     <!-- Swiper JS -->
     <script src="~/lib/swiper/swiper-bundle.min.js"></script>
     <!-- If you need separate Popper (only if not using the bundle) -->

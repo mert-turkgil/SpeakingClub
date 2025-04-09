@@ -1,64 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!--  
-    Microsoft ResX Schema 
-    
-    Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
-    associated with the data types.
-    
-    Example:
-    
-    ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
-    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        <value>[base64 mime encoded serialized .NET Framework object]</value>
-    </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-        <comment>This is a comment</comment>
-    </data>
-                
-    There are any number of "resheader" rows that contain simple 
-    name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
-    mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
-    extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
-    read any of the formats listed below.
-    
-    mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
-            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-            : and then encoded with base64 encoding.
-    
-    mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
-            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
-            : and then encoded with base64 encoding.
-
-    mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
-            : using a System.ComponentModel.TypeConverter
-            : and then encoded with base64 encoding.
-    -->
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -118,60 +59,46 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="SplashMessage" xml:space="preserve">
-    <value>Öğrenmeye başlamadan önce bir tane kahve alın</value>
-    <comment>Splash</comment>
+    <value>Merakınızı uyandırın... Macera şimdi başlıyor!</value>
   </data>
   <data name="Home" xml:space="preserve">
     <value>Anasayfa</value>
-    <comment>Nav</comment>
   </data>
   <data name="Blog" xml:space="preserve">
     <value>Blog</value>
-    <comment>Nav</comment>
   </data>
   <data name="About" xml:space="preserve">
     <value>Hakkında</value>
-    <comment>Nav</comment>
   </data>
   <data name="Sözlük" xml:space="preserve">
     <value>Sözlük</value>
-    <comment>Nav</comment>
   </data>
   <data name="Login" xml:space="preserve">
     <value>Hesap</value>
-    <comment>Nav</comment>
   </data>
   <data name="Logo" xml:space="preserve">
     <value>Almanca Konuşma Kulubü</value>
-    <comment>Logo</comment>
   </data>
   <data name="FooterBrand" xml:space="preserve">
     <value>Almanca Konuşma Kulübü</value>
-    <comment>Footer</comment>
   </data>
   <data name="FooterDescription" xml:space="preserve">
     <value>Almanca konuşma topluluğumuz ile bağlantı kurun, öğrenin ve kendinizden emin bir şekilde konuşun.</value>
-    <comment>Footer</comment>
   </data>
   <data name="ContactUs" xml:space="preserve">
     <value>İletişim</value>
-    <comment>Footer</comment>
   </data>
   <data name="FollowUs" xml:space="preserve">
     <value>Bizi Takip Edin</value>
-    <comment>Footer</comment>
   </data>
   <data name="Copyright" xml:space="preserve">
     <value>© 2025 Almanca Konuşma Kulübü. Tüm hakları saklıdır.</value>
-    <comment>Footer</comment>
   </data>
   <data name="Carousel_1_Description" xml:space="preserve">
     <value>Kulüplerde farklı konular işlenir, seviyeye göre sunum ve tartışma teknikleri uygulanırken, öğrencinin verdiği cümleye alternatif cümleler verilir, gerekiyorsa gramer konularına değinir.</value>
-    <comment>Carousel</comment>
   </data>
   <data name="Carousel_2_Description" xml:space="preserve">
     <value>Bu blogda Almanca öğrenme sürecine dair deneyimlerimi, konuşma önerilerini ve faydalı kaynakları paylaşıyor; böylece yeni fikirler ve motivasyon kazanabilirsiniz.</value>
-    <comment>Carousel</comment>
   </data>
   <data name="Carousel_2_Title" xml:space="preserve">
     <value>Blog</value>
@@ -185,11 +112,11 @@
   <data name="Carousel_1_LinkText" xml:space="preserve">
     <value>Daha Fazla Öğren</value>
   </data>
-    <data name="PageTitle" xml:space="preserve">
+  <data name="PageTitle" xml:space="preserve">
     <value>Hakkımda</value>
   </data>
   <data name="HeroGreeting" xml:space="preserve">
-    <value><![CDATA[Merhaba, <span class="color-animation-2">Ben</span> <span class="color-animation">Suna</span>!]]></value>
+    <value>Merhaba, &lt;span class="color-animation-2"&gt;Ben&lt;/span&gt; &lt;span class="color-animation"&gt;Suna&lt;/span&gt;!</value>
   </data>
   <data name="HeroSubtitle" xml:space="preserve">
     <value>Almanca Konuşma Kulübü</value>
@@ -201,7 +128,7 @@
     <value>Hakkımda</value>
   </data>
   <data name="AboutParagraph1" xml:space="preserve">
-    <value><![CDATA[Merhaba, ben <strong>Suna!</strong> 1965 yılında Bremen, Almanya’da doğdum, orada büyüdüm ve okudum. Birkaç yıl çalıştıktan sonra eşimle tanışıp Türkiye’ye kesin dönüş yaptım. Kısa bir süreliğine devlet okulunda çalıştıktan sonra yolculuğuma özel eğitim kurumlarında devam ettim.]]></value>
+    <value>Merhaba, ben &lt;strong&gt;Suna!&lt;/strong&gt; 1965 yılında Bremen, Almanya’da doğdum, orada büyüdüm ve okudum. Birkaç yıl çalıştıktan sonra eşimle tanışıp Türkiye’ye kesin dönüş yaptım. Kısa bir süreliğine devlet okulunda çalıştıktan sonra yolculuğuma özel eğitim kurumlarında devam ettim.</value>
   </data>
   <data name="AboutParagraph2" xml:space="preserve">
     <value>Emekliliğe ayrıldıktan sonra sosyal medyaya ağırlık verip özel ders ve konuşma kulüplerine yoğunlaştım. Farklı Almanca seviyelerine yönelik konuşma kulüplerini hizmetinize sunuyorum. Kulüplerde farklı konular işlenir, seviyeye göre sunum ve tartışma teknikleri uygulanır, alternatif cümle önerileri ve gerektiğinde gramer desteği sağlanır.</value>
@@ -295,216 +222,345 @@
     <value>Gönder</value>
   </data>
   <data name="PageTitleD" xml:space="preserve">
-  <value>Sözlük</value>
-</data>
-<data name="PageSubtitle" xml:space="preserve">
-  <value>Anlamları, telaffuzları, örnekleri ve daha fazlasını keşfedin.</value>
-</data>
-<data name="SearchPlaceholder" xml:space="preserve">
-  <value>Bir kelime ara...</value>
-</data>
-<data name="SearchButton" xml:space="preserve">
-  <value><i class="fa-solid fa-magnifying-glass"></i> Ara</value>
-</data>
-<data name="DefinitionLabel" xml:space="preserve">
-  <value>Tanım:</value>
-</data>
-<data name="PronunciationLabel" xml:space="preserve">
-  <value>Telaffuz:</value>
-</data>
-<data name="ExampleLabel" xml:space="preserve">
-  <value>Örnek:</value>
-</data>
-<data name="OriginLabel" xml:space="preserve">
-  <value>Köken:</value>
-</data>
-<data name="SynonymsLabel" xml:space="preserve">
-  <value>Eşanlamlılar:</value>
-</data>
-<data name="ExternalSourceNote" xml:space="preserve">
-  <value>*Harici kaynaklardan alındı.</value>
-</data>
-<data name="WarningMessage" xml:space="preserve">
-  <value>Üzerinde çalışıyoruz. Şu anda tanım mevcut değil.</value>
-</data>
-<data name="Register_Title" xml:space="preserve"><value>Kayıt Ol</value></data>
-<data name="Register_Header" xml:space="preserve"><value>Kayıt Ol</value></data>
-<data name="Register_Subtitle" xml:space="preserve"><value>Hemen kayıt olun ve platformumuza tam erişim sağlayın.</value></data>
-<data name="Label_FirstName" xml:space="preserve"><value>Adınız</value></data>
-<data name="Placeholder_FirstName" xml:space="preserve"><value>Adınızı giriniz</value></data>
-<data name="Label_LastName" xml:space="preserve"><value>Soyadınız</value></data>
-<data name="Placeholder_LastName" xml:space="preserve"><value>Soyadınızı giriniz</value></data>
-<data name="Label_Age" xml:space="preserve"><value>Yaşınız</value></data>
-<data name="Label_Email" xml:space="preserve"><value>E-posta</value></data>
-<data name="Placeholder_Email" xml:space="preserve"><value>isim@ornek.com</value></data>
-<data name="Label_Password" xml:space="preserve"><value>Şifre</value></data>
-<data name="Label_ConfirmPassword" xml:space="preserve"><value>Şifreyi Onayla</value></data>
-<data name="Button_CreateAccount" xml:space="preserve"><value>Hesap Oluştur</value></data>
-<data name="AlreadyHaveAccount" xml:space="preserve"><value>Zaten bir hesabınız var mı?</value></data>
-<data name="Link_LoginHere" xml:space="preserve"><value>Buradan giriş yapın</value></data>
-<data name="WarningMessage_Register_UnderDevelopment" xml:space="preserve">
-  <value>Üzerinde çalışıyoruz. Şu anda mevcut bir tanım yok.</value>
-</data>
-<data name="Login_Title" xml:space="preserve"><value>Giriş Yap</value></data>
-<data name="Login_Header" xml:space="preserve"><value>Giriş Yap</value></data>
-<data name="Login_Subtitle" xml:space="preserve"><value>Hesabınıza erişmek için giriş bilgilerinizi girin.</value></data>
-<data name="Label_RememberMe" xml:space="preserve"><value>Beni hatırla</value></data>
-<data name="Button_Login" xml:space="preserve"><value>Giriş Yap</value></data>
-<data name="NoAccountYet" xml:space="preserve"><value>Henüz hesabınız yok mu?</value></data>
-<data name="Link_RegisterHere" xml:space="preserve"><value>Buradan kayıt olun</value></data>
-<data name="WarningMessage_Login_UnderDevelopment" xml:space="preserve">
-  <value>Üzerinde çalışıyoruz. Şu anda mevcut bir tanım yok.</value>
-</data>
-<data name="MyAccount_Title"><value>Hesabım</value></data>
-<data name="MyAccount_Header"><value>Hesabım</value></data>
-<data name="AccountDetails"><value>Hesap Bilgileri</value></data>
-<data name="FirstName"><value>Adınız</value></data>
-<data name="LastName"><value>Soyadınız</value></data>
-<data name="Age"><value>Yaşınız</value></data>
-<data name="GoToDashboard"><value>Panele Git</value></data>
-<data name="NoQuizData"><value>Henüz hiçbir sınava katılmadınız.</value></data>
-<data name="ManagePassword"><value>Şifre Yönetimi</value></data>
-<data name="ManagePasswordText"><value>Hesabınızı korumak için şifrenizi düzenli olarak güncelleyin.</value></data>
-<data name="ChangePassword"><value>Şifreyi Değiştir</value></data>
-<data name="MyQuizzesLevels"><value>Sınavlarım ve Seviyelerim</value></data>
-<data name="MyQuizzesLevelsText"><value>İlerlemelerinizi ve tamamladığınız sınavları görün.</value></data>
-<data name="GoToQuizzes"><value>Sınavlara Git</value></data>
-<data name="DeleteAccount"><value>Hesabı Sil</value></data>
-<data name="DeleteAccountText"><value>Hesabınızı ve ilişkili verileri kalıcı olarak silin. Bu işlem geri alınamaz.</value></data>
-<data name="DeleteAccountConfirm"><value>Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</value></data>
-<data name="DeleteAccountButton"><value>Hesabımı Sil</value></data>
-<data name="ChangePassword_Title"><value>Şifreyi Değiştir</value></data>
-<data name="CurrentPassword"><value>Mevcut Şifre</value></data>
-<data name="NewPassword"><value>Yeni Şifre</value></data>
-<data name="ConfirmNewPassword"><value>Yeni Şifreyi Onayla</value></data>
-<data name="UpdatePasswordButton"><value>Şifreyi Güncelle</value></data>
-  <data name="ReviewQuiz_Title">
+    <value>Sözlük</value>
+  </data>
+  <data name="PageSubtitle" xml:space="preserve">
+    <value>Anlamları, telaffuzları, örnekleri ve daha fazlasını keşfedin.</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Bir kelime ara...</value>
+  </data>
+  <data name="SearchButton" xml:space="preserve">
+    <value>Çevir</value>
+  </data>
+  <data name="DefinitionLabel" xml:space="preserve">
+    <value>Tanım:</value>
+  </data>
+  <data name="PronunciationLabel" xml:space="preserve">
+    <value>Telaffuz:</value>
+  </data>
+  <data name="ExampleLabel" xml:space="preserve">
+    <value>Örnek:</value>
+  </data>
+  <data name="OriginLabel" xml:space="preserve">
+    <value>Köken:</value>
+  </data>
+  <data name="SynonymsLabel" xml:space="preserve">
+    <value>Eşanlamlılar:</value>
+  </data>
+  <data name="ExternalSourceNote" xml:space="preserve">
+    <value>*Harici kaynaklardan alındı.</value>
+  </data>
+  <data name="WarningMessage" xml:space="preserve">
+    <value>Üzerinde çalışıyoruz. Şu anda tanım mevcut değil.</value>
+  </data>
+  <data name="Register_Title" xml:space="preserve">
+    <value>Kayıt Ol</value>
+  </data>
+  <data name="Register_Header" xml:space="preserve">
+    <value>Kayıt Ol</value>
+  </data>
+  <data name="Register_Subtitle" xml:space="preserve">
+    <value>Hemen kayıt olun ve platformumuza tam erişim sağlayın.</value>
+  </data>
+  <data name="Label_FirstName" xml:space="preserve">
+    <value>Adınız</value>
+  </data>
+  <data name="Placeholder_FirstName" xml:space="preserve">
+    <value>Adınızı giriniz</value>
+  </data>
+  <data name="Label_LastName" xml:space="preserve">
+    <value>Soyadınız</value>
+  </data>
+  <data name="Placeholder_LastName" xml:space="preserve">
+    <value>Soyadınızı giriniz</value>
+  </data>
+  <data name="Label_Age" xml:space="preserve">
+    <value>Yaşınız</value>
+  </data>
+  <data name="Label_Email" xml:space="preserve">
+    <value>E-posta</value>
+  </data>
+  <data name="Placeholder_Email" xml:space="preserve">
+    <value>isim@ornek.com</value>
+  </data>
+  <data name="Label_Password" xml:space="preserve">
+    <value>Şifre</value>
+  </data>
+  <data name="Label_ConfirmPassword" xml:space="preserve">
+    <value>Şifreyi Onayla</value>
+  </data>
+  <data name="Button_CreateAccount" xml:space="preserve">
+    <value>Hesap Oluştur</value>
+  </data>
+  <data name="AlreadyHaveAccount" xml:space="preserve">
+    <value>Zaten bir hesabınız var mı?</value>
+  </data>
+  <data name="Link_LoginHere" xml:space="preserve">
+    <value>Buradan giriş yapın</value>
+  </data>
+  <data name="WarningMessage_Register_UnderDevelopment" xml:space="preserve">
+    <value>Üzerinde çalışıyoruz. Şu anda mevcut bir tanım yok.</value>
+  </data>
+  <data name="Login_Title" xml:space="preserve">
+    <value>Giriş Yap</value>
+  </data>
+  <data name="Login_Header" xml:space="preserve">
+    <value>Giriş Yap</value>
+  </data>
+  <data name="Login_Subtitle" xml:space="preserve">
+    <value>Hesabınıza erişmek için giriş bilgilerinizi girin.</value>
+  </data>
+  <data name="Label_RememberMe" xml:space="preserve">
+    <value>Beni hatırla</value>
+  </data>
+  <data name="Button_Login" xml:space="preserve">
+    <value>Giriş Yap</value>
+  </data>
+  <data name="NoAccountYet" xml:space="preserve">
+    <value>Henüz hesabınız yok mu?</value>
+  </data>
+  <data name="Link_RegisterHere" xml:space="preserve">
+    <value>Buradan kayıt olun</value>
+  </data>
+  <data name="WarningMessage_Login_UnderDevelopment" xml:space="preserve">
+    <value>Üzerinde çalışıyoruz. Şu anda mevcut bir tanım yok.</value>
+  </data>
+  <data name="MyAccount_Title" xml:space="preserve">
+    <value>Hesabım</value>
+  </data>
+  <data name="MyAccount_Header" xml:space="preserve">
+    <value>Hesabım</value>
+  </data>
+  <data name="AccountDetails" xml:space="preserve">
+    <value>Hesap Bilgileri</value>
+  </data>
+  <data name="FirstName" xml:space="preserve">
+    <value>Adınız</value>
+  </data>
+  <data name="LastName" xml:space="preserve">
+    <value>Soyadınız</value>
+  </data>
+  <data name="Age" xml:space="preserve">
+    <value>Yaşınız</value>
+  </data>
+  <data name="GoToDashboard" xml:space="preserve">
+    <value>Panele Git</value>
+  </data>
+  <data name="NoQuizData" xml:space="preserve">
+    <value>Henüz hiçbir sınava katılmadınız.</value>
+  </data>
+  <data name="ManagePassword" xml:space="preserve">
+    <value>Şifre Yönetimi</value>
+  </data>
+  <data name="ManagePasswordText" xml:space="preserve">
+    <value>Hesabınızı korumak için şifrenizi düzenli olarak güncelleyin.</value>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>Şifreyi Değiştir</value>
+  </data>
+  <data name="MyQuizzesLevels" xml:space="preserve">
+    <value>Sınavlarım ve Seviyelerim</value>
+  </data>
+  <data name="MyQuizzesLevelsText" xml:space="preserve">
+    <value>İlerlemelerinizi ve tamamladığınız sınavları görün.</value>
+  </data>
+  <data name="GoToQuizzes" xml:space="preserve">
+    <value>Sınavlara Git</value>
+  </data>
+  <data name="DeleteAccount" xml:space="preserve">
+    <value>Hesabı Sil</value>
+  </data>
+  <data name="DeleteAccountText" xml:space="preserve">
+    <value>Hesabınızı ve ilişkili verileri kalıcı olarak silin. Bu işlem geri alınamaz.</value>
+  </data>
+  <data name="DeleteAccountConfirm" xml:space="preserve">
+    <value>Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</value>
+  </data>
+  <data name="DeleteAccountButton" xml:space="preserve">
+    <value>Hesabımı Sil</value>
+  </data>
+  <data name="ChangePassword_Title" xml:space="preserve">
+    <value>Şifreyi Değiştir</value>
+  </data>
+  <data name="CurrentPassword" xml:space="preserve">
+    <value>Mevcut Şifre</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>Yeni Şifre</value>
+  </data>
+  <data name="ConfirmNewPassword" xml:space="preserve">
+    <value>Yeni Şifreyi Onayla</value>
+  </data>
+  <data name="UpdatePasswordButton" xml:space="preserve">
+    <value>Şifreyi Güncelle</value>
+  </data>
+  <data name="ReviewQuiz_Title" xml:space="preserve">
     <value>İnceleme: {0}</value>
   </data>
-  <data name="SubmissionDate">
+  <data name="SubmissionDate" xml:space="preserve">
     <value>Gönderim Tarihi</value>
   </data>
-  <data name="Score">
+  <data name="Score" xml:space="preserve">
     <value>Puan</value>
   </data>
-  <data name="TotalTimeTaken">
+  <data name="TotalTimeTaken" xml:space="preserve">
     <value>Toplam Süre</value>
   </data>
-  <data name="QuestionDetails">
+  <data name="QuestionDetails" xml:space="preserve">
     <value>Soru Detayları</value>
   </data>
-  <data name="Question">
+  <data name="Question" xml:space="preserve">
     <value>Soru</value>
   </data>
-  <data name="YourAnswer">
+  <data name="YourAnswer" xml:space="preserve">
     <value>Cevabınız</value>
   </data>
-  <data name="CorrectAnswer">
+  <data name="CorrectAnswer" xml:space="preserve">
     <value>Doğru Cevap</value>
   </data>
-  <data name="TimeSeconds">
+  <data name="TimeSeconds" xml:space="preserve">
     <value>Süre (s)</value>
   </data>
-  <data name="Status">
+  <data name="Status" xml:space="preserve">
     <value>Durum</value>
   </data>
-  <data name="Correct">
+  <data name="Correct" xml:space="preserve">
     <value>Doğru</value>
   </data>
-  <data name="Incorrect">
+  <data name="Incorrect" xml:space="preserve">
     <value>Yanlış</value>
   </data>
-  <data name="BackToQuizzes">
+  <data name="BackToQuizzes" xml:space="preserve">
     <value>Quizlere Geri Dön</value>
   </data>
-    <data name="AvailableQuizzes_Title">
+  <data name="AvailableQuizzes_Title" xml:space="preserve">
     <value>Mevcut Sınavlar</value>
   </data>
-  <data name="NoQuizzesAvailable">
+  <data name="NoQuizzesAvailable" xml:space="preserve">
     <value>Mevcut sınav bulunmamaktadır.</value>
   </data>
-  <data name="NoDescriptionAvailable">
+  <data name="NoDescriptionAvailable" xml:space="preserve">
     <value>Açıklama mevcut değil.</value>
   </data>
-  <data name="TeacherLabel">
+  <data name="TeacherLabel" xml:space="preserve">
     <value>Öğretmen</value>
   </data>
-  <data name="CategoryLabel">
+  <data name="CategoryLabel" xml:space="preserve">
     <value>Kategori</value>
   </data>
-  <data name="AttemptsLabel">
+  <data name="AttemptsLabel" xml:space="preserve">
     <value>Denemeler</value>
   </data>
-  <data name="LastScoreLabel">
+  <data name="LastScoreLabel" xml:space="preserve">
     <value>Son Puan</value>
   </data>
-  <data name="LastAttemptLabel">
+  <data name="LastAttemptLabel" xml:space="preserve">
     <value>Son Deneme</value>
   </data>
-  <data name="TakeQuizButton">
+  <data name="TakeQuizButton" xml:space="preserve">
     <value>Sınava Başla</value>
   </data>
-  <data name="ReviewButton">
+  <data name="ReviewButton" xml:space="preserve">
     <value>İncele</value>
   </data>
-  <data name="ReviewDetailsTitle">
+  <data name="ReviewDetailsTitle" xml:space="preserve">
     <value>İnceleme Detayları</value>
   </data>
-  <data name="QuestionLabel">
+  <data name="QuestionLabel" xml:space="preserve">
     <value>Soru</value>
   </data>
-  <data name="YourAnswerLabel">
+  <data name="YourAnswerLabel" xml:space="preserve">
     <value>Cevabınız</value>
   </data>
-  <data name="CorrectAnswerLabel">
+  <data name="CorrectAnswerLabel" xml:space="preserve">
     <value>Doğru Cevap</value>
   </data>
-  <data name="TimeSecondsLabel">
+  <data name="TimeSecondsLabel" xml:space="preserve">
     <value>Süre (s)</value>
   </data>
-  <data name="StatusLabel">
+  <data name="StatusLabel" xml:space="preserve">
     <value>Durum</value>
   </data>
-  <data name="CorrectStatus">
+  <data name="CorrectStatus" xml:space="preserve">
     <value>Doğru</value>
   </data>
-  <data name="IncorrectStatus">
+  <data name="IncorrectStatus" xml:space="preserve">
     <value>Yanlış</value>
   </data>
-    <data name="QuizTitle">
+  <data name="QuizTitle" xml:space="preserve">
     <value>Sınav</value>
   </data>
-  <data name="TotalTimeLabel">
+  <data name="TotalTimeLabel" xml:space="preserve">
     <value>Toplam Süre:</value>
   </data>
-  <data name="PreviousButton">
+  <data name="PreviousButton" xml:space="preserve">
     <value>Önceki</value>
   </data>
-  <data name="NextButton">
+  <data name="NextButton" xml:space="preserve">
     <value>Sonraki</value>
   </data>
-  <data name="SubmitExamButton">
+  <data name="SubmitExamButton" xml:space="preserve">
     <value>Sınavı Gönder</value>
   </data>
-  <data name="StartQuizModalTitle">
+  <data name="StartQuizModalTitle" xml:space="preserve">
     <value>Sınava başlamaya hazır mısınız?</value>
   </data>
-  <data name="StartQuizModalMessage">
+  <data name="StartQuizModalMessage" xml:space="preserve">
     <value>Başladıktan sonra, sınavı tam ekran modunda tamamlamanız gerekmektedir.</value>
   </data>
-  <data name="StartQuizButton">
+  <data name="StartQuizButton" xml:space="preserve">
     <value>Şimdi Başla</value>
   </data>
-  <data name="ExamCanceledFullscreenExit">
+  <data name="Err1" xml:space="preserve">
+    <value>Sınav sorusu mevcut değil.</value>
+  </data>
+  <data name="Err2" xml:space="preserve">
+    <value>İçerik şu anda mevcut değildir.</value>
+  </data>
+  <data name="Err3" xml:space="preserve">
+    <value>Etiket mevcut değil.</value>
+  </data>
+  <data name="Err4" xml:space="preserve">
+    <value>Resim mevcut değil.</value>
+  </data>
+  <data name="SendButtonQ" xml:space="preserve">
+    <value>Yanıt Gönder</value>
+  </data>
+  <data name="RightAnswer" xml:space="preserve">
+    <value>Doğru Cevap:</value>
+  </data>
+  <data name="BlogDesc" xml:space="preserve">
+    <value>En son gönderilerimize göz atın</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Arama Yapın</value>
+  </data>
+  <data name="Tag" xml:space="preserve">
+    <value>Etiket</value>
+  </data>
+  <data name="ReadMore" xml:space="preserve">
+    <value>Daha fazla bilgi edinin</value>
+  </data>
+  <data name="ExamCanceledFullscreenExit" xml:space="preserve">
     <value>Sınav, tam ekran modundan çıkıldığı için iptal edildi.</value>
   </data>
-  <data name="ExamCanceledLeaveScreen">
+  <data name="ExamCanceledLeaveScreen" xml:space="preserve">
     <value>Sınav, ekran terk edildiği için iptal edildi.</value>
   </data>
-  <data name="ExamCanceledInactivity">
+  <data name="ExamCanceledInactivity" xml:space="preserve">
     <value>Hareketsizlik nedeniyle sınavınız iptal edildi.</value>
   </data>
-  <data name="AudioNotSupported">
+  <data name="AudioNotSupported" xml:space="preserve">
     <value>Tarayıcınız ses öğesini desteklemiyor.</value>
+  </data>
+  <data name="Reklam" xml:space="preserve">
+    <value>Evde rahatça pratik yapın.</value>
+  </data>
+  <data name="Title_3_freefromdesire_tr" xml:space="preserve">
+    <value>Akıllı Evlerin Geleceği: Teknoloji ve Konforun Buluşması</value>
+  </data>
+  <data name="Content_3_freefromdesire_tr" xml:space="preserve">
+    <value>&lt;h1&gt;Congratulations on setting up CKEditor 5! 🎉&lt;/h1&gt;&lt;figure class="image"&gt;&lt;img style="aspect-ratio:500/280;" src="/blog/gif/f9387b0777d6c83d05bfbbdbe60b96cd.gif" width="500" height="280"&gt;&lt;/figure&gt;&lt;p&gt;You've successfully created a CKEditor 5 project. Enjoy editing!&lt;/p&gt;</value>
   </data>
 </root>

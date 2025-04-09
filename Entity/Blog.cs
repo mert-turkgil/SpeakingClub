@@ -46,5 +46,7 @@ namespace SpeakingClub.Entity
         
         // New: Many-to-many relationship with Tags
         public ICollection<Tag> Tags { get; set; }
+
+         public int? SelectedQuestionId { get; set; }
     }
 }

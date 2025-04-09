@@ -1,10 +1,12 @@
 ﻿@model IndexModel
+@inject LanguageService Localizer
 @{
     ViewData["Title"] = "Home Page";
 }
 @section Css{
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
     <link rel="stylesheet" href="~/css/Slide.css" />
+    <link rel="stylesheet" href="~/css/splash.css" /> 
     <style>
       .video-container {
         position: relative;
@@ -57,22 +59,19 @@
     }
 <main>
 <section>
-        <div data-aos="fade-down">
-           @await Component.InvokeAsync("Slide")
-        </div>
+    <div data-aos="fade-down">
+        @await Component.InvokeAsync("Slide")
+    </div>
 </section>
 <!-- Hero Section: Introduction -->
-<section class="hero pb-5" style="position:relative; overflow:hidden;">
-  <div id="Isik" class="container-fluid" style="position:relative; height:600px;">
-    <!-- Metin solda başlasın -->
-    <div id="overlayText" style="">
-      Almanca Konuşma Kulübü<br>
-      <span style="font-size:0.6em;">Practice speaking German interactively.</span><br>
-      <a href="#" class="btn btn-light">Join Now</a>
+<section class="hero pb-5">
+  <div id="Isik" class="container-fluid">
+    <div id="overlayText">
+      <h1>@Localizer.GetKey("Logo").Value</h1>
+      <span class="subtext">@Localizer.GetKey("Reklam").Value</span><br>
+      <a asp-controller="Account" asp-action="Account" class="btn btn-light">@Localizer.GetKey("Register_Title").Value</a>
     </div>
-    <canvas id="three-canvas" style="
-        position:absolute; top:0; left:0; width:100%; height:100%; z-index:0;">
-    </canvas>
+    <canvas id="three-canvas"></canvas>
   </div>
 </section>
 <!-- Video Grid Section -->
@@ -109,6 +108,20 @@
 </section>
 </main>
   @section Scripts {
+    <script>
+      window.localizedSplashMessage = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(_localization.GetKey("SplashMessage").Value));
+    </script>
+    <!-- Three.js -->
+      <script type="importmap">
+      {
+        "imports": {
+          "three": "/lib/three/build/three.module.js"
+        }
+      }
+    </script>
+    <!-- Load splash.js as an ES Module -->
+    <script type="module" src="~/js/splash.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js" type="module"></script>
     <script type="module" src="~/js/anime.js"></script> 
         <!-- GSAP -->
     <script src="~/lib/gsap/gsap.min.js"></script>
@@ -149,4 +162,8 @@
             });
         });
     </script>
-  }
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+    <script>
+      AOS.init();
+    </script>
+  } 

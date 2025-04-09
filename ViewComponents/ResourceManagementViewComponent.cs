@@ -17,19 +17,22 @@ public class ResourceManagementViewComponent : ViewComponent
         _env = env;
     }
 
-    public IViewComponentResult Invoke()
+    public IViewComponentResult Invoke(string resourceLang)
     {
-        var lang = CultureInfo.CurrentCulture.Name;
-        var translations = LoadTranslations(GetResxPath(lang));
+        // Fall back if nothing is chosen
+        if (string.IsNullOrEmpty(resourceLang))
+            resourceLang = "en-US";
+
+        var translations = LoadTranslations(GetResxPath(resourceLang));
 
         var viewModel = new LocalizationViewModel
         {
-            CurrentLanguage = lang,
+            CurrentLanguage = resourceLang,
             AvailableLanguages = new List<string> { "de-DE", "en-US", "tr-TR" },
             Translations = translations
         };
 
-        return View(viewModel); // This should match the expected model in Default.cshtml
+        return View("Default", viewModel);
     }
 
     private string GetResxPath(string lang)

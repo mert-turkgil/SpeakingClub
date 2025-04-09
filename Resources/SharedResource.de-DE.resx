@@ -1,64 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!--  
-    Microsoft ResX Schema 
-    
-    Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
-    associated with the data types.
-    
-    Example:
-    
-    ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
-    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        <value>[base64 mime encoded serialized .NET Framework object]</value>
-    </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-        <comment>This is a comment</comment>
-    </data>
-                
-    There are any number of "resheader" rows that contain simple 
-    name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
-    mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
-    extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
-    read any of the formats listed below.
-    
-    mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
-            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-            : and then encoded with base64 encoding.
-    
-    mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
-            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
-            : and then encoded with base64 encoding.
-
-    mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
-            : using a System.ComponentModel.TypeConverter
-            : and then encoded with base64 encoding.
-    -->
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -118,32 +59,25 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="SplashMessage" xml:space="preserve">
-    <value>Trinken Sie einen Kaffee, bevor Sie mit dem Lernen beginnen </value>
-    <comment>Splash</comment>
+    <value>Schüren Sie Ihre Neugierde... Das Abenteuer beginnt jetzt!</value>
   </data>
   <data name="Home" xml:space="preserve">
     <value>Startseite</value>
-    <comment>Nav</comment>
   </data>
   <data name="Blog" xml:space="preserve">
     <value>Blog</value>
-    <comment>Nav</comment>
   </data>
   <data name="About" xml:space="preserve">
     <value>Über</value>
-    <comment>Nav</comment>
   </data>
   <data name="Sözlük" xml:space="preserve">
     <value>Wörterbuch</value>
-    <comment>Nav</comment>
   </data>
   <data name="Login" xml:space="preserve">
     <value>Konto</value>
-    <comment>Nav</comment>
   </data>
   <data name="Logo" xml:space="preserve">
     <value>Deutschsprachiger Club</value>
-    <comment>Nav</comment>
   </data>
   <data name="FooterBrand" xml:space="preserve">
     <value>Deutscher Gesprächsclub</value>
@@ -178,11 +112,11 @@
   <data name="Carousel_1_LinkText" xml:space="preserve">
     <value>Weitere Informationen</value>
   </data>
-    <data name="PageTitle" xml:space="preserve">
+  <data name="PageTitle" xml:space="preserve">
     <value>Über mich</value>
   </data>
   <data name="HeroGreeting" xml:space="preserve">
-    <value><![CDATA[Hallo, <span class="color-animation-2">ich bin</span> <span class="color-animation">Suna</span>!]]></value>
+    <value>Hallo, &lt;span class="color-animation-2"&gt;ich bin&lt;/span&gt; &lt;span class="color-animation"&gt;Suna&lt;/span&gt;!</value>
   </data>
   <data name="HeroSubtitle" xml:space="preserve">
     <value>Deutscher Konversationsclub</value>
@@ -194,7 +128,7 @@
     <value>Über mich</value>
   </data>
   <data name="AboutParagraph1" xml:space="preserve">
-    <value><![CDATA[Hallo, ich bin <strong>Suna!</strong> Ich wurde 1965 in Bremen, Deutschland geboren, wuchs dort auf und studierte. Nach einigen Jahren der Arbeit traf ich meinen Ehepartner und zog endgültig in die Türkei. Nach einer kurzen Zeit an einer staatlichen Schule setzte ich meinen Weg in privaten Bildungseinrichtungen fort.]]></value>
+    <value>Hallo, ich bin &lt;strong&gt;Suna!&lt;/strong&gt; Ich wurde 1965 in Bremen, Deutschland geboren, wuchs dort auf und studierte. Nach einigen Jahren der Arbeit traf ich meinen Ehepartner und zog endgültig in die Türkei. Nach einer kurzen Zeit an einer staatlichen Schule setzte ich meinen Weg in privaten Bildungseinrichtungen fort.</value>
   </data>
   <data name="AboutParagraph2" xml:space="preserve">
     <value>Nach meiner Pensionierung habe ich mich auf soziale Medien, Privatunterricht und Gesprächskreise konzentriert. Ich biete Gesprächskreise an, die auf verschiedene Niveaus der Deutschkenntnisse zugeschnitten sind. In diesen Gruppen werden verschiedene Themen behandelt, mit niveauangepassten Präsentations- und Diskussionstechniken, alternativen Satzvorschlägen und bei Bedarf grammatikalischer Unterstützung.</value>
@@ -287,216 +221,345 @@
     <value>Senden</value>
   </data>
   <data name="PageTitleD" xml:space="preserve">
-  <value>Wörterbuch</value>
-</data>
-<data name="PageSubtitle" xml:space="preserve">
-  <value>Entdecke Bedeutungen, Aussprachen, Beispiele und mehr.</value>
-</data>
-<data name="SearchPlaceholder" xml:space="preserve">
-  <value>Suche nach einem Wort...</value>
-</data>
-<data name="SearchButton" xml:space="preserve">
-  <value><i class="fa-solid fa-magnifying-glass"></i> Suchen</value>
-</data>
-<data name="DefinitionLabel" xml:space="preserve">
-  <value>Definition:</value>
-</data>
-<data name="PronunciationLabel" xml:space="preserve">
-  <value>Aussprache:</value>
-</data>
-<data name="ExampleLabel" xml:space="preserve">
-  <value>Beispiel:</value>
-</data>
-<data name="OriginLabel" xml:space="preserve">
-  <value>Herkunft:</value>
-</data>
-<data name="SynonymsLabel" xml:space="preserve">
-  <value>Synonyme:</value>
-</data>
-<data name="ExternalSourceNote" xml:space="preserve">
-  <value>*Aus externen Quellen abgerufen.</value>
-</data>
-<data name="WarningMessage" xml:space="preserve">
-  <value>Wir arbeiten daran. Zurzeit ist keine Definition verfügbar.</value>
-</data>
-<data name="Register_Title" xml:space="preserve"><value>Registrieren</value></data>
-<data name="Register_Header" xml:space="preserve"><value>Registrieren</value></data>
-<data name="Register_Subtitle" xml:space="preserve"><value>Registrieren Sie sich jetzt und erhalten Sie vollen Zugang zu unserer Plattform.</value></data>
-<data name="Label_FirstName" xml:space="preserve"><value>Vorname</value></data>
-<data name="Placeholder_FirstName" xml:space="preserve"><value>Geben Sie Ihren Vornamen ein</value></data>
-<data name="Label_LastName" xml:space="preserve"><value>Nachname</value></data>
-<data name="Placeholder_LastName" xml:space="preserve"><value>Geben Sie Ihren Nachnamen ein</value></data>
-<data name="Label_Age" xml:space="preserve"><value>Alter</value></data>
-<data name="Label_Email" xml:space="preserve"><value>E-Mail</value></data>
-<data name="Placeholder_Email" xml:space="preserve"><value>name@beispiel.de</value></data>
-<data name="Label_Password" xml:space="preserve"><value>Passwort</value></data>
-<data name="Label_ConfirmPassword" xml:space="preserve"><value>Passwort bestätigen</value></data>
-<data name="Button_CreateAccount" xml:space="preserve"><value>Konto erstellen</value></data>
-<data name="AlreadyHaveAccount" xml:space="preserve"><value>Haben Sie bereits ein Konto?</value></data>
-<data name="Link_LoginHere" xml:space="preserve"><value>Hier anmelden</value></data>
-<data name="WarningMessage_Register_UnderDevelopment" xml:space="preserve">
-  <value>Wir arbeiten daran. Zurzeit ist keine Definition verfügbar.</value>
-</data>
-<data name="Login_Title" xml:space="preserve"><value>Anmelden</value></data>
-<data name="Login_Header" xml:space="preserve"><value>Anmelden</value></data>
-<data name="Login_Subtitle" xml:space="preserve"><value>Geben Sie Ihre Zugangsdaten ein, um auf Ihr Konto zuzugreifen.</value></data>
-<data name="Label_RememberMe" xml:space="preserve"><value>Angemeldet bleiben</value></data>
-<data name="Button_Login" xml:space="preserve"><value>Anmelden</value></data>
-<data name="NoAccountYet" xml:space="preserve"><value>Noch kein Konto?</value></data>
-<data name="Link_RegisterHere" xml:space="preserve"><value>Hier registrieren</value></data>
-<data name="WarningMessage_Login_UnderDevelopment" xml:space="preserve">
-  <value>Wir arbeiten daran. Zurzeit ist keine Definition verfügbar.</value>
-</data>
-<data name="MyAccount_Title"><value>Mein Konto</value></data>
-<data name="MyAccount_Header"><value>Mein Konto</value></data>
-<data name="AccountDetails"><value>Kontodetails</value></data>
-<data name="FirstName"><value>Vorname</value></data>
-<data name="LastName"><value>Nachname</value></data>
-<data name="Age"><value>Alter</value></data>
-<data name="GoToDashboard"><value>Zum Dashboard</value></data>
-<data name="NoQuizData"><value>Sie haben noch keine Quiz abgeschlossen.</value></data>
-<data name="ManagePassword"><value>Passwort verwalten</value></data>
-<data name="ManagePasswordText"><value>Aktualisieren Sie regelmäßig Ihr Passwort, um Ihr Konto zu sichern.</value></data>
-<data name="ChangePassword"><value>Passwort ändern</value></data>
-<data name="MyQuizzesLevels"><value>Meine Quiz &amp; Level</value></data>
-<data name="MyQuizzesLevelsText"><value>Sehen Sie Ihren Fortschritt und abgeschlossene Quiz an.</value></data>
-<data name="GoToQuizzes"><value>Zu den Quiz</value></data>
-<data name="DeleteAccount"><value>Konto löschen</value></data>
-<data name="DeleteAccountText"><value>Löschen Sie dauerhaft Ihr Konto und alle zugehörigen Daten. Diese Aktion kann nicht rückgängig gemacht werden.</value></data>
-<data name="DeleteAccountConfirm"><value>Sind Sie sicher, dass Sie Ihr Konto löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.</value></data>
-<data name="DeleteAccountButton"><value>Mein Konto löschen</value></data>
-<data name="ChangePassword_Title"><value>Passwort ändern</value></data>
-<data name="CurrentPassword"><value>Aktuelles Passwort</value></data>
-<data name="NewPassword"><value>Neues Passwort</value></data>
-<data name="ConfirmNewPassword"><value>Neues Passwort bestätigen</value></data>
-<data name="UpdatePasswordButton"><value>Passwort aktualisieren</value></data>
-  <data name="ReviewQuiz_Title">
+    <value>Wörterbuch</value>
+  </data>
+  <data name="PageSubtitle" xml:space="preserve">
+    <value>Entdecke Bedeutungen, Aussprachen, Beispiele und mehr.</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Suche nach einem Wort...</value>
+  </data>
+  <data name="SearchButton" xml:space="preserve">
+    <value>Übersetzen Sie</value>
+  </data>
+  <data name="DefinitionLabel" xml:space="preserve">
+    <value>Definition:</value>
+  </data>
+  <data name="PronunciationLabel" xml:space="preserve">
+    <value>Aussprache:</value>
+  </data>
+  <data name="ExampleLabel" xml:space="preserve">
+    <value>Beispiel:</value>
+  </data>
+  <data name="OriginLabel" xml:space="preserve">
+    <value>Herkunft:</value>
+  </data>
+  <data name="SynonymsLabel" xml:space="preserve">
+    <value>Synonyme:</value>
+  </data>
+  <data name="ExternalSourceNote" xml:space="preserve">
+    <value>*Aus externen Quellen abgerufen.</value>
+  </data>
+  <data name="WarningMessage" xml:space="preserve">
+    <value>Wir arbeiten daran. Zurzeit ist keine Definition verfügbar.</value>
+  </data>
+  <data name="Register_Title" xml:space="preserve">
+    <value>Registrieren</value>
+  </data>
+  <data name="Register_Header" xml:space="preserve">
+    <value>Registrieren</value>
+  </data>
+  <data name="Register_Subtitle" xml:space="preserve">
+    <value>Registrieren Sie sich jetzt und erhalten Sie vollen Zugang zu unserer Plattform.</value>
+  </data>
+  <data name="Label_FirstName" xml:space="preserve">
+    <value>Vorname</value>
+  </data>
+  <data name="Placeholder_FirstName" xml:space="preserve">
+    <value>Geben Sie Ihren Vornamen ein</value>
+  </data>
+  <data name="Label_LastName" xml:space="preserve">
+    <value>Nachname</value>
+  </data>
+  <data name="Placeholder_LastName" xml:space="preserve">
+    <value>Geben Sie Ihren Nachnamen ein</value>
+  </data>
+  <data name="Label_Age" xml:space="preserve">
+    <value>Alter</value>
+  </data>
+  <data name="Label_Email" xml:space="preserve">
+    <value>E-Mail</value>
+  </data>
+  <data name="Placeholder_Email" xml:space="preserve">
+    <value>name@beispiel.de</value>
+  </data>
+  <data name="Label_Password" xml:space="preserve">
+    <value>Passwort</value>
+  </data>
+  <data name="Label_ConfirmPassword" xml:space="preserve">
+    <value>Passwort bestätigen</value>
+  </data>
+  <data name="Button_CreateAccount" xml:space="preserve">
+    <value>Konto erstellen</value>
+  </data>
+  <data name="AlreadyHaveAccount" xml:space="preserve">
+    <value>Haben Sie bereits ein Konto?</value>
+  </data>
+  <data name="Link_LoginHere" xml:space="preserve">
+    <value>Hier anmelden</value>
+  </data>
+  <data name="BlogDesc" xml:space="preserve">
+    <value>Lesen Sie unsere letzten Beiträge</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Suchen Sie</value>
+  </data>
+  <data name="ReadMore" xml:space="preserve">
+    <value>Lesen Sie mehr</value>
+  </data>
+  <data name="Err1" xml:space="preserve">
+    <value>Es werden keine Prüfungsfragen gestellt.</value>
+  </data>
+  <data name="Err2" xml:space="preserve">
+    <value>Der Inhalt ist derzeit nicht verfügbar.</value>
+  </data>
+  <data name="Err3" xml:space="preserve">
+    <value>Der Tag ist nicht verfügbar.</value>
+  </data>
+  <data name="Err4" xml:space="preserve">
+    <value>Bild nicht verfügbar.</value>
+  </data>
+  <data name="SendButtonQ" xml:space="preserve">
+    <value>Antwort senden</value>
+  </data>
+  <data name="RightAnswer" xml:space="preserve">
+    <value>Richtige Antwort:</value>
+  </data>
+  <data name="Tag" xml:space="preserve">
+    <value>Tag</value>
+  </data>
+  <data name="WarningMessage_Register_UnderDevelopment" xml:space="preserve">
+    <value>Wir arbeiten daran. Zurzeit ist keine Definition verfügbar.</value>
+  </data>
+  <data name="Login_Title" xml:space="preserve">
+    <value>Anmelden</value>
+  </data>
+  <data name="Login_Header" xml:space="preserve">
+    <value>Anmelden</value>
+  </data>
+  <data name="Login_Subtitle" xml:space="preserve">
+    <value>Geben Sie Ihre Zugangsdaten ein, um auf Ihr Konto zuzugreifen.</value>
+  </data>
+  <data name="Label_RememberMe" xml:space="preserve">
+    <value>Angemeldet bleiben</value>
+  </data>
+  <data name="Button_Login" xml:space="preserve">
+    <value>Anmelden</value>
+  </data>
+  <data name="NoAccountYet" xml:space="preserve">
+    <value>Noch kein Konto?</value>
+  </data>
+  <data name="Link_RegisterHere" xml:space="preserve">
+    <value>Hier registrieren</value>
+  </data>
+  <data name="WarningMessage_Login_UnderDevelopment" xml:space="preserve">
+    <value>Wir arbeiten daran. Zurzeit ist keine Definition verfügbar.</value>
+  </data>
+  <data name="MyAccount_Title" xml:space="preserve">
+    <value>Mein Konto</value>
+  </data>
+  <data name="MyAccount_Header" xml:space="preserve">
+    <value>Mein Konto</value>
+  </data>
+  <data name="AccountDetails" xml:space="preserve">
+    <value>Kontodetails</value>
+  </data>
+  <data name="FirstName" xml:space="preserve">
+    <value>Vorname</value>
+  </data>
+  <data name="LastName" xml:space="preserve">
+    <value>Nachname</value>
+  </data>
+  <data name="Age" xml:space="preserve">
+    <value>Alter</value>
+  </data>
+  <data name="GoToDashboard" xml:space="preserve">
+    <value>Zum Dashboard</value>
+  </data>
+  <data name="NoQuizData" xml:space="preserve">
+    <value>Sie haben noch keine Quiz abgeschlossen.</value>
+  </data>
+  <data name="ManagePassword" xml:space="preserve">
+    <value>Passwort verwalten</value>
+  </data>
+  <data name="ManagePasswordText" xml:space="preserve">
+    <value>Aktualisieren Sie regelmäßig Ihr Passwort, um Ihr Konto zu sichern.</value>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>Passwort ändern</value>
+  </data>
+  <data name="MyQuizzesLevels" xml:space="preserve">
+    <value>Meine Quiz &amp; Level</value>
+  </data>
+  <data name="MyQuizzesLevelsText" xml:space="preserve">
+    <value>Sehen Sie Ihren Fortschritt und abgeschlossene Quiz an.</value>
+  </data>
+  <data name="GoToQuizzes" xml:space="preserve">
+    <value>Zu den Quiz</value>
+  </data>
+  <data name="DeleteAccount" xml:space="preserve">
+    <value>Konto löschen</value>
+  </data>
+  <data name="DeleteAccountText" xml:space="preserve">
+    <value>Löschen Sie dauerhaft Ihr Konto und alle zugehörigen Daten. Diese Aktion kann nicht rückgängig gemacht werden.</value>
+  </data>
+  <data name="DeleteAccountConfirm" xml:space="preserve">
+    <value>Sind Sie sicher, dass Sie Ihr Konto löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.</value>
+  </data>
+  <data name="DeleteAccountButton" xml:space="preserve">
+    <value>Mein Konto löschen</value>
+  </data>
+  <data name="ChangePassword_Title" xml:space="preserve">
+    <value>Passwort ändern</value>
+  </data>
+  <data name="CurrentPassword" xml:space="preserve">
+    <value>Aktuelles Passwort</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>Neues Passwort</value>
+  </data>
+  <data name="ConfirmNewPassword" xml:space="preserve">
+    <value>Neues Passwort bestätigen</value>
+  </data>
+  <data name="UpdatePasswordButton" xml:space="preserve">
+    <value>Passwort aktualisieren</value>
+  </data>
+  <data name="ReviewQuiz_Title" xml:space="preserve">
     <value>Überprüfung: {0}</value>
   </data>
-  <data name="SubmissionDate">
+  <data name="SubmissionDate" xml:space="preserve">
     <value>Einreichungsdatum</value>
   </data>
-  <data name="Score">
+  <data name="Score" xml:space="preserve">
     <value>Punktzahl</value>
   </data>
-  <data name="TotalTimeTaken">
+  <data name="TotalTimeTaken" xml:space="preserve">
     <value>Gesamtzeit</value>
   </data>
-  <data name="QuestionDetails">
+  <data name="QuestionDetails" xml:space="preserve">
     <value>Fragendetails</value>
   </data>
-  <data name="Question">
+  <data name="Question" xml:space="preserve">
     <value>Frage</value>
   </data>
-  <data name="YourAnswer">
+  <data name="YourAnswer" xml:space="preserve">
     <value>Ihre Antwort</value>
   </data>
-  <data name="CorrectAnswer">
+  <data name="CorrectAnswer" xml:space="preserve">
     <value>Richtige Antwort</value>
   </data>
-  <data name="TimeSeconds">
+  <data name="TimeSeconds" xml:space="preserve">
     <value>Zeit (s)</value>
   </data>
-  <data name="Status">
+  <data name="Status" xml:space="preserve">
     <value>Status</value>
   </data>
-  <data name="Correct">
+  <data name="Correct" xml:space="preserve">
     <value>Richtig</value>
   </data>
-  <data name="Incorrect">
+  <data name="Incorrect" xml:space="preserve">
     <value>Falsch</value>
   </data>
-  <data name="BackToQuizzes">
+  <data name="BackToQuizzes" xml:space="preserve">
     <value>Zurück zu den Quizzen</value>
   </data>
-    <data name="AvailableQuizzes_Title">
+  <data name="AvailableQuizzes_Title" xml:space="preserve">
     <value>Verfügbare Quizze</value>
   </data>
-  <data name="NoQuizzesAvailable">
+  <data name="NoQuizzesAvailable" xml:space="preserve">
     <value>Keine Quizze verfügbar.</value>
   </data>
-  <data name="NoDescriptionAvailable">
+  <data name="NoDescriptionAvailable" xml:space="preserve">
     <value>Keine Beschreibung verfügbar.</value>
   </data>
-  <data name="TeacherLabel">
+  <data name="TeacherLabel" xml:space="preserve">
     <value>Lehrer</value>
   </data>
-  <data name="CategoryLabel">
+  <data name="CategoryLabel" xml:space="preserve">
     <value>Kategorie</value>
   </data>
-  <data name="AttemptsLabel">
+  <data name="AttemptsLabel" xml:space="preserve">
     <value>Versuche</value>
   </data>
-  <data name="LastScoreLabel">
+  <data name="LastScoreLabel" xml:space="preserve">
     <value>Letzte Punktzahl</value>
   </data>
-  <data name="LastAttemptLabel">
+  <data name="LastAttemptLabel" xml:space="preserve">
     <value>Letzter Versuch</value>
   </data>
-  <data name="TakeQuizButton">
+  <data name="TakeQuizButton" xml:space="preserve">
     <value>Quiz starten</value>
   </data>
-  <data name="ReviewButton">
+  <data name="ReviewButton" xml:space="preserve">
     <value>Überprüfen</value>
   </data>
-  <data name="ReviewDetailsTitle">
+  <data name="ReviewDetailsTitle" xml:space="preserve">
     <value>Überprüfungsdetails</value>
   </data>
-  <data name="QuestionLabel">
+  <data name="QuestionLabel" xml:space="preserve">
     <value>Frage</value>
   </data>
-  <data name="YourAnswerLabel">
+  <data name="YourAnswerLabel" xml:space="preserve">
     <value>Ihre Antwort</value>
   </data>
-  <data name="CorrectAnswerLabel">
+  <data name="CorrectAnswerLabel" xml:space="preserve">
     <value>Richtige Antwort</value>
   </data>
-  <data name="TimeSecondsLabel">
+  <data name="TimeSecondsLabel" xml:space="preserve">
     <value>Zeit (s)</value>
   </data>
-  <data name="StatusLabel">
+  <data name="StatusLabel" xml:space="preserve">
     <value>Status</value>
   </data>
-  <data name="CorrectStatus">
+  <data name="CorrectStatus" xml:space="preserve">
     <value>Richtig</value>
   </data>
-  <data name="IncorrectStatus">
+  <data name="IncorrectStatus" xml:space="preserve">
     <value>Falsch</value>
   </data>
-    <data name="QuizTitle">
+  <data name="QuizTitle" xml:space="preserve">
     <value>Quiz</value>
   </data>
-  <data name="TotalTimeLabel">
+  <data name="TotalTimeLabel" xml:space="preserve">
     <value>Gesamtzeit:</value>
   </data>
-  <data name="PreviousButton">
+  <data name="PreviousButton" xml:space="preserve">
     <value>Zurück</value>
   </data>
-  <data name="NextButton">
+  <data name="NextButton" xml:space="preserve">
     <value>Weiter</value>
   </data>
-  <data name="SubmitExamButton">
+  <data name="SubmitExamButton" xml:space="preserve">
     <value>Prüfung abschließen</value>
   </data>
-  <data name="StartQuizModalTitle">
+  <data name="StartQuizModalTitle" xml:space="preserve">
     <value>Sind Sie bereit, das Quiz zu starten?</value>
   </data>
-  <data name="StartQuizModalMessage">
+  <data name="StartQuizModalMessage" xml:space="preserve">
     <value>Sobald Sie beginnen, müssen Sie das Quiz im Vollbildmodus abschließen.</value>
   </data>
-  <data name="StartQuizButton">
+  <data name="StartQuizButton" xml:space="preserve">
     <value>Jetzt starten</value>
   </data>
-  <data name="ExamCanceledFullscreenExit">
+  <data name="ExamCanceledFullscreenExit" xml:space="preserve">
     <value>Prüfung abgebrochen, weil der Vollbildmodus verlassen wurde.</value>
   </data>
-  <data name="ExamCanceledLeaveScreen">
+  <data name="ExamCanceledLeaveScreen" xml:space="preserve">
     <value>Prüfung abgebrochen, weil der Bildschirm verlassen wurde.</value>
   </data>
-  <data name="ExamCanceledInactivity">
+  <data name="ExamCanceledInactivity" xml:space="preserve">
     <value>Ihre Prüfung wurde aufgrund von Inaktivität abgebrochen.</value>
   </data>
-  <data name="AudioNotSupported">
+  <data name="AudioNotSupported" xml:space="preserve">
     <value>Ihr Browser unterstützt das Audio-Element nicht.</value>
+  </data>
+  <data name="Reklam" xml:space="preserve">
+    <value>Bequem zu Hause üben</value>
+  </data>
+  <data name="Title_3_freefromdesire_de" xml:space="preserve">
+    <value>Die Zukunft der Smart Homes: Wo Technologie auf Komfort trifft</value>
+  </data>
+  <data name="Content_3_freefromdesire_de" xml:space="preserve">
+    <value>&lt;h1&gt;Congratulations on setting up CKEditor 5! 🎉&lt;/h1&gt;&lt;p&gt;You've successfully created a CKEditor 5 project. Enjoy editing!&lt;/p&gt;&lt;figure class="image"&gt;&lt;img style="aspect-ratio:400/301;" src="/blog/gif/b089c981796de907176ec48516887acd.gif" width="400" height="301"&gt;&lt;/figure&gt;</value>
   </data>
 </root>

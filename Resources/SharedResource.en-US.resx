@@ -1,64 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!--  
-    Microsoft ResX Schema 
-    
-    Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
-    associated with the data types.
-    
-    Example:
-    
-    ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
-    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        <value>[base64 mime encoded serialized .NET Framework object]</value>
-    </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-        <comment>This is a comment</comment>
-    </data>
-                
-    There are any number of "resheader" rows that contain simple 
-    name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
-    mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
-    extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
-    read any of the formats listed below.
-    
-    mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
-            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-            : and then encoded with base64 encoding.
-    
-    mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
-            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
-            : and then encoded with base64 encoding.
-
-    mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
-            : using a System.ComponentModel.TypeConverter
-            : and then encoded with base64 encoding.
-    -->
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -118,32 +59,25 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="SplashMessage" xml:space="preserve">
-    <value>Have a coffee before you start learning </value>
-    <comment>Splash</comment>
+    <value>Brew up your curiosity... The adventure begins now!</value>
   </data>
   <data name="Home" xml:space="preserve">
     <value>Home</value>
-    <comment>Nav</comment>
   </data>
   <data name="Blog" xml:space="preserve">
     <value>Blog</value>
-    <comment>Nav</comment>
   </data>
   <data name="About" xml:space="preserve">
     <value>About</value>
-    <comment>Nav</comment>
   </data>
   <data name="Sözlük" xml:space="preserve">
     <value>Dictionary</value>
-    <comment>Nav</comment>
   </data>
   <data name="Login" xml:space="preserve">
     <value>Account</value>
-    <comment>Nav</comment>
   </data>
   <data name="Logo" xml:space="preserve">
     <value>German Speaking Club</value>
-    <comment>Nav</comment>
   </data>
   <data name="FooterBrand" xml:space="preserve">
     <value>German Conversation Club</value>
@@ -182,7 +116,7 @@
     <value>About Me</value>
   </data>
   <data name="HeroGreeting" xml:space="preserve">
-    <value><![CDATA[Hello, <span class="color-animation-2">I'm</span> <span class="color-animation">Suna</span>!]]></value>
+    <value>Hello, &lt;span class="color-animation-2"&gt;I'm&lt;/span&gt; &lt;span class="color-animation"&gt;Suna&lt;/span&gt;!</value>
   </data>
   <data name="HeroSubtitle" xml:space="preserve">
     <value>German Conversation Club</value>
@@ -194,14 +128,14 @@
     <value>About Me</value>
   </data>
   <data name="AboutParagraph1" xml:space="preserve">
-    <value><![CDATA[Hello, I'm <strong>Suna!</strong> I was born in 1965 in Bremen, Germany, where I grew up and studied. After working for a few years, I met my spouse and permanently moved to Turkey. After a short stint at a public school, I continued my journey in private educational institutions.]]></value>
+    <value>Hello, I'm &lt;strong&gt;Suna!&lt;/strong&gt; I was born in 1965 in Bremen, Germany, where I grew up and studied. After working for a few years, I met my spouse and permanently moved to Turkey. After a short stint at a public school, I continued my journey in private educational institutions.</value>
   </data>
   <data name="AboutParagraph2" xml:space="preserve">
     <value>After retiring, I focused on social media, private lessons, and conversation clubs. I offer conversation clubs tailored to different levels of German proficiency. In these clubs, various topics are discussed, with presentations and debate techniques adapted to the level, along with alternative sentence suggestions and grammar support when needed.</value>
   </data>
   <data name="AboutImageAlt" xml:space="preserve">
     <value>Suna, the Instructor</value>
-  <comment>About</comment></data>
+  </data>
   <data name="ProcessSectionTitle" xml:space="preserve">
     <value>How Does the Online German Conversation Club Work?</value>
   </data>
@@ -287,38 +221,65 @@
     <value>Send</value>
   </data>
   <data name="PageTitleD" xml:space="preserve">
-  <value>Dictionary</value>
-</data>
+    <value>Dictionary</value>
+  </data>
   <data name="PageSubtitle" xml:space="preserve">
-  <value>Discover meanings, pronunciations, examples, and more.</value>
-</data>
+    <value>Discover meanings, pronunciations, examples, and more.</value>
+  </data>
   <data name="SearchPlaceholder" xml:space="preserve">
-  <value>Search for a word...</value>
-</data>
+    <value>Search for a word...</value>
+  </data>
+    <data name="Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Err1" xml:space="preserve">
+    <value>There are no exam questions.</value>
+  </data>
+  <data name="Err2" xml:space="preserve">
+    <value>Content is not currently available.</value>
+  </data>
+  <data name="Err3" xml:space="preserve">
+    <value>The Tag is not available.</value>
+  </data>
+  <data name="Err4" xml:space="preserve">
+    <value>Image not available.</value>
+  </data>
+  <data name="SendButtonQ" xml:space="preserve">
+    <value>Send Reply</value>
+  </data>
+  <data name="RightAnswer" xml:space="preserve">
+    <value>Correct Answer:</value>
+  </data>
+  <data name="ReadMore" xml:space="preserve">
+    <value>Read More</value>
+  </data>
+  <data name="Tag" xml:space="preserve">
+    <value>Tag</value>
+  </data>
   <data name="SearchButton" xml:space="preserve">
-  <value><i class="fa-solid fa-magnifying-glass"></i> Search</value>
-</data>
+    <value>Translate</value>
+  </data>
   <data name="DefinitionLabel" xml:space="preserve">
-  <value>Definition:</value>
-</data>
+    <value>Definition:</value>
+  </data>
   <data name="PronunciationLabel" xml:space="preserve">
-  <value>Pronunciation:</value>
-</data>
+    <value>Pronunciation:</value>
+  </data>
   <data name="ExampleLabel" xml:space="preserve">
-  <value>Example:</value>
-</data>
+    <value>Example:</value>
+  </data>
   <data name="OriginLabel" xml:space="preserve">
-  <value>Origin:</value>
-</data>
+    <value>Origin:</value>
+  </data>
   <data name="SynonymsLabel" xml:space="preserve">
-  <value>Synonyms:</value>
-</data>
+    <value>Synonyms:</value>
+  </data>
   <data name="ExternalSourceNote" xml:space="preserve">
-  <value>*Retrieved from external sources.</value>
-</data>
+    <value>*Retrieved from external sources.</value>
+  </data>
   <data name="WarningMessage" xml:space="preserve">
-  <value>We are working on it. No definition available at this time.</value>
-</data>
+    <value>We are working on it. No definition available at this time.</value>
+  </data>
   <data name="Register_Title" xml:space="preserve">
     <value>Register</value>
   </data>
@@ -364,9 +325,12 @@
   <data name="Link_LoginHere" xml:space="preserve">
     <value>Login here</value>
   </data>
+  <data name="BlogDesc" xml:space="preserve">
+    <value>Check out our latest posts</value>
+  </data>
   <data name="WarningMessage_Register_UnderDevelopment" xml:space="preserve">
-  <value>We are working on it. No definition available at this time.</value>
-</data>
+    <value>We are working on it. No definition available at this time.</value>
+  </data>
   <data name="Login_Title" xml:space="preserve">
     <value>Login</value>
   </data>
@@ -389,204 +353,213 @@
     <value>Register here</value>
   </data>
   <data name="WarningMessage_Login_UnderDevelopment" xml:space="preserve">
-  <value>We are working on it. No definition available at this time.</value>
-</data>
-  <data name="MyAccount_Title">
+    <value>We are working on it. No definition available at this time.</value>
+  </data>
+  <data name="MyAccount_Title" xml:space="preserve">
     <value>My Account</value>
   </data>
-  <data name="MyAccount_Header">
+  <data name="MyAccount_Header" xml:space="preserve">
     <value>My Account</value>
   </data>
-  <data name="AccountDetails">
+  <data name="AccountDetails" xml:space="preserve">
     <value>Account Details</value>
   </data>
-  <data name="FirstName">
+  <data name="FirstName" xml:space="preserve">
     <value>First Name</value>
   </data>
-  <data name="LastName">
+  <data name="LastName" xml:space="preserve">
     <value>Last Name</value>
   </data>
-  <data name="Age">
+  <data name="Age" xml:space="preserve">
     <value>Age</value>
   </data>
-  <data name="GoToDashboard">
+  <data name="GoToDashboard" xml:space="preserve">
     <value>Go to Dashboard</value>
   </data>
-  <data name="NoQuizData">
+  <data name="NoQuizData" xml:space="preserve">
     <value>You haven't completed any quizzes yet.</value>
   </data>
-  <data name="ManagePassword">
+  <data name="ManagePassword" xml:space="preserve">
     <value>Manage Password</value>
   </data>
-  <data name="ManagePasswordText">
+  <data name="ManagePasswordText" xml:space="preserve">
     <value>Update your password regularly to secure your account.</value>
   </data>
-  <data name="ChangePassword">
+  <data name="ChangePassword" xml:space="preserve">
     <value>Change Password</value>
   </data>
-  <data name="MyQuizzesLevels">
+  <data name="MyQuizzesLevels" xml:space="preserve">
     <value>My Quizzes &amp; Levels</value>
   </data>
-  <data name="MyQuizzesLevelsText">
+  <data name="MyQuizzesLevelsText" xml:space="preserve">
     <value>View your progress and completed quizzes.</value>
   </data>
-  <data name="GoToQuizzes">
+  <data name="GoToQuizzes" xml:space="preserve">
     <value>Go to Quizzes</value>
   </data>
-  <data name="DeleteAccount">
+  <data name="DeleteAccount" xml:space="preserve">
     <value>Delete Account</value>
   </data>
-  <data name="DeleteAccountText">
+  <data name="DeleteAccountText" xml:space="preserve">
     <value>Permanently delete your account and associated data. This action cannot be undone.</value>
   </data>
-  <data name="DeleteAccountConfirm">
+  <data name="DeleteAccountConfirm" xml:space="preserve">
     <value>Are you sure you want to delete your account? This action cannot be undone.</value>
   </data>
-  <data name="DeleteAccountButton">
+  <data name="DeleteAccountButton" xml:space="preserve">
     <value>Delete My Account</value>
   </data>
-  <data name="ChangePassword_Title">
+  <data name="ChangePassword_Title" xml:space="preserve">
     <value>Change Password</value>
   </data>
-  <data name="CurrentPassword">
+  <data name="CurrentPassword" xml:space="preserve">
     <value>Current Password</value>
   </data>
-  <data name="NewPassword">
+  <data name="NewPassword" xml:space="preserve">
     <value>New Password</value>
   </data>
-  <data name="ConfirmNewPassword">
+  <data name="ConfirmNewPassword" xml:space="preserve">
     <value>Confirm New Password</value>
   </data>
-  <data name="UpdatePasswordButton">
+  <data name="UpdatePasswordButton" xml:space="preserve">
     <value>Update Password</value>
   </data>
-  <data name="ReviewQuiz_Title">
+  <data name="ReviewQuiz_Title" xml:space="preserve">
     <value>Review: {0}</value>
   </data>
-  <data name="SubmissionDate">
+  <data name="SubmissionDate" xml:space="preserve">
     <value>Submission Date</value>
   </data>
-  <data name="Score">
+  <data name="Score" xml:space="preserve">
     <value>Score</value>
   </data>
-  <data name="TotalTimeTaken">
+  <data name="TotalTimeTaken" xml:space="preserve">
     <value>Total Time Taken</value>
   </data>
-  <data name="QuestionDetails">
+  <data name="QuestionDetails" xml:space="preserve">
     <value>Question Details</value>
   </data>
-  <data name="Question">
+  <data name="Question" xml:space="preserve">
     <value>Question</value>
   </data>
-  <data name="YourAnswer">
+  <data name="YourAnswer" xml:space="preserve">
     <value>Your Answer</value>
   </data>
-  <data name="CorrectAnswer">
+  <data name="CorrectAnswer" xml:space="preserve">
     <value>Correct Answer</value>
   </data>
-  <data name="TimeSeconds">
+  <data name="TimeSeconds" xml:space="preserve">
     <value>Time (s)</value>
   </data>
-  <data name="Status">
+  <data name="Status" xml:space="preserve">
     <value>Status</value>
   </data>
-  <data name="Correct">
+  <data name="Correct" xml:space="preserve">
     <value>Correct</value>
   </data>
-  <data name="Incorrect">
+  <data name="Incorrect" xml:space="preserve">
     <value>Incorrect</value>
   </data>
-  <data name="BackToQuizzes">
+  <data name="BackToQuizzes" xml:space="preserve">
     <value>Back to Quizzes</value>
   </data>
-  <data name="AvailableQuizzes_Title">
+  <data name="AvailableQuizzes_Title" xml:space="preserve">
     <value>Available Quizzes</value>
   </data>
-  <data name="NoQuizzesAvailable">
+  <data name="NoQuizzesAvailable" xml:space="preserve">
     <value>No quizzes available.</value>
   </data>
-  <data name="NoDescriptionAvailable">
+  <data name="NoDescriptionAvailable" xml:space="preserve">
     <value>No description available.</value>
   </data>
-  <data name="TeacherLabel">
+  <data name="TeacherLabel" xml:space="preserve">
     <value>Teacher</value>
   </data>
-  <data name="CategoryLabel">
+  <data name="CategoryLabel" xml:space="preserve">
     <value>Category</value>
   </data>
-  <data name="AttemptsLabel">
+  <data name="AttemptsLabel" xml:space="preserve">
     <value>Attempts</value>
   </data>
-  <data name="LastScoreLabel">
+  <data name="LastScoreLabel" xml:space="preserve">
     <value>Last Score</value>
   </data>
-  <data name="LastAttemptLabel">
+  <data name="LastAttemptLabel" xml:space="preserve">
     <value>Last Attempt</value>
   </data>
-  <data name="TakeQuizButton">
+  <data name="TakeQuizButton" xml:space="preserve">
     <value>Take Quiz</value>
   </data>
-  <data name="ReviewButton">
+  <data name="ReviewButton" xml:space="preserve">
     <value>Review</value>
   </data>
-  <data name="ReviewDetailsTitle">
+  <data name="ReviewDetailsTitle" xml:space="preserve">
     <value>Review Details</value>
   </data>
-  <data name="QuestionLabel">
+  <data name="QuestionLabel" xml:space="preserve">
     <value>Question</value>
   </data>
-  <data name="YourAnswerLabel">
+  <data name="YourAnswerLabel" xml:space="preserve">
     <value>Your Answer</value>
   </data>
-  <data name="CorrectAnswerLabel">
+  <data name="CorrectAnswerLabel" xml:space="preserve">
     <value>Correct Answer</value>
   </data>
-  <data name="TimeSecondsLabel">
+  <data name="TimeSecondsLabel" xml:space="preserve">
     <value>Time (s)</value>
   </data>
-  <data name="StatusLabel">
+  <data name="StatusLabel" xml:space="preserve">
     <value>Status</value>
   </data>
-  <data name="CorrectStatus">
+  <data name="CorrectStatus" xml:space="preserve">
     <value>Correct</value>
   </data>
-  <data name="IncorrectStatus">
+  <data name="IncorrectStatus" xml:space="preserve">
     <value>Incorrect</value>
   </data>
-  <data name="QuizTitle">
+  <data name="QuizTitle" xml:space="preserve">
     <value>Quiz</value>
   </data>
-  <data name="TotalTimeLabel">
+  <data name="TotalTimeLabel" xml:space="preserve">
     <value>Total Time:</value>
   </data>
-  <data name="PreviousButton">
+  <data name="PreviousButton" xml:space="preserve">
     <value>Previous</value>
   </data>
-  <data name="NextButton">
+  <data name="NextButton" xml:space="preserve">
     <value>Next</value>
   </data>
-  <data name="SubmitExamButton">
+  <data name="SubmitExamButton" xml:space="preserve">
     <value>Submit Exam</value>
   </data>
-  <data name="StartQuizModalTitle">
+  <data name="StartQuizModalTitle" xml:space="preserve">
     <value>Ready to start the quiz?</value>
   </data>
-  <data name="StartQuizModalMessage">
+  <data name="StartQuizModalMessage" xml:space="preserve">
     <value>Once you start, you must complete the quiz without leaving fullscreen mode.</value>
   </data>
-  <data name="StartQuizButton">
+  <data name="StartQuizButton" xml:space="preserve">
     <value>Start Now</value>
   </data>
-  <data name="ExamCanceledFullscreenExit">
+  <data name="ExamCanceledFullscreenExit" xml:space="preserve">
     <value>Exam canceled due to fullscreen exit.</value>
   </data>
-  <data name="ExamCanceledLeaveScreen">
+  <data name="ExamCanceledLeaveScreen" xml:space="preserve">
     <value>Exam canceled due to leaving the screen.</value>
   </data>
-  <data name="ExamCanceledInactivity">
+  <data name="ExamCanceledInactivity" xml:space="preserve">
     <value>Your exam has been canceled due to inactivity.</value>
   </data>
-  <data name="AudioNotSupported">
+  <data name="AudioNotSupported" xml:space="preserve">
     <value>Your browser does not support the audio element.</value>
+  </data>
+  <data name="Reklam" xml:space="preserve">
+    <value>Practice comfortably at home.</value>
+  </data>
+  <data name="Title_3_freefromdesire_en" xml:space="preserve">
+    <value>The Future of Smart Homes: Where Technology Meets Convenience</value>
+  </data>
+  <data name="Content_3_freefromdesire_en" xml:space="preserve">
+    <value>&lt;h1&gt;Congratulations on setting up CKEditor 5! 🎉&lt;/h1&gt;&lt;p&gt;You've successfully created a CKEditor 5 project. Enjoy editing!&lt;/p&gt;&lt;figure class="image"&gt;&lt;img style="aspect-ratio:270/480;" src="/blog/gif/6e16b98dd1f53343474fdd840a230a3a.gif" width="270" height="480"&gt;&lt;/figure&gt;</value>
   </data>
 </root>

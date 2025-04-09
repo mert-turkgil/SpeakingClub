@@ -319,7 +319,16 @@ namespace SpeakingClub.Controllers
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
+                // Get current culture code (e.g., "en", "tr", etc.)
+                var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
+                var langCode = currentCulture.Substring(0, 2).ToLower();
 
+                // Update each blog with its translated Title and Content if available.
+                foreach (var blog in blogs)
+                {
+                    blog.Title = _localization.GetKey($"Title_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Title;
+                    blog.Content = _localization.GetKey($"Content_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Content;
+                }
             // Get the list of categories.
             var categoriesFromRepo = await _unitOfWork.Categories.GetAllAsync();
             var categoryNames = categoriesFromRepo.Select(c => c.Name).ToList();
@@ -345,18 +354,79 @@ namespace SpeakingClub.Controllers
                 AvailableTags = availableTags,
 
                 // UI text labels (static or from configuration)
-                BlogList_Title = "Our Blog",
-                BlogList_Description = "Check out our latest posts...",
-                BlogList_SearchLabel = "Search",
-                BlogList_AllCategories = "All Categories",
-                BlogList_TagLabel = "Tag",              // New label for tag filter
+                BlogList_Title = _localization.GetKey("Blog").Value,
+                BlogList_Description = _localization.GetKey("BlogDesc").Value,
+                BlogList_SearchLabel = _localization.GetKey("Search").Value,
+                BlogList_AllCategories = _localization.GetKey("CategoryLabel").Value,
+                BlogList_TagLabel = _localization.GetKey("Tag").Value,              // New label for tag filter
                 BlogList_TagPlaceholder = "Select a tag", // Optional placeholder text
-                BlogList_ApplyFiltersButton = "Apply Filters",
+                BlogList_ApplyFiltersButton = _localization.GetKey("Search").Value,
                 BlogList_NoPostsMessage = "No posts found.",
-                BlogList_ReadMore = "Read More"
+                BlogList_ReadMore = _localization.GetKey("ReadMore").Value,
             };
 
             return View(model);
+        }
+
+        [HttpGet("blog/{url}")]
+        public async Task<IActionResult> BlogDetail(string url)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching blog detail for url {url}.", url);
+
+                // Retrieve the blog using your slug
+                var blog = await _unitOfWork.Blogs.GetByUrlAsync(url);
+                if (blog == null)
+                {
+                    _logger.LogWarning("Blog with slug {url} not found.", url);
+                    return NotFound();
+                }
+
+                var currentCulture = CultureInfo.CurrentCulture.Name;
+                var langCode = currentCulture.Substring(0, 2).ToLower();
+                blog.Title = _localization.GetKey($"Title_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Title;
+                blog.Content = _localization.GetKey($"Content_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Content;
+
+                // Create the view model.
+                var viewModel = new BlogDetailViewModel
+                {
+                    BlogId = blog.BlogId,
+                    Title = blog.Title,
+                    Content = blog.Content,
+                    Date = blog.Date,
+                    Author = blog.Author,
+                    Image = blog.Image,
+                    Tags = blog.Tags?.ToList() ?? new List<Tag>(),
+                    Quizzes = blog.Quiz // the collection of quizzes linked to the blog
+                };
+
+                // Adjusting quiz question retrieval:
+                if (blog.SelectedQuestionId.HasValue)
+                {
+                    // Try to locate the question by its ID from any quiz's Questions collection.
+                    var selectedQuestion = blog.Quiz.SelectMany(q => q.Questions)
+                                                    .FirstOrDefault(q => q.Id == blog.SelectedQuestionId.Value);
+                    viewModel.QuizQuestion = selectedQuestion;
+                }
+                else if (blog.Quiz != null && blog.Quiz.Any())
+                {
+                    // Fallback: if no selected question was explicitly set, pick the first quiz's first question.
+                    var firstQuiz = blog.Quiz.First();
+                    if (firstQuiz.Questions != null && firstQuiz.Questions.Any())
+                    {
+                        viewModel.QuizQuestion = firstQuiz.Questions.First();
+                    }
+                }
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving blog detail for url {url}.", url);
+                TempData["ErrorMessage"] = "An error occurred while retrieving the blog post. Please try again later.";
+                return RedirectToAction("Index");
+            }
         }
 
         #endregion

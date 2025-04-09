@@ -11,5 +11,6 @@ namespace SpeakingClub.Data.Abstract
         Task<IEnumerable<Blog>> GetRecentBlogsAsync(int count);
         Task<IEnumerable<Blog>> SearchBlogsByKeywordAsync(string keyword);
         Task<int> CountBlogsByDateAsync(DateTime date);
+        Task<Blog?> GetByUrlAsync(string url);
     }
 }

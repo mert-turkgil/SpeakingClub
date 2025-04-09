@@ -22,6 +22,9 @@ namespace SpeakingClub.ViewComponents
         public async Task<IViewComponentResult> InvokeAsync()
         {
             var slides = await _unitOfWork.Slides.GetAllAsync(); 
+            if (!slides.Any()) {
+                return Content(string.Empty);
+            }
             var slideItems = new SlideItemModel{SlideItems = slides.Select(s =>
             {
                 var action = string.IsNullOrEmpty(s.CarouselLink) ? "Index" : s.CarouselLink;

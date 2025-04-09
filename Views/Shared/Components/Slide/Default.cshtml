@@ -1,49 +1,48 @@
+@using Azure.Core
 @model SlideItemModel
 
-<!-- Swiper Container -->
-<div class="swiper alpha-carousel">
+<div class="alpha-carousel swiper-container">
     <div class="swiper-wrapper">
-        @if (Model?.SlideItems?.Any() == true)
+        @foreach (var slide in Model.SlideItems)
         {
-            foreach (var item in Model.SlideItems)
-            {
-                <div class="swiper-slide">
-                    <img class="slide-image"
-                         src="@Url.Content($"~/img/{item.CarouselImage}")"
-                         alt="@item.CarouselTitle"
-                         srcset="
-                             @Url.Content($"~/img/{item.CarouselImage600w}") 600w,
-                             @Url.Content($"~/img/{item.CarouselImage1200w}") 1200w,
-                             @Url.Content($"~/img/{item.CarouselImage}") 1600w"
-                         sizes="(max-width: 600px) 100vw, (max-width: 1200px) 75vw, 1600px" />
-
-                    <div class="slide-overlay">
-                        <h2>@item.CarouselTitle</h2>
-                        <p>@item.CarouselDescription</p>
-                        @if (!string.IsNullOrEmpty(item.CarouselLink))
-                        {
-                            <a href="@item.CarouselLink" class="slide-button">@item.CarouselLinkText</a>
-                        }
-                    </div>
-                </div>
-            }
-        }
-        else
-        {
+                var imageDefault = Url.Content($"/img/{slide.CarouselImage}");
+                var image600w    = Url.Content($"/img/{slide.CarouselImage600w}");
+                var image1200w   = Url.Content($"/img/{slide.CarouselImage1200w}");
             <div class="swiper-slide">
-                <img src="https://via.placeholder.com/1200x800?text=No+Items" alt="Placeholder" class="slide-image" />
+                <img 
+                    src="@imageDefault"
+                    srcset="@image600w 600w, @image1200w 1200w"
+                    sizes="(max-width: 600px) 600px, 1200px"
+                    class="slide-image"
+                    alt="@slide.CarouselTitle" />
                 <div class="slide-overlay">
-                    <h2>No Carousel Items</h2>
-                    <p>Please add items to the carousel.</p>
+                    <h2 class="slide-title">@slide.CarouselTitle</h2>
+                    <p class="slide-description">@slide.CarouselDescription</p>
+                    <a href="@slide.CarouselLink" class="slide-button">@slide.CarouselLinkText</a>
                 </div>
             </div>
         }
     </div>
 
-    <!-- Navigation buttons -->
+    <div class="swiper-pagination"></div>
     <div class="swiper-button-prev"></div>
     <div class="swiper-button-next"></div>
-
-    <!-- Pagination with thumbnails -->
-    <div class="swiper-pagination"></div>
 </div>
+
+@{
+    var req = ViewContext.HttpContext.Request;
+    var fullImagePaths = Model.SlideItems
+        .Select(s => $"{req.Scheme}://{req.Host}/img/{Url.Content(s.CarouselImage)}")
+        .ToList();
+}
+<script>
+    window.carouselImages = [
+        @foreach(var image in fullImagePaths)
+        {
+            @: "@image",
+        }
+    ];
+</script>
+<!-- Now load your slide.js -->
+<script src="~/js/slide.js"></script>
+

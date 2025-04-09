@@ -1,0 +1,238 @@
+@model BlogCreateModel
+
+@{
+    ViewData["Title"] = "Create Blog Post";
+}
+
+@section Css {
+    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.css" />
+    <link rel="stylesheet" href="~/lib/animate/animate.min.css">
+    <link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css">
+    <link rel="stylesheet" href="~/css/ck.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef1f6;
+        }
+        .form-container {
+            max-width: 1200px;
+            padding: 25px;
+            margin: 30px auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            background: #ffffff;
+        }
+        .form-section h5 {
+            font-weight: bold;
+            color: #0056b3;
+            animation: fadeInDown 1s;
+        }
+        .preview-img {
+            max-width: 350px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .swiper-slide img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+    </style>
+}
+
+<div class="container animate__animated animate__fadeIn form-container">
+    <h2 class="text-center mb-4"><i class="fa-solid fa-pen"></i> Create Blog Post</h2>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger animate__animated animate__shakeX">
+            <i class="fa-solid fa-triangle-exclamation"></i> Please fix the errors below.
+        </div>
+    }
+
+    <form asp-action="BlogCreate" method="post" enctype="multipart/form-data">
+        <div asp-validation-summary="ModelOnly" class="alert alert-warning"></div>
+
+        <!-- Blog Title -->
+        <div class="mb-3">
+            <label asp-for="Title">Title</label>
+            <input asp-for="Title" class="form-control" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+
+        <!-- Main Blog Content -->
+        <div class="mb-3">
+            <label asp-for="Content">Content</label>
+            <textarea asp-for="Content" id="Content" class="form-control">
+                @(Model.Content ?? " ")
+            </textarea>
+            <span asp-validation-for="Content" class="text-danger"></span>
+        </div>
+
+        <!-- Cover Image -->
+        <div class="mb-3">
+            <label asp-for="ImageFile">Cover Image</label>
+            <input asp-for="ImageFile" type="file" class="form-control" onchange="previewImage(event)" />
+            <img id="coverPreview" class="preview-img mt-3" />
+        </div>
+
+        <!-- URL, Author -->
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="Url">SEO URL</label>
+                <input asp-for="Url" class="form-control" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="Author">Author</label>
+                <input asp-for="Author" class="form-control" />
+            </div>
+        </div>
+
+        <!-- Embed YouTube & Maps -->
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="RawYT">YouTube Embed</label>
+                <input asp-for="RawYT" class="form-control" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="RawMaps">Google Maps Embed</label>
+                <input asp-for="RawMaps" class="form-control" />
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <h5>Categories</h5>
+        <div class="mb-4 swiper categorySwiper">
+            <div class="swiper-wrapper">
+                @foreach (var category in (List<SelectListItem>)ViewBag.Categories)
+                {
+                    <div class="swiper-slide card p-2">
+                        <input type="checkbox" name="SelectedCategoryIds" value="@category.Value" />
+                        <label>@category.Text</label>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Tags -->
+        <h5>Tags</h5>
+        <div class="mb-4">
+            @foreach (var tag in (List<SelectListItem>)ViewBag.Tags)
+            {
+                <div class="form-check form-check-inline">
+                    <input type="checkbox" name="SelectedTagIds" value="@tag.Value" class="form-check-input" />
+                    <label>@tag.Text</label>
+                </div>
+            }
+        </div>
+
+        <!-- Home Page Toggle -->
+        <div class="mb-3">
+            <label asp-for="IsHome" class="form-label">Show on Home Page?</label>
+            <input asp-for="IsHome" class="form-check-input" type="checkbox" />
+        </div>
+
+        <!-- Quiz Selection Section -->
+        <div class="mb-3">
+            <label class="form-label">Select a Quiz</label>
+            <select id="quizDropdown" class="form-select">
+                <option value="">-- Select a Quiz --</option>
+                @foreach (var quiz in (List<SelectListItem>)ViewBag.Quizzes)
+                {
+                    <option value="@quiz.Value">@quiz.Text</option>
+                }
+            </select>
+        </div>
+
+        <!-- Quiz Question Dropdown (dynamic based on selected quiz) -->
+        <div class="mb-3">
+            <label class="form-label">Select Quiz Question</label>
+            <select asp-for="SelectedQuestionId" class="form-select" id="quizQuestionsDropdown">
+                <option value="">-- Select a Question --</option>
+            </select>
+        </div>
+
+        <!-- Translations -->
+        <h5>Translations</h5>
+        <ul class="nav nav-tabs mb-3">
+            <li class="nav-item">
+                <button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#en">EN</button>
+            </li>
+            <li class="nav-item">
+                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tr">TR</button>
+            </li>
+            <li class="nav-item">
+                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#de">DE</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="en">
+                <input asp-for="TitleUS" placeholder="English Title" class="form-control mb-2" />
+                <textarea asp-for="ContentUS" id="ContentUS" class="form-control"></textarea>
+            </div>
+            <div class="tab-pane fade" id="tr">
+                <input asp-for="TitleTR" placeholder="Turkish Title" class="form-control mb-2" />
+                <textarea asp-for="ContentTR" id="ContentTR" class="form-control"></textarea>
+            </div>
+            <div class="tab-pane fade" id="de">
+                <input asp-for="TitleDE" placeholder="German Title" class="form-control mb-2" />
+                <textarea asp-for="ContentDE" id="ContentDE" class="form-control"></textarea>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="d-flex justify-content-between mt-5">
+            <button type="submit" class="btn btn-success"><i class="fa-solid fa-check"></i> Publish</button>
+            <a asp-action="Blogs" class="btn btn-danger"><i class="fa-solid fa-xmark"></i> Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/swiper/swiper-bundle.min.js"></script>
+    <script src="~/lib/gsap/gsap.min.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.umd.js"></script>
+    <script src="https://cdn.ckbox.io/ckbox/2.6.1/ckbox.js"></script>
+    <script src="~/js/ckeditor.js"></script>
+
+    <script>
+        // COVER IMAGE PREVIEW FUNCTION
+        function previewImage(event) {
+            const reader = new FileReader();
+            reader.onload = () => $('#coverPreview').attr('src', reader.result);
+            reader.readAsDataURL(event.target.files[0]);
+        }
+        window.previewImage = previewImage;
+
+        // Embed all quiz questions as a JS array.
+        // Each object should have: QuestionId, QuestionText, QuizId.
+        var allQuizQuestions = @Html.Raw(Json.Serialize(ViewBag.QuizQuestions ?? new List<object>()));
+        console.log("All Quiz Questions:", allQuizQuestions);
+
+        // When the quiz dropdown changes, update the questions dropdown.
+        $('#quizDropdown').on('change', function () {
+            var selectedQuizId = parseInt($(this).val());
+            console.log("Selected Quiz ID:", selectedQuizId);
+            var dropdown = $('#quizQuestionsDropdown');
+            dropdown.empty();
+            dropdown.append($('<option>').val("").text("-- Select a Question --"));
+            // Filter based on the selected quiz ID.
+            var filteredQuestions = allQuizQuestions.filter(function (q) {
+                return parseInt(q.QuizId) === selectedQuizId;
+            });
+            console.log("Filtered Questions:", filteredQuestions);
+            $.each(filteredQuestions, function (index, question) {
+                dropdown.append($('<option>').val(question.QuestionId).text(question.QuestionText));
+            });
+        });
+
+        // Initialize Swiper sliders.
+        $(document).ready(function () {
+            new Swiper(".categorySwiper", { slidesPerView: 3, spaceBetween: 15 });
+            new Swiper(".quizSwiper", { slidesPerView: 3, spaceBetween: 15 });
+        });
+    </script>
+}

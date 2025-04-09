@@ -22,7 +22,9 @@ namespace SpeakingClub.Models
         [Required(ErrorMessage = "URL is required.")]
         [MaxLength(255, ErrorMessage = "URL cannot exceed 255 characters.")]
         public string Url { get; set; }
-
+        // New properties:
+        public bool IsHome { get; set; } // Determines whether the blog is shown on the homepage.
+        public int? SelectedQuestionId { get; set; } // The chosen quiz question ID.
         // Image Upload
         public IFormFile ImageFile { get; set; }
 
@@ -37,12 +39,6 @@ namespace SpeakingClub.Models
         // Embed Fields
         public string RawYT { get; set; } = string.Empty;
         public string RawMaps { get; set; } = string.Empty;
-
-        [RequiredNonEmptyList(ErrorMessage = "At least one category must be selected.")]
-        public List<int> SelectedCategoryIds { get; set; }
-        //Products
-        [RequiredNonEmptyList(ErrorMessage = "At least one product must be selected.")]
-        public List<int> SelectedProductIds { get; set; } = new(); 
 
         // Translations
         [Required(ErrorMessage = "English title is required.")]
@@ -59,6 +55,11 @@ namespace SpeakingClub.Models
         public string TitleDE { get; set; }
         [Required(ErrorMessage = "German content is required.")]
         public string ContentDE { get; set; }
+        // Selected relationships
+        [RequiredNonEmptyList(ErrorMessage = "At least one category must be selected.")]
+        public List<int> SelectedCategoryIds { get; set; }
+        public List<int> SelectedQuizIds { get; set; } = new();
+        public List<int> SelectedTagIds { get; set; } = new();
 
         // Helper Methods for Translations
         public string GetTitleByCulture(string culture)
