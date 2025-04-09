@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SpeakingClub")]
 [assembly: System.Reflection.AssemblyCopyrightAttribute(" ")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1844df363ab1209e21f9a6065d2ac16cb4c2a400")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+69d8d8beb9454b8feea011b4ef35645e93263ab5")]
 [assembly: System.Reflection.AssemblyProductAttribute("SpeakingClub")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SpeakingClub")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -12,194 +12,217 @@ const progressBarFill = document.getElementById('progressBarFill');
 const threeContainer = document.getElementById('threeContainer');
 const splashMessage = document.getElementById('splashMessage');
 
-// Minimum time (ms) to keep splash
-const minSplashDuration = 6000;
+// Timing settings
+const baseMinSplashDuration = 6000; // Base time in ms for splash to show
+const extraDelayAfterTyping = 8000; // Extra delay after typewriter finishes (ms)
 const splashStartTime = Date.now();
 
-// Track loading progress
+// Flags for waiting conditions
 let actualProgress = 0;
+let modelLoaded = false;
+let modelError = false;
+let typewriterFinished = false;
+let typewriterExtraDelayFinished = false;
 
 // Check if user has visited before
 const hasVisited = localStorage.getItem('hasVisited');
 if (hasVisited) {
-    hideSplash();
+  hideSplash();
 } else {
-    showSplash();
+  showSplash();
 
-    // Localized splash message
-    const localizedSplashMessage = "Grab Your Coffee For Learning"; // Replace with your localization logic
-    typeAnimation(splashMessage, localizedSplashMessage, 100);
+  // Use localized message from global variable (set in _Layout.cshtml)
+  const localizedSplashMessage = window.localizedSplashMessage || "Brew up your curiosity... The adventure begins now!";
+  
+  // Run typewriter animation (returns a promise when finished)
+  typeAnimation(splashMessage, localizedSplashMessage, 100).then(() => {
+    typewriterFinished = true;
+    // After typewriter finishes, start extra delay timer
+    setTimeout(() => {
+      typewriterExtraDelayFinished = true;
+    }, extraDelayAfterTyping);
+  });
 
-    function typeAnimation(element, text, speed = 100) {
-        let index = 0;
-        element.textContent = "";
-        const interval = setInterval(() => {
-            if (index < text.length) {
-                element.textContent += text.charAt(index);
-                index++;
-            } else {
-                clearInterval(interval);
-            }
-        }, speed);
+  // Start a timer to update the progress bar
+  const progressTimer = setInterval(() => {
+    // Update progress bar based on time relative to baseMinSplashDuration and loading progress
+    const timeProgress = Math.min((Date.now() - splashStartTime) / baseMinSplashDuration, 1);
+    const combinedProgress = Math.max(timeProgress, actualProgress);
+    progressBarFill.style.width = (combinedProgress * 100) + '%';
+
+    // Only end splash if model is loaded AND typewriter has finished AND extra delay has passed.
+    if (modelLoaded && typewriterFinished && typewriterExtraDelayFinished) {
+      clearInterval(progressTimer);
+      endSplash();
+      setTimeout(() => {
+        window.location.replace(window.location.href);
+        // window.location.reload(); 
+      }, 5000);
     }
+    if (modelError) {
+      splashMessage.textContent = "Oops! We couldn't brew your coffee. Please check your connection or reload the page.";
+      clearInterval(progressTimer);
+    }
+  }, 100);
 
-    // Start a timer to update the progress bar
-    const progressTimer = setInterval(() => {
-        const timeProgress = Math.min((Date.now() - splashStartTime) / minSplashDuration, 1);
-        const combinedProgress = Math.max(timeProgress, actualProgress);
-        progressBarFill.style.width = (combinedProgress * 100) + '%';
-
-        // End splash if both time and loading are complete
-        if (combinedProgress >= 1) {
-            clearInterval(progressTimer);
-            endSplash();
-        }
-    }, 100);
-
-    // Initialize Three.js scene
-    initThreeJS(progressTimer);
+  // Initialize Three.js scene (this updates modelLoaded/modelError)
+  initThreeJS();
 }
 
 /* ------------------------------
    SPLASH SCREEN DISPLAY LOGIC
 ------------------------------ */
 function showSplash() {
-    splashScreen.style.display = 'flex';
-    mainContent.style.display = 'none';
+  splashScreen.style.display = 'flex';
+  mainContent.style.display = 'none';
 }
 
 function hideSplash() {
-    splashScreen.style.display = 'none';
-    mainContent.style.display = 'block';
+  splashScreen.style.display = 'none';
+  mainContent.style.display = 'block';
 }
 
 function endSplash() {
-    hideSplash();
-    localStorage.setItem('hasVisited', 'true');
+  hideSplash();
+  localStorage.setItem('hasVisited', 'true');
+}
+
+/* ------------------------------
+   TYPE ANIMATION (Promise-Based)
+------------------------------ */
+function typeAnimation(element, text, speed = 100) {
+  return new Promise((resolve) => {
+    let index = 0;
+    element.textContent = "";
+    const interval = setInterval(() => {
+      if (index < text.length) {
+        element.textContent += text.charAt(index);
+        index++;
+      } else {
+        clearInterval(interval);
+        resolve();
+      }
+    }, speed);
+  });
 }
 
 /* ------------------------------
    THREE.JS INITIALIZATION
 ------------------------------ */
-function initThreeJS(progressTimer) {
-    // Create scene and renderer
-    const scene = new THREE.Scene();
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(threeContainer.clientWidth, threeContainer.clientHeight);
-    threeContainer.appendChild(renderer.domElement);
+function initThreeJS() {
+  // Create scene and renderer
+  const scene = new THREE.Scene();
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer.setSize(threeContainer.clientWidth, threeContainer.clientHeight);
+  threeContainer.appendChild(renderer.domElement);
 
-    // Setup environment using RoomEnvironment
-    const environment = new RoomEnvironment();
-    const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmremGenerator.fromScene(environment).texture;
-    scene.background = new THREE.Color(0xbbbbbb);
+  // Setup environment using RoomEnvironment
+  const environment = new RoomEnvironment();
+  const pmremGenerator = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmremGenerator.fromScene(environment).texture;
+  scene.background = new THREE.Color(0xbbbbbb);
 
-    // Create camera
-    const camera = new THREE.PerspectiveCamera(50, threeContainer.clientWidth / threeContainer.clientHeight, 0.1, 1000);
+  // Create camera
+  const camera = new THREE.PerspectiveCamera(50, threeContainer.clientWidth / threeContainer.clientHeight, 0.1, 1000);
 
-    // Add OrbitControls for debugging (optional)
-    const controls = new OrbitControls(camera, renderer.domElement);
+  // Optional: OrbitControls for debugging
+  const controls = new OrbitControls(camera, renderer.domElement);
 
-    // Helpers (grid + axes) for reference
-    const gridHelper = new THREE.GridHelper(10, 10);
-    scene.add(gridHelper);
-    const axesHelper = new THREE.AxesHelper(5);
-    scene.add(axesHelper);
+  // Helpers for reference (grid and axes)
+  const gridHelper = new THREE.GridHelper(10, 10);
+  scene.add(gridHelper);
+  const axesHelper = new THREE.AxesHelper(5);
+  scene.add(axesHelper);
 
-    // Basic lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    dirLight.position.set(5, 10, 7.5);
-    scene.add(dirLight);
+  // Basic lighting
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambientLight);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  dirLight.position.set(5, 10, 7.5);
+  scene.add(dirLight);
 
-    // Setup decoders for compressed textures
-    const ktx2Loader = new KTX2Loader().setTranscoderPath('/lib/three/examples/jsm/libs/basis/').detectSupport(renderer);
+  // Setup decoders for compressed textures
+  const ktx2Loader = new KTX2Loader().setTranscoderPath('/lib/three/examples/jsm/libs/basis/').detectSupport(renderer);
 
-    // GLTFLoader
-    const loader = new GLTFLoader();
-    loader.setPath('/models/');
-    loader.setKTX2Loader(ktx2Loader);
-    loader.setMeshoptDecoder(MeshoptDecoder);
+  // GLTFLoader configuration
+  const loader = new GLTFLoader();
+  loader.setPath('/models/');
+  loader.setKTX2Loader(ktx2Loader);
+  loader.setMeshoptDecoder(MeshoptDecoder);
 
-    // Load the coffee mug model
-    loader.load(
-        'coffeemat.glb',
-        (gltf) => {
-            console.log("Model loaded successfully");
-            const model = gltf.scene;
-            scene.add(model);
+  // Load the coffee mug model
+  loader.load(
+    'coffeemat.glb',
+    (gltf) => {
+      console.log("Model loaded successfully");
+      modelLoaded = true;
+      const model = gltf.scene;
+      scene.add(model);
 
-            // Compute bounding box to center + scale the model
-            const box = new THREE.Box3().setFromObject(model);
-            const center = box.getCenter(new THREE.Vector3());
-            const size = box.getSize(new THREE.Vector3());
-            const maxDim = Math.max(size.x, size.y, size.z);
+      // Center and scale the model
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const desiredSize = 90;
+      const scaleFactor = desiredSize / maxDim;
+      model.scale.multiplyScalar(scaleFactor);
+      box.setFromObject(model);
+      box.getCenter(center);
+      model.position.sub(center);
 
-            // Scale the model to a desired size
-            const desiredSize = 90;
-            const scaleFactor = desiredSize / maxDim;
-            model.scale.multiplyScalar(scaleFactor);
+      // Start scene animation
+      animate(camera, center, renderer, scene);
 
-            // Recompute bounding box after scaling
-            box.setFromObject(model);
-            box.getCenter(center);
-
-            // Center the model at origin
-            model.position.sub(center);
-
-            // Start animation
-            animate(camera, center, renderer, scene);
-
-            // Keep splash for at least minSplashDuration
-            const elapsed = Date.now() - splashStartTime;
-            if (elapsed < minSplashDuration) {
-                const remainingTime = minSplashDuration - elapsed;
-                setTimeout(() => {
-                    clearInterval(progressTimer);
-                    endSplash();
-                }, remainingTime);
-            } else {
-                clearInterval(progressTimer);
-                endSplash();
-            }
-        },
-        (xhr) => {
-            if (xhr.lengthComputable) {
-                actualProgress = xhr.loaded / xhr.total;
-            }
-        },
-        (error) => {
-            console.error("Error loading 3D model:", error);
+      // Ensure splash remains for at least the base duration if model loads quickly.
+      const elapsed = Date.now() - splashStartTime;
+      if (elapsed < baseMinSplashDuration) {
+        setTimeout(() => {
+          // Don't end splash until extra delay after typewriter is complete as well
+          if (modelLoaded && typewriterFinished && typewriterExtraDelayFinished) {
+            endSplash();
+          }
+        }, baseMinSplashDuration - elapsed);
+      } else {
+        if (modelLoaded && typewriterFinished && typewriterExtraDelayFinished) {
+          endSplash();
         }
-    );
-
-    // Handle window resizing
-    window.addEventListener('resize', onWindowResize);
-    function onWindowResize() {
-        camera.aspect = threeContainer.clientWidth / threeContainer.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(threeContainer.clientWidth, threeContainer.clientHeight);
+      }
+    },
+    (xhr) => {
+      if (xhr.lengthComputable) {
+        actualProgress = xhr.loaded / xhr.total;
+      }
+    },
+    (error) => {
+      console.error("Error loading 3D model:", error);
+      modelError = true;
     }
+  );
+
+
+  // Handle window resizing
+  window.addEventListener('resize', onWindowResize);
+  function onWindowResize() {
+    camera.aspect = threeContainer.clientWidth / threeContainer.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(threeContainer.clientWidth, threeContainer.clientHeight);
+  }
 }
 
-// Animation function
+// Animation loop for Three.js scene
 function animate(camera, center, renderer, scene) {
-    let angle = 0;
-    const radius = 250; // Distance from the mug center
-    const cameraHeight = -20; // Height above the mug center
-
-    function loop() {
-        requestAnimationFrame(loop);
-
-        angle += 0.005; // Adjust rotation speed as desired
-        camera.position.x = center.x + radius * Math.cos(angle);
-        camera.position.z = center.z + radius * Math.sin(angle);
-        camera.position.y = center.y + cameraHeight;
-        camera.lookAt(center);
-
-        renderer.render(scene, camera);
-    }
-
-    loop();
+  let angle = 0;
+  const radius = 250; // Distance from model center
+  const cameraHeight = -20; // Vertical offset
+  function loop() {
+    requestAnimationFrame(loop);
+    angle += 0.005; // Adjust rotation speed as desired
+    camera.position.x = center.x + radius * Math.cos(angle);
+    camera.position.z = center.z + radius * Math.sin(angle);
+    camera.position.y = center.y + cameraHeight;
+    camera.lookAt(center);
+    renderer.render(scene, camera);
+  }
+  loop();
 }

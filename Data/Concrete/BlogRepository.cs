@@ -33,5 +33,23 @@ namespace SpeakingClub.Data.Concrete
         {
             return await _dbSet.CountAsync(b => b.Date.Date == date.Date);
         }
+        public async Task<Blog?> GetByUrlAsync(string url)
+        {
+            // Use ToLower() for case-insensitive comparison.
+           return await _dbSet.Include(b => b.Category)
+                .Include(b => b.Tags)
+                .Include(b => b.Quiz)
+                .Where(b => b.Url != null) // Ensure Url is not null before comparison
+                .AsNoTracking()
+                .SingleOrDefaultAsync(b => b.Url.ToLower() == url.ToLower());
+        }
+        public override async Task<IEnumerable<Blog>> GetAllAsync()
+        {
+            return await _dbSet
+                .Include(b => b.Category)
+                .Include(b => b.Tags)
+                .Include(b => b.Quiz)
+                .ToListAsync();
+        }
     }
 }

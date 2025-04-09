@@ -5,12 +5,36 @@
       "PackagePath": "staticwebassets\\SpeakingClub.bundle.scp.css"
     },
     {
+      "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\blog\\gif\\6e16b98dd1f53343474fdd840a230a3a.gif",
+      "PackagePath": "staticwebassets\\blog\\gif\\6e16b98dd1f53343474fdd840a230a3a.gif"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\blog\\gif\\8fe2fffb9e29dce6cbd04b0ab0862674.gif",
+      "PackagePath": "staticwebassets\\blog\\gif\\8fe2fffb9e29dce6cbd04b0ab0862674.gif"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\blog\\gif\\99ae98e90cf043fcc27e9d32e4240939.gif",
+      "PackagePath": "staticwebassets\\blog\\gif\\99ae98e90cf043fcc27e9d32e4240939.gif"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\blog\\gif\\b089c981796de907176ec48516887acd.gif",
+      "PackagePath": "staticwebassets\\blog\\gif\\b089c981796de907176ec48516887acd.gif"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\blog\\gif\\f9387b0777d6c83d05bfbbdbe60b96cd.gif",
+      "PackagePath": "staticwebassets\\blog\\gif\\f9387b0777d6c83d05bfbbdbe60b96cd.gif"
+    },
+    {
       "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\css\\Slide.css",
       "PackagePath": "staticwebassets\\css\\Slide.css"
     },
     {
       "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\css\\_bootstrap-custom.scss",
       "PackagePath": "staticwebassets\\css\\_bootstrap-custom.scss"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\css\\ck.css",
+      "PackagePath": "staticwebassets\\css\\ck.css"
     },
     {
       "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\css\\custom.css",
@@ -47,6 +71,10 @@
     {
       "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\img\\footer_logo.png",
       "PackagePath": "staticwebassets\\img\\footer_logo.png"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\img\\freefromdesire_cover.jpg",
+      "PackagePath": "staticwebassets\\img\\freefromdesire_cover.jpg"
     },
     {
       "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\img\\header_logo.png",
@@ -101,8 +129,16 @@
       "PackagePath": "staticwebassets\\js\\anime.js"
     },
     {
+      "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\js\\ckeditor.js",
+      "PackagePath": "staticwebassets\\js\\ckeditor.js"
+    },
+    {
       "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\js\\site.js",
       "PackagePath": "staticwebassets\\js\\site.js"
+    },
+    {
+      "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\js\\slide.js",
+      "PackagePath": "staticwebassets\\js\\slide.js"
     },
     {
       "Id": "C:\\Users\\mertu\\Desktop\\SpeakingClub\\wwwroot\\js\\splash.js",
