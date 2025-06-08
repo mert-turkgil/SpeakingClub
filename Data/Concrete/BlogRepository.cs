@@ -35,12 +35,13 @@ namespace SpeakingClub.Data.Concrete
         }
         public async Task<Blog?> GetByUrlAsync(string url)
         {
-            // Use ToLower() for case-insensitive comparison.
-           return await _dbSet.Include(b => b.Category)
+            // Include Category, Tags, and then the quizzes and their questions.
+            return await _dbSet
+                .Include(b => b.Category)
                 .Include(b => b.Tags)
                 .Include(b => b.Quiz)
-                .Where(b => b.Url != null) // Ensure Url is not null before comparison
-                .AsNoTracking()
+                    .ThenInclude(q => q.Questions)
+                    .ThenInclude(q => q.Answers)
                 .SingleOrDefaultAsync(b => b.Url.ToLower() == url.ToLower());
         }
         public override async Task<IEnumerable<Blog>> GetAllAsync()

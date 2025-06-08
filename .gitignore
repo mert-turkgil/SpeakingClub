@@ -1,0 +1,21 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# ASP.NET
+wwwroot/uploads/
+wwwroot/blog/img/
+wwwroot/blog/gif/
+wwwroot/blog/pdf/
+appsettings.Development.json
+appsettings.Production.json
+password.txt
+
+# Environment secrets
+.env
+
+# Others
+bin/
+obj/
+temp/

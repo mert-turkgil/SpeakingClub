@@ -1,0 +1,148 @@
+@model SpeakingClub.Models.QuizEditViewModel
+@{
+    ViewBag.Title = "Edit Quiz";
+}
+
+<h2>Edit Quiz</h2>
+
+<form asp-action="QuizEdit" enctype="multipart/form-data" method="post">
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(m => m.QuizId)
+
+    <div class="form-group">
+        <label asp-for="Title"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Description"></label>
+        <textarea asp-for="Description" class="form-control"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="CategoryId"></label>
+        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-control"></select>
+    </div>
+
+    <div class="form-group">
+        <label>Tags</label>
+        <select asp-for="SelectedTagIds" asp-items="Model.Tags" class="form-control" multiple="multiple"></select>
+    </div>
+    <div class="form-group">
+        <label>Words</label>
+        <select asp-for="SelectedWordIds" asp-items="Model.Words" class="form-control" multiple="multiple"></select>
+    </div>
+
+    <hr />
+    <h4>Questions</h4>
+    <div id="questions">
+        @for (int i = 0; i < Model.Questions.Count; i++)
+        {
+            <div class="card mb-4 p-3">
+                <h5>Question @(i+1)</h5>
+                <input type="hidden" asp-for="Questions[@i].QuestionId" />
+
+                <div class="form-group">
+                    <label asp-for="Questions[@i].QuestionText">Question Text</label>
+                    <input asp-for="Questions[@i].QuestionText" class="form-control" />
+                    <span asp-validation-for="Questions[@i].QuestionText" class="text-danger"></span>
+                </div>
+
+                <!-- Question Image Upload & Preview -->
+                <div class="form-group">
+                    <label>Image</label>
+                    @if (!string.IsNullOrEmpty(Model.Questions[i].ImageUrl))
+                    {
+                        <div>
+                            <img src="@Model.Questions[i].ImageUrl" style="max-width:180px;max-height:120px" class="mb-2" />
+                        </div>
+                    }
+                    <input type="file" name="Questions[@i].ImageFile" accept="image/*" class="form-control" />
+                </div>
+
+                <!-- Question MP3 Upload & Preview -->
+                <div class="form-group">
+                    <label>MP3 Audio (upload or record)</label>
+                    @if (!string.IsNullOrEmpty(Model.Questions[i].AudioUrl))
+                    {
+                        <audio controls class="mb-2">
+                            <source src="@Model.Questions[i].AudioUrl" type="audio/mpeg" />
+                            Your browser does not support the audio element.
+                        </audio>
+                    }
+                    <input type="file" name="Questions[@i].AudioFile" accept="audio/*" class="form-control" />
+                </div>
+
+                <!-- Question YouTube Video Link & Embed Preview -->
+                <div class="form-group">
+                    <label>YouTube Video URL (Paste full link or embed code)</label>
+                    <input asp-for="Questions[@i].VideoUrl" class="form-control" />
+                    @if (!string.IsNullOrWhiteSpace(Model.Questions[i].VideoUrl))
+                    {
+                        <div class="mt-2">
+                            <iframe width="420" height="240" src="@GetYouTubeEmbedUrl(Model.Questions[i].VideoUrl?? "")" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                    }
+                </div>
+
+                <!-- Answers List -->
+                <div>
+                    <label>Answers</label>
+                    @for (int j = 0; j < Model.Questions[i].Answers.Count; j++)
+                    {
+                        <div class="form-inline mb-2">
+                            <input type="hidden" asp-for="Questions[@i].Answers[@j].AnswerId" />
+                            <input asp-for="Questions[@i].Answers[@j].AnswerText" class="form-control mr-2" style="width: 70%;" placeholder="Answer" />
+                            <label class="ml-2">
+                                <input asp-for="Questions[@i].Answers[@j].IsCorrect" type="checkbox" /> Correct
+                            </label>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+    <button type="submit" class="btn btn-success">Save Changes</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // You can enhance for dynamic question/answer add/remove with JS if needed
+    </script>
+}
+
+@functions {
+    public static string GetYouTubeEmbedUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return "";
+
+        string? videoId = null;
+
+        // Handle regular youtube.com and youtu.be links
+        if (url.Contains("youtube.com"))
+        {
+            var uri = new Uri(url);
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            videoId = query["v"];
+        }
+        else if (url.Contains("youtu.be"))
+        {
+            var uri = new Uri(url);
+            videoId = uri.AbsolutePath.Trim('/');
+        }
+        // Support for direct embed code
+        if (url.Contains("embed"))
+        {
+            // Already embed format
+            return url;
+        }
+        if (!string.IsNullOrWhiteSpace(videoId))
+            return $"https://www.youtube.com/embed/{videoId}";
+
+        return url;
+    }
+}
+

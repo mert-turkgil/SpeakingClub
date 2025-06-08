@@ -55,15 +55,20 @@ namespace SpeakingClub.Controllers
         {
             var entityBlogs = await _unitOfWork.Blogs.GetAllAsync();
             var selectedBlogs = entityBlogs.Where(b => b.isHome == true).ToList();
-
+                var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
+                var langCode = currentCulture.Substring(0, 2).ToLower();
             var model = new IndexModel 
             {
                 BlogItems = selectedBlogs.Any() ?
                     selectedBlogs.Select(b => new SpeakingClub.Entity.Blog
                     {
                         BlogId = b.BlogId,
-                        Title = _localization.GetKey($"Blog_{b.BlogId}_Title")?.Value ?? b.Title,
-                        Content = _localization.GetKey($"Blog_{b.BlogId}_Content")?.Value ?? b.Content,
+                        Image = b.Image,
+                        Url = b.Url,
+                        RawYT = b.RawYT,
+                        RawMaps = b.RawMaps,
+                        Title = _localization.GetKey($"Title_{b.BlogId}_{b.Url}_{langCode}")?.Value ?? b.Title,
+                        Content = _localization.GetKey($"Content_{b.BlogId}_{b.Url}_{langCode}")?.Value ?? b.Content,
                         Date = b.Date,
                         Author = b.Author,
                         Tags = b.Tags
@@ -71,8 +76,12 @@ namespace SpeakingClub.Controllers
                     entityBlogs.Select(b => new SpeakingClub.Entity.Blog
                     {
                         BlogId = b.BlogId,
-                        Title = _localization.GetKey($"Blog_{b.BlogId}_Title")?.Value ?? b.Title,
-                        Content = _localization.GetKey($"Blog_{b.BlogId}_Content")?.Value ?? b.Content,
+                        Image = b.Image,
+                        Url = b.Url,
+                        RawYT = b.RawYT,
+                        RawMaps = b.RawMaps,
+                        Title = _localization.GetKey($"Title_{b.BlogId}_{b.Url}_{langCode}")?.Value ?? b.Title,
+                        Content = _localization.GetKey($"Content_{b.BlogId}_{b.Url}_{langCode}")?.Value ?? b.Content,
                         Date = b.Date,
                         Author = b.Author,
                         Tags = b.Tags
@@ -395,23 +404,25 @@ namespace SpeakingClub.Controllers
                     Title = blog.Title,
                     Content = blog.Content,
                     Date = blog.Date,
+                    RawMaps = blog.RawMaps,
+                    RawYT = blog.RawYT,
                     Author = blog.Author,
                     Image = blog.Image,
                     Tags = blog.Tags?.ToList() ?? new List<Tag>(),
-                    Quizzes = blog.Quiz // the collection of quizzes linked to the blog
+                    Quizzes = blog.Quiz 
                 };
 
                 // Adjusting quiz question retrieval:
                 if (blog.SelectedQuestionId.HasValue)
                 {
-                    // Try to locate the question by its ID from any quiz's Questions collection.
+                    // Try to locate the question by its ID among all questions of the quizzes.
                     var selectedQuestion = blog.Quiz.SelectMany(q => q.Questions)
                                                     .FirstOrDefault(q => q.Id == blog.SelectedQuestionId.Value);
                     viewModel.QuizQuestion = selectedQuestion;
                 }
                 else if (blog.Quiz != null && blog.Quiz.Any())
                 {
-                    // Fallback: if no selected question was explicitly set, pick the first quiz's first question.
+                    // Fallback: select the first question from the first quiz.
                     var firstQuiz = blog.Quiz.First();
                     if (firstQuiz.Questions != null && firstQuiz.Questions.Any())
                     {

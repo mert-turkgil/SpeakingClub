@@ -1,4 +1,5 @@
 using System;
+using System.Dynamic;
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -97,6 +98,9 @@ namespace SpeakingClub.Controllers
 
                 return new QuizSummaryViewModel
                 {
+                    Tags = q.Tags?.ToList() ?? new List<Tag>(),
+                    AudioUrl = q.AudioUrl,
+                    YouTubeVideoUrl = q.YouTubeVideoUrl,
                     QuizId = q.Id,
                     QuizTitle = q.Title,
                     QuizDescription = q.Description,
@@ -252,8 +256,10 @@ namespace SpeakingClub.Controllers
                 TempData["Error"] = "Unable to load user data.";
                 return RedirectToAction("Login", "Account");
             }
+            
 
             var submissions = await _unitOfWork.QuizSubmissions.GetAllAsync();
+            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
             var userSubmissions = submissions.Where(qs => qs.UserId == user.Id).ToList();
 
             // Check if any quizzes have been completed
@@ -263,41 +269,48 @@ namespace SpeakingClub.Controllers
             if (hasQuizData)
             {
                 double averageScore = userSubmissions.Average(q => q.Score);
+                int totalAttempts = userSubmissions.Count;
+                int distinctQuizzes = userSubmissions.Select(s => s.QuizId).Distinct().Count();
+
                 string level;
+                if (averageScore >= 90)
+                    level = "C2";
+                else if (averageScore >= 80)
+                    level = "C1";
+                else if (averageScore >= 70)
+                    level = "B2";
+                else if (averageScore >= 60)
+                    level = "B1";
+                else if (averageScore >= 50)
+                    level = "A2";
+                else
+                    level = "A1";
 
-                    if (averageScore >= 90)
-                    {
-                        level = "C2";
-                    }
-                    else if (averageScore >= 80)
-                    {
-                        level = "C1";
-                    }
-                    else if (averageScore >= 70)
-                    {
-                        level = "B2";
-                    }
-                    else if (averageScore >= 60)
-                    {
-                        level = "B1";
-                    }
-                    else if (averageScore >= 50)
-                    {
-                        level = "A2";
-                    }
-                    else
-                    {
-                        level = "A1";
-                    }
+                // Prepare list of all attempts with quiz title and score (optional, for graphs)
+                var attemptsList = userSubmissions
+                    .OrderBy(s => s.SubmissionDate)
+                    .Select(s => {
+                        dynamic obj = new ExpandoObject();
+                        obj.QuizTitle = quizzes.FirstOrDefault(q => q.Id == s.QuizId)?.Title ?? "Unknown";
+                        obj.Score = s.Score;
+                        obj.Date = s.SubmissionDate;
+                        return obj;
+                    })
+                    .ToList();
 
-
+                ViewBag.AttemptsList = attemptsList;
                 ViewBag.UserLevel = level;
                 ViewBag.Progress = averageScore;
+                ViewBag.TotalAttempts = totalAttempts;
+                ViewBag.DistinctQuizzes = distinctQuizzes;
             }
             else
             {
                 ViewBag.UserLevel = null;
                 ViewBag.Progress = 0;
+                ViewBag.TotalAttempts = 0;
+                ViewBag.DistinctQuizzes = 0;
+                ViewBag.AttemptsList = new List<object>();
             }
 
             return View(user);

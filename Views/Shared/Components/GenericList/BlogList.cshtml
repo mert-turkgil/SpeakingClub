@@ -27,7 +27,7 @@
                         <td>@item.Date.ToString("d")</td>
                         <td>@(item.isHome ? "Yes" : "No")</td>
                         <td>
-                            <a asp-action="Edit" asp-controller="Blog" asp-route-id="@item.BlogId" 
+                            <a asp-action="BlogEdit" asp-controller="Admin" asp-route-id="@item.BlogId" 
                                class="btn btn-sm btn-warning">Edit</a>
                             <form asp-action="Delete" method="post" class="d-inline">
                                 <input type="hidden" name="id" value="@item.BlogId" />

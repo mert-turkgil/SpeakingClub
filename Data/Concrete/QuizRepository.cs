@@ -67,6 +67,13 @@ namespace SpeakingClub.Data.Concrete
                 .Include(q=>q.Words)
                 .FirstOrDefaultAsync(q => q.Id == quizId);
         }
+        public async Task<Quiz?> GetByIdWithQuestions(int quizId)
+        {
+            return await _dbSet
+                .Include(q => q.Questions)
+                .ThenInclude(q => q.Answers)
+                .FirstOrDefaultAsync(q => q.Id == quizId);
+        }
 
     }
 }

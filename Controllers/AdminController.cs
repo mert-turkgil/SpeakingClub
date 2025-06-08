@@ -30,13 +30,13 @@ namespace SpeakingClub.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly AliveResourceService _dynamicResourceService;
 
-        public AdminController(ILogger<AdminController> logger,UserManager<User> userManager, RoleManager<IdentityRole> roleManager, IUnitOfWork unitOfWork,IWebHostEnvironment env,
-        IManageResourceService manageResourceService,AliveResourceService dynamicResourceService)
+        public AdminController(ILogger<AdminController> logger, UserManager<User> userManager, RoleManager<IdentityRole> roleManager, IUnitOfWork unitOfWork, IWebHostEnvironment env,
+        IManageResourceService manageResourceService, AliveResourceService dynamicResourceService)
         {
             _env = env;
-            _dynamicResourceService =dynamicResourceService;
-            _manageResourceService=manageResourceService;
-            _roleManager= roleManager;
+            _dynamicResourceService = dynamicResourceService;
+            _manageResourceService = manageResourceService;
+            _roleManager = roleManager;
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _logger = logger;
@@ -92,7 +92,7 @@ namespace SpeakingClub.Controllers
             };
 
             var createResult = await _userManager.CreateAsync(user, model.Password);
-            
+
             if (!createResult.Succeeded)
             {
                 foreach (var error in createResult.Errors)
@@ -150,8 +150,8 @@ namespace SpeakingClub.Controllers
             // 2. Target is Admin and current user is not Root
             if (isTargetRoot || (isTargetAdmin && !User.IsInRole("Root")))
             {
-                TempData["ErrorMessage"] = isTargetRoot 
-                    ? "You cannot delete the Root user." 
+                TempData["ErrorMessage"] = isTargetRoot
+                    ? "You cannot delete the Root user."
                     : "Only Root users can delete Admin users.";
                 return RedirectToAction("Account");
             }
@@ -171,13 +171,13 @@ namespace SpeakingClub.Controllers
             }
             else
             {
-                TempData["ErrorMessage"] = "Error occurred while deleting the user: " + 
+                TempData["ErrorMessage"] = "Error occurred while deleting the user: " +
                     string.Join(", ", result.Errors.Select(e => e.Description));
             }
 
             return RedirectToAction("Account");
         }
-        
+
         // Edit User Method (GET)
         [HttpGet("UserEdit/{id}")]
         [Authorize(Roles = "Admin,Root")]
@@ -347,8 +347,8 @@ namespace SpeakingClub.Controllers
             {
                 ModelState.AddModelError(string.Empty, error.Description);
             }
-        } 
-        
+        }
+
         #endregion
 
         #region  Roles
@@ -472,7 +472,7 @@ namespace SpeakingClub.Controllers
             return RedirectToAction("Index");
         }
         #endregion
-    
+
         #region Services
         [HttpPost("EditTranslation")]
         [ValidateAntiForgeryToken]
@@ -527,7 +527,7 @@ namespace SpeakingClub.Controllers
         }
 
         #endregion
-        
+
 
         #region Blog Management
         private void DeleteUnusedImages(Blog blog, List<string> usedImagePaths)
@@ -745,10 +745,10 @@ namespace SpeakingClub.Controllers
 
 
 
-        private void SaveContentToResx(BlogCreateModel model , int id)
+        private void SaveContentToResx(BlogCreateModel model, int id)
         {
             // Supported languages and their codes
-            string[] cultures = { "en-US", "tr-TR", "de-DE"};
+            string[] cultures = { "en-US", "tr-TR", "de-DE" };
             string[] titles = { model.TitleUS, model.TitleTR, model.TitleDE };
             string[] contents = { model.ContentUS, model.ContentTR, model.ContentDE };
 
@@ -773,10 +773,10 @@ namespace SpeakingClub.Controllers
         private void SaveContentToResxEdit(BlogResultModel model, string updatedContent, int id)
         {
             // Supported languages and their codes
-            string[] cultures = { "en-US", "tr-TR", "de-DE", "fr-FR" };
-            string[] langCodes = { "en", "tr", "de", "fr" };
-            string[] titles = { model.TitleUS, model.TitleTR, model.TitleDE};
-            string[] contents = { model.ContentUS, model.ContentTR, model.ContentDE};
+            string[] cultures = { "en-US", "tr-TR", "de-DE" };
+            string[] langCodes = { "en", "tr", "de" };
+            string[] titles = { model.TitleUS, model.TitleTR, model.TitleDE };
+            string[] contents = { model.ContentUS, model.ContentTR, model.ContentDE };
 
             for (int i = 0; i < cultures.Length; i++)
             {
@@ -805,8 +805,7 @@ namespace SpeakingClub.Controllers
             {
                 { "en-US", "en" },
                 { "tr-TR", "tr" },
-                { "de-DE", "de" },
-                { "fr-FR", "fr" }
+                { "de-DE", "de" }
             };
 
             foreach (var culture in cultures)
@@ -897,8 +896,7 @@ namespace SpeakingClub.Controllers
             {
                 { "en-US", "en" },
                 { "tr-TR", "tr" },
-                { "de-DE", "de" },
-                { "fr-FR", "fr" }
+                { "de-DE", "de" }
             };
 
             // Track deleted images to avoid multiple deletions
@@ -985,8 +983,7 @@ namespace SpeakingClub.Controllers
             {
                 { "en-US", "en" },
                 { "tr-TR", "tr" },
-                { "de-DE", "de" },
-                { "fr-FR", "fr" }
+                { "de-DE", "de" }
             };
 
             // Loop through each culture and delete its translations
@@ -1024,6 +1021,24 @@ namespace SpeakingClub.Controllers
             }
         }
 
+        [HttpGet("GetQuizQuestions")]
+        public async Task<IActionResult> GetQuizQuestions(int quizId)
+        {
+            // Use a repository method that loads the quiz including its questions.
+            var quiz = await _unitOfWork.Quizzes.GetByIdWithQuestions(quizId);
+            if (quiz == null)
+            {
+                return NotFound();
+            }
+
+            var questions = quiz.Questions.Select(q => new
+            {
+                QuestionId = q.Id,
+                QuestionText = q.QuestionText
+            }).ToList();
+
+            return Json(questions);
+        }
 
 
         #endregion
@@ -1042,7 +1057,7 @@ namespace SpeakingClub.Controllers
                     Text = q.Title
                 })
             };
-            
+
             return View(model);
         }
 
@@ -1091,7 +1106,7 @@ namespace SpeakingClub.Controllers
                     Value = q.Id.ToString(),
                     Text = q.Title
                 });
-                
+
             return View(model);
         }
         [Authorize(Roles = "Root,Admin,Teacher")]
@@ -1103,7 +1118,7 @@ namespace SpeakingClub.Controllers
             {
                 // Get the word with related quizzes to handle relationships
                 var word = await _unitOfWork.Words.GetByIdAsync(id);
-                
+
                 if (word == null)
                 {
                     TempData["ErrorMessage"] = "Word not found";
@@ -1143,7 +1158,7 @@ namespace SpeakingClub.Controllers
             }
 
             var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-            
+
             var model = new WordEditViewModel
             {
                 WordId = word.WordId,
@@ -1191,7 +1206,7 @@ namespace SpeakingClub.Controllers
                     // Update quizzes
                     var Quizzes = await _unitOfWork.Quizzes
                         .GetAllAsync();
-                    var  selectedQuizzes = Quizzes
+                    var selectedQuizzes = Quizzes
                         .Where(q => model.SelectedQuizIds.Contains(q.Id))
                         .ToList();
                     word.Quizzes.Clear();
@@ -1219,13 +1234,70 @@ namespace SpeakingClub.Controllers
                     Value = q.Id.ToString(),
                     Text = q.Title
                 });
-                
+
             return View(model);
         }
-        
+
         #endregion
-    
+
         #region Quiz
+        [HttpPost("QuizDelete/{id}")]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Root,Admin,Teacher")]
+        public async Task<IActionResult> QuizDelete(int id)
+        {
+            using var transaction = await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                var quiz = await _unitOfWork.Quizzes.GetByIdAsync(id);
+                if (quiz == null)
+                {
+                    TempData["ErrorMessage"] = "Quiz not found!";
+                    return RedirectToAction("QuizList");
+                }
+
+                // Remove related quiz submissions & responses
+                var submissions = (await _unitOfWork.QuizSubmissions.GetAllAsync())
+                    .Where(qs => qs.QuizId == id)
+                    .ToList();
+                foreach (var submission in submissions)
+                {
+                    // Remove responses first
+                    foreach (var response in submission.QuizResponses.ToList())
+                    {
+                        _unitOfWork.QuizResponses.Remove(response);
+                    }
+                    _unitOfWork.QuizSubmissions.Remove(submission);
+                }
+
+                // Remove word and tag relationships if needed
+                quiz.Words?.Clear();
+                quiz.Tags?.Clear();
+
+                // Remove questions and their answers
+                foreach (var question in quiz.Questions.ToList())
+                {
+                    question.Answers?.Clear();
+                    _unitOfWork.Questions.Remove(question);
+                }
+
+                // Remove the quiz itself
+                _unitOfWork.Quizzes.Remove(quiz);
+
+                await _unitOfWork.SaveAsync();
+                await transaction.CommitAsync();
+
+                TempData["SuccessMessage"] = "Quiz deleted successfully!";
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                TempData["ErrorMessage"] = $"Error deleting quiz: {ex.Message}";
+            }
+            return RedirectToAction("QuizList");
+        }
+
+
         [HttpGet("QuizCreate")]
         public async Task<IActionResult> QuizCreate()
         {
@@ -1242,7 +1314,7 @@ namespace SpeakingClub.Controllers
             };
             model.Questions.Add(new QuestionViewModel
             {
-                QuestionText = string.Empty, 
+                QuestionText = string.Empty,
                 Answers = new List<AnswerViewModel>
                 {
                     new AnswerViewModel { AnswerText = string.Empty },
@@ -1278,22 +1350,22 @@ namespace SpeakingClub.Controllers
                         Words = wordlist.Where(w => model.SelectedWordIds.Contains(w.WordId)).ToList()
                     };
 
-                        foreach (var questionModel in model.Questions)
+                    foreach (var questionModel in model.Questions)
+                    {
+                        var question = new SpeakingClub.Entity.Question // Use Entity namespace
                         {
-                            var question = new SpeakingClub.Entity.Question // Use Entity namespace
+                            QuestionText = questionModel.QuestionText,
+                            ImageUrl = questionModel.ImageUrl,
+                            AudioUrl = questionModel.AudioUrl,
+                            VideoUrl = questionModel.VideoUrl,
+                            Answers = questionModel.Answers.Select(a => new SpeakingClub.Entity.QuizAnswer
                             {
-                                QuestionText = questionModel.QuestionText,
-                                ImageUrl = questionModel.ImageUrl,
-                                AudioUrl = questionModel.AudioUrl,
-                                VideoUrl = questionModel.VideoUrl,
-                                Answers = questionModel.Answers.Select(a => new SpeakingClub.Entity.QuizAnswer
-                                {
-                                    AnswerText = a.AnswerText,
-                                    IsCorrect = a.IsCorrect
-                                }).ToList()
-                            };
-                            quiz.Questions.Add(question);
-                        }
+                                AnswerText = a.AnswerText,
+                                IsCorrect = a.IsCorrect
+                            }).ToList()
+                        };
+                        quiz.Questions.Add(question);
+                    }
 
                     await _unitOfWork.Quizzes.AddAsync(quiz);
                     await _unitOfWork.SaveAsync();
@@ -1439,6 +1511,7 @@ namespace SpeakingClub.Controllers
                 return View(model);
             }
         }
+
         #region helpers for quiz
         private async Task UpdateQuizRelationships(Entity.Quiz quiz, QuizEditViewModel model)
         {
@@ -1466,7 +1539,7 @@ namespace SpeakingClub.Controllers
             foreach (var questionModel in model.Questions)
             {
                 var question = quiz.Questions.FirstOrDefault(q => q.Id == questionModel.QuestionId) ?? new Entity.Question();
-                
+
                 question.QuestionText = questionModel.QuestionText;
                 question.ImageUrl = questionModel.ImageUrl;
                 question.AudioUrl = questionModel.AudioUrl;
@@ -1485,7 +1558,7 @@ namespace SpeakingClub.Controllers
                     var answer = question.Answers.FirstOrDefault(a => a.Id == answerModel.AnswerId) ?? new Entity.QuizAnswer();
                     answer.AnswerText = answerModel.AnswerText;
                     answer.IsCorrect = answerModel.IsCorrect;
-                    
+
                     if (answer.Id == 0)
                     {
                         question.Answers.Add(answer);
@@ -1519,216 +1592,510 @@ namespace SpeakingClub.Controllers
         }
         #endregion
         #endregion
-  
+
         #region Blog
-            #region Blog Create
-[HttpGet("BlogCreate")]
-public async Task<IActionResult> BlogCreate()
-{
-    // Fetch Categories, Quizzes, and Tags for selection lists.
-    var categories = await _unitOfWork.Categories.GetAllAsync();
-
-    // Ensure quizzes are eagerly loaded with questions.
-    var quizzes = await _unitOfWork.Quizzes.GetAllAsync(); 
-    var tags = await _unitOfWork.Tags.GetAllAsync();
-
-    // Debug log: count total questions loaded.
-    int totalQuestions = quizzes.Sum(q => q.Questions?.Count ?? 0);
-    Console.WriteLine($"[DEBUG] Total quiz questions loaded: {totalQuestions}");
-
-    // Populate ViewBag for Categories.
-    ViewBag.Categories = categories.Select(c => new SelectListItem
-    {
-        Value = c.CategoryId.ToString(),
-        Text = c.Name
-    }).ToList();
-
-    // Populate ViewBag for Quizzes (for single selection).
-    ViewBag.Quizzes = quizzes.Select(q => new SelectListItem
-    {
-        Value = q.Id.ToString(),
-        Text = q.Title
-    }).ToList();
-
-    // Aggregate quiz questions from all quizzes.
-    var quizQuestions = quizzes
-        .Where(q => q.Questions != null && q.Questions.Any())
-        .SelectMany(q => q.Questions.Select(quest => new
+        #region Blog Create
+        [HttpGet("BlogCreate")]
+        public async Task<IActionResult> BlogCreate()
         {
-            QuestionId = quest.Id,
-            QuestionText = quest.QuestionText,
-            QuizId = q.Id
-        }))
-        .ToList();
+            // Fetch Categories, Quizzes, and Tags for selection lists.
+            var categories = await _unitOfWork.Categories.GetAllAsync();
+            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+            var tags = await _unitOfWork.Tags.GetAllAsync();
 
-    Console.WriteLine($"[DEBUG] Aggregated quiz questions count: {quizQuestions.Count}");
-    foreach (var item in quizQuestions)
-    {
-        Console.WriteLine($"[DEBUG] Question - Id: {item.QuestionId}, Text: {item.QuestionText}, QuizId: {item.QuizId}");
-    }
-    ViewBag.QuizQuestions = quizQuestions;
+            // Debug log: count total questions loaded (for logging only).
+            int totalQuestions = quizzes.Sum(q => q.Questions?.Count ?? 0);
+            Console.WriteLine($"[DEBUG] Total quiz questions loaded: {totalQuestions}");
 
-    // Populate ViewBag for Tags.
-    ViewBag.Tags = tags.Select(t => new SelectListItem
-    {
-        Value = t.TagId.ToString(),
-        Text = t.Name
-    }).ToList();
-
-    // Create an initial empty BlogCreateModel.
-    var model = new BlogCreateModel
-    {
-        SelectedCategoryIds = new List<int>(),
-        // Change: Instead of multiple quiz IDs, allow single quiz selection.
-        // You may add a new property, e.g. SelectedQuizId (int?) instead of SelectedQuizIds (List<int>).
-        // For this example, we'll assume you add:
-        // public int? SelectedQuizId { get; set; }
-        // And then remove the checkbox UI for quizzes.
-        SelectedQuizIds = null,
-        SelectedTagIds = new List<int>(),
-        IsHome = false,         // Default: not shown on home page.
-        SelectedQuestionId = null // No quiz question selected by default.
-    };
-
-    Console.WriteLine("[DEBUG] BlogCreate GET page loaded successfully.");
-    return View(model);
-}
-
-            [HttpPost("BlogCreate")]
-            public async Task<IActionResult> BlogCreate(BlogCreateModel model)
+            // Populate ViewBag for Categories.
+            ViewBag.Categories = categories.Select(c => new SelectListItem
             {
-                if (!ModelState.IsValid)
+                Value = c.CategoryId.ToString(),
+                Text = c.Name
+            }).ToList();
+
+            // Populate ViewBag for Quizzes (for single quiz selection).
+            ViewBag.Quizzes = quizzes.Select(q => new SelectListItem
+            {
+                Value = q.Id.ToString(),
+                Text = q.Title
+            }).ToList();
+
+            // NOTE: We no longer aggregate quiz questions here as they are fetched
+            // via an AJAX call using GetByIdWithQuestions.
+
+            // Populate ViewBag for Tags.
+            ViewBag.Tags = tags.Select(t => new SelectListItem
+            {
+                Value = t.TagId.ToString(),
+                Text = t.Name
+            }).ToList();
+
+            // Create an initial empty BlogCreateModel.
+            var model = new BlogCreateModel
+            {
+                SelectedCategoryIds = new List<int>(),
+                // Use single quiz selection (if you have introduced a property like SelectedQuizId, use that)
+                SelectedQuizIds = null,
+                SelectedTagIds = new List<int>(),
+                IsHome = false,
+                SelectedQuestionId = null // No quiz question selected by default.
+            };
+
+            Console.WriteLine("[DEBUG] BlogCreate GET page loaded successfully.");
+            return View(model);
+        }
+
+
+        [HttpPost("BlogCreate")]
+        public async Task<IActionResult> BlogCreate(BlogCreateModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                Console.WriteLine("[ERROR] BlogCreate model validation failed.");
+
+                // Re-fetch categories, quizzes, and tags to repopulate dropdowns.
+                var categories = await _unitOfWork.Categories.GetAllAsync();
+                var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+                var tags = await _unitOfWork.Tags.GetAllAsync();
+
+                ViewBag.Categories = categories.Select(c => new SelectListItem
                 {
-                    Console.WriteLine("[ERROR] BlogCreate model validation failed.");
+                    Value = c.CategoryId.ToString(),
+                    Text = c.Name
+                }).ToList();
 
-                    // Fetch categories, quizzes, tags again for dropdowns.
-                    var categories = await _unitOfWork.Categories.GetAllAsync();
-                    var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-                    var tags = await _unitOfWork.Tags.GetAllAsync();
-
-                    ViewBag.Categories = categories.Select(c => new SelectListItem
-                    {
-                        Value = c.CategoryId.ToString(),
-                        Text = c.Name
-                    }).ToList();
-
-                    ViewBag.Quizzes = quizzes.Select(q => new SelectListItem
-                    {
-                        Value = q.Id.ToString(),
-                        Text = q.Title
-                    }).ToList();
-
-                    ViewBag.Tags = tags.Select(t => new SelectListItem
-                    {
-                        Value = t.TagId.ToString(),
-                        Text = t.Name
-                    }).ToList();
-
-                    return View(model);
-                }
-
-                // Define necessary paths.
-                string tempPath = Path.Combine(_env.WebRootPath, "temp");
-                string imgPath = Path.Combine(_env.WebRootPath, "blog", "img");
-                string gifPath = Path.Combine(_env.WebRootPath, "blog", "gif");
-                string coverPath = Path.Combine(_env.WebRootPath, "img");
-
-                Directory.CreateDirectory(tempPath);
-                Directory.CreateDirectory(imgPath);
-                Directory.CreateDirectory(gifPath);
-                Directory.CreateDirectory(coverPath);
-
-                var fileMappings = new Dictionary<string, string>();
-                foreach (var file in Directory.GetFiles(tempPath))
+                ViewBag.Quizzes = quizzes.Select(q => new SelectListItem
                 {
-                    var fileName = Path.GetFileName(file);
-                    var fileExtension = Path.GetExtension(file).ToLower();
+                    Value = q.Id.ToString(),
+                    Text = q.Title
+                }).ToList();
 
-                    var destination = fileExtension == ".gif"
-                        ? Path.Combine(gifPath, fileName)
-                        : Path.Combine(imgPath, fileName);
-
-                    if (!System.IO.File.Exists(destination))
-                    {
-                        System.IO.File.Move(file, destination);
-                        Console.WriteLine($"[DEBUG] Moved content image: {fileName}");
-                    }
-
-                    fileMappings[$"/temp/{fileName}"] = $"/blog/{(fileExtension == ".gif" ? "gif" : "img")}/{fileName}";
-                }
-
-                string updatedContent = ProcessContentImages(model.Content, fileMappings);
-                string updatedContentUS = ProcessContentImages(model.ContentUS, fileMappings);
-                string updatedContentTR = ProcessContentImages(model.ContentTR, fileMappings);
-                string updatedContentDE = ProcessContentImages(model.ContentDE, fileMappings);
-
-                string coverFileName = null!;
-                if (model.ImageFile != null && model.ImageFile.Length > 0)
+                ViewBag.Tags = tags.Select(t => new SelectListItem
                 {
-                    coverFileName = $"{model.Url}_cover{Path.GetExtension(model.ImageFile.FileName)}";
-                    string coverFilePath = Path.Combine(coverPath, coverFileName);
+                    Value = t.TagId.ToString(),
+                    Text = t.Name
+                }).ToList();
 
-                    using var stream = new FileStream(coverFilePath, FileMode.Create);
-                    await model.ImageFile.CopyToAsync(stream);
-                    Console.WriteLine($"[DEBUG] Saved cover image: {coverFileName}");
-                }
-
-                // Create and populate the Blog entity.
-                var blog = new Blog
-                {
-                    Title = model.Title,
-                    Content = updatedContent,
-                    Url = model.Url,
-                    Image = coverFileName,
-                    Date = DateTime.Now,
-                    Author = model.Author,
-                    RawYT = model.RawYT,
-                    RawMaps = model.RawMaps,
-                    CategoryId = model.SelectedCategoryIds?.FirstOrDefault(),
-                    // Set whether this blog should appear on the home page.
-                    isHome = model.IsHome
-                };
-
-                // If any quizzes were selected, assign them.
-                if (model.SelectedQuizIds?.Any() == true)
-                {
-                    var quizzesToAdd = await _unitOfWork.Quizzes.GetAllAsync();
-                    blog.Quiz = quizzesToAdd.Where(q => model.SelectedQuizIds.Contains(q.Id)).ToList();
-                }
-
-                // If any tags were selected, assign them.
-                if (model.SelectedTagIds?.Any() == true)
-                {
-                    var tagsToAdd = await _unitOfWork.Tags.GetAllAsync();
-                    blog.Tags = tagsToAdd.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList();
-                }
-
-                // Optionally assign the chosen quiz question to the blog.
-                if (model.SelectedQuestionId.HasValue)
-                {
-                    blog.SelectedQuestionId = model.SelectedQuestionId.Value;
-                }
-
-                await _unitOfWork.Blogs.AddAsync(blog);
-                await _unitOfWork.SaveAsync();
-
-                // Save translations to resource files.
-                SaveContentToResx(new BlogCreateModel
-                {
-                    TitleUS = model.TitleUS,
-                    ContentUS = updatedContentUS,
-                    TitleTR = model.TitleTR,
-                    ContentTR = updatedContentTR,
-                    TitleDE = model.TitleDE,
-                    ContentDE = updatedContentDE,
-                    Url = model.Url
-                }, blog.BlogId);
-
-                Console.WriteLine($"[DEBUG] Blog '{blog.Title}' saved successfully with ID {blog.BlogId}.");
-                return RedirectToAction("Index");
+                return View(model);
             }
 
-            #endregion
+            // Define necessary paths.
+            string tempPath = Path.Combine(_env.WebRootPath, "temp");
+            string imgPath = Path.Combine(_env.WebRootPath, "blog", "img");
+            string gifPath = Path.Combine(_env.WebRootPath, "blog", "gif");
+            string coverPath = Path.Combine(_env.WebRootPath, "img");
+
+            Directory.CreateDirectory(tempPath);
+            Directory.CreateDirectory(imgPath);
+            Directory.CreateDirectory(gifPath);
+            Directory.CreateDirectory(coverPath);
+
+            // Process and move any images in the temp folder.
+            var fileMappings = new Dictionary<string, string>();
+            foreach (var file in Directory.GetFiles(tempPath))
+            {
+                var fileName = Path.GetFileName(file);
+                var fileExtension = Path.GetExtension(file).ToLower();
+
+                var destination = fileExtension == ".gif"
+                    ? Path.Combine(gifPath, fileName)
+                    : Path.Combine(imgPath, fileName);
+
+                if (!System.IO.File.Exists(destination))
+                {
+                    System.IO.File.Move(file, destination);
+                    Console.WriteLine($"[DEBUG] Moved content image: {fileName}");
+                }
+
+                fileMappings[$"/temp/{fileName}"] = $"/blog/{(fileExtension == ".gif" ? "gif" : "img")}/{fileName}";
+            }
+
+            // Process content images for main content and translations.
+            string updatedContent = ProcessContentImages(model.Content, fileMappings);
+            string updatedContentUS = ProcessContentImages(model.ContentUS, fileMappings);
+            string updatedContentTR = ProcessContentImages(model.ContentTR, fileMappings);
+            string updatedContentDE = ProcessContentImages(model.ContentDE, fileMappings);
+
+            // Process Cover Image Upload if provided.
+            string? coverFileName = null;
+            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            {
+                coverFileName = $"{model.Url}_cover{Path.GetExtension(model.ImageFile.FileName)}";
+                string coverFilePath = Path.Combine(coverPath, coverFileName);
+
+                using var stream = new FileStream(coverFilePath, FileMode.Create);
+                await model.ImageFile.CopyToAsync(stream);
+                Console.WriteLine($"[DEBUG] Saved cover image: {coverFileName}");
+            }
+
+            // Create and populate the Blog entity.
+            var blog = new Blog
+            {
+                Title = model.Title,
+                Content = updatedContent,
+                Url = model.Url,
+                Image = coverFileName,
+                Date = DateTime.Now,
+                Author = model.Author,
+                RawYT = model.RawYT,
+                RawMaps = model.RawMaps,
+                CategoryId = model.SelectedCategoryIds?.FirstOrDefault(),
+                isHome = model.IsHome
+            };
+
+            // If any quizzes were selected, assign them.
+            if (model.SelectedQuizIds?.Any() == true)
+            {
+                var quizzesToAdd = await _unitOfWork.Quizzes.GetAllAsync();
+                blog.Quiz = quizzesToAdd.Where(q => model.SelectedQuizIds.Contains(q.Id)).ToList();
+            }
+
+            // If any tags were selected, assign them.
+            if (model.SelectedTagIds?.Any() == true)
+            {
+                var tagsToAdd = await _unitOfWork.Tags.GetAllAsync();
+                blog.Tags = tagsToAdd.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList();
+            }
+
+            // Optionally assign the chosen quiz question to the blog.
+            if (model.SelectedQuestionId.HasValue)
+            {
+                blog.SelectedQuestionId = model.SelectedQuestionId.Value;
+            }
+
+            await _unitOfWork.Blogs.AddAsync(blog);
+            await _unitOfWork.SaveAsync();
+
+            // Save translations to resource files.
+            SaveContentToResx(new BlogCreateModel
+            {
+                TitleUS = model.TitleUS,
+                ContentUS = updatedContentUS,
+                TitleTR = model.TitleTR,
+                ContentTR = updatedContentTR,
+                TitleDE = model.TitleDE,
+                ContentDE = updatedContentDE,
+                Url = model.Url
+            }, blog.BlogId);
+
+            Console.WriteLine($"[DEBUG] Blog '{blog.Title}' saved successfully with ID {blog.BlogId}.");
+            return RedirectToAction("Index");
+        }
+
+        #endregion
+
+        #region Blog Edit
+        [HttpGet("BlogEdit/{id}")]
+        public async Task<IActionResult> BlogEdit(int id)
+        {
+            // Fetch the blog by its ID.
+            var blog = await _unitOfWork.Blogs.GetAsync(id);
+            if (blog == null)
+            {
+                return NotFound();
+            }
+
+            // Fetch supporting lists.
+            var categories = await _unitOfWork.Categories.GetAllAsync();
+            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+            var tags = await _unitOfWork.Tags.GetAllAsync();
+
+            // Populate ViewBag lists.
+            ViewBag.Categories = categories.Select(c => new SelectListItem
+            {
+                Value = c.CategoryId.ToString(),
+                Text = c.Name
+            }).ToList();
+
+            ViewBag.Quizzes = quizzes.Select(q => new SelectListItem
+            {
+                Value = q.Id.ToString(),
+                Text = q.Title
+            }).ToList();
+
+            ViewBag.Tags = tags.Select(t => new SelectListItem
+            {
+                Value = t.TagId.ToString(),
+                Text = t.Name
+            }).ToList();
+
+            // Populate the edit model.
+            var model = new BlogEditModel
+            {
+                BlogId = blog.BlogId,
+                Title = blog.Title,
+                Content = blog.Content,
+                Url = blog.Url,
+                Author = blog.Author,
+                RawYT = blog.RawYT,
+                RawMaps = blog.RawMaps,
+                // Set CoverImageUrl by assuming the cover image is stored in wwwroot/img.
+                CoverImageUrl = !string.IsNullOrEmpty(blog.Image) ? $"~/img/{blog.Image}" : string.Empty,
+                SelectedCategoryIds = blog.CategoryId.HasValue
+                                    ? new List<int> { blog.CategoryId.Value }
+                                    : new List<int>(),
+                SelectedQuizIds = null, // Quiz selection can be implemented as needed.
+                SelectedQuestionId = blog.SelectedQuestionId,
+                SelectedTagIds = blog.Tags?.Select(t => t.TagId).ToList() ?? new List<int>(),
+                IsHome = blog.isHome
+            };
+
+            // Set the cover image URL.
+            // Assuming cover images are stored in wwwroot/img and blog.Image holds the file name.
+            model.CoverImageUrl = !string.IsNullOrEmpty(blog.Image)
+                                ? $"/img/{blog.Image}"
+                                : string.Empty;
+
+            // Read translations from resource files using your helper service.
+            // Note: Keys must match those used when saving translations.
+            model.TitleUS = _manageResourceService.ReadResourceValue($"Title_{blog.BlogId}_{blog.Url}_en", "en-US") ?? string.Empty;
+            model.ContentUS = _manageResourceService.ReadResourceValue($"Content_{blog.BlogId}_{blog.Url}_en", "en-US") ?? string.Empty;
+
+            model.TitleTR = _manageResourceService.ReadResourceValue($"Title_{blog.BlogId}_{blog.Url}_tr", "tr-TR") ?? string.Empty;
+            model.ContentTR = _manageResourceService.ReadResourceValue($"Content_{blog.BlogId}_{blog.Url}_tr", "tr-TR") ?? string.Empty;
+
+            model.TitleDE = _manageResourceService.ReadResourceValue($"Title_{blog.BlogId}_{blog.Url}_de", "de-DE") ?? string.Empty;
+            model.ContentDE = _manageResourceService.ReadResourceValue($"Content_{blog.BlogId}_{blog.Url}_de", "de-DE") ?? string.Empty;
+
+            return View(model);
+        }
+
+        [HttpPost("BlogEdit/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BlogEdit(BlogEditModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                // Repopulate dropdown lists if validation fails.
+                var categories = await _unitOfWork.Categories.GetAllAsync();
+                var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+                var tags = await _unitOfWork.Tags.GetAllAsync();
+
+                ViewBag.Categories = categories.Select(c => new SelectListItem
+                {
+                    Value = c.CategoryId.ToString(),
+                    Text = c.Name
+                }).ToList();
+
+                ViewBag.Quizzes = quizzes.Select(q => new SelectListItem
+                {
+                    Value = q.Id.ToString(),
+                    Text = q.Title
+                }).ToList();
+
+                ViewBag.Tags = tags.Select(t => new SelectListItem
+                {
+                    Value = t.TagId.ToString(),
+                    Text = t.Name
+                }).ToList();
+
+                return View(model);
+            }
+
+            // Retrieve the existing blog from the database.
+            var blog = await _unitOfWork.Blogs.GetAsync(model.BlogId);
+            if (blog == null)
+            {
+                return NotFound();
+            }
+
+            // Define necessary paths.
+            string tempPath = Path.Combine(_env.WebRootPath, "temp");
+            string imgPath = Path.Combine(_env.WebRootPath, "blog", "img");
+            string gifPath = Path.Combine(_env.WebRootPath, "blog", "gif");
+            string coverPath = Path.Combine(_env.WebRootPath, "img");
+
+            Directory.CreateDirectory(tempPath);
+            Directory.CreateDirectory(imgPath);
+            Directory.CreateDirectory(gifPath);
+            Directory.CreateDirectory(coverPath);
+
+            // Process any images that have been uploaded to the temporary folder.
+            var fileMappings = new Dictionary<string, string>();
+            foreach (var file in Directory.GetFiles(tempPath))
+            {
+                var fileName = Path.GetFileName(file);
+                var fileExtension = Path.GetExtension(file).ToLower();
+                var destination = fileExtension == ".gif"
+                    ? Path.Combine(gifPath, fileName)
+                    : Path.Combine(imgPath, fileName);
+
+                if (!System.IO.File.Exists(destination))
+                {
+                    System.IO.File.Move(file, destination);
+                    Console.WriteLine($"[DEBUG] Moved content image: {fileName}");
+                }
+                fileMappings[$"/temp/{fileName}"] = $"/blog/{(fileExtension == ".gif" ? "gif" : "img")}/{fileName}";
+            }
+
+            // Process content images for main content and translations.
+            string updatedContent = ProcessContentImages(model.Content, fileMappings);
+            string updatedContentUS = ProcessContentImages(model.ContentUS, fileMappings);
+            string updatedContentTR = ProcessContentImages(model.ContentTR, fileMappings);
+            string updatedContentDE = ProcessContentImages(model.ContentDE, fileMappings);
+
+            // Process cover image update: retain the existing cover image if no new file is uploaded.
+            string? coverFileName = blog.Image;
+            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            {
+                coverFileName = $"{model.Url}_cover{Path.GetExtension(model.ImageFile.FileName)}";
+                string coverFilePath = Path.Combine(coverPath, coverFileName);
+                using (var stream = new FileStream(coverFilePath, FileMode.Create))
+                {
+                    await model.ImageFile.CopyToAsync(stream);
+                }
+                Console.WriteLine($"[DEBUG] Updated cover image: {coverFileName}");
+            }
+
+            // Update blog properties.
+            blog.Title = model.Title;
+            blog.Content = updatedContent;
+            blog.Url = model.Url;
+            blog.Author = model.Author;
+            blog.RawYT = model.RawYT;
+            blog.RawMaps = model.RawMaps;
+            blog.CategoryId = model.SelectedCategoryIds?.FirstOrDefault();
+            blog.isHome = model.IsHome;
+            blog.Image = coverFileName;
+
+            // Update quiz question ID.
+            blog.SelectedQuestionId = (model.SelectedQuestionId.HasValue && model.SelectedQuestionId.Value > 0)
+                                        ? model.SelectedQuestionId.Value
+                                        : null;
+
+            // (Optional) Update related quizzes if applicable.
+            if (model.SelectedQuizIds != null && model.SelectedQuizIds.Any())
+            {
+                var quizzesToAdd = await _unitOfWork.Quizzes.GetAllAsync();
+                blog.Quiz = quizzesToAdd.Where(q => model.SelectedQuizIds.Contains(q.Id)).ToList();
+            }
+            // Update associated tags.
+            if (model.SelectedTagIds != null && model.SelectedTagIds.Any())
+            {
+                var tagsToAdd = await _unitOfWork.Tags.GetAllAsync();
+                blog.Tags = tagsToAdd.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList();
+            }
+
+            // Update translations using the helper method.
+            SaveContentToResx(new BlogCreateModel
+            {
+                TitleUS = model.TitleUS,
+                ContentUS = updatedContentUS,
+                TitleTR = model.TitleTR,
+                ContentTR = updatedContentTR,
+                TitleDE = model.TitleDE,
+                ContentDE = updatedContentDE,
+                Url = model.Url
+            }, blog.BlogId);
+
+            // Save the updated blog.
+            _unitOfWork.Blogs.Update(blog);
+            await _unitOfWork.SaveAsync();
+
+            Console.WriteLine($"[DEBUG] Blog '{blog.Title}' updated successfully with ID {blog.BlogId}.");
+            return RedirectToAction("Index");
+        }
+
+
+        #endregion
+        #endregion
+
+        #region Question
+        [HttpGet("QuestionCreate")]
+        public async Task<IActionResult> QuestionCreate()
+        {
+            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+            var model = new QuestionCreateViewModel
+            {
+                AvailableQuizzes = quizzes.Select(q => new SelectListItem
+                {
+                    Value = q.Id.ToString(),
+                    Text = q.Title
+                }),
+                Answers = new List<AnswerEditViewModel>
+                {
+                    new AnswerEditViewModel(),
+                    new AnswerEditViewModel()
+                }
+            };
+            return View(model);
+        }
+
+        [HttpPost("QuestionCreate")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> QuestionCreate(QuestionCreateViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+                model.AvailableQuizzes = quizzes.Select(q => new SelectListItem
+                {
+                    Value = q.Id.ToString(),
+                    Text = q.Title
+                });
+                return View(model);
+            }
+
+            // Process file uploads (if any)
+            string? imageUrl = null;
+            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            {
+                imageUrl = await ProcessImageUpload(model.ImageFile); // You must implement this!
+            }
+
+            string? audioUrl = null;
+            if (model.AudioFile != null && model.AudioFile.Length > 0)
+            {
+                audioUrl = await ProcessAudioUpload(model.AudioFile); // Reuse your quiz audio method
+            }
+
+            var question = new Entity.Question
+            {
+                QuestionText = model.QuestionText,
+                ImageUrl = imageUrl,
+                AudioUrl = audioUrl,
+                VideoUrl = model.VideoUrl,
+                Answers = model.Answers.Select(a => new SpeakingClub.Entity.QuizAnswer
+                {
+                    AnswerText = a.AnswerText,
+                    IsCorrect = a.IsCorrect
+                }).ToList()
+            };
+
+            // Optionally bind to a quiz
+            if (model.QuizId.HasValue)
+                question.QuizId = model.QuizId.Value;
+
+            await _unitOfWork.Questions.AddAsync(question);
+            await _unitOfWork.SaveAsync();
+
+            TempData["SuccessMessage"] = "Question created successfully!";
+            return RedirectToAction("Index"); // or QuestionList if you want
+        }
+        #region helpers for question
+        private async Task<string?> ProcessImageUpload(IFormFile imageFile)
+        {
+            if (imageFile == null || imageFile.Length == 0)
+                return null;
+
+            // Save to wwwroot/img
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "img");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(imageFile.FileName)}";
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await imageFile.CopyToAsync(fileStream);
+            }
+
+            // Return the relative path (so you can use it directly in <img src="">)
+            return $"/img/{uniqueFileName}";
+        }
+        #endregion
         #endregion
     }
 }
