@@ -40,13 +40,9 @@
                                asp-route-id="@quiz.Id" class="btn btn-sm btn-warning mb-1">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
-                            <form asp-action="QuizDelete" method="post">
+                            <form asp-action="QuizDelete" asp-route-id="@quiz.Id" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
                                 @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@quiz.Id" />
-                                <button type="submit" class="btn btn-sm btn-danger" 
-                                        onclick="return confirm('Delete this quiz?')">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
                             </form>
                         </td>
                     </tr>

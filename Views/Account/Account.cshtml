@@ -7,6 +7,11 @@
     var progress = ViewBag.Progress != null ? Convert.ToDouble(ViewBag.Progress) : 0;
     bool hasQuizData = ViewBag.HasQuizData != null && (bool)ViewBag.HasQuizData;
     bool canAccessDashboard = User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root");
+
+    // NEW: Quiz analytics
+    var totalAttempts = ViewBag.TotalAttempts != null ? (int)ViewBag.TotalAttempts : 0;
+    var distinctQuizzes = ViewBag.DistinctQuizzes != null ? (int)ViewBag.DistinctQuizzes : 0;
+    var attempts = ((IEnumerable<dynamic>)ViewBag.AttemptsList) ?? Enumerable.Empty<dynamic>();
 }
 @section Css {
     <link rel="stylesheet" href="~/lib/animate/animate.min.css" />
@@ -35,37 +40,6 @@
             background-color: #dc3545;
             color: white;
         }
-
-        .progress-circle {
-            width: 100px;
-            height: 100px;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-left: auto;
-        }
-
-        .progress-circle svg {
-            transform: rotate(-90deg);
-        }
-
-        .progress-circle .circle-bg {
-            fill: none;
-            stroke: #eee;
-            stroke-width: 8;
-        }
-
-        .progress-circle .circle {
-            fill: none;
-            stroke-width: 8;
-            stroke-linecap: round;
-            stroke: #00b4d8;
-            stroke-dasharray: 283;
-            stroke-dashoffset: calc(283 - (283 * var(--percent)) / 100);
-            animation: progress 1.5s ease-out forwards;
-        }
-
         @@keyframes progress {
             from { stroke-dashoffset: 283; }
             to { stroke-dashoffset: calc(283 - (283 * var(--percent)) / 100); }
@@ -77,6 +51,61 @@
             font-weight: bold;
         }
 
+        .no-quiz-data {
+            font-size: 14px;
+            color: #888;
+            text-align: right;
+        }
+        /* New for attempts table */
+        .attempt-table th, .attempt-table td {
+            vertical-align: middle !important;
+        }
+        .attempt-table th {
+            background: #f8fafc;
+        }
+        @@media (max-width: 767.98px) {
+            .progress-circle {
+                margin: 0 auto 14px auto;
+                width: 90px;
+                height: 90px;
+            }
+            .card-title,
+            .card-body p {
+                text-align: center !important;
+            }
+        }
+        .progress-circle {
+            width: 90px;
+            height: 90px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .progress-circle svg {
+            transform: rotate(-90deg);
+        }
+        .progress-circle .circle-bg {
+            fill: none;
+            stroke: #eee;
+            stroke-width: 8;
+        }
+        .progress-circle .circle {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke: #00b4d8;
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: calc(251.2 - (251.2 * var(--percent)) / 100);
+            animation: progress 1.5s ease-out forwards;
+        }
+        .level-text {
+            position: absolute;
+            font-size: 20px;
+            font-weight: bold;
+        }
         .no-quiz-data {
             font-size: 14px;
             color: #888;
@@ -102,43 +131,74 @@
         </div>
     }
 
-    <div class="card shadow-sm card-hover mb-4 animate__animated animate__fadeInUp">
-        <div class="card-body d-flex justify-content-between align-items-center">
-            <div>
-                <h5 class="card-title">@_localization.GetKey("AccountDetails")</h5>
-                <p class="text-muted mb-1"><strong>@_localization.GetKey("FirstName"):</strong> @Model.FirstName</p>
-                <p class="text-muted mb-1"><strong>@_localization.GetKey("LastName"):</strong> @Model.LastName</p>
-                <p class="text-muted"><strong>@_localization.GetKey("Age"):</strong> @Model.Age</p>
+    <!-- ================== END QUIZ ANALYTICS SECTION (NEW) ================== -->
+<div class="card shadow-sm card-hover mb-4 animate__animated animate__fadeInUp">
+    <div class="card-body px-2 py-4">
+        <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-4">
+            <!-- İstatistik ve Progress aynı blokta, flex ile -->
+            <div class="d-flex flex-column flex-md-row align-items-center gap-3 w-100 justify-content-center">
+                <!-- İstatistik Kutu -->
+                <div class="mb-3 mb-md-0">
+                    <div class="p-3 border rounded bg-light text-center" style="min-width:160px;">
+                        <div><strong>@_localization.GetKey("Level"):</strong> @userLevel</div>
+                        <div><strong>@_localization.GetKey("AverageScore"):</strong> @progress.ToString("F1")%</div>
+                        <div><strong>@_localization.GetKey("TotalAttempts"):</strong> @totalAttempts</div>
+                        <div><strong>@_localization.GetKey("DistinctQuizzes"):</strong> @distinctQuizzes</div>
+                    </div>
+                </div>
+                <!-- Progress Circle -->
+                <div>
+                    @if (hasQuizData)
+                    {
+                        <div class="progress-circle mx-auto">
+                            <svg width="90" height="90">
+                                <circle class="circle-bg" cx="45" cy="45" r="40"></circle>
+                                <circle class="circle" cx="45" cy="45" r="40"></circle>
+                            </svg>
+                            <span class="level-text" style="font-size:1.1rem;">@userLevel</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-column align-items-center justify-content-center">
+                            <div class="progress-circle mx-auto">
+                                <svg width="90" height="90">
+                                    <circle class="circle-bg" cx="45" cy="45" r="40"></circle>
+                                    <circle class="circle" cx="45" cy="45" r="40"></circle>
+                                </svg>
+                                <span class="level-text">?</span>
+                            </div>
+                            <span class="no-quiz-data mt-2">@_localization.GetKey("NoQuizData")</span>
+                        </div>
+                    }
+                </div>
+            </div>
+            <!-- Kullanıcı Bilgi + Panel Butonu -->
+            <div class="w-50 m-0" style="max-width:320px;">
+                <h5 class="card-title text-center text-md-start">@_localization.GetKey("AccountDetails")</h5>
+                <p class="mb-1 text-center text-md-start">
+                    <strong>@_localization.GetKey("FirstName"):</strong> @Model.FirstName
+                </p>
+                <p class="mb-1 text-center text-md-start">
+                    <strong>@_localization.GetKey("LastName"):</strong> @Model.LastName
+                </p>
+                <p class="mb-3 text-center text-md-start">
+                    <strong>@_localization.GetKey("Age"):</strong> @Model.Age
+                </p>
                 @if (canAccessDashboard)
                 {
-                    <a asp-controller="Admin" asp-action="Index" class="btn btn-outline-info btn-custom mt-3">@_localization.GetKey("GoToDashboard")</a>
+                    <div class="d-flex justify-content-center justify-content-md-start">
+                        <a asp-controller="Admin" asp-action="Index" class="btn btn-outline-info btn-custom">
+                            @_localization.GetKey("GoToDashboard")
+                        </a>
+                    </div>
                 }
             </div>
-            @if(hasQuizData)
-            {
-                <div class="progress-circle" style="--percent: @progress;">
-                    <svg width="100" height="100">
-                        <circle class="circle-bg" cx="50" cy="50" r="45"></circle>
-                        <circle class="circle" cx="50" cy="50" r="45"></circle>
-                    </svg>
-                    <span class="level-text">@userLevel</span>
-                </div>
-            }
-            else
-            {
-                <div class="d-flex flex-column align-items-center justify-content-center">
-                    <div class="progress-circle" style="--percent: @progress;">
-                        <svg width="100" height="100">
-                            <circle class="circle-bg" cx="50" cy="50" r="45"></circle>
-                            <circle class="circle" cx="50" cy="50" r="45"></circle>
-                        </svg>
-                        <span class="level-text">?</span>
-                    </div>
-                    <span class="no-quiz-data mt-2">@_localization.GetKey("NoQuizData")</span>
-                </div>
-            }
         </div>
     </div>
+</div>
+
+
 
     <div class="card shadow-sm card-hover mb-4 animate__animated animate__fadeInUp animate__delay-1s">
         <div class="card-body d-flex justify-content-between align-items-center">

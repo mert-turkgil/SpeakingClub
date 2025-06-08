@@ -83,7 +83,7 @@
     <section class="container-xxl" >
     <div class="card shadow my-3">
         <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0"> <i class="fa-solid fa-square-check"></i> Category List</h3>
+            <h3 class="card-title mb-0"> <i class="fa-solid fa-layer-group"></i> Category List</h3>
         </div>
         <div class="card-body">
             @await Component.InvokeAsync("GenericList", new { entityType = "Categories" })
@@ -93,10 +93,20 @@
     <section class="container-xxl" >
     <div class="card shadow my-3">
         <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0"> <i class="fa-solid fa-square-check"></i> Tag List</h3>
+            <h3 class="card-title mb-0"> <i class="fa-solid fa-hashtag"></i> Tag List</h3>
         </div>
         <div class="card-body">
             @await Component.InvokeAsync("GenericList", new { entityType = "Tags" })
+        </div>
+    </div>
+    </section>
+        <section class="container-xxl" >
+    <div class="card shadow my-3">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0"> <i class="fa-solid fa-person-circle-question"></i> Questions List</h3>
+        </div>
+        <div class="card-body">
+            @await Component.InvokeAsync("GenericList", new { entityType = "questions" })
         </div>
     </div>
     </section>
@@ -106,6 +116,7 @@
 @section Scripts{
     <script>
         $(document).ready(function() {
+            $('#QuestionsList').DataTable();
             $('#QuizList').DataTable();
             $('#TagList').DataTable();
             $('#WordList').DataTable();

@@ -1,72 +1,68 @@
 @model SpeakingClub.Entity.Blog
-
-<div class="col-lg-4 col-md-6 mb-4 animate__animated animate__fadeIn ">
-    <div class="card blog-card shadow-sm overflow-hidden" style="border-radius: 10px;">
-
-        <!-- Swiper Container for media -->
-        <div class="swiper blog-swiper">
-            <div class="swiper-wrapper">
-                @if (!string.IsNullOrEmpty(Model.Image))
-                {
-                    <div class="swiper-slide">
-                        <img src="@Model.Image" class="img-fluid" alt="@Model.Title">
-                    </div>
-                }
-
-                @if (!string.IsNullOrEmpty(Model.RawYT))
-                {
-                    <div class="swiper-slide ratio ratio-16x9">
-                        <iframe src="https://www.youtube.com/embed/@Model.RawYT" allowfullscreen></iframe>
-                    </div>
-                }
-
-                @if (!string.IsNullOrEmpty(Model.RawMaps))
-                {
-                    <div class="swiper-slide ratio ratio-16x9">
-                        <iframe src="@Model.RawMaps" allowfullscreen></iframe>
-                    </div>
-                }
+@inject LanguageService Localizer
+<div class="advanced-blog-card card shadow advanced-blog-card--container h-100">
+    <!-- Media Swiper for Cover Image, YouTube, Google Maps -->
+    <div class="advanced-blog-card__media swiper-container">
+    <div class="swiper-wrapper">
+        @* Cover Image Slide *@
+        @if (!string.IsNullOrEmpty(Model.Image))
+        {
+            <div class="swiper-slide advanced-blog-card__slide">
+                <img src="~/img/@Model.Image" class="advanced-blog-card__image" alt="@Model.Title" />
             </div>
+        }
 
-            <div class="swiper-pagination"></div>
-            <div class="swiper-button-prev"></div>
-            <div class="swiper-button-next"></div>
-        </div>
+        @* YouTube Video Slide *@
+        @if (!string.IsNullOrEmpty(Model.RawYT))
+        {
+            <div class="swiper-slide advanced-blog-card__slide">
+                <iframe src="@Model.RawYT" class="advanced-blog-card__video" allowfullscreen></iframe>
+            </div>
+        }
 
-        <div class="card-body">
-            <h5 class="card-title">
-                <a asp-controller="Blog" asp-action="Details" asp-route-id="@Model.BlogId" class="text-decoration-none" style="color: var(--color-accent);">
-                    @Model.Title
-                </a>
-            </h5>
+        @* Google Maps Slide *@
+        @if (!string.IsNullOrEmpty(Model.RawMaps))
+        {
+            <div class="swiper-slide advanced-blog-card__slide">
+                <iframe src="@Model.RawMaps" class="advanced-blog-card__map" allowfullscreen></iframe>
+            </div>
+        }
+    </div>
+        <div class="swiper-button-prev advanced-blog-card__prev"></div>
+        <div class="swiper-button-next advanced-blog-card__next"></div>
+    </div>
 
-            <p class="card-text text-muted small mb-2">
-                <i class="fa fa-calendar"></i> @Model.Date.ToString("MMMM dd, yyyy")
-                @if (!string.IsNullOrEmpty(Model.Author))
-                {
-                    <span class="mx-2">|</span>
-                    <i class="fa fa-user"></i> @Model.Author
-                }
-            </p>
-
-            <p class="card-text">
-                @(Model.Content.Length > 150 ? Model.Content.Substring(0, 150) + "..." : Model.Content)
-            </p>
-
-            <a href="@Url.Action("Details", "Blog", new { id = Model.BlogId, url = Model.Url })" class="btn btn-accent">
-                Read More <i class="fa fa-arrow-right"></i>
+    <!-- Card Body -->
+    <div class="card-body advanced-blog-card__body">
+        <h5 class="card-title advanced-blog-card__title" title="@Model.Title">
+            <a asp-controller="Home" asp-action="BlogDetail" asp-route-url="@Model.Url" class="advanced-blog-card__link">
+                @Model.Title
             </a>
+        </h5>
+        @* If you wish to render rich HTML (from CKEditor) directly, use Html.Raw.
+           Alternatively, create an excerpt by stripping HTML tags. Here we provide a plaintext excerpt. *@
+        @{
+            var plainText = System.Text.RegularExpressions.Regex.Replace(Model.Content ?? "", "<.*?>", "");
+            var excerpt = plainText.Length > 150 ? plainText.Substring(0, 150) + "..." : plainText;
+        }
+        <p class="card-text advanced-blog-card__excerpt text-muted">
+            @excerpt
+        </p>
+    </div>
 
-            @if (Model.Tags != null && Model.Tags.Any())
+    <!-- Card Footer -->
+    <div class="card-footer advanced-blog-card__footer d-flex justify-content-between align-items-center bg-white">
+        <small class="advanced-blog-card__meta text-muted">
+            <i class="fa-solid fa-calendar advanced-blog-card__icon"></i>
+            @Model.Date.ToString("MMM dd, yyyy")
+            @if (!string.IsNullOrEmpty(Model.Author))
             {
-                <div class="mt-3">
-                    @foreach (var tag in Model.Tags)
-                    {
-                        <span class="badge" style="background-color: var(--color-medium);">@tag.Name</span>
-                    }
-                </div>
+                <span class="advanced-blog-card__separator">|</span>
+                <i class="fa-solid fa-user advanced-blog-card__icon"></i> @Model.Author
             }
-        </div>
-
+        </small>
+        <a asp-controller="Home" asp-action="BlogDetail" asp-route-url="@Model.Url" class="btn btn-sm btn-primary advanced-blog-card__readmore">
+            @_localization.GetKey("ReadMore").Value <i class="fa-solid fa-arrow-right advanced-blog-card__icon"></i>
+        </a>
     </div>
 </div>

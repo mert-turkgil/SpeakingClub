@@ -87,8 +87,15 @@ window.addEventListener('load', function () {
 	} = window.CKEDITOR;
 
 	// License key (if required). For free usage you may replace this with 'GPL'
-	const LICENSE_KEY = '***REMOVED***';
-
+	const LICENSE_KEY = document.querySelector('meta[name="ck-license-key"]').getAttribute('content');
+    const defaultData = `<h2>Congratulations on setting up CKEditor 5! 🎉</h2>
+	<p>You've successfully created a CKEditor 5 project. Enjoy editing!</p>`;
+    const data = {
+        Content: (document.querySelector('#Content')?.value  || '').trim() || defaultData,
+        ContentUS: (document.querySelector('#ContentUS')?.value  || '').trim() || defaultData,
+        ContentTR: (document.querySelector('#ContentTR')?.value  || '').trim() || defaultData,
+        ContentDE: (document.querySelector('#ContentDE')?.value  || '').trim() || defaultData
+    };
 	// Editor configuration with simpleUpload configuration added.
 	const editorConfig = {
 		simpleUpload: {
@@ -318,21 +325,27 @@ window.addEventListener('load', function () {
 	};
 
 	// Helper function to initialize an editor on a given selector.
-	function createEditor(selector, storageVarName) {
-		ClassicEditor.create(document.querySelector(selector), editorConfig)
-			.then(editor => {
-				window[storageVarName] = editor;
-			})
-			.catch(error => {
-				console.error('Error initializing editor for', selector, error);
-			});
-	}
-
+    function createEditor(selector, storageVarName, initialContent) {
+        const element = document.querySelector(selector);
+        ClassicEditor.create(element, editorConfig)
+            .then(editor => {
+                // Set the editor's data: if initialContent is empty, use defaultData.
+                if (!initialContent || initialContent.trim() === '') {
+                    editor.setData(defaultData);
+                } else {
+                    editor.setData(initialContent);
+                }
+                window[storageVarName] = editor;
+            })
+            .catch(error => {
+                console.error('Error initializing editor for', selector, error);
+            });
+    }
 	// Create additional editor instances.
-	createEditor('#Content', 'editorContent');
-	createEditor('#ContentUS', 'editorContentUS');
-	createEditor('#ContentTR', 'editorContentTR');
-	createEditor('#ContentDE', 'editorContentDE');
+	createEditor('#Content', 'editorContent', data.Content);
+	createEditor('#ContentUS', 'editorContentUS', data.ContentUS);
+	createEditor('#ContentTR', 'editorContentTR', data.ContentTR);
+	createEditor('#ContentDE', 'editorContentDE', data.ContentDE);
 
 	// Initialize Swiper sliders.
 	new Swiper(".categorySwiper", { slidesPerView: 3, spaceBetween: 15 });

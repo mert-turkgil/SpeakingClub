@@ -1,0 +1,123 @@
+@model IEnumerable<SpeakingClub.Entity.Question>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" />
+
+<table id="QuestionList" class="table table-bordered table-hover align-middle display responsive nowrap" style="width:100%">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Quiz</th>
+            <th>Content</th>
+            <th>Type</th>
+            <th>Answers</th>
+            <th style="width:140px"></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var q in Model)
+    {
+        var mediaType = !string.IsNullOrWhiteSpace(q.VideoUrl) ? "Video"
+                     : !string.IsNullOrWhiteSpace(q.AudioUrl) ? "Audio"
+                     : !string.IsNullOrWhiteSpace(q.ImageUrl) ? "Image"
+                     : !string.IsNullOrWhiteSpace(q.QuestionText) ? "Text" : "Unknown";
+        <tr>
+            <td class="text-center">@q.Id</td>
+            <td>@q.Quiz?.Title</td>
+            <td>
+                @if (!string.IsNullOrWhiteSpace(q.VideoUrl) && (q.VideoUrl.Contains("youtube.com") || q.VideoUrl.Contains("youtu.be")))
+                {
+                    <iframe width="180" height="100" src="@GetYouTubeEmbedUrl(q.VideoUrl ?? "")" frameborder="0" allowfullscreen></iframe>
+                    <div class="small text-muted mt-1">YouTube</div>
+                }
+                else if (!string.IsNullOrWhiteSpace(q.VideoUrl))
+                {
+                    <video controls width="180" height="100">
+                        <source src="@q.VideoUrl" type="video/mp4" />
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="small text-muted mt-1">Video</div>
+                }
+                else if (!string.IsNullOrWhiteSpace(q.AudioUrl))
+                {
+                    <audio controls style="width:140px;">
+                        <source src="@q.AudioUrl" type="audio/mpeg" />
+                        Your browser does not support the audio tag.
+                    </audio>
+                    <div class="small text-muted mt-1">Audio</div>
+                }
+                else if (!string.IsNullOrWhiteSpace(q.ImageUrl))
+                {
+                    <img src="@q.ImageUrl" style="max-width:90px; max-height:60px;" alt="Question Image" />
+                    <div class="small text-muted mt-1">Image</div>
+                }
+                else if (!string.IsNullOrWhiteSpace(q.QuestionText))
+                {
+                    <div style="max-width:260px;word-break:break-word;">@q.QuestionText</div>
+                    <div class="small text-muted mt-1">Text</div>
+                }
+                else
+                {
+                    <span class="text-muted">No content</span>
+                }
+            </td>
+            <td>@mediaType</td>
+            <td>
+                <ul class="mb-0 ps-3">
+                    @if (q.Answers != null)
+                    {
+                        foreach (var a in q.Answers)
+                        {
+                            <li>
+                                @a.AnswerText
+                                @if (a.IsCorrect)
+                                {
+                                    <span class="badge bg-success ms-2">Correct</span>
+                                }
+                            </li>
+                        }
+                    }
+                </ul>
+            </td>
+            <td>
+                <a asp-controller="Admin" asp-action="QuestionEdit" asp-route-id="@q.Id" class="btn btn-sm btn-primary mb-1">Edit</a>
+                <form asp-controller="Admin" asp-action="QuestionDelete" asp-route-id="@q.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this question?')">Delete</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+
+@functions{
+    public static string GetYouTubeEmbedUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return "";
+
+        string? videoId = null;
+        try
+        {
+            if (url.Contains("embed"))
+                return url;
+            if (url.Contains("youtube.com"))
+            {
+                var uri = new Uri(url);
+                var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+                videoId = query["v"];
+            }
+            else if (url.Contains("youtu.be"))
+            {
+                var uri = new Uri(url);
+                videoId = uri.AbsolutePath.Trim('/');
+            }
+            if (!string.IsNullOrWhiteSpace(videoId))
+                return $"https://www.youtube.com/embed/{videoId}";
+        }
+        catch { }
+        return url;
+    }
+}

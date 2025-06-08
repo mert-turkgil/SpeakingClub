@@ -1,6 +1,11 @@
 @model SpeakingClub.Entity.Quiz
 @inject LanguageService _localization
-
+@{    
+    var fullscreenExitUrl = Url.Action("Quizzes", "Account", new { warning = "FullscreenExit" });
+    var leaveScreenUrl = Url.Action("Quizzes", "Account", new { warning = "LeaveScreen" });
+    var inactivityUrl = Url.Action("Quizzes", "Account", new { warning = "Inactivity" });
+    var submitQuizUrl = Url.Action("SubmitQuiz", "Account");
+    }
 <!-- Fullscreen Quiz Container -->
 <div id="quizContainer" class="fullscreen-container">
     <h2 class="text-center">@Model.Title</h2>
@@ -10,7 +15,7 @@
         @_localization.GetKey("TotalTimeLabel") <span id="totalTime">00:00</span>
     </div>
 
-    <form id="quizForm" method="post" asp-action="SubmitQuiz">
+    <form id="quizForm" method="post" asp-controller="Account" asp-action="SubmitQuiz">
         <input type="hidden" name="QuizId" value="@Model.Id.ToString()" />
         <input type="hidden" name="ElapsedTime" id="elapsedTime" value="0" />
 
@@ -91,9 +96,32 @@
         </div>
     </div>
 </div>
+<div id="loadingOverlay" style="
+    display: none; position: fixed; z-index: 99999;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.5);
+    color: white; font-size: 2rem;
+    justify-content: center; align-items: center; text-align: center;">
+    <div>
+        <div class="spinner-border text-light mb-3" role="status"></div>
+        <div>Lütfen bekleyin, sınav kaydediliyor...</div>
+    </div>
+</div>
+
 
 @section Css {
     <style>
+        #loadingOverlay {
+            display: none;
+            position: fixed; z-index: 99999;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5);
+            color: white; font-size: 2rem;
+            justify-content: center; align-items: center;
+            text-align: center;
+        }
+        #loadingOverlay.active { display: flex; }
+
         body, html {
             margin: 0;
             padding: 0;
@@ -127,6 +155,48 @@
 }
 
 @section Scripts {
+    <script>
+    function showLoadingOverlay() {
+        var overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.style.display = 'flex'; // veya overlay.classList.add('active');
+    }
+    </script>
+    <script>
+        let isSubmitting = false;
+        function autoSubmitQuizAndRedirect(redirectUrl) {
+            if (isSubmitting) return;
+            isSubmitting = true;
+            showLoadingOverlay();
+            // Formun DOM'daki ID'si
+            var form = document.getElementById('quizForm');
+            if (!form) {
+                window.location.href = redirectUrl;
+                return;
+            }
+
+            // Formdaki verileri al
+            var formData = new FormData(form);
+
+            // ElapsedTime'ı hesapla (eğer examStartTime değişkenin varsa)
+            if (typeof examStartTime !== "undefined") {
+                formData.set('ElapsedTime', Math.floor((Date.now() - examStartTime) / 1000));
+            }
+
+            // Fetch ile AJAX submit
+            fetch('@submitQuizUrl', {
+                method: "POST",
+                body: formData,
+                credentials: "include"
+            })
+            .then(function () {
+                window.location.href = redirectUrl;
+            })
+            .catch(function () {
+                // Yine de yönlendir
+                window.location.href = redirectUrl;
+            });
+        }
+    </script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             let examStartTime;
@@ -179,17 +249,16 @@
             // Prevent user from leaving fullscreen
             document.addEventListener("fullscreenchange", function () {
                 if (!document.fullscreenElement) {
-                    alert("@_localization.GetKey("ExamCanceledFullscreenExit")");
-                    window.location.href = "/Account/Quizzes?warning=FullscreenExit"; // Redirect instead of submit
+                    alert("@Html.Raw(@_localization.GetKey("ExamCanceledFullscreenExit"))");
+                    autoSubmitQuizAndRedirect('@fullscreenExitUrl');
                 }
             });
 
-            // Auto-redirect if user moves the mouse out of the screen
             document.addEventListener("mouseleave", () => {
                 warningTimeout = setTimeout(() => {
-                    alert("@_localization.GetKey("ExamCanceledLeaveScreen")");
-                    window.location.href = "/Account/Quizzes?warning=LeaveScreen"; // Redirect instead of submit
-                }, 3000); // 3-second warning before redirect
+                    alert("@Html.Raw(@_localization.GetKey("ExamCanceledLeaveScreen"))");
+                    autoSubmitQuizAndRedirect('@leaveScreenUrl');
+                }, 3000);
             });
 
             // Clear warning timeout if mouse re-enters the screen
@@ -224,7 +293,12 @@
             });
 
             // Handle form submission
-            document.getElementById('quizForm').addEventListener('submit', () => {
+            document.getElementById('quizForm').addEventListener('submit', function (event) {
+                if (isSubmitting) {
+                    event.preventDefault(); // Çift gönderimi tamamen engelle
+                    return;
+                }
+                isSubmitting = true;
                 const totalElapsed = Math.floor((Date.now() - examStartTime) / 1000);
                 document.getElementById('elapsedTime').value = totalElapsed;
                 clearInterval(overallTimerInterval);
@@ -235,9 +309,9 @@
             function resetInactivityTimer() {
                 clearTimeout(inactivityTimeout);
                 inactivityTimeout = setTimeout(() => {
-                    alert("@_localization.GetKey("ExamCanceledInactivity")");
-                    window.location.href = "/Account/Quizzes?warning=Inactivity"; // Redirect instead of submit
-                }, 30000); // 30 seconds of inactivity
+                    alert("@Html.Raw(@_localization.GetKey("ExamCanceledInactivity"))");
+                    autoSubmitQuizAndRedirect('@inactivityUrl');
+                }, 30000);
             }
         });
     </script>

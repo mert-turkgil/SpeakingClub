@@ -1,12 +1,15 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using SpeakingClub.Identity
+@using Microsoft.Extensions.Configuration
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
+@inject IConfiguration Configuration
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="ck-license-key" content="@Configuration["License:CKEditor"]" />
     <title>@ViewData["Title"] - SpeakingClub</title>
     <!-- Site-specific CSS -->
     <link rel="stylesheet" href="~/css/custom.css">

@@ -3,7 +3,36 @@
 @{
     Layout = "_Layout"; // Your shared layout that loads Bootstrap, FontAwesome, animate.css, GSAP, jQuery, etc.
 }
-
+@section Css{
+    <style>
+        /* Advanced Quiz Section Styling */
+        .advanced-quiz-section {
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        .advanced-quiz-header {
+            padding: 1rem;
+        }
+        .advanced-quiz-question {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .advanced-quiz-option {
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .advanced-quiz-submit {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .advanced-quiz-submit:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .advanced-quiz-feedback {
+            font-size: 1rem;
+        }
+    </style>
+}
 <div class="container py-5">
 
     <!-- Title Section (full width) -->
@@ -54,40 +83,39 @@
     </div>
 
     <!-- Quiz Section (full width) -->
-    <div class="row my-5">
-        <div class="col-12">
-            <div class="card border-primary">
-                <div class="card-header bg-primary text-white">
-                    <i class="fas fa-question-circle"></i> Quiz
-                </div>
-                <div class="card-body">
-                    @if (Model.QuizQuestion != null)
-                    {
-                        <h5 class="card-title">@Model.QuizQuestion.QuestionText</h5>
-                        <form id="quizForm">
-                            <div class="mb-3">
-                                <input type="text" id="quizAnswer" class="form-control" placeholder="Your Answer" />
-                            </div>
-                            <button type="button" class="btn btn-primary" id="submitQuiz">@Localizer.GetKey("SendButtonQ").Value</button>
-                        </form>
-                        <div id="quizFeedback" class="mt-3" style="display:none;">
-                            @if (Model.QuizQuestion.Answers != null && Model.QuizQuestion.Answers.Any(a => a.IsCorrect))
-                            {
-                                var correctAnswer = Model.QuizQuestion.Answers.First(a => a.IsCorrect);
-                                <div class="alert alert-success" role="alert">
-                                    @Localizer.GetKey("RightAnswer").Value <strong>@correctAnswer.AnswerText</strong>
-                                </div>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <p class="text-muted">@Localizer.GetKey("Err1").Value</p>
-                    }
-                </div>
-            </div>
-        </div>
+    <div class="advanced-quiz-section card shadow-lg my-4">
+    <div class="card-header advanced-quiz-header bg-primary text-white">
+        <h5 class="mb-0">Quiz Challenge</h5>
     </div>
+
+    <div class="card-body">
+        <!-- Display the quiz question -->
+        @if (Model.QuizQuestion != null)
+        {
+            <h6 class="advanced-quiz-question mb-3">@Model.QuizQuestion.QuestionText</h6>
+            <form id="advancedQuizForm">
+                @foreach (var answer in Model.QuizQuestion.Answers)
+                {
+                    <div class="form-check advanced-quiz-option mb-2">
+                        <input class="form-check-input" type="radio" name="advancedQuizAnswer" id="advancedQuizAnswer_@answer.Id" value="@answer.Id" />
+                        <label class="form-check-label" for="advancedQuizAnswer_@answer.Id">
+                            @answer.AnswerText
+                        </label>
+                    </div>
+                }
+                <button type="submit" class="btn btn-success advanced-quiz-submit mt-3">
+                    @Localizer.GetKey("SubmitAnswer").Value <i class="fa-solid fa-check ms-1"></i>
+                </button>
+            </form>
+            <div id="advancedQuizFeedback" class="advanced-quiz-feedback mt-3" style="display: none;"></div>
+        }
+        else
+        {
+            <div class="alert alert-info">There is no quiz available for this blog.</div>
+        }
+    </div>
+    </div>
+
 
     <!-- Blog Cover Section (full width) -->
     <div class="row my-5">
@@ -118,29 +146,76 @@
             </p>
         </div>
     </div>
-
+    @if (!string.IsNullOrEmpty(Model.RawYT) || !string.IsNullOrEmpty(Model.RawMaps))
+    {
+        <div class="row my-5">
+            @* Render YouTube iframe if RawYT is not null/empty *@
+            @if (!string.IsNullOrEmpty(Model.RawYT))
+            {
+                <div class="col-6">
+                    <iframe
+                            src="@Model.RawYT" 
+                            title="YouTube video player"
+                            width="100%"
+                            style="height: 450px;" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            referrerpolicy="strict-origin-when-cross-origin" 
+                            allowfullscreen>
+                    </iframe>
+                </div>
+            }
+            
+            @* Render Google Maps iframe if RawMaps is not null/empty *@
+            @if (!string.IsNullOrEmpty(Model.RawMaps))
+            {
+                <div class="col-6">
+                    <iframe src="@Model.RawMaps" 
+                            style="border:0;"
+                            height="100%" 
+                            width="100%"
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+            }
+        </div>
+    }
 </div>
 
 @section Scripts {
     <script src="~/lib/gsap/gsap.min.js"></script>
     <script>
-        $(document).ready(function () {
-            // GSAP Animations for a modern touch
-            gsap.from(".display-4", { duration: 1, y: -50, opacity: 0, ease: "power2.out" });
-            gsap.from(".content-body", { duration: 1, x: -50, opacity: 0, delay: 0.3, ease: "power2.out" });
-            gsap.from(".card", { duration: 1, opacity: 0, delay: 0.5, ease: "power2.out" });
-            gsap.from("img", { duration: 1, scale: 0.9, opacity: 0, delay: 0.5, ease: "power2.out" });
-            
-            // Quiz answer submission using jQuery
-            $('#submitQuiz').on('click', function () {
-                var userAnswer = $('#quizAnswer').val().trim();
-                if (userAnswer !== "") {
-                    $('#quizFeedback').slideDown();
-                    // Further answer comparison logic can be added here if needed.
-                } else {
-                    alert('Please enter your answer.');
-                }
-            });
+        // When the advanced quiz form is submitted.
+        document.getElementById("advancedQuizForm")?.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            // Retrieve the selected answer.
+            const selectedRadio = document.querySelector('input[name="advancedQuizAnswer"]:checked');
+            const feedbackDiv = document.getElementById("advancedQuizFeedback");
+
+            if (!selectedRadio) {
+                feedbackDiv.innerHTML = "<div class='alert alert-warning animate__animated animate__shakeX'>Please select an answer.</div>";
+                feedbackDiv.style.display = "block";
+                return;
+            }
+
+            // Parse the selected answer id.
+            const selectedAnswerId = parseInt(selectedRadio.value, 10);
+
+            // Provide the correct answer id and text directly from the Model.
+            // Here we assume there is exactly one correct answer.
+            const correctAnswerId = @Model.QuizQuestion?.Answers.First(a => a.IsCorrect).Id;
+            const correctAnswerText = "@Model.QuizQuestion?.Answers.First(a => a.IsCorrect).AnswerText";
+
+            // Show animated feedback.
+            if (selectedAnswerId === correctAnswerId) {
+                feedbackDiv.innerHTML = "<div class='alert alert-success animate__animated animate__fadeIn'>Correct! Congratulations.</div>";
+            } else {
+                feedbackDiv.innerHTML = "<div class='alert alert-danger animate__animated animate__fadeIn'>Incorrect. The correct answer is: <strong>" + correctAnswerText + "</strong></div>";
+            }
+            feedbackDiv.style.display = "block";
         });
     </script>
 }

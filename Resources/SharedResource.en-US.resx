@@ -229,7 +229,7 @@
   <data name="SearchPlaceholder" xml:space="preserve">
     <value>Search for a word...</value>
   </data>
-    <data name="Search" xml:space="preserve">
+  <data name="Search" xml:space="preserve">
     <value>Search</value>
   </data>
   <data name="Err1" xml:space="preserve">
@@ -560,6 +560,6 @@
     <value>The Future of Smart Homes: Where Technology Meets Convenience</value>
   </data>
   <data name="Content_3_freefromdesire_en" xml:space="preserve">
-    <value>&lt;h1&gt;Congratulations on setting up CKEditor 5! 🎉&lt;/h1&gt;&lt;p&gt;You've successfully created a CKEditor 5 project. Enjoy editing!&lt;/p&gt;&lt;figure class="image"&gt;&lt;img style="aspect-ratio:270/480;" src="/blog/gif/6e16b98dd1f53343474fdd840a230a3a.gif" width="270" height="480"&gt;&lt;/figure&gt;</value>
+    <value>&lt;h1&gt;Congratulations on setting up CKEditor 5q! 🎉&lt;/h1&gt;&lt;p&gt;You've successfully created a CKEditor 5 project. Enjoy editing!&lt;/p&gt;&lt;figure class="image"&gt;&lt;img style="aspect-ratio:270/480;" src="/blog/gif/6e16b98dd1f53343474fdd840a230a3a.gif" width="270" height="480"&gt;&lt;/figure&gt;</value>
   </data>
 </root>

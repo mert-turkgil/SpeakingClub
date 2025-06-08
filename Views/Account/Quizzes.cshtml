@@ -1,123 +1,287 @@
-@model SpeakingClub.Models.CombinedQuizzesViewModel
-@inject LanguageService _localization
-@section Css{
-    <style>
-        .card.quiz-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
-        }
-        .card.quiz-card:hover {
-            transform: scale(1.05) translateY(-5px);
-            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
-            background-color: #f8f9fa;
-        }
-        .quiz-summary {
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
-        }
-    </style>
+@model CombinedQuizzesViewModel
+@{
+    ViewData["Title"] = "Quizler";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
-<div class="container my-5">
-    <h2 class="text-center mb-4">@_localization.GetKey("AvailableQuizzes_Title")</h2>
-    <div class="row">
-    @if (Model.AvailableQuizzes == null || !Model.AvailableQuizzes.Any())
-        {
-            <p>@_localization.GetKey("NoQuizzesAvailable")</p>
-        }
-        else
-    {
-        @foreach (var quiz in Model.AvailableQuizzes)
-        {
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card h-100 shadow-sm animate__animated animate__fadeInUp quiz-card">
-                    <img src="@quiz.ImageUrl" class="card-img-top" alt="@quiz.QuizTitle" />
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">@quiz.QuizTitle</h5>
-                        <p class="card-text text-truncate">
-                            @if (!string.IsNullOrEmpty(quiz.QuizDescription))
-                            {
-                                @quiz.QuizDescription
-                            }
-                            else
-                            {
-                                <em>@_localization.GetKey("NoDescriptionAvailable")</em>
-                            }
-                        </p>
-                        <ul class="list-unstyled mb-3">
-                            <li>
-                                <i class="fas fa-chalkboard-teacher me-1"></i>
-                                <small>@_localization.GetKey("TeacherLabel"): @quiz.TeacherName</small>
-                            </li>
-                            <li>
-                                <i class="fas fa-layer-group me-1"></i>
-                                <small>@_localization.GetKey("CategoryLabel"): @quiz.CategoryName</small>
-                            </li>
-                        </ul>
-                        
-                        <div class="quiz-summary mb-3">
-                            <p><strong>@_localization.GetKey("AttemptsLabel"):</strong> @quiz.AttemptCount</p>
-                            @if (quiz.AttemptCount > 0)
-                            {
-                                <p><strong>@_localization.GetKey("LastScoreLabel"):</strong> @quiz.LastScore%</p>
-                                <p><strong>@_localization.GetKey("LastAttemptLabel"):</strong> @quiz.LastAttemptDate?.ToLocalTime().ToString("g")</p>
+@section Css{
+<style>
+    .main-bg { background: #fcf3e8 !important; }
+    body{background-color: #ffd1d1;}
+    .card.quiz-card {
+        background: #fff; border: none; border-radius: 20px;
+        box-shadow: 0 2px 10px rgba(60,72,88,.06);
+        transition: box-shadow .2s, transform .2s;
+        min-height: 480px; display: flex; flex-direction: column;
+    }
+    .card.quiz-card:hover { box-shadow: 0 6px 24px rgba(60,72,88,.16); transform: translateY(-4px) scale(1.03);}
+    .quiz-card .card-body { flex: 1 1 auto; display: flex; flex-direction: column; }
+    .quiz-badges .badge {
+        background: #edf2fa; color: #0058a3; font-weight: 600;
+        border-radius: 8px; margin-right: 3px; font-size: 0.95em;
+    }
+    .quiz-category { color: #40b691; font-size: 0.99em; font-weight: 600; margin-bottom: .3rem; }
+    .quiz-meta { font-size: .95em; color: #858585; margin-bottom: .35rem; }
+    .quiz-result { color: #27ad56; font-size: 0.98em; font-weight: 600;}
+    aside { background: #fff; border-radius: 18px; box-shadow: 0 2px 12px rgba(60,72,88,.07);}
+    .aside-inner { padding: 1.7rem 1.3rem 1.4rem 1.3rem; }
+    .tag-filter {
+        cursor:pointer; background: #d1d5db; color: #555; margin:2px 6px 2px 0;
+        border-radius:8px; font-weight: 600; font-size: 0.97em; padding: 5px 12px; display: inline-block;
+    }
+    .tag-filter.active { background: #0058a3!important; color:#fff; }
+    .search-btn { background: #1164b4; color: #fff; font-weight:600; border-radius:8px; }
+    .quiz-media { background:#f7f6f6; border-radius: 14px 14px 0 0; margin-bottom:1rem; }
+    .swiper { width: 100%; height: 180px; }
+    .swiper-slide { display: flex; align-items: center; justify-content: center; background: #f7f6f6;}
+    .swiper-slide img, .swiper-slide iframe, .swiper-slide audio { max-width:100%; max-height:180px; object-fit:cover; border-radius:14px 14px 0 0;}
+    .swiper-slide audio { width: 90%; margin: auto;}
+    @@media (max-width:991px) {
+        .swiper, .swiper-slide img, .swiper-slide iframe { height: 140px;}
+        aside { margin-bottom:1.5rem;}
+    }
+    @@media (max-width:767px) {
+        .swiper, .swiper-slide img, .swiper-slide iframe { height: 100px;}
+        .aside-inner { padding: 1.1rem;}
+        .card.quiz-card { min-height: 420px;}
+    }
+</style>
+}
+
+<div class="main-bg pb-5">
+    <div class="container pt-4">
+        <div class="row gy-4">
+            <!-- Sol Panel -->
+            <aside class="col-lg-3 col-md-4">
+                <div class="aside-inner">
+                    <form id="quizSearchForm" class="mb-3" onsubmit="event.preventDefault();filterAndPaginate(1);">
+                        <div class="input-group input-group-sm">
+                            <input id="quizSearch" type="text" class="form-control" placeholder="Quiz ara...">
+                            <button class="btn search-btn" type="submit"><i class="fa fa-search"></i> Ara</button>
+                        </div>
+                    </form>
+                    <div class="mb-3">
+                        <div class="fw-bold mb-1" style="color: #d6785e;">Etiketler</div>
+                        <div id="tagFilters" class="mb-2">
+                            <span class="tag-filter active" data-tag="">Tümü</span>
+                            @{
+                                var allTags = (Model.AvailableQuizzes ?? Enumerable.Empty<QuizSummaryViewModel>())
+                                    .SelectMany(q => q.Tags ?? new List<SpeakingClub.Entity.Tag>())
+                                    .Select(t => t.Name)
+                                    .Distinct()
+                                    .OrderBy(x => x);
+                                foreach (var tag in allTags)
+                                {
+                                    <span class="tag-filter" data-tag="@tag">@tag</span>
+                                }
                             }
                         </div>
-                        
-                        <!-- Action Buttons -->
-                        <div class="mt-auto d-flex justify-content-between">
-                            <a asp-action="StartQuiz" asp-route-id="@quiz.QuizId" class="btn btn-primary">
-                                <i class="fas fa-play me-1"></i> @_localization.GetKey("TakeQuizButton")
-                            </a>
-                            @if (quiz.AttemptCount > 0)
-                            {
-                                <a asp-controller="Account" asp-action="ReviewQuiz" asp-route-id="@quiz.QuizId" class="btn btn-secondary">
-                                    <i class="fas fa-eye me-1"></i> @_localization.GetKey("ReviewButton")
-                                </a>
+                    </div>
+                    <div class="mb-2">
+                        <div class="fw-bold mb-1" style="color: #d6785e;">Kategori</div>
+                        <select id="categoryFilter" class="form-select form-select-sm">
+                            <option value="">Tümü</option>
+                            @{
+                                var allCats = (Model.AvailableQuizzes ?? Enumerable.Empty<QuizSummaryViewModel>()).Select(q => q.CategoryName).Distinct();
+                                foreach (var cat in allCats)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(cat))
+                                    {
+                                        <option value="@cat">@cat</option>
+                                    }
+                                }
                             }
-                        </div>
-                        
-                        <!-- Collapsible review details for the most recent attempt -->
-                        @if (quiz.RecentAttemptDetails?.Any() == true)
-                        {
-                            <div class="collapse mt-3" id="details-@quiz.QuizId">
-                                <h6>@_localization.GetKey("ReviewDetailsTitle"):</h6>
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>@_localization.GetKey("QuestionLabel")</th>
-                                            <th>@_localization.GetKey("YourAnswerLabel")</th>
-                                            <th>@_localization.GetKey("CorrectAnswerLabel")</th>
-                                            <th>@_localization.GetKey("TimeSecondsLabel")</th>
-                                            <th>@_localization.GetKey("StatusLabel")</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var detail in quiz.RecentAttemptDetails)
-                                        {
-                                            <tr>
-                                                <td>@detail.QuestionText</td>
-                                                <td>@detail.YourAnswer</td>
-                                                <td>@detail.CorrectAnswer</td>
-                                                <td>@detail.TimeTakenSeconds</td>
-                                                <td>
-                                                    @if (detail.IsCorrect)
-                                                    {
-                                                        <span class="badge bg-success">@_localization.GetKey("CorrectStatus")</span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="badge bg-danger">@_localization.GetKey("IncorrectStatus")</span>
-                                                    }
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        }
+                        </select>
                     </div>
                 </div>
-            </div>
-        }
-       } 
+            </aside>
+
+            <!-- Quiz Kartları -->
+            <main class="col-lg-9 col-md-8">
+                <div class="row g-4" id="quizList">
+                    @foreach (var quiz in Model.AvailableQuizzes ?? Enumerable.Empty<QuizSummaryViewModel>())
+                    {
+                        <div class="col-md-6 col-lg-4 d-flex">
+                            <div class="card quiz-card w-100">
+                                <!-- Quiz Medya Swiper: Resim, Video, Ses-->
+                                <div class="quiz-media swiper mySwiper">
+                                    <div class="swiper-wrapper">
+                                        @if (!string.IsNullOrEmpty(quiz.ImageUrl))
+                                        {
+                                            <div class="swiper-slide">
+                                                <img src="@quiz.ImageUrl" class="img-fluid" alt="@quiz.QuizTitle" loading="lazy"/>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(quiz.YouTubeVideoUrl))
+                                        {
+                                            <div class="swiper-slide">
+                                                <div class="ratio ratio-16x9 w-100">
+                                                    <iframe src="@quiz.YouTubeVideoUrl"
+                                                            title="Quiz Video" allowfullscreen></iframe>
+                                                </div>
+                                            </div>
+                                        }
+                                        @* Ses dosyası varsa: *@
+                                        @if (!string.IsNullOrEmpty(quiz.AudioUrl))
+                                        {
+                                            <div class="swiper-slide d-flex align-items-center justify-content-center">
+                                                <audio controls>
+                                                    <source src="@quiz.AudioUrl" type="audio/mpeg" />
+                                                    Tarayıcınız audio etiketini desteklemiyor.
+                                                </audio>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="swiper-button-next"></div>
+                                    <div class="swiper-button-prev"></div>
+                                    <div class="swiper-pagination"></div>
+                                </div>
+                                <!-- Swiper sonu -->
+
+                                <div class="card-body">
+                                    <div class="quiz-category mb-1">@quiz.CategoryName</div>
+                                    <div class="quiz-badges mb-1">
+                                        @foreach (var tag in quiz.Tags ?? new List<SpeakingClub.Entity.Tag>())
+                                        {
+                                            <span class="badge">@tag.Name</span>
+                                        }
+                                    </div>
+                                    <h5 class="card-title mb-1">@quiz.QuizTitle</h5>
+                                    <div class="quiz-meta mb-1"><i class="fa fa-user"></i> @quiz.TeacherName</div>
+                                    <div class="mb-2" style="font-size:.97em; color:#313131;">
+                                        @(quiz.QuizDescription != null && quiz.QuizDescription.Length > 100
+                                            ? quiz.QuizDescription.Substring(0, 100) + "..."
+                                            : quiz.QuizDescription)
+                                    </div>
+                                    @if (quiz.LastAttemptDate.HasValue)
+                                    {
+                                        <div class="quiz-result mb-2">
+                                            <i class="fa fa-check-circle"></i>
+                                            Son Çözüm: @quiz.LastAttemptDate.Value.ToShortDateString()
+                                            <br />Skor: @(quiz.LastScore?.ToString() ?? "0")
+                                        </div>
+                                    }
+                                    <button type="button"
+                                            class="btn btn-primary w-100 mt-1 start-quiz-btn"
+                                            data-quiz-id="@quiz.QuizId"
+                                            data-quiz-title="@quiz.QuizTitle">
+                                        Quiz'e Başla
+                                    </button>
+                                    @if (quiz.LastAttemptDate.HasValue)
+                                    {
+                                        <a asp-action="ReviewQuiz"
+                                        asp-controller="Account"
+                                        asp-route-id="@quiz.QuizId"
+                                        class="btn btn-outline-info btn-sm w-100 mt-1 mb-1">
+                                            <i class="fa fa-eye"></i> Gözden Geçir
+                                        </a>
+                                    }
+
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <!-- Pagination -->
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center" id="quizPagination"></ul>
+                </nav>
+            </main>
+        </div>
     </div>
 </div>
+<!-- Modal -->
+<div class="modal fade" id="startQuizModal" tabindex="-1" aria-labelledby="startQuizModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="startQuizModalLabel">Quiz’e Başla</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+      </div>
+      <div class="modal-body">
+        <div class="fw-bold mb-2" id="modalQuizTitle"></div>
+        <p>Bu sınava başlamak istediğine emin misin?<br>
+          <small>Sınav başladıktan sonra, sınavı tam ekran modunda bitirmen gerekmektedir.</small>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+        <!-- ASP.NET tag helper ile yönlendirme -->
+        <form id="startQuizForm" asp-action="StartQuiz" asp-controller="Account" method="get">
+            <input type="hidden" id="modalQuizId" name="id" value="" />
+            <button type="submit" class="btn btn-primary">Şimdi Başla</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+@section Scripts {
+<script src="~/lib/swiper/swiper-bundle.min.js"></script>
+<script>
+$(document).on('click', '.start-quiz-btn', function () {
+    var quizId = $(this).data('quiz-id');
+    var quizTitle = $(this).data('quiz-title');
+    $('#modalQuizId').val(quizId);
+    $('#modalQuizTitle').text(quizTitle);
+    var modal = new bootstrap.Modal(document.getElementById('startQuizModal'));
+    modal.show();
+});
+</script>
+<script>
+function filterAndPaginate(page=1){
+    let search = $('#quizSearch').val().toLowerCase();
+    let selectedTag = $('#tagFilters .tag-filter.active').data('tag') || '';
+    let selectedCat = $('#categoryFilter').val();
+    let cards = $('.quiz-card').closest('.col-md-6, .col-lg-4').hide().filter(function(){
+        let $card = $(this).find('.quiz-card');
+        let matchesSearch = $card.find('.card-title').text().toLowerCase().includes(search);
+        let matchesTag = !selectedTag || $card.data('tags').includes(selectedTag);
+        let matchesCat = !selectedCat || $card.data('category') === selectedCat;
+        return matchesSearch && matchesTag && matchesCat;
+    });
+    let total = cards.length;
+    let pageSize = 6;
+    let pageCount = Math.ceil(total / pageSize);
+    if (page > pageCount) page = 1;
+    cards.slice((page-1)*pageSize, page*pageSize).show();
+
+    let pagHtml = '';
+    for(let i=1; i<=pageCount; i++)
+        pagHtml += `<li class="page-item ${i==page?'active':''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>`;
+    $('#quizPagination').html(pagHtml);
+}
+$(function () {
+    $('.mySwiper').each(function(idx, el){
+        new Swiper(el, {
+            loop: false,
+            navigation: {
+                nextEl: $(el).find('.swiper-button-next')[0],
+                prevEl: $(el).find('.swiper-button-prev')[0]
+            },
+            pagination: {
+                el: $(el).find('.swiper-pagination')[0],
+                clickable: true,
+            },
+        });
+    });
+
+    $('#quizSearch').on('input', ()=>filterAndPaginate(1));
+    $('#quizSearchForm').on('submit', ()=>filterAndPaginate(1));
+    $('#tagFilters').on('click', '.tag-filter', function(){
+        $('#tagFilters .tag-filter').removeClass('active');
+        $(this).addClass('active');
+        filterAndPaginate(1);
+    });
+    $('#categoryFilter').on('change', ()=>filterAndPaginate(1));
+    $('#quizPagination').on('click', 'a', function(e){
+        e.preventDefault();
+        let page = $(this).data('page');
+        filterAndPaginate(page);
+    });
+    filterAndPaginate(1);
+});
+</script>
+}
