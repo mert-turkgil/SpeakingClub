@@ -1,8 +1,10 @@
 @model IEnumerable<SpeakingClub.Entity.Question>
-
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
-<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" />
-
+        <a class="btn btn-outline-success nav-item m-auto my-3 w-100" 
+            asp-controller="Admin" 
+            asp-action="QuestionCreate">
+                Create Question
+            </a> 
+<div class="table-responsive">
 <table id="QuestionList" class="table table-bordered table-hover align-middle display responsive nowrap" style="width:100%">
     <thead class="table-dark">
         <tr>
@@ -90,7 +92,7 @@
     }
     </tbody>
 </table>
-
+</div>
 
 @functions{
     public static string GetYouTubeEmbedUrl(string? url)

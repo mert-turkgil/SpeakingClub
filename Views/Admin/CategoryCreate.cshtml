@@ -1,0 +1,29 @@
+@model CategoryCreateViewModel
+@{
+    ViewData["Title"] = "Create Category";
+}
+<section class="container my-4">
+<h2>Create Category</h2>
+<form asp-action="CategoryCreate" method="post">
+    <div class="form-group">
+        <label asp-for="Name"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label>Associate Blogs</label>
+        <select asp-for="SelectedBlogIds" asp-items="Model.AvailableBlogs" multiple class="form-control" size="8"></select>
+    </div>
+    <div class="form-group">
+        <label>Associate Quizzes</label>
+        <select asp-for="SelectedQuizIds" asp-items="Model.AvailableQuizzes" multiple class="form-control" size="8"></select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create Category</button>
+    <a asp-action="Index" class="btn btn-secondary">Back</a>
+</form>
+</section>
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

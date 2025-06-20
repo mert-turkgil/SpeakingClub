@@ -587,11 +587,13 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("QuizSubmissionId");
 
                     b.HasIndex("QuizId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("QuizSubmissions");
 
@@ -613,6 +615,15 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             Score = 90,
                             SubmissionDate = new DateTime(2025, 2, 16, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             UserId = "user2"
+                        },
+                        new
+                        {
+                            QuizSubmissionId = 3,
+                            AttemptNumber = 1,
+                            QuizId = 1,
+                            Score = 100,
+                            SubmissionDate = new DateTime(2025, 2, 17, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            UserId = "root"
                         });
                 });
 
@@ -988,6 +999,26 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             SecurityStamp = "security_stamp_user2",
                             TwoFactorEnabled = false,
                             UserName = "user2"
+                        },
+                        new
+                        {
+                            Id = "root",
+                            AccessFailedCount = 0,
+                            Age = 99,
+                            ConcurrencyStamp = "concurrency_stamp_root",
+                            Email = "root@example.com",
+                            EmailConfirmed = true,
+                            FirstName = "Root",
+                            LastName = "Admin",
+                            LockoutEnabled = false,
+                            NormalizedEmail = "ROOT@EXAMPLE.COM",
+                            NormalizedUserName = "ROOT",
+                            PasswordHash = "FakeHash",
+                            PhoneNumber = "0000000000",
+                            PhoneNumberConfirmed = true,
+                            SecurityStamp = "security_stamp_root",
+                            TwoFactorEnabled = false,
+                            UserName = "root"
                         });
                 });
 
@@ -1168,7 +1199,15 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("SpeakingClub.Identity.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Quiz");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SpeakingClub.Entity.Rating", b =>

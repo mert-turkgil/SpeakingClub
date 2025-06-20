@@ -24,5 +24,14 @@ namespace SpeakingClub.Data.Concrete
                 .Include(t => t.Quizzes)
                 .ToListAsync();
         }
+        public async Task<Tag?> GetByIdAsync(int id)
+        {
+            return await _database.Tags
+                .Include(t => t.Blogs)
+                .ThenInclude(b => b.Category) 
+                .Include(t => t.Quizzes)
+                .ThenInclude(q => q.Category)
+                .FirstOrDefaultAsync(t => t.TagId == id);
+        }
     }
 }

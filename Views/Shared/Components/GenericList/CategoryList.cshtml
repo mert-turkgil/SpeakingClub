@@ -4,8 +4,8 @@
 {
         <a class="btn btn-outline-success nav-item m-auto w-100" 
             asp-controller="Admin" 
-            asp-action="UserCreate">
-                Create user
+            asp-action="CategoryCreate">
+                Create Category
             </a> 
     <div class="table-responsive">
         <table id="CategoryList" class="table table-hover">
@@ -25,9 +25,9 @@
                         <td>@item.Blogs.Count</td>
                         <td>@item.Quizzes.Count</td>
                         <td>
-                            <a asp-action="Edit" asp-controller="Category" asp-route-id="@item.CategoryId" 
+                            <a asp-action="CategoryEdit" asp-controller="Admin" asp-route-id="@item.CategoryId" 
                                class="btn btn-sm btn-warning">Edit</a>
-                            <form asp-action="Delete" method="post" class="d-inline">
+                            <form  asp-route-id="@item.CategoryId" asp-action="CategoryDelete" method="post" class="d-inline">
                                 <input type="hidden" name="id" value="@item.CategoryId" />
                                 <button type="submit" class="btn btn-sm btn-danger" 
                                         onclick="return confirm('Delete this category?')">Delete</button>

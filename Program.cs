@@ -104,6 +104,7 @@ builder.Services.AddHttpClient<IDeeplService, DeeplService>()
     .AddTransientHttpErrorPolicy(policyBuilder =>
         policyBuilder.WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromSeconds(10)));
 builder.Services.AddSingleton<IFileProvider>(new PhysicalFileProvider(resourcesPath));
+builder.Services.AddSignalR();
 #endregion
 
 #region Localization and MVC Configuration
@@ -238,5 +239,7 @@ app.MapControllerRoute(
     pattern: "blog/{url}",
     defaults: new { controller = "Home", action = "BlogDetail"});
 #endregion
-
+#region SignalR Configuration
+app.MapHub<SpeakingClub.Hubs.QuizMonitorHub>("/quizMonitorHub");
+#endregion
 app.Run();

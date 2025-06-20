@@ -10,8 +10,12 @@ namespace SpeakingClub.Data.Concrete
 {
     public class QuizSubmissionRepository : GenericRepository<QuizSubmission>, IQuizSubmissionRepository
     {
+        protected new readonly SpeakingClubContext _context;
+        protected new readonly DbSet<QuizSubmission> _dbSet;
         public QuizSubmissionRepository(SpeakingClubContext context) : base(context)
         {
+            _context = context;
+            _dbSet = context.Set<QuizSubmission>();
         }
         
         public async Task<IEnumerable<QuizSubmission>> GetSubmissionsByUserIdAsync(string userId)
@@ -38,6 +42,17 @@ namespace SpeakingClub.Data.Concrete
                     .ThenInclude(r => r.QuizAnswer)
                         .ThenInclude(a => a.Question)
                 .Include(s => s.Quiz)
+                .ToListAsync();
+        }
+        public async Task<List<QuizSubmission>> GetAllWithIncludesAsync()
+        {
+            return await _context.QuizSubmissions
+                .Include(qs => qs.User)
+                .Include(qs => qs.Quiz)
+                .ThenInclude(qs => qs.Questions)
+                .Include(qs => qs.QuizResponses)
+                    .ThenInclude(qr => qr.QuizAnswer)
+                .OrderByDescending(qs => qs.SubmissionDate)
                 .ToListAsync();
         }
 

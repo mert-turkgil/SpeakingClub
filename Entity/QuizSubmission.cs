@@ -17,7 +17,6 @@ namespace SpeakingClub.Entity
         public DateTime SubmissionDate { get; set; }
         // Optional: a computed score or result field
         public int Score { get; set; }
-        
         // New: Attempt counter if a user can attempt the quiz multiple times
         public int AttemptNumber { get; set; }
 

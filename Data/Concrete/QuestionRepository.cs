@@ -8,7 +8,7 @@ using SpeakingClub.Entity;
 
 namespace SpeakingClub.Data.Concrete
 {
-    public class QuestionRepository: GenericRepository<Question>, IQuestionRepository
+    public class QuestionRepository : GenericRepository<Question>, IQuestionRepository
     {
         private readonly new SpeakingClubContext _context;
 
@@ -52,5 +52,14 @@ namespace SpeakingClub.Data.Concrete
                 .SelectMany(q => q.Answers)
                 .AnyAsync(a => a.IsCorrect);
         } 
+        
+        public override async Task<IEnumerable<Question>> GetAllAsync()
+        {
+            return await _context.Questions
+                .Include(q => q.Answers)
+                .Include(q => q.Quiz)
+                .ToListAsync();
+        }
+
     }
 }

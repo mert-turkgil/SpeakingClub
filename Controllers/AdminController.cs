@@ -528,6 +528,257 @@ namespace SpeakingClub.Controllers
 
         #endregion
 
+        #region Tag
+        // Tag Edit (GET)
+        [HttpGet("TagEdit/{id}")]
+        public async Task<IActionResult> TagEdit(int id)
+        {
+            var tag = await _unitOfWork.Tags.GetByIdAsync(id);
+            if (tag == null)
+                return NotFound();
+
+            // Fetch all blogs and quizzes for the admin to choose from
+            var allBlogs = await _unitOfWork.Blogs.GetAllAsync();
+            var allQuizzes = await _unitOfWork.Quizzes.GetAllAsync();
+
+            var model = new TagEditViewModel
+            {
+                TagId = tag.TagId,
+                Name = tag.Name,
+                SelectedBlogIds = tag.Blogs.Select(b => b.BlogId).ToList(),
+                SelectedQuizIds = tag.Quizzes.Select(q => q.Id).ToList(),
+                AvailableBlogs = allBlogs.Select(b => new SelectListItem { Value = b.BlogId.ToString(), Text = b.Title }),
+                AvailableQuizzes = allQuizzes.Select(q => new SelectListItem { Value = q.Id.ToString(), Text = q.Title })
+            };
+            return View(model);
+        }
+
+
+        [HttpPost("TagEdit/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> TagEdit(TagEditViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                // Re-populate selection lists if validation fails
+                model.AvailableBlogs = (await _unitOfWork.Blogs.GetAllAsync())
+                    .Select(b => new SelectListItem { Value = b.BlogId.ToString(), Text = b.Title });
+                model.AvailableQuizzes = (await _unitOfWork.Quizzes.GetAllAsync())
+                    .Select(q => new SelectListItem { Value = q.Id.ToString(), Text = q.Title });
+                return View(model);
+            }
+
+            var tag = await _unitOfWork.Tags.GetByIdAsync(model.TagId);
+            if (tag == null)
+                return NotFound();
+
+            tag.Name = model.Name;
+
+            // --- Manage Blog associations ---
+            var allBlogs = await _unitOfWork.Blogs.GetAllAsync();
+            tag.Blogs = allBlogs.Where(b => model.SelectedBlogIds.Contains(b.BlogId)).ToList();
+
+            // --- Manage Quiz associations ---
+            var allQuizzes = await _unitOfWork.Quizzes.GetAllAsync();
+            tag.Quizzes = allQuizzes.Where(q => model.SelectedQuizIds.Contains(q.Id)).ToList();
+
+            _unitOfWork.Tags.Update(tag);
+            await _unitOfWork.SaveAsync();
+
+            TempData["SuccessMessage"] = "Tag updated successfully!";
+            return RedirectToAction("Index");
+        }
+
+
+        [HttpPost("TagDelete/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> TagDelete(int id)
+        {
+            var tag = await _unitOfWork.Tags.GetByIdAsync(id);
+            if (tag == null)
+            {
+                TempData["ErrorMessage"] = "Tag not found.";
+                return RedirectToAction("Index");
+            }
+
+            // Remove tag associations with blogs and quizzes
+            foreach (var blog in tag.Blogs.ToList())
+                blog.Tags.Remove(tag);
+            foreach (var quiz in tag.Quizzes.ToList())
+                quiz.Tags.Remove(tag);
+
+            _unitOfWork.Tags.Remove(tag);
+            await _unitOfWork.SaveAsync();
+
+            TempData["SuccessMessage"] = "Tag deleted successfully!";
+            return RedirectToAction("Index"); // or TagList
+        }
+
+
+        [HttpGet("TagCreate")]
+        public IActionResult TagCreate()
+        {
+            var model = new TagCreateViewModel();
+            return View(model);
+        }
+
+        [HttpPost("TagCreate")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> TagCreate(TagCreateViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var tag = new Tag { Name = model.Name };
+
+            // Optionally check for duplicates
+            var exists = (await _unitOfWork.Tags.GetAllAsync()).Any(t => t.Name == model.Name);
+            if (exists)
+            {
+                ModelState.AddModelError("Name", "This tag already exists.");
+                return View(model);
+            }
+
+            await _unitOfWork.Tags.AddAsync(tag);
+            await _unitOfWork.SaveAsync();
+
+            TempData["SuccessMessage"] = "Tag created successfully!";
+            return RedirectToAction("Index"); // Or TagList if you have a list page
+        }
+
+        #endregion
+
+        #region Category
+        [HttpGet("CategoryEdit/{id}")]
+        public async Task<IActionResult> CategoryEdit(int id)
+        {
+            var category = await _unitOfWork.Categories.GetByIdAsync(id);
+            if (category == null)
+                return NotFound();
+
+            var allBlogs = await _unitOfWork.Blogs.GetAllAsync();
+            var allQuizzes = await _unitOfWork.Quizzes.GetAllAsync();
+
+            var model = new CategoryEditViewModel
+            {
+                CategoryId = category.CategoryId,
+                Name = category.Name,
+                SelectedBlogIds = category.Blogs?.Select(b => b.BlogId).ToList() ?? new List<int>(),
+                SelectedQuizIds = category.Quizzes?.Select(q => q.Id).ToList() ?? new List<int>(),
+                AvailableBlogs = allBlogs.Select(b => new SelectListItem { Value = b.BlogId.ToString(), Text = b.Title }),
+                AvailableQuizzes = allQuizzes.Select(q => new SelectListItem { Value = q.Id.ToString(), Text = q.Title })
+            };
+            return View(model);
+        }
+
+        [HttpPost("CategoryEdit/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CategoryEdit(CategoryEditViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                // Repopulate selections if validation fails
+                model.AvailableBlogs = (await _unitOfWork.Blogs.GetAllAsync())
+                    .Select(b => new SelectListItem { Value = b.BlogId.ToString(), Text = b.Title });
+                model.AvailableQuizzes = (await _unitOfWork.Quizzes.GetAllAsync())
+                    .Select(q => new SelectListItem { Value = q.Id.ToString(), Text = q.Title });
+                return View(model);
+            }
+
+            var category = await _unitOfWork.Categories.GetByIdAsync(model.CategoryId);
+            if (category == null)
+                return NotFound();
+
+            category.Name = model.Name;
+
+            // Update Blog associations
+            var allBlogs = await _unitOfWork.Blogs.GetAllAsync();
+            category.Blogs = allBlogs.Where(b => model.SelectedBlogIds.Contains(b.BlogId)).ToList();
+
+            // Update Quiz associations
+            var allQuizzes = await _unitOfWork.Quizzes.GetAllAsync();
+            category.Quizzes = allQuizzes.Where(q => model.SelectedQuizIds.Contains(q.Id)).ToList();
+
+            _unitOfWork.Categories.Update(category);
+            await _unitOfWork.SaveAsync();
+
+            TempData["SuccessMessage"] = "Category updated successfully!";
+            return RedirectToAction("Index");
+        }
+
+        [HttpGet("CategoryCreate")]
+        public async Task<IActionResult> CategoryCreate()
+        {
+            var allBlogs = await _unitOfWork.Blogs.GetAllAsync();
+            var allQuizzes = await _unitOfWork.Quizzes.GetAllAsync();
+
+            var model = new CategoryCreateViewModel
+            {
+                AvailableBlogs = allBlogs.Select(b => new SelectListItem { Value = b.BlogId.ToString(), Text = b.Title }),
+                AvailableQuizzes = allQuizzes.Select(q => new SelectListItem { Value = q.Id.ToString(), Text = q.Title })
+            };
+            return View(model);
+        }
+
+        [HttpPost("CategoryCreate")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CategoryCreate(CategoryCreateViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                model.AvailableBlogs = (await _unitOfWork.Blogs.GetAllAsync())
+                    .Select(b => new SelectListItem { Value = b.BlogId.ToString(), Text = b.Title });
+                model.AvailableQuizzes = (await _unitOfWork.Quizzes.GetAllAsync())
+                    .Select(q => new SelectListItem { Value = q.Id.ToString(), Text = q.Title });
+                return View(model);
+            }
+
+            var category = new Category
+            {
+                Name = model.Name
+            };
+
+            // Associate Blogs and Quizzes
+            var allBlogs = await _unitOfWork.Blogs.GetAllAsync();
+            category.Blogs = allBlogs.Where(b => model.SelectedBlogIds.Contains(b.BlogId)).ToList();
+
+            var allQuizzes = await _unitOfWork.Quizzes.GetAllAsync();
+            category.Quizzes = allQuizzes.Where(q => model.SelectedQuizIds.Contains(q.Id)).ToList();
+
+            await _unitOfWork.Categories.AddAsync(category);
+            await _unitOfWork.SaveAsync();
+
+            TempData["SuccessMessage"] = "Category created successfully!";
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost("CategoryDelete/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CategoryDelete(int id)
+        {
+            var category = await _unitOfWork.Categories.GetByIdAsync(id);
+            if (category == null)
+            {
+                TempData["ErrorMessage"] = "Category not found.";
+                return RedirectToAction("Index");
+            }
+
+            // Remove associations (optional: depends on cascade behavior)
+            foreach (var blog in category.Blogs?.ToList() ?? new List<Blog>())
+                blog.CategoryId = null;
+
+            foreach (var quiz in category.Quizzes?.ToList() ?? new List<Entity.Quiz>())
+                quiz.CategoryId = null;
+
+            _unitOfWork.Categories.Remove(category);
+            await _unitOfWork.SaveAsync();
+
+            TempData["SuccessMessage"] = "Category deleted successfully!";
+            return RedirectToAction("Index");
+        }
+
+
+        #endregion
 
         #region Blog Management
         private void DeleteUnusedImages(Blog blog, List<string> usedImagePaths)
@@ -1398,7 +1649,7 @@ namespace SpeakingClub.Controllers
             if (audioFile == null || audioFile.Length == 0)
                 return null;
 
-            var uploadsFolder = Path.Combine(_env.WebRootPath, "uploads", "audio");
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "mp3");
             if (!Directory.Exists(uploadsFolder))
                 Directory.CreateDirectory(uploadsFolder);
 
@@ -2002,11 +2253,12 @@ namespace SpeakingClub.Controllers
         #endregion
 
         #region Question
+
         [HttpGet("QuestionCreate")]
         public async Task<IActionResult> QuestionCreate()
         {
             var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-            var model = new QuestionCreateViewModel
+            var model = new QuestionEditViewModel
             {
                 AvailableQuizzes = quizzes.Select(q => new SelectListItem
                 {
@@ -2019,12 +2271,90 @@ namespace SpeakingClub.Controllers
                     new AnswerEditViewModel()
                 }
             };
-            return View(model);
+            return View("QuestionCreateEdit", model); 
         }
+
+
 
         [HttpPost("QuestionCreate")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> QuestionCreate(QuestionCreateViewModel model)
+        public async Task<IActionResult> QuestionCreate(QuestionEditViewModel model)
+        {
+            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+            model.AvailableQuizzes = quizzes.Select(q => new SelectListItem
+            {
+                Value = q.Id.ToString(),
+                Text = q.Title
+            });
+
+            if (!ModelState.IsValid)
+                return View("QuestionCreateEdit", model);
+
+            // Use your helper for image upload
+            string? imageUrl = null;
+            if (model.ImageFile != null && model.ImageFile.Length > 0)
+                imageUrl = await ProcessImageUpload(model.ImageFile);
+
+            // Use your helper for audio upload
+            string? audioUrl = null;
+            if (model.AudioFile != null && model.AudioFile.Length > 0)
+                audioUrl = await ProcessAudioUpload(model.AudioFile);
+
+            var question = new SpeakingClub.Entity.Question
+            {
+                QuestionText = model.QuestionText,
+                ImageUrl = imageUrl,
+                AudioUrl = audioUrl,
+                VideoUrl = model.VideoUrl,
+                QuizId = model.QuizId,
+                Answers = model.Answers.Select(a => new SpeakingClub.Entity.QuizAnswer
+                {
+                    AnswerText = a.AnswerText,
+                    IsCorrect = a.IsCorrect
+                }).ToList()
+            };
+
+            await _unitOfWork.Questions.AddAsync(question);
+            await _unitOfWork.SaveAsync();
+
+            TempData["SuccessMessage"] = "Question created successfully!";
+            return RedirectToAction("QuestionList");
+        }
+
+        [HttpGet("QuestionEdit/{id}")]
+        public async Task<IActionResult> QuestionEdit(int id)
+        {
+            var question = await _unitOfWork.Questions.GetByIdAsync(id);
+            if (question == null) return NotFound();
+
+            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+            var model = new QuestionEditViewModel
+            {
+                QuestionId = question.Id,
+                QuestionText = question.QuestionText,
+                ImageUrl = question.ImageUrl,
+                AudioUrl = question.AudioUrl,
+                VideoUrl = question.VideoUrl,
+                QuizId = question.QuizId,
+                AvailableQuizzes = quizzes.Select(q => new SelectListItem
+                {
+                    Value = q.Id.ToString(),
+                    Text = q.Title
+                }),
+                Answers = question.Answers.Select(a => new AnswerEditViewModel
+                {
+                    AnswerId = a.Id,
+                    AnswerText = a.AnswerText,
+                    IsCorrect = a.IsCorrect
+                }).ToList()
+            };
+            return View("QuestionCreateEdit", model);
+        }
+
+
+        [HttpPost("QuestionEdit/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> QuestionEdit(QuestionEditViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -2037,42 +2367,78 @@ namespace SpeakingClub.Controllers
                 return View(model);
             }
 
-            // Process file uploads (if any)
-            string? imageUrl = null;
-            if (model.ImageFile != null && model.ImageFile.Length > 0)
-            {
-                imageUrl = await ProcessImageUpload(model.ImageFile); // You must implement this!
-            }
+            var question = await _unitOfWork.Questions.GetByIdAsync(model.QuestionId);
+            if (question == null) return NotFound();
 
-            string? audioUrl = null;
-            if (model.AudioFile != null && model.AudioFile.Length > 0)
-            {
-                audioUrl = await ProcessAudioUpload(model.AudioFile); // Reuse your quiz audio method
-            }
+            question.QuestionText = model.QuestionText;
+            question.VideoUrl = model.VideoUrl;
+            question.ImageUrl = model.ImageUrl;
+            question.AudioUrl = model.AudioUrl;
 
-            var question = new Entity.Question
+            // Update Quiz binding (unbinding from previous if changed)
+            if (question.QuizId != model.QuizId)
+                question.QuizId = model.QuizId;
+
+            // Update Answers (add/edit/remove)
+            // Remove deleted answers
+            var answerIds = model.Answers.Select(a => a.AnswerId).ToList();
+            var answersToRemove = question.Answers.Where(a => !answerIds.Contains(a.Id)).ToList();
+            foreach (var ans in answersToRemove)
+                question.Answers.Remove(ans);
+
+            // Add or update existing answers
+            foreach (var answerVm in model.Answers)
             {
-                QuestionText = model.QuestionText,
-                ImageUrl = imageUrl,
-                AudioUrl = audioUrl,
-                VideoUrl = model.VideoUrl,
-                Answers = model.Answers.Select(a => new SpeakingClub.Entity.QuizAnswer
+                var answer = question.Answers.FirstOrDefault(a => a.Id == answerVm.AnswerId);
+                if (answer == null)
                 {
-                    AnswerText = a.AnswerText,
-                    IsCorrect = a.IsCorrect
-                }).ToList()
-            };
+                    answer = new Entity.QuizAnswer
+                    {
+                        AnswerText = answerVm.AnswerText,
+                        IsCorrect = answerVm.IsCorrect
+                    };
+                    question.Answers.Add(answer);
+                }
+                else
+                {
+                    answer.AnswerText = answerVm.AnswerText;
+                    answer.IsCorrect = answerVm.IsCorrect;
+                }
+            }
 
-            // Optionally bind to a quiz
-            if (model.QuizId.HasValue)
-                question.QuizId = model.QuizId.Value;
-
-            await _unitOfWork.Questions.AddAsync(question);
+            _unitOfWork.Questions.Update(question);
             await _unitOfWork.SaveAsync();
 
-            TempData["SuccessMessage"] = "Question created successfully!";
-            return RedirectToAction("Index"); // or QuestionList if you want
+            TempData["SuccessMessage"] = "Question updated successfully!";
+            return RedirectToAction("QuestionList");
         }
+
+        [HttpPost("QuestionDelete/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> QuestionDelete(int id)
+        {
+            var question = await _unitOfWork.Questions.GetByIdAsync(id);
+            if (question == null)
+            {
+                TempData["ErrorMessage"] = "Question not found.";
+                return RedirectToAction("QuestionList");
+            }
+
+            // Remove from associated quiz's Questions collection
+            if (question.Quiz != null)
+                question.Quiz.Questions.Remove(question);
+
+            // Answers cascade delete should be handled by EF, but you can clear manually
+            question.Answers?.Clear();
+
+            _unitOfWork.Questions.Remove(question);
+            await _unitOfWork.SaveAsync();
+
+            TempData["SuccessMessage"] = "Question deleted successfully!";
+            return RedirectToAction("QuestionList");
+        }
+
+
         #region helpers for question
         private async Task<string?> ProcessImageUpload(IFormFile imageFile)
         {

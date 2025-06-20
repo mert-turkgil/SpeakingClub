@@ -39,7 +39,7 @@ namespace SpeakingClub.Data.Configuration
                 }
             );
 
-            // Seed Users (teachers and regular users)
+            // Seed Users (teachers, regular users, and root)
             modelBuilder.Entity<User>().HasData(
                 new User {
                     Id = "teacher1",
@@ -116,8 +116,28 @@ namespace SpeakingClub.Data.Configuration
                     TwoFactorEnabled = false,
                     LockoutEnabled = false,
                     AccessFailedCount = 0
+                },
+                new User { // ADD ROOT USER
+                    Id = "root",
+                    FirstName = "Root",
+                    LastName = "Admin",
+                    Age = 99,
+                    UserName = "root",
+                    NormalizedUserName = "ROOT",
+                    Email = "root@example.com",
+                    NormalizedEmail = "ROOT@EXAMPLE.COM",
+                    EmailConfirmed = true,
+                    PasswordHash = "FakeHash",
+                    SecurityStamp = "security_stamp_root",
+                    ConcurrencyStamp = "concurrency_stamp_root",
+                    PhoneNumber = "0000000000",
+                    PhoneNumberConfirmed = true,
+                    TwoFactorEnabled = false,
+                    LockoutEnabled = false,
+                    AccessFailedCount = 0
                 }
             );
+
 
             // Seed Categories
             modelBuilder.Entity<Category>().HasData(
@@ -268,6 +288,15 @@ namespace SpeakingClub.Data.Configuration
                     UserId = "user2",
                     SubmissionDate = new DateTime(2025, 2, 16),
                     Score = 90,
+                    AttemptNumber = 1
+                },
+                new QuizSubmission
+                {
+                    QuizSubmissionId = 3,
+                    QuizId = 1,
+                    UserId = "root",
+                    SubmissionDate = new DateTime(2025, 2, 17),
+                    Score = 100,
                     AttemptNumber = 1
                 }
             );

@@ -4,8 +4,8 @@
 {
         <a class="btn btn-outline-success nav-item m-auto w-100" 
     asp-controller="Admin" 
-    asp-action="UserCreate">
-        Create user
+    asp-action="TagCreate">
+        Create Tag
     </a> 
     <div class="table-responsive">
         <table id="TagList" class="table table-hover table-striped">
@@ -29,7 +29,7 @@
                                asp-route-id="@tag.TagId" class="btn btn-sm btn-warning mb-1">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
-                            <form asp-action="TagDelete" method="post">
+                            <form asp-route-id="@tag.TagId" asp-action="TagDelete" method="post">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="id" value="@tag.TagId" />
                                 <button type="submit" class="btn btn-sm btn-danger" 

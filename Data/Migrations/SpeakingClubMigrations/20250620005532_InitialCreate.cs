@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 {
     /// <inheritdoc />
-    public partial class InitialSpeakingClubMigration : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -133,7 +133,8 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     RawYT = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     RawMaps = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     isHome = table.Column<bool>(type: "bit", nullable: false),
-                    CategoryId = table.Column<int>(type: "int", nullable: true)
+                    CategoryId = table.Column<int>(type: "int", nullable: true),
+                    SelectedQuestionId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -310,7 +311,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     QuizSubmissionId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     QuizId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     SubmissionDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Score = table.Column<int>(type: "int", nullable: false),
                     AttemptNumber = table.Column<int>(type: "int", nullable: false)
@@ -324,6 +325,12 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         principalTable: "Quizzes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_QuizSubmissions_User_UserId",
+                        column: x => x.UserId,
+                        principalTable: "User",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -521,6 +528,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 columns: new[] { "Id", "AccessFailedCount", "Age", "ConcurrencyStamp", "Email", "EmailConfirmed", "FirstName", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
                 values: new object[,]
                 {
+                    { "root", 0, 99, "concurrency_stamp_root", "root@example.com", true, "Root", "Admin", false, null, "ROOT@EXAMPLE.COM", "ROOT", "FakeHash", "0000000000", true, "security_stamp_root", false, "root" },
                     { "teacher1", 0, 35, "concurrency_stamp_teacher1", "teacher1@example.com", true, "Teacher", "One", false, null, "TEACHER1@EXAMPLE.COM", "TEACHER1", "FakeHash", "1234567890", true, "security_stamp_teacher1", false, "teacher1" },
                     { "teacher2", 0, 40, "concurrency_stamp_teacher2", "teacher2@example.com", true, "Teacher", "Two", false, null, "TEACHER2@EXAMPLE.COM", "TEACHER2", "FakeHash", "1234567890", true, "security_stamp_teacher2", false, "teacher2" },
                     { "user1", 0, 25, "concurrency_stamp_user1", "user1@example.com", true, "User", "One", false, null, "USER1@EXAMPLE.COM", "USER1", "FakeHash", "1234567890", true, "security_stamp_user1", false, "user1" },
@@ -538,11 +546,11 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 
             migrationBuilder.InsertData(
                 table: "Blogs",
-                columns: new[] { "BlogId", "Author", "CategoryId", "Content", "Date", "Image", "RawMaps", "RawYT", "Title", "Url", "isHome" },
+                columns: new[] { "BlogId", "Author", "CategoryId", "Content", "Date", "Image", "RawMaps", "RawYT", "SelectedQuestionId", "Title", "Url", "isHome" },
                 values: new object[,]
                 {
-                    { 1, "Author1", 1, "Content of blog post 1.", new DateTime(2025, 2, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "blog1.jpg", "", "", "Blog Post 1", "http://example.com/blog1", true },
-                    { 2, "Author2", 2, "Content of blog post 2.", new DateTime(2025, 3, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "blog2.jpg", "", "", "Blog Post 2", "http://example.com/blog2", true }
+                    { 1, "Author1", 1, "Content of blog post 1.", new DateTime(2025, 2, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "blog1.jpg", "", "", null, "Blog Post 1", "http://example.com/blog1", true },
+                    { 2, "Author2", 2, "Content of blog post 2.", new DateTime(2025, 3, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "blog2.jpg", "", "", null, "Blog Post 2", "http://example.com/blog2", true }
                 });
 
             migrationBuilder.InsertData(
@@ -581,7 +589,8 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 values: new object[,]
                 {
                     { 1, 1, 1, 80, new DateTime(2025, 2, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), "user1" },
-                    { 2, 1, 1, 90, new DateTime(2025, 2, 16, 0, 0, 0, 0, DateTimeKind.Unspecified), "user2" }
+                    { 2, 1, 1, 90, new DateTime(2025, 2, 16, 0, 0, 0, 0, DateTimeKind.Unspecified), "user2" },
+                    { 3, 1, 1, 100, new DateTime(2025, 2, 17, 0, 0, 0, 0, DateTimeKind.Unspecified), "root" }
                 });
 
             migrationBuilder.InsertData(
@@ -695,6 +704,11 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 name: "IX_QuizSubmissions_QuizId",
                 table: "QuizSubmissions",
                 column: "QuizId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QuizSubmissions_UserId",
+                table: "QuizSubmissions",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_QuizTag_TagsTagId",
