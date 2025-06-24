@@ -999,9 +999,9 @@ namespace SpeakingClub.Controllers
         private void SaveContentToResx(BlogCreateModel model, int id)
         {
             // Supported languages and their codes
-            string[] cultures = { "en-US", "tr-TR", "de-DE" };
-            string[] titles = { model.TitleUS, model.TitleTR, model.TitleDE };
-            string[] contents = { model.ContentUS, model.ContentTR, model.ContentDE };
+            string[] cultures = { "tr-TR", "de-DE" };
+            string[] titles = { model.TitleTR, model.TitleDE };
+            string[] contents = { model.ContentTR, model.ContentDE };
 
             // Process each translation
             for (int i = 0; i < cultures.Length; i++)
@@ -1024,10 +1024,10 @@ namespace SpeakingClub.Controllers
         private void SaveContentToResxEdit(BlogResultModel model, string updatedContent, int id)
         {
             // Supported languages and their codes
-            string[] cultures = { "en-US", "tr-TR", "de-DE" };
-            string[] langCodes = { "en", "tr", "de" };
-            string[] titles = { model.TitleUS, model.TitleTR, model.TitleDE };
-            string[] contents = { model.ContentUS, model.ContentTR, model.ContentDE };
+            string[] cultures = {   "tr-TR", "de-DE" };
+            string[] langCodes = {   "tr", "de" };
+            string[] titles = {  model.TitleTR, model.TitleDE };
+            string[] contents = { model.ContentTR, model.ContentDE };
 
             for (int i = 0; i < cultures.Length; i++)
             {
@@ -1054,7 +1054,6 @@ namespace SpeakingClub.Controllers
             List<string> imagePaths = new();
             var cultures = new Dictionary<string, string>
             {
-                { "en-US", "en" },
                 { "tr-TR", "tr" },
                 { "de-DE", "de" }
             };
@@ -1145,7 +1144,6 @@ namespace SpeakingClub.Controllers
             // Supported cultures and keys
             var cultures = new Dictionary<string, string>
             {
-                { "en-US", "en" },
                 { "tr-TR", "tr" },
                 { "de-DE", "de" }
             };
@@ -1232,7 +1230,6 @@ namespace SpeakingClub.Controllers
             // Supported languages and their culture codes
             var cultures = new Dictionary<string, string>
             {
-                { "en-US", "en" },
                 { "tr-TR", "tr" },
                 { "de-DE", "de" }
             };
@@ -1964,7 +1961,6 @@ namespace SpeakingClub.Controllers
 
             // Process content images for main content and translations.
             string updatedContent = ProcessContentImages(model.Content, fileMappings);
-            string updatedContentUS = ProcessContentImages(model.ContentUS, fileMappings);
             string updatedContentTR = ProcessContentImages(model.ContentTR, fileMappings);
             string updatedContentDE = ProcessContentImages(model.ContentDE, fileMappings);
 
@@ -2021,8 +2017,6 @@ namespace SpeakingClub.Controllers
             // Save translations to resource files.
             SaveContentToResx(new BlogCreateModel
             {
-                TitleUS = model.TitleUS,
-                ContentUS = updatedContentUS,
                 TitleTR = model.TitleTR,
                 ContentTR = updatedContentTR,
                 TitleDE = model.TitleDE,
@@ -2100,8 +2094,7 @@ namespace SpeakingClub.Controllers
 
             // Read translations from resource files using your helper service.
             // Note: Keys must match those used when saving translations.
-            model.TitleUS = _manageResourceService.ReadResourceValue($"Title_{blog.BlogId}_{blog.Url}_en", "en-US") ?? string.Empty;
-            model.ContentUS = _manageResourceService.ReadResourceValue($"Content_{blog.BlogId}_{blog.Url}_en", "en-US") ?? string.Empty;
+
 
             model.TitleTR = _manageResourceService.ReadResourceValue($"Title_{blog.BlogId}_{blog.Url}_tr", "tr-TR") ?? string.Empty;
             model.ContentTR = _manageResourceService.ReadResourceValue($"Content_{blog.BlogId}_{blog.Url}_tr", "tr-TR") ?? string.Empty;
@@ -2182,7 +2175,6 @@ namespace SpeakingClub.Controllers
 
             // Process content images for main content and translations.
             string updatedContent = ProcessContentImages(model.Content, fileMappings);
-            string updatedContentUS = ProcessContentImages(model.ContentUS, fileMappings);
             string updatedContentTR = ProcessContentImages(model.ContentTR, fileMappings);
             string updatedContentDE = ProcessContentImages(model.ContentDE, fileMappings);
 
@@ -2231,8 +2223,6 @@ namespace SpeakingClub.Controllers
             // Update translations using the helper method.
             SaveContentToResx(new BlogCreateModel
             {
-                TitleUS = model.TitleUS,
-                ContentUS = updatedContentUS,
                 TitleTR = model.TitleTR,
                 ContentTR = updatedContentTR,
                 TitleDE = model.TitleDE,

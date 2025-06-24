@@ -12,7 +12,7 @@ using SpeakingClub.Data;
 namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 {
     [DbContext(typeof(SpeakingClubContext))]
-    [Migration("20250620005532_InitialCreate")]
+    [Migration("20250624215118_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -561,10 +561,98 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         new
                         {
                             QuizResponseId = 1,
-                            AnswerText = "User1 answer for Question 1",
+                            AnswerText = "4",
                             QuizAnswerId = 1,
                             QuizSubmissionId = 1,
-                            TimeTakenSeconds = 0
+                            TimeTakenSeconds = 10
+                        },
+                        new
+                        {
+                            QuizResponseId = 2,
+                            AnswerText = "Paris",
+                            QuizAnswerId = 4,
+                            QuizSubmissionId = 1,
+                            TimeTakenSeconds = 15
+                        },
+                        new
+                        {
+                            QuizResponseId = 3,
+                            AnswerText = "Piano",
+                            QuizAnswerId = 7,
+                            QuizSubmissionId = 1,
+                            TimeTakenSeconds = 20
+                        },
+                        new
+                        {
+                            QuizResponseId = 4,
+                            AnswerText = "Dr. Smith",
+                            QuizAnswerId = 10,
+                            QuizSubmissionId = 1,
+                            TimeTakenSeconds = 18
+                        },
+                        new
+                        {
+                            QuizResponseId = 5,
+                            AnswerText = "3",
+                            QuizAnswerId = 2,
+                            QuizSubmissionId = 2,
+                            TimeTakenSeconds = 12
+                        },
+                        new
+                        {
+                            QuizResponseId = 6,
+                            AnswerText = "Paris",
+                            QuizAnswerId = 4,
+                            QuizSubmissionId = 2,
+                            TimeTakenSeconds = 17
+                        },
+                        new
+                        {
+                            QuizResponseId = 7,
+                            AnswerText = "Guitar",
+                            QuizAnswerId = 8,
+                            QuizSubmissionId = 2,
+                            TimeTakenSeconds = 25
+                        },
+                        new
+                        {
+                            QuizResponseId = 8,
+                            AnswerText = "Dr. Smith",
+                            QuizAnswerId = 10,
+                            QuizSubmissionId = 2,
+                            TimeTakenSeconds = 22
+                        },
+                        new
+                        {
+                            QuizResponseId = 9,
+                            AnswerText = "3",
+                            QuizAnswerId = 2,
+                            QuizSubmissionId = 3,
+                            TimeTakenSeconds = 12
+                        },
+                        new
+                        {
+                            QuizResponseId = 10,
+                            AnswerText = "Paris",
+                            QuizAnswerId = 4,
+                            QuizSubmissionId = 3,
+                            TimeTakenSeconds = 17
+                        },
+                        new
+                        {
+                            QuizResponseId = 11,
+                            AnswerText = "Guitar",
+                            QuizAnswerId = 8,
+                            QuizSubmissionId = 3,
+                            TimeTakenSeconds = 25
+                        },
+                        new
+                        {
+                            QuizResponseId = 12,
+                            AnswerText = "Dr. Smith",
+                            QuizAnswerId = 10,
+                            QuizSubmissionId = 3,
+                            TimeTakenSeconds = 22
                         });
                 });
 
@@ -590,13 +678,11 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("QuizSubmissionId");
 
                     b.HasIndex("QuizId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("QuizSubmissions");
 
@@ -606,27 +692,27 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             QuizSubmissionId = 1,
                             AttemptNumber = 1,
                             QuizId = 1,
-                            Score = 80,
-                            SubmissionDate = new DateTime(2025, 2, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            UserId = "user1"
+                            Score = 100,
+                            SubmissionDate = new DateTime(2025, 6, 22, 21, 51, 17, 616, DateTimeKind.Utc).AddTicks(591),
+                            UserId = "user1-id"
                         },
                         new
                         {
                             QuizSubmissionId = 2,
-                            AttemptNumber = 1,
+                            AttemptNumber = 2,
                             QuizId = 1,
-                            Score = 90,
-                            SubmissionDate = new DateTime(2025, 2, 16, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            UserId = "user2"
+                            Score = 50,
+                            SubmissionDate = new DateTime(2025, 6, 23, 21, 51, 17, 616, DateTimeKind.Utc).AddTicks(598),
+                            UserId = "user1-id"
                         },
                         new
                         {
                             QuizSubmissionId = 3,
                             AttemptNumber = 1,
                             QuizId = 1,
-                            Score = 100,
-                            SubmissionDate = new DateTime(2025, 2, 17, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            UserId = "root"
+                            Score = 40,
+                            SubmissionDate = new DateTime(2025, 6, 23, 21, 51, 17, 616, DateTimeKind.Utc).AddTicks(609),
+                            UserId = "user2-id"
                         });
                 });
 
@@ -796,13 +882,13 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.HasData(
                         new
                         {
-                            UserId = "user1",
+                            UserId = "user1-id",
                             QuizId = 1,
-                            TotalAttempts = 1
+                            TotalAttempts = 2
                         },
                         new
                         {
-                            UserId = "user2",
+                            UserId = "user2-id",
                             QuizId = 1,
                             TotalAttempts = 1
                         });
@@ -927,101 +1013,58 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         {
                             Id = "teacher1",
                             AccessFailedCount = 0,
-                            Age = 35,
-                            ConcurrencyStamp = "concurrency_stamp_teacher1",
+                            Age = 30,
+                            ConcurrencyStamp = "c07f7abd-8a55-4d6a-b5a0-e410d58627b4",
                             Email = "teacher1@example.com",
                             EmailConfirmed = true,
-                            FirstName = "Teacher",
-                            LastName = "One",
+                            FirstName = "Ali",
+                            LastName = "Öğretmen",
                             LockoutEnabled = false,
                             NormalizedEmail = "TEACHER1@EXAMPLE.COM",
-                            NormalizedUserName = "TEACHER1",
+                            NormalizedUserName = "TEACHER1@EXAMPLE.COM",
                             PasswordHash = "FakeHash",
-                            PhoneNumber = "1234567890",
-                            PhoneNumberConfirmed = true,
-                            SecurityStamp = "security_stamp_teacher1",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "securitystamp1",
                             TwoFactorEnabled = false,
-                            UserName = "teacher1"
+                            UserName = "teacher1@example.com"
                         },
                         new
                         {
-                            Id = "teacher2",
+                            Id = "user1-id",
                             AccessFailedCount = 0,
-                            Age = 40,
-                            ConcurrencyStamp = "concurrency_stamp_teacher2",
-                            Email = "teacher2@example.com",
-                            EmailConfirmed = true,
-                            FirstName = "Teacher",
-                            LastName = "Two",
-                            LockoutEnabled = false,
-                            NormalizedEmail = "TEACHER2@EXAMPLE.COM",
-                            NormalizedUserName = "TEACHER2",
-                            PasswordHash = "FakeHash",
-                            PhoneNumber = "1234567890",
-                            PhoneNumberConfirmed = true,
-                            SecurityStamp = "security_stamp_teacher2",
-                            TwoFactorEnabled = false,
-                            UserName = "teacher2"
-                        },
-                        new
-                        {
-                            Id = "user1",
-                            AccessFailedCount = 0,
-                            Age = 25,
-                            ConcurrencyStamp = "concurrency_stamp_user1",
+                            Age = 22,
+                            ConcurrencyStamp = "462b3d69-2d86-4a73-86f7-7d6c15286750",
                             Email = "user1@example.com",
                             EmailConfirmed = true,
-                            FirstName = "User",
-                            LastName = "One",
+                            FirstName = "Mert",
+                            LastName = "Yılmaz",
                             LockoutEnabled = false,
                             NormalizedEmail = "USER1@EXAMPLE.COM",
-                            NormalizedUserName = "USER1",
+                            NormalizedUserName = "USER1@EXAMPLE.COM",
                             PasswordHash = "FakeHash",
-                            PhoneNumber = "1234567890",
-                            PhoneNumberConfirmed = true,
-                            SecurityStamp = "security_stamp_user1",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "3004496c-f638-455a-a5cc-0b41a436f1b9",
                             TwoFactorEnabled = false,
-                            UserName = "user1"
+                            UserName = "user1@example.com"
                         },
                         new
                         {
-                            Id = "user2",
+                            Id = "user2-id",
                             AccessFailedCount = 0,
-                            Age = 30,
-                            ConcurrencyStamp = "concurrency_stamp_user2",
+                            Age = 18,
+                            ConcurrencyStamp = "cec18065-53b4-4fe9-ba10-7fa10126d1c8",
                             Email = "user2@example.com",
                             EmailConfirmed = true,
-                            FirstName = "User",
-                            LastName = "Two",
+                            FirstName = "Zeynep",
+                            LastName = "Demir",
                             LockoutEnabled = false,
                             NormalizedEmail = "USER2@EXAMPLE.COM",
-                            NormalizedUserName = "USER2",
+                            NormalizedUserName = "USER2@EXAMPLE.COM",
                             PasswordHash = "FakeHash",
-                            PhoneNumber = "1234567890",
-                            PhoneNumberConfirmed = true,
-                            SecurityStamp = "security_stamp_user2",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "997f70b1-bd26-4b76-94ee-ed43942c0bc1",
                             TwoFactorEnabled = false,
-                            UserName = "user2"
-                        },
-                        new
-                        {
-                            Id = "root",
-                            AccessFailedCount = 0,
-                            Age = 99,
-                            ConcurrencyStamp = "concurrency_stamp_root",
-                            Email = "root@example.com",
-                            EmailConfirmed = true,
-                            FirstName = "Root",
-                            LastName = "Admin",
-                            LockoutEnabled = false,
-                            NormalizedEmail = "ROOT@EXAMPLE.COM",
-                            NormalizedUserName = "ROOT",
-                            PasswordHash = "FakeHash",
-                            PhoneNumber = "0000000000",
-                            PhoneNumberConfirmed = true,
-                            SecurityStamp = "security_stamp_root",
-                            TwoFactorEnabled = false,
-                            UserName = "root"
+                            UserName = "user2@example.com"
                         });
                 });
 
@@ -1202,15 +1245,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SpeakingClub.Identity.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Quiz");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SpeakingClub.Entity.Rating", b =>

@@ -13,7 +13,6 @@ namespace SpeakingClub.Entity
         public int QuizId { get; set; }
         public Quiz Quiz { get; set; }
         public string UserId { get; set; }
-        public User User { get; set; }
         public DateTime SubmissionDate { get; set; }
         // Optional: a computed score or result field
         public int Score { get; set; }

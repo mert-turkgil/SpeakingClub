@@ -9,8 +9,29 @@ namespace SpeakingClub.Data.Configuration
 {
     public static class ModelBuilderExtensions
     {
-       public static void SeedData(this ModelBuilder modelBuilder)
+        public static void SeedData(this ModelBuilder modelBuilder)
         {
+            var user1Id = "user1-id";
+            var user2Id = "user2-id";
+                        // Seed Users
+            modelBuilder.Entity<User>().HasData(
+                    new User
+                    {
+                        Id = "teacher1",
+                        UserName = "teacher1@example.com",
+                        NormalizedUserName = "TEACHER1@EXAMPLE.COM",
+                        Email = "teacher1@example.com",
+                        FirstName = "Ali",
+                        LastName = "Öğretmen",
+                        Age = 30,
+                        NormalizedEmail = "TEACHER1@EXAMPLE.COM",
+                        EmailConfirmed = true,
+                        PasswordHash = "FakeHash",
+                        SecurityStamp = "securitystamp1"
+                    },
+                new User { Id = user1Id,FirstName = "Mert", LastName = "Yılmaz",Age=22, UserName = "user1@example.com", NormalizedUserName = "USER1@EXAMPLE.COM", Email = "user1@example.com", NormalizedEmail = "USER1@EXAMPLE.COM", EmailConfirmed = true, PasswordHash = "FakeHash", SecurityStamp = Guid.NewGuid().ToString() },
+                new User { Id = user2Id,FirstName = "Zeynep",LastName = "Demir",Age=18, UserName = "user2@example.com", NormalizedUserName = "USER2@EXAMPLE.COM", Email = "user2@example.com", NormalizedEmail = "USER2@EXAMPLE.COM", EmailConfirmed = true, PasswordHash = "FakeHash", SecurityStamp = Guid.NewGuid().ToString() }
+            );
             // Seed SlideShow
             modelBuilder.Entity<SlideShow>().HasData(
                 new SlideShow
@@ -38,106 +59,6 @@ namespace SpeakingClub.Data.Configuration
                     DateAdded = new DateTime(2025, 1, 15)
                 }
             );
-
-            // Seed Users (teachers, regular users, and root)
-            modelBuilder.Entity<User>().HasData(
-                new User {
-                    Id = "teacher1",
-                    FirstName = "Teacher",
-                    LastName = "One",
-                    Age = 35,
-                    UserName = "teacher1",
-                    NormalizedUserName = "TEACHER1",
-                    Email = "teacher1@example.com",
-                    NormalizedEmail = "TEACHER1@EXAMPLE.COM",
-                    EmailConfirmed = true,
-                    PasswordHash = "FakeHash",
-                    SecurityStamp = "security_stamp_teacher1",
-                    ConcurrencyStamp = "concurrency_stamp_teacher1",
-                    PhoneNumber = "1234567890",
-                    PhoneNumberConfirmed = true,
-                    TwoFactorEnabled = false,
-                    LockoutEnabled = false,
-                    AccessFailedCount = 0
-                },
-                new User {
-                    Id = "teacher2",
-                    FirstName = "Teacher",
-                    LastName = "Two",
-                    Age = 40,
-                    UserName = "teacher2",
-                    NormalizedUserName = "TEACHER2",
-                    Email = "teacher2@example.com",
-                    NormalizedEmail = "TEACHER2@EXAMPLE.COM",
-                    EmailConfirmed = true,
-                    PasswordHash = "FakeHash",
-                    SecurityStamp = "security_stamp_teacher2",
-                    ConcurrencyStamp = "concurrency_stamp_teacher2",
-                    PhoneNumber = "1234567890",
-                    PhoneNumberConfirmed = true,
-                    TwoFactorEnabled = false,
-                    LockoutEnabled = false,
-                    AccessFailedCount = 0
-                },
-                new User {
-                    Id = "user1",
-                    FirstName = "User",
-                    LastName = "One",
-                    Age = 25,
-                    UserName = "user1",
-                    NormalizedUserName = "USER1",
-                    Email = "user1@example.com",
-                    NormalizedEmail = "USER1@EXAMPLE.COM",
-                    EmailConfirmed = true,
-                    PasswordHash = "FakeHash",
-                    SecurityStamp = "security_stamp_user1",
-                    ConcurrencyStamp = "concurrency_stamp_user1",
-                    PhoneNumber = "1234567890",
-                    PhoneNumberConfirmed = true,
-                    TwoFactorEnabled = false,
-                    LockoutEnabled = false,
-                    AccessFailedCount = 0
-                },
-                new User {
-                    Id = "user2",
-                    FirstName = "User",
-                    LastName = "Two",
-                    Age = 30,
-                    UserName = "user2",
-                    NormalizedUserName = "USER2",
-                    Email = "user2@example.com",
-                    NormalizedEmail = "USER2@EXAMPLE.COM",
-                    EmailConfirmed = true,
-                    PasswordHash = "FakeHash",
-                    SecurityStamp = "security_stamp_user2",
-                    ConcurrencyStamp = "concurrency_stamp_user2",
-                    PhoneNumber = "1234567890",
-                    PhoneNumberConfirmed = true,
-                    TwoFactorEnabled = false,
-                    LockoutEnabled = false,
-                    AccessFailedCount = 0
-                },
-                new User { // ADD ROOT USER
-                    Id = "root",
-                    FirstName = "Root",
-                    LastName = "Admin",
-                    Age = 99,
-                    UserName = "root",
-                    NormalizedUserName = "ROOT",
-                    Email = "root@example.com",
-                    NormalizedEmail = "ROOT@EXAMPLE.COM",
-                    EmailConfirmed = true,
-                    PasswordHash = "FakeHash",
-                    SecurityStamp = "security_stamp_root",
-                    ConcurrencyStamp = "concurrency_stamp_root",
-                    PhoneNumber = "0000000000",
-                    PhoneNumberConfirmed = true,
-                    TwoFactorEnabled = false,
-                    LockoutEnabled = false,
-                    AccessFailedCount = 0
-                }
-            );
-
 
             // Seed Categories
             modelBuilder.Entity<Category>().HasData(
@@ -276,27 +197,27 @@ namespace SpeakingClub.Data.Configuration
                 {
                     QuizSubmissionId = 1,
                     QuizId = 1,
-                    UserId = "user1",
-                    SubmissionDate = new DateTime(2025, 2, 15),
-                    Score = 80,
+                    UserId = user1Id,
+                    SubmissionDate = DateTime.UtcNow.AddDays(-2),
+                    Score = 100,
                     AttemptNumber = 1
                 },
                 new QuizSubmission
                 {
                     QuizSubmissionId = 2,
                     QuizId = 1,
-                    UserId = "user2",
-                    SubmissionDate = new DateTime(2025, 2, 16),
-                    Score = 90,
-                    AttemptNumber = 1
+                    UserId = user1Id,
+                    SubmissionDate = DateTime.UtcNow.AddDays(-1),
+                    Score = 50,
+                    AttemptNumber = 2
                 },
                 new QuizSubmission
                 {
                     QuizSubmissionId = 3,
                     QuizId = 1,
-                    UserId = "root",
-                    SubmissionDate = new DateTime(2025, 2, 17),
-                    Score = 100,
+                    UserId = user2Id,
+                    SubmissionDate = DateTime.UtcNow.AddDays(-1),
+                    Score = 40,
                     AttemptNumber = 1
                 }
             );
@@ -323,13 +244,23 @@ namespace SpeakingClub.Data.Configuration
 
             // Seed QuizResponses (example response)
             modelBuilder.Entity<QuizResponse>().HasData(
-                new QuizResponse
-                {
-                    QuizResponseId = 1,
-                    QuizSubmissionId = 1,
-                    QuizAnswerId = 1,
-                    AnswerText = "User1 answer for Question 1"
-                }
+                // user1 attempt 1 (QuizSubmissionId = 1), all correct answers
+                new QuizResponse { QuizResponseId = 1, QuizSubmissionId = 1, QuizAnswerId = 1, TimeTakenSeconds = 10, AnswerText = "4" },          // Q1
+                new QuizResponse { QuizResponseId = 2, QuizSubmissionId = 1, QuizAnswerId = 4, TimeTakenSeconds = 15, AnswerText = "Paris" },      // Q2
+                new QuizResponse { QuizResponseId = 3, QuizSubmissionId = 1, QuizAnswerId = 7, TimeTakenSeconds = 20, AnswerText = "Piano" },      // Q3
+                new QuizResponse { QuizResponseId = 4, QuizSubmissionId = 1, QuizAnswerId = 10, TimeTakenSeconds = 18, AnswerText = "Dr. Smith" }, // Q4
+
+                // user1 attempt 2 (QuizSubmissionId = 2), some correct, some wrong
+                new QuizResponse { QuizResponseId = 5, QuizSubmissionId = 2, QuizAnswerId = 2, TimeTakenSeconds = 12, AnswerText = "3" },          // Q1 (wrong)
+                new QuizResponse { QuizResponseId = 6, QuizSubmissionId = 2, QuizAnswerId = 4, TimeTakenSeconds = 17, AnswerText = "Paris" },      // Q2 (correct)
+                new QuizResponse { QuizResponseId = 7, QuizSubmissionId = 2, QuizAnswerId = 8, TimeTakenSeconds = 25, AnswerText = "Guitar" },     // Q3 (wrong)
+                new QuizResponse { QuizResponseId = 8, QuizSubmissionId = 2, QuizAnswerId = 10, TimeTakenSeconds = 22, AnswerText = "Dr. Smith" },  // Q4 (correct)
+
+                // user2 attempt 1 (QuizSubmissionId = 3)
+                new QuizResponse { QuizResponseId = 9, QuizSubmissionId = 3, QuizAnswerId = 2, TimeTakenSeconds = 12, AnswerText = "3" },          // Q1 (wrong)
+                new QuizResponse { QuizResponseId = 10, QuizSubmissionId = 3, QuizAnswerId = 4, TimeTakenSeconds = 17, AnswerText = "Paris" },      // Q2 (correct)
+                new QuizResponse { QuizResponseId = 11, QuizSubmissionId = 3, QuizAnswerId = 8, TimeTakenSeconds = 25, AnswerText = "Guitar" },     // Q3 (wrong)
+                new QuizResponse { QuizResponseId = 12, QuizSubmissionId = 3, QuizAnswerId = 10, TimeTakenSeconds = 22, AnswerText = "Dr. Smith" }             
             );
 
             // Seed many-to-many join data for Blog-Tags
@@ -351,9 +282,10 @@ namespace SpeakingClub.Data.Configuration
 
             // Seed UserQuiz join table (User-Quiz relationship)
             modelBuilder.Entity<UserQuiz>().HasData(
-                new UserQuiz { UserId = "user1", QuizId = 1, TotalAttempts = 1 },
-                new UserQuiz { UserId = "user2", QuizId = 1, TotalAttempts = 1 }
+                new UserQuiz { UserId = user1Id, QuizId = 1, TotalAttempts = 2 },
+                new UserQuiz { UserId = user2Id, QuizId = 1, TotalAttempts = 1 }
             );
+
         }
     }
 }

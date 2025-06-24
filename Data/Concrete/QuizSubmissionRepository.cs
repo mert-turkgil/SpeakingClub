@@ -47,11 +47,8 @@ namespace SpeakingClub.Data.Concrete
         public async Task<List<QuizSubmission>> GetAllWithIncludesAsync()
         {
             return await _context.QuizSubmissions
-                .Include(qs => qs.User)
-                .Include(qs => qs.Quiz)
-                .ThenInclude(qs => qs.Questions)
-                .Include(qs => qs.QuizResponses)
-                    .ThenInclude(qr => qr.QuizAnswer)
+                .Include(qs => qs.Quiz).ThenInclude(q => q.Questions).ThenInclude(q => q.Answers)
+                .Include(qs => qs.QuizResponses).ThenInclude(qr => qr.QuizAnswer).ThenInclude(qa => qa.Question)
                 .OrderByDescending(qs => qs.SubmissionDate)
                 .ToListAsync();
         }

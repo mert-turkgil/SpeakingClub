@@ -1,29 +1,34 @@
 @model List<SelectListItem>
 
-<form id="language-selector" asp-controller="Home" asp-action="SetLanguage" 
-      asp-route-returnUrl="@Context.Request.Path" method="post">
+@{
+    var currentCulture = System.Globalization.CultureInfo.CurrentUICulture.Name;
+    bool isTr = currentCulture == "tr-TR";
+    // For reverse: bool isDe = currentCulture == "de-DE";
+}
 
-    <div class="input-group" style="width: fit-content;">
-        <span class="input-group-text bg-white">
-            <i class="fa-solid fa-globe me-1"></i>
-        </span>
-        <select class="form-select" name="culture" id="culture" onchange="this.form.submit()">
-            @foreach (var culture in Model.Where(c => c.Value == "en-US" || c.Value == "tr-TR" || c.Value == "de-DE"))
-            {
-                // Strip out anything in parentheses, if present
-                var displayText = culture.Text.Contains("(")
-                    ? culture.Text.Split('(')[0].Trim()
-                    : culture.Text;
-
-                if (culture.Selected)
-                {
-                    <option value="@culture.Value" selected>@displayText</option>
-                }
-                else
-                {
-                    <option value="@culture.Value">@displayText</option>
-                }
-            }
-        </select>
-    </div>
+<form id="language-switcher" asp-controller="Home" asp-action="SetLanguage"
+      asp-route-returnUrl="@Context.Request.Path" method="post" style="display:inline;">
+    <label class="switch" aria-label="Dil Değiştir">
+        <input type="checkbox"
+               name="culture"
+               value="de-DE"
+               @(isTr ? "" : "checked")
+               onchange="toggleLanguage(this)" />
+        <span class="d-inline"> <i class="fa-solid fa-globe me-1"></i>Türkçe</span>
+        <span class="d-inline"> <i class="fa-solid fa-globe me-1"></i>Deutsch</span>
+    </label>
+    <input type="hidden" name="culture" id="culture-hidden" value="@(isTr ? "tr-TR" : "de-DE")" />
 </form>
+
+<script>
+    function toggleLanguage(checkbox) {
+        var hidden = document.getElementById('culture-hidden');
+        if (checkbox.checked) {
+            hidden.value = 'de-DE';
+        } else {
+            hidden.value = 'tr-TR';
+        }
+        checkbox.form.submit();
+    }
+</script>
+

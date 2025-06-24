@@ -245,6 +245,14 @@
                 const secs = seconds % 60;
                 return (mins < 10 ? "0" + mins : mins) + ":" + (secs < 10 ? "0" + secs : secs);
             }
+            // Reset inactivity timer
+            function resetInactivityTimer() {
+                clearTimeout(inactivityTimeout);
+                inactivityTimeout = setTimeout(() => {
+                    alert("@Html.Raw(@_localization.GetKey("ExamCanceledInactivity"))");
+                    autoSubmitQuizAndRedirect('@inactivityUrl');
+                }, 30000);
+            }
 
             // Prevent user from leaving fullscreen
             document.addEventListener("fullscreenchange", function () {
@@ -304,15 +312,6 @@
                 clearInterval(overallTimerInterval);
                 clearTimeout(inactivityTimeout);
             });
-
-            // Reset inactivity timer
-            function resetInactivityTimer() {
-                clearTimeout(inactivityTimeout);
-                inactivityTimeout = setTimeout(() => {
-                    alert("@Html.Raw(@_localization.GetKey("ExamCanceledInactivity"))");
-                    autoSubmitQuizAndRedirect('@inactivityUrl');
-                }, 30000);
-            }
         });
     </script>
 }

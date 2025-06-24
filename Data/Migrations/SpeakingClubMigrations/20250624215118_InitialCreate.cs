@@ -311,7 +311,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     QuizSubmissionId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     QuizId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     SubmissionDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Score = table.Column<int>(type: "int", nullable: false),
                     AttemptNumber = table.Column<int>(type: "int", nullable: false)
@@ -325,12 +325,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         principalTable: "Quizzes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_QuizSubmissions_User_UserId",
-                        column: x => x.UserId,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -528,11 +522,9 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 columns: new[] { "Id", "AccessFailedCount", "Age", "ConcurrencyStamp", "Email", "EmailConfirmed", "FirstName", "LastName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
                 values: new object[,]
                 {
-                    { "root", 0, 99, "concurrency_stamp_root", "root@example.com", true, "Root", "Admin", false, null, "ROOT@EXAMPLE.COM", "ROOT", "FakeHash", "0000000000", true, "security_stamp_root", false, "root" },
-                    { "teacher1", 0, 35, "concurrency_stamp_teacher1", "teacher1@example.com", true, "Teacher", "One", false, null, "TEACHER1@EXAMPLE.COM", "TEACHER1", "FakeHash", "1234567890", true, "security_stamp_teacher1", false, "teacher1" },
-                    { "teacher2", 0, 40, "concurrency_stamp_teacher2", "teacher2@example.com", true, "Teacher", "Two", false, null, "TEACHER2@EXAMPLE.COM", "TEACHER2", "FakeHash", "1234567890", true, "security_stamp_teacher2", false, "teacher2" },
-                    { "user1", 0, 25, "concurrency_stamp_user1", "user1@example.com", true, "User", "One", false, null, "USER1@EXAMPLE.COM", "USER1", "FakeHash", "1234567890", true, "security_stamp_user1", false, "user1" },
-                    { "user2", 0, 30, "concurrency_stamp_user2", "user2@example.com", true, "User", "Two", false, null, "USER2@EXAMPLE.COM", "USER2", "FakeHash", "1234567890", true, "security_stamp_user2", false, "user2" }
+                    { "teacher1", 0, 30, "c07f7abd-8a55-4d6a-b5a0-e410d58627b4", "teacher1@example.com", true, "Ali", "Öğretmen", false, null, "TEACHER1@EXAMPLE.COM", "TEACHER1@EXAMPLE.COM", "FakeHash", null, false, "securitystamp1", false, "teacher1@example.com" },
+                    { "user1-id", 0, 22, "462b3d69-2d86-4a73-86f7-7d6c15286750", "user1@example.com", true, "Mert", "Yılmaz", false, null, "USER1@EXAMPLE.COM", "USER1@EXAMPLE.COM", "FakeHash", null, false, "3004496c-f638-455a-a5cc-0b41a436f1b9", false, "user1@example.com" },
+                    { "user2-id", 0, 18, "cec18065-53b4-4fe9-ba10-7fa10126d1c8", "user2@example.com", true, "Zeynep", "Demir", false, null, "USER2@EXAMPLE.COM", "USER2@EXAMPLE.COM", "FakeHash", null, false, "997f70b1-bd26-4b76-94ee-ed43942c0bc1", false, "user2@example.com" }
                 });
 
             migrationBuilder.InsertData(
@@ -588,9 +580,9 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 columns: new[] { "QuizSubmissionId", "AttemptNumber", "QuizId", "Score", "SubmissionDate", "UserId" },
                 values: new object[,]
                 {
-                    { 1, 1, 1, 80, new DateTime(2025, 2, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), "user1" },
-                    { 2, 1, 1, 90, new DateTime(2025, 2, 16, 0, 0, 0, 0, DateTimeKind.Unspecified), "user2" },
-                    { 3, 1, 1, 100, new DateTime(2025, 2, 17, 0, 0, 0, 0, DateTimeKind.Unspecified), "root" }
+                    { 1, 1, 1, 100, new DateTime(2025, 6, 22, 21, 51, 17, 616, DateTimeKind.Utc).AddTicks(591), "user1-id" },
+                    { 2, 2, 1, 50, new DateTime(2025, 6, 23, 21, 51, 17, 616, DateTimeKind.Utc).AddTicks(598), "user1-id" },
+                    { 3, 1, 1, 40, new DateTime(2025, 6, 23, 21, 51, 17, 616, DateTimeKind.Utc).AddTicks(609), "user2-id" }
                 });
 
             migrationBuilder.InsertData(
@@ -612,8 +604,8 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 columns: new[] { "QuizId", "UserId", "TotalAttempts" },
                 values: new object[,]
                 {
-                    { 1, "user1", 1 },
-                    { 1, "user2", 1 }
+                    { 1, "user1-id", 2 },
+                    { 1, "user2-id", 1 }
                 });
 
             migrationBuilder.InsertData(
@@ -638,7 +630,21 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
             migrationBuilder.InsertData(
                 table: "QuizResponses",
                 columns: new[] { "QuizResponseId", "AnswerText", "QuizAnswerId", "QuizSubmissionId", "TimeTakenSeconds" },
-                values: new object[] { 1, "User1 answer for Question 1", 1, 1, 0 });
+                values: new object[,]
+                {
+                    { 1, "4", 1, 1, 10 },
+                    { 2, "Paris", 4, 1, 15 },
+                    { 3, "Piano", 7, 1, 20 },
+                    { 4, "Dr. Smith", 10, 1, 18 },
+                    { 5, "3", 2, 2, 12 },
+                    { 6, "Paris", 4, 2, 17 },
+                    { 7, "Guitar", 8, 2, 25 },
+                    { 8, "Dr. Smith", 10, 2, 22 },
+                    { 9, "3", 2, 3, 12 },
+                    { 10, "Paris", 4, 3, 17 },
+                    { 11, "Guitar", 8, 3, 25 },
+                    { 12, "Dr. Smith", 10, 3, 22 }
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_BlogQuiz_QuizId",
@@ -704,11 +710,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 name: "IX_QuizSubmissions_QuizId",
                 table: "QuizSubmissions",
                 column: "QuizId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_QuizSubmissions_UserId",
-                table: "QuizSubmissions",
-                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_QuizTag_TagsTagId",

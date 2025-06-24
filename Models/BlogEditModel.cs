@@ -42,8 +42,6 @@ namespace SpeakingClub.Models
         public string CoverImageUrl { get; set; } = string.Empty;
 
         // Translation fields for various languages.
-        public string TitleUS { get; set; } = string.Empty;
-        public string ContentUS { get; set; } = string.Empty;
         public string TitleTR { get; set; } = string.Empty;
         public string ContentTR { get; set; } = string.Empty;
         public string TitleDE { get; set; } = string.Empty;

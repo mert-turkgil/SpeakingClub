@@ -36,13 +36,7 @@ namespace SpeakingClub.Data
         {
             base.OnModelCreating(modelBuilder);
             // Ignore the navigation property so that only the foreign key is used in this context.
-            // modelBuilder.Entity<QuizSubmission>().Ignore(qs => qs.User);
-            modelBuilder.Entity<QuizSubmission>()
-            .HasOne(qs => qs.User)
-            .WithMany()
-            .HasForeignKey(qs => qs.UserId)
-            .OnDelete(DeleteBehavior.Restrict); 
-            
+            // modelBuilder.Entity<QuizSubmission>().Ignore(qs => qs.User);            
             modelBuilder.Entity<QuizSubmission>()
                 .Property(qs => qs.UserId)
                 .IsRequired();

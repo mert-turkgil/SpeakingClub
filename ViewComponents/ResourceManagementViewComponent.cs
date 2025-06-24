@@ -21,14 +21,14 @@ public class ResourceManagementViewComponent : ViewComponent
     {
         // Fall back if nothing is chosen
         if (string.IsNullOrEmpty(resourceLang))
-            resourceLang = "en-US";
+            resourceLang = "tr-TR";
 
         var translations = LoadTranslations(GetResxPath(resourceLang));
 
         var viewModel = new LocalizationViewModel
         {
             CurrentLanguage = resourceLang,
-            AvailableLanguages = new List<string> { "de-DE", "en-US", "tr-TR" },
+            AvailableLanguages = new List<string> { "de-DE",   "tr-TR" },
             Translations = translations
         };
 

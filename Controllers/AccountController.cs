@@ -185,62 +185,72 @@ namespace SpeakingClub.Controllers
         [Authorize]
         public async Task<IActionResult> SubmitQuiz(string? QuizId, Dictionary<int, int>? responses, int ElapsedTime)
         {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                // This should stop everything!
+                return NotFound("User not found.");
+            }
+            if (string.IsNullOrEmpty(user.Id))
+            {
+                // Log this as a critical error
+                throw new Exception("Authenticated user has no Id!");
+            }
+
             // If no responses were provided, redirect back to the quiz page
             if (responses == null || responses.Count == 0)
             {
                 TempData["Warning"] = "You must answer at least one question!";
                 return RedirectToAction("Quizzes");
-            }else{
-            // Ensure QuizId is valid
-            if (string.IsNullOrEmpty(QuizId) || !int.TryParse(QuizId, out int quizId))
-            {
-                return BadRequest("Invalid or missing Quiz ID.");
             }
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-                return NotFound("User not found.");
-
-            var quiz = await _unitOfWork.Quizzes.GetByIdAsync(quizId);
-            if (quiz == null)
-                return NotFound("Quiz not found.");
-
-
-
-            var submission = new QuizSubmission
+            else
             {
-                UserId = user.Id,
-                QuizId = quizId,
-                SubmissionDate = DateTime.UtcNow,
-                Score = 0,
-                AttemptNumber = 1
-            };
-
-            int score = 0;
-
-            foreach (var question in quiz.Questions)
-            {
-                var selectedAnswerId = responses.ContainsKey(question.Id) ? responses[question.Id] : (int?)null;
-                var correctAnswer = question.Answers.FirstOrDefault(a => a.IsCorrect);
-
-                if (selectedAnswerId == correctAnswer?.Id)
-                    score++;
-
-                submission.QuizResponses.Add(new QuizResponse
+                // Ensure QuizId is valid
+                if (string.IsNullOrEmpty(QuizId) || !int.TryParse(QuizId, out int quizId))
                 {
-                    QuizAnswerId = selectedAnswerId,
-                    AnswerText = selectedAnswerId == null ? "No answer" : null,
-                    TimeTakenSeconds = ElapsedTime / Math.Max(1, quiz.Questions.Count)
-                });
-            }
-            
-            submission.Score = (int)((double)score / quiz.Questions.Count * 100);
+                    return BadRequest("Invalid or missing Quiz ID.");
+                }
 
-            await _unitOfWork.QuizSubmissions.AddAsync(submission);
-            await _unitOfWork.SaveAsync();
+                var quiz = await _unitOfWork.Quizzes.GetByIdAsync(quizId);
+                if (quiz == null)
+                    return NotFound("Quiz not found.");
 
-            TempData["Success"] = $"Quiz attempt recorded. Your score: {submission.Score}%";
-            return RedirectToAction(nameof(Quizzes));
+
+
+                var submission = new QuizSubmission
+                {
+                    UserId = user.Id,
+                    QuizId = quizId,
+                    SubmissionDate = DateTime.UtcNow,
+                    Score = 0,
+                    AttemptNumber = 1
+                };
+
+                int score = 0;
+
+                foreach (var question in quiz.Questions)
+                {
+                    var selectedAnswerId = responses.ContainsKey(question.Id) ? responses[question.Id] : (int?)null;
+                    var correctAnswer = question.Answers.FirstOrDefault(a => a.IsCorrect);
+
+                    if (selectedAnswerId == correctAnswer?.Id)
+                        score++;
+
+                    submission.QuizResponses.Add(new QuizResponse
+                    {
+                        QuizAnswerId = selectedAnswerId,
+                        AnswerText = selectedAnswerId == null ? "No answer" : null,
+                        TimeTakenSeconds = ElapsedTime / Math.Max(1, quiz.Questions.Count)
+                    });
+                }
+
+                submission.Score = (int)((double)score / quiz.Questions.Count * 100);
+
+                await _unitOfWork.QuizSubmissions.AddAsync(submission);
+                await _unitOfWork.SaveAsync();
+
+                TempData["Success"] = $"Quiz attempt recorded. Your score: {submission.Score}%";
+                return RedirectToAction(nameof(Quizzes));
             }
         }
 
@@ -474,11 +484,7 @@ namespace SpeakingClub.Controllers
 
                 // Define template path based on culture
                 string userTemplatePath;
-                if (currentCulture.StartsWith("en", StringComparison.OrdinalIgnoreCase))
-                {
-                    userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "EmailTemplates", "UserNotification_en.html");
-                }
-                else if (currentCulture.StartsWith("de", StringComparison.OrdinalIgnoreCase))
+                if (currentCulture.StartsWith("de", StringComparison.OrdinalIgnoreCase))
                 {
                     userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "EmailTemplates", "UserNotification_de.html");
                 }

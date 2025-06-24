@@ -1,24 +1,31 @@
-@model IEnumerable<QuizMonitorViewModel>
+@model IEnumerable<SpeakingClub.Models.QuizMonitorViewModel>
+@using Newtonsoft.Json
 @{
     ViewData["Title"] = "Quiz Monitor";
     var users = Model.Select(x => x.UserName).Distinct().OrderBy(x => x).ToList();
     var quizzes = Model.Select(x => x.QuizTitle).Distinct().OrderBy(x => x).ToList();
+    var now = DateTime.Now;
 }
 
 @section Css {
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <style>
-        #monitor-container { max-width:1200px; margin:auto; }
-        #userSelect, #quizSelect { max-width:280px; }
+        #monitor-container { max-width:1250px; margin:auto; }
+        #userSelect, #quizSelect { max-width:260px; }
         .dataTables_wrapper .dataTables_filter { float: right; }
-        .modal-dialog { max-width: 700px; }
+        .modal-dialog { max-width: 800px; }
         canvas { background: #fff; border-radius: 8px; }
+        .badge-live { background: #ff1744; color:#fff; font-weight:600; }
+        .table-hover tbody tr:hover { background: #f0f5ff !important; }
     </style>
 }
 
 <div id="monitor-container" class="py-3">
-    <h2 class="mb-4"><i class="fas fa-chart-line"></i> Quiz Monitor</h2>
+    <h2 class="mb-4"><i class="fas fa-chart-line"></i> Quiz Monitor <span id="livePulse" style="display:none;" class="badge badge-live ms-2"><i class="fas fa-broadcast-tower"></i> LIVE</span></h2>
+
+    <!-- Filtres -->
     <div class="mb-4 d-flex flex-wrap align-items-center gap-3">
         <label for="userSelect" class="fw-bold">Filter by Student:</label>
         <select id="userSelect" class="form-select">
@@ -36,64 +43,184 @@
                 <option>@q</option>
             }
         </select>
-        <label class="ms-3"><input type="checkbox" id="showFailed" /> Show only failed attempts</label>
+        <label class="ms-3">
+            <input type="checkbox" id="showFailed" /> Show only failed attempts
+        </label>
+        <hr/>
         <button class="btn btn-outline-success ms-2" id="exportExcel"><i class="fas fa-file-excel"></i> Export Excel</button>
         <button class="btn btn-outline-danger" id="exportPdf"><i class="fas fa-file-pdf"></i> Export PDF</button>
     </div>
 
-    <div class="mb-4 row g-4">
-        <div class="col-md-6">
-            <canvas id="scoresChart" height="220"></canvas>
-        </div>
-        <div class="col-md-6">
-            <canvas id="trendChart" height="220"></canvas>
-        </div>
-    </div>
-    <div class="mb-4 row g-4">
-        <div class="col-md-6">
-            <canvas id="avgScoreChart" height="180"></canvas>
-        </div>
-        <div class="col-md-6">
-            <canvas id="successPieChart" height="180"></canvas>
-        </div>
-    </div>
-    <div class="mb-4 row g-4">
-        <div class="col-md-12">
-            <canvas id="attemptsBarChart" height="160"></canvas>
-        </div>
-    </div>
-    <div class="card shadow">
+    <!-- TABLE 1: Ana Tablo (Geçmiş ve Canlı) -->
+    <div class="card shadow mb-4">
         <div class="card-body">
-            <table id="monitorTable" class="table table-striped table-bordered" style="width:100%">
+            <table id="monitorTable" class="table table-striped table-bordered table-hover align-middle" style="width:100%">
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>Student</th>
                         <th>Quiz</th>
                         <th>Score</th>
                         <th>Max Score</th>
                         <th>Attempt</th>
-                        <th>Time</th>
                         <th>Age</th>
+                        <th>Time</th>
+                        <th>Status</th>
                         <th>Submission Time</th>
+                        <th>Detail</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var s in Model)
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TABLE 2: Öğrenciye göre geçmiş -->
+    <div class="card shadow mb-4">
+        <div class="card-header"><b>Student-wise Attempts</b></div>
+        <div class="card-body">
+            <table id="studentHistoryTable" class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Quiz</th>
+                        <th>Attempts</th>
+                        <th>Best Score</th>
+                        <th>Average Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var studentGroups = Model.GroupBy(x => x.UserName);
+                        foreach (var g in studentGroups)
+                        {
+                            var attempts = g.Count();
+                            var best = g.Max(x => x.Score);
+                            var avg = g.Average(x => x.Score);
+                            <tr>
+                                <td>@g.Key</td>
+                                <td>@string.Join(", ", g.Select(x => x.QuizTitle).Distinct())</td>
+                                <td>@attempts</td>
+                                <td>@best</td>
+                                <td>@avg.ToString("0.##")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TABLE 3: Quizlere göre analiz -->
+    <div class="card shadow mb-4">
+        <div class="card-header"><b>Quiz-wise Analysis</b></div>
+        <div class="card-body">
+            <table id="quizAnalysisTable" class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Quiz</th>
+                        <th>Total Attempts</th>
+                        <th>Best Score</th>
+                        <th>Average Score</th>
+                        <th>Pass %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var quizGroups = Model.GroupBy(x => x.QuizTitle);
+                        foreach (var g in quizGroups)
+                        {
+                            var total = g.Count();
+                            var best = g.Max(x => x.Score);
+                            var avg = g.Average(x => x.Score);
+                            var pass = g.Count(x => x.Score >= 50);
+                            <tr>
+                                <td>@g.Key</td>
+                                <td>@total</td>
+                                <td>@best</td>
+                                <td>@avg.ToString("0.##")</td>
+                                <td>@((total > 0) ? ((pass * 100) / total) : 0) %</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TABLE 4: En iyi denemeler -->
+    <div class="card shadow mb-4">
+        <div class="card-header"><b>Top Attempts (Score &gt;= 90)</b></div>
+        <div class="card-body">
+            <table id="topAttemptsTable" class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Quiz</th>
+                        <th>Score</th>
+                        <th>Attempt</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var s in Model.Where(x => x.Score >= 90).OrderByDescending(x=>x.Score))
                     {
-                        <tr data-submission='@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(s))'>
+                        <tr>
                             <td>@s.UserName</td>
                             <td>@s.QuizTitle</td>
                             <td>@s.Score</td>
-                            <td>@s.MaxScore</td>
                             <td>@s.AttemptNumber</td>
                             <td>@s.SubmissionTimeFormatted</td>
-                            <td>@s.Age</td>
-                            <td data-order="@s.SubmissionDate.Ticks">@s.SubmissionTimeFormatted</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
+    </div>
+
+    <!-- TABLE 5: Son 20 Deneme -->
+    <div class="card shadow mb-4">
+        <div class="card-header"><b>Recent 20 Attempts</b></div>
+        <div class="card-body">
+            <table id="recentAttemptsTable" class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Quiz</th>
+                        <th>Score</th>
+                        <th>Attempt</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var s in Model.OrderByDescending(x=>x.SubmissionDate).Take(20))
+                    {
+                        <tr>
+                            <td>@s.UserName</td>
+                            <td>@s.QuizTitle</td>
+                            <td>@s.Score</td>
+                            <td>@s.AttemptNumber</td>
+                            <td>@s.SubmissionTimeFormatted</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Grafikler -->
+    <div class="mb-4 row g-4">
+        <div class="col-md-6"><canvas id="scoresChart" height="220"></canvas></div>
+        <div class="col-md-6"><canvas id="trendChart"  height="220"></canvas></div>
+    </div>
+    <div class="mb-4 row g-4">
+        <div class="col-md-6"><canvas id="avgScoreChart"    height="180"></canvas></div>
+        <div class="col-md-6"><canvas id="successPieChart"  height="180"></canvas></div>
+    </div>
+    <div class="mb-4 row g-4">
+        <div class="col-md-12"><canvas id="attemptsBarChart" height="160"></canvas></div>
     </div>
 </div>
 
@@ -103,7 +230,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="attemptDetailModalLabel"><i class="fas fa-list"></i> Attempt Details</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <div id="attemptDetailBody"></div>
@@ -113,224 +240,311 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- DataTables, SheetJS, jsPDF, Chart.js, SignalR should be in _Layout.cshtml -->
     <script>
-        let allData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model));
-        let filtered = allData;
+        // Ana veri
+        const allData = @Html.Raw(JsonConvert.SerializeObject(Model));
+        let filtered = [...allData];
         let dataTable;
 
-        function safeDestroy(chartRef) {
-            if (chartRef && typeof chartRef.destroy === "function") chartRef.destroy();
-        }
+        function safeDestroy(chart) { if(chart && typeof chart.destroy==='function') chart.destroy(); }
 
+        // Grafik çizimleri
         function updateCharts(data) {
-            // Destroy old charts safely
             safeDestroy(window.scoresChart);
             safeDestroy(window.trendChart);
             safeDestroy(window.avgScoreChart);
             safeDestroy(window.successPieChart);
             safeDestroy(window.attemptsBarChart);
 
-            // Score per attempt (bar)
-            const quizTitles = data.map(x => x.QuizTitle + ' #' + x.AttemptNumber + ' (' + x.SubmissionTimeFormatted + ')');
-            const scores = data.map(x => x.Score);
-            const maxScores = data.map(x => x.MaxScore);
-
-            const ctx1 = document.getElementById('scoresChart').getContext('2d');
-            window.scoresChart = new Chart(ctx1, {
+            // Score per attempt
+            const labels1 = data.map(x => `${x.QuizTitle} #${x.AttemptNumber} (${x.SubmissionTimeFormatted})`);
+            const dsScore    = data.map(x => x.Score);
+            const dsMaxScore = data.map(x => x.MaxScore);
+            window.scoresChart = new Chart(document.getElementById('scoresChart').getContext('2d'), {
                 type: 'bar',
                 data: {
-                    labels: quizTitles,
+                    labels: labels1,
                     datasets: [
-                        { label: 'Score', data: scores, backgroundColor: 'rgba(54, 162, 235, 0.7)' },
-                        { label: 'Max Score', data: maxScores, backgroundColor: 'rgba(153, 102, 255, 0.4)' }
+                        { label: 'Score',     data: dsScore,     backgroundColor: 'rgba(54,162,235,0.7)' },
+                        { label: 'Max Score', data: dsMaxScore,  backgroundColor: 'rgba(153,102,255,0.4)' }
                     ]
                 },
-                options: { responsive: true, plugins: { legend: { position: 'top' } }, indexAxis: 'y' }
+                options: { responsive: true, indexAxis: 'y', plugins:{legend:{position:'top'}} }
             });
 
-            // Score trend (line)
-            const ctx2 = document.getElementById('trendChart').getContext('2d');
-            window.trendChart = new Chart(ctx2, {
+            // Score Over Time
+            window.trendChart = new Chart(document.getElementById('trendChart').getContext('2d'), {
                 type: 'line',
                 data: {
                     labels: data.map(x => x.SubmissionTimeFormatted),
-                    datasets: [{
-                        label: 'Score Over Time',
-                        data: data.map(x => x.Score),
-                        borderColor: 'rgba(255,99,132,1)',
-                        fill: false,
-                        tension: 0.2
-                    }]
+                    datasets: [{ label:'Score Over Time', data:data.map(x=>x.Score), borderColor:'rgba(255,99,132,1)', fill:false, tension:0.2 }]
                 },
-                options: { responsive: true, plugins: { legend: { display: true } } }
+                options:{responsive:true, plugins:{legend:{display:true}}}
             });
 
-            // Average score per quiz (bar)
-            let avgScores = {};
-            data.forEach(x => {
-                if (!avgScores[x.QuizTitle]) avgScores[x.QuizTitle] = [];
-                avgScores[x.QuizTitle].push(x.Score);
-            });
-            const avgLabels = Object.keys(avgScores);
-            const avgData = avgLabels.map(k => (avgScores[k].reduce((a, b) => a + b, 0) / avgScores[k].length).toFixed(2));
-            const ctx3 = document.getElementById('avgScoreChart').getContext('2d');
-            window.avgScoreChart = new Chart(ctx3, {
-                type: 'bar',
-                data: {
-                    labels: avgLabels,
-                    datasets: [{
-                        label: 'Average Score',
-                        data: avgData,
-                        backgroundColor: 'rgba(255, 206, 86, 0.7)'
-                    }]
+            // Average Score per Quiz
+            const avgMap = {};
+            data.forEach(x => { avgMap[x.QuizTitle] = avgMap[x.QuizTitle]||[]; avgMap[x.QuizTitle].push(x.Score); });
+            const avgLabels = Object.keys(avgMap);
+            const avgValues = avgLabels.map(q => +(avgMap[q].reduce((a,b)=>a+b,0)/avgMap[q].length).toFixed(2));
+            window.avgScoreChart = new Chart(document.getElementById('avgScoreChart').getContext('2d'), {
+                type:'bar',
+                data:{
+                    labels:avgLabels,
+                    datasets:[{ label:'Average Score', data:avgValues, backgroundColor:'rgba(255,206,86,0.7)' }]
                 },
-                options: { responsive: true, plugins: { legend: { position: 'top' } }, indexAxis: 'y' }
+                options:{responsive:true, indexAxis:'y', plugins:{legend:{position:'top'}}}
             });
 
-            // Success ratio (pie)
-            let passFailCount = { Passed: 0, Failed: 0 };
-            data.forEach(x => {
-                if (x.Score >= x.MaxScore && x.MaxScore > 0) passFailCount.Passed++;
-                else if (x.MaxScore > 0) passFailCount.Failed++;
-            });
-            const ctxPie = document.getElementById('successPieChart').getContext('2d');
-            window.successPieChart = new Chart(ctxPie, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Passed', 'Failed'],
-                    datasets: [{
-                        data: [passFailCount.Passed, passFailCount.Failed],
-                        backgroundColor: ['#4caf50', '#e53935']
-                    }]
+            // Overall Pass/Fail
+            const pf = {Passed:0,Failed:0};
+            data.forEach(x => x.Score>=50?pf.Passed++:pf.Failed++);
+            window.successPieChart = new Chart(document.getElementById('successPieChart').getContext('2d'), {
+                type:'doughnut',
+                data:{
+                    labels:['Passed','Failed'],
+                    datasets:[{ data:[pf.Passed,pf.Failed], backgroundColor:['#4caf50','#e53935'] }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { position: 'top' },
-                        title: { display: true, text: 'Overall Pass/Fail Ratio' }
-                    }
-                }
+                options:{ responsive:true, plugins:{legend:{position:'top'}, title:{display:true,text:'Overall Pass/Fail Ratio'} } }
             });
 
-            // Attempts per student (bar)
-            let attemptsPerUser = {};
-            data.forEach(x => {
-                if (!attemptsPerUser[x.UserName]) attemptsPerUser[x.UserName] = 0;
-                attemptsPerUser[x.UserName]++;
-            });
-            const users = Object.keys(attemptsPerUser);
-            const attempts = users.map(u => attemptsPerUser[u]);
-            const ctxBar = document.getElementById('attemptsBarChart').getContext('2d');
-            window.attemptsBarChart = new Chart(ctxBar, {
-                type: 'bar',
-                data: {
-                    labels: users,
-                    datasets: [{
-                        label: 'Attempts',
-                        data: attempts,
-                        backgroundColor: 'rgba(33,150,243,0.6)'
-                    }]
+            // Attempts per Student
+            const apu = {};
+            data.forEach(x => apu[x.UserName] = (apu[x.UserName]||0)+1);
+            const users = Object.keys(apu), counts=users.map(u=>apu[u]);
+            window.attemptsBarChart = new Chart(document.getElementById('attemptsBarChart').getContext('2d'), {
+                type:'bar',
+                data:{
+                    labels:users,
+                    datasets:[{ label:'Attempts', data:counts, backgroundColor:'rgba(33,150,243,0.6)' }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        title: { display: true, text: 'Quiz Attempts per Student' }
-                    },
-                    indexAxis: 'y'
-                }
+                options:{ responsive:true, indexAxis:'y', plugins:{legend:{display:false}, title:{display:true,text:'Quiz Attempts per Student'} } }
             });
         }
 
+        // Filtrele & güncelle
         function filterAndRedraw() {
-            let selectedUser = $('#userSelect').val();
-            let selectedQuiz = $('#quizSelect').val();
-            let showFailed = $('#showFailed').is(':checked');
-
+            const userSel = $('#userSelect').val();
+            const quizSel = $('#quizSelect').val();
+            const showF   = $('#showFailed').is(':checked');
             filtered = allData.filter(x =>
-                (!selectedUser || x.UserName === selectedUser) &&
-                (!selectedQuiz || x.QuizTitle === selectedQuiz) &&
-                (!showFailed || (x.Score < x.MaxScore && x.MaxScore > 0))
+                (!userSel   || x.UserName   === userSel) &&
+                (!quizSel   || x.QuizTitle  === quizSel) &&
+                (!showF     || x.Score < 50)
             );
-            // Update DataTable
-            dataTable.clear().rows.add(filtered.map(x => [
-                x.UserName, x.QuizTitle, x.Score, x.MaxScore, x.AttemptNumber, x.SubmissionTimeFormatted, x.Age, x.SubmissionTimeFormatted
-            ])).draw();
+dataTable.clear().rows.add(filtered.map((x,i) => [
+    (i+1).toString(),
+    String(x.UserName ?? ""),
+    String(x.QuizTitle ?? ""),
+    `<span>${x.Score} ${x.Score>=50?'<span class="badge bg-success ms-1">Passed</span>':'<span class="badge bg-danger ms-1">Failed</span>'}</span>`,
+    String(x.MaxScore ?? ""),
+    String(x.AttemptNumber ?? ""),
+    String(x.Age ?? ""),
+    String(x.SubmissionTimeFormatted ?? ""),
+    (new Date(x.SubmissionDate) > new Date(Date.now()-5*60000))
+        ? '<span class="badge badge-live">LIVE</span>'
+        : '<span class="badge bg-secondary">History</span>',
+    String(x.SubmissionTimeFormatted ?? ""),
+    `<button class="btn btn-sm btn-outline-primary show-details" data-row-idx="${i}"><i class="fas fa-eye"></i></button>`
+])).draw();
 
-            // Update charts
             updateCharts(filtered);
         }
 
-        $(function () {
-            // DataTable init
+        $(function(){
+            // DataTable ana tablo
             dataTable = $('#monitorTable').DataTable({
                 responsive: true,
-                order: [[7, "desc"]],
+                order: [[9, 'desc']],
                 columns: [
-                    null, null, null, null, null, null, null, { orderData: 7 }
-                ]
+                    { title: "#"},  // idx
+                    { title: "Student"},
+                    { title: "Quiz"},
+                    { title: "Score"},
+                    { title: "Max Score"},
+                    { title: "Attempt"},
+                    { title: "Age"},
+                    { title: "Time"},
+                    { title: "Status"},
+                    { title: "Submission Time"},
+                    { title: "Detail", orderable:false}
+                ],
+                language:{search:"Search:",lengthMenu:"Show _MENU_ records"}
             });
+            filterAndRedraw();
+            // Diğer tablolar için DataTable başlatabilirsin:
+            $('#studentHistoryTable, #quizAnalysisTable, #topAttemptsTable, #recentAttemptsTable').DataTable({paging:false, searching:false, info:false});
 
-            // Initial draw
             updateCharts(allData);
-
-            // Filters
+            // NEW: Populate the table on first load!
+            filterAndRedraw();
+            // Filtre olayları
             $('#userSelect, #quizSelect, #showFailed').on('change', filterAndRedraw);
 
-            // Export Excel
-            $('#exportExcel').click(function () {
-                const data = dataTable.rows({ search: 'applied' }).data().toArray();
+            // Export Excel (SheetJS)
+            $('#exportExcel').click(()=>{
+                // Use the filtered array, not DOM!
+                const data = filtered.map((x, i) => [
+                    i+1,
+                    x.UserName,
+                    x.QuizTitle,
+                    x.Score,
+                    x.MaxScore,
+                    x.AttemptNumber,
+                    x.Age,
+                    x.SubmissionTimeFormatted,
+                    (new Date(x.SubmissionDate) > new Date(Date.now()-5*60000)) ? 'LIVE' : 'History',
+                    x.SubmissionTimeFormatted
+                ]);
                 const ws = XLSX.utils.aoa_to_sheet([
-                    ['Student', 'Quiz', 'Score', 'Max Score', 'Attempt', 'Time', 'Age', 'Submission Time'],
+                    ['#','Student','Quiz','Score','Max Score','Attempt','Age','Time','Status','Submission Time'],
                     ...data
                 ]);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Quiz Results");
-                XLSX.writeFile(wb, "quiz_results.xlsx");
+                XLSX.utils.book_append_sheet(wb, ws, 'Quiz Results');
+                XLSX.writeFile(wb, 'quiz_results.xlsx');
             });
-            // Export PDF
-            $('#exportPdf').click(function () {
+            // Export PDF (jsPDF + autotable)
+            $('#exportPdf').click(()=>{
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                const data = dataTable.rows({ search: 'applied' }).data().toArray();
-                doc.text("Quiz Results", 10, 10);
-                doc.autoTable({
-                    head: [['Student', 'Quiz', 'Score', 'Max Score', 'Attempt', 'Time', 'Age', 'Submission Time']],
-                    body: data,
-                    startY: 20
+                const doc = new jsPDF({
+                    orientation: "landscape",
+                    unit: "px",
+                    format: "a4"
                 });
-                doc.save("quiz_results.pdf");
+
+                // --- TITLE ---
+                doc.setFontSize(28);
+                doc.setTextColor(45, 62, 80);
+                doc.text('Quiz Results Report', 35, 40);
+
+                let y = 60;
+
+                // --- CHARTS SECTION ---
+                const chartConfigs = [
+                    { id: 'scoresChart',      title: 'Scores per Attempt' },
+                    { id: 'trendChart',       title: 'Score Over Time' },
+                    { id: 'avgScoreChart',    title: 'Average Score per Quiz' },
+                    { id: 'successPieChart',  title: 'Overall Pass/Fail Ratio' },
+                    { id: 'attemptsBarChart', title: 'Quiz Attempts per Student' }
+                ];
+
+                let col = 0, row = 0;
+                const colW = 320, rowH = 120, leftM = 35, topM = y;
+                for(let i=0; i<chartConfigs.length; i++) {
+                    if (i === 2) { row++; col=0; } // Move to next row after 2 charts
+                    const x = leftM + col*colW;
+                    const yPos = topM + row*(rowH+40);
+                    doc.setFontSize(15);
+                    doc.setTextColor(65, 65, 80);
+                    doc.text(chartConfigs[i].title, x+10, yPos+15);
+
+                    const chartElem = document.getElementById(chartConfigs[i].id);
+                    if(chartElem) {
+                        const img = chartElem.toDataURL('image/png');
+                        doc.addImage(img, 'PNG', x, yPos+20, colW-25, rowH);
+                    }
+                    col++;
+                }
+
+                // --- Table Section ---
+                let tableStartY = topM + 2*(rowH+40) + 90;
+
+                doc.setFontSize(19);
+                doc.setTextColor(45, 62, 80);
+                doc.text('Quiz Submissions', leftM, tableStartY-18);
+
+                // Table data (filtered)
+                const data = filtered.map((x, i) => [
+                    i+1,
+                    x.UserName,
+                    x.QuizTitle,
+                    x.Score,
+                    x.MaxScore,
+                    x.AttemptNumber,
+                    x.Age,
+                    x.SubmissionTimeFormatted,
+                    (new Date(x.SubmissionDate) > new Date(Date.now()-5*60000)) ? 'LIVE' : 'History',
+                    x.SubmissionTimeFormatted
+                ]);
+
+                doc.autoTable({
+                    head: [['#','Student','Quiz','Score','Max Score','Attempt','Age','Time','Status','Submission Time']],
+                    body: data,
+                    startY: tableStartY,
+                    theme: 'striped',
+                    headStyles: { fillColor: [41, 128, 185], textColor: [255,255,255], fontStyle: 'bold' },
+                    bodyStyles: { textColor: [44, 62, 80] },
+                    styles: { fontSize: 12, cellPadding: 3, halign: 'center' },
+                    margin: { left: leftM, right: leftM }
+                });
+
+                // --- FOOTER with LOGO ---
+                const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+                const footerY = pageHeight - 40;
+                const logo = new Image();
+                logo.src = '/img/footer_logo.png'; // <<-- your logo path here (should be accessible!)
+                logo.onload = function() {
+                    doc.addImage(logo, 'PNG', leftM, footerY-15, 100, 28); // size and position
+                    doc.setFontSize(10);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text("© Almanca Konuşma Kulübü · " + (new Date().getFullYear()), leftM + 115, footerY+4);
+                    doc.save('quiz_results_report.pdf');
+                };
+                // Fallback: If logo not loaded, save anyway after delay
+                setTimeout(function(){
+                    try { doc.save('quiz_results_report.pdf'); } catch(e){}
+                }, 800);
             });
 
-            // Row click for drilldown modal
-            $('#monitorTable tbody').on('click', 'tr', function () {
-                let row = $(this).data('submission');
-                if (!row || !row.Responses) return;
-                let html = `<div class="mb-2"><b>Student:</b> ${row.UserName} <br><b>Quiz:</b> ${row.QuizTitle} <br><b>Attempt:</b> ${row.AttemptNumber} <br><b>Score:</b> ${row.Score}/${row.MaxScore} <br><b>Submitted:</b> ${row.SubmissionTimeFormatted}</div>`;
-                html += '<table class="table table-bordered"><thead><tr><th>Question</th><th>Answer</th><th>Correct?</th><th>Time (s)</th></tr></thead><tbody>';
-                row.Responses.forEach(resp => {
-                    html += `<tr>
-                        <td>${resp.Question}</td>
-                        <td>${resp.Answer}</td>
-                        <td>${resp.IsCorrect ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-danger">No</span>'}</td>
-                        <td>${resp.TimeTakenSeconds}</td>
+
+            // Drilldown modal: detay bak
+            $('#monitorTable tbody').on('click', '.show-details', function(e){
+                e.stopPropagation();
+                const idx = $(this).data('row-idx');
+                const row = filtered[idx];
+                if(!row?.Responses) return;
+                let html = `
+                    <p><b>Student:</b> ${row.UserName}<br>
+                    <b>Quiz:</b> ${row.QuizTitle}<br>
+                    <b>Attempt:</b> ${row.AttemptNumber}<br>
+                    <b>Score:</b> ${row.Score}/${row.MaxScore}<br>
+                    <b>Submitted:</b> ${row.SubmissionTimeFormatted}</p>
+                    <table class="table table-bordered">
+                    <thead><tr>
+                        <th>Question</th><th>Answer</th><th>Correct?</th><th>Time (s)</th>
+                    </tr></thead><tbody>`;
+                row.Responses.forEach(r=>{
+                    html+=`<tr>
+                        <td>${r.Question}</td>
+                        <td>${r.Answer}</td>
+                        <td>${r.IsCorrect?'<span class="badge bg-success">Yes</span>':'<span class="badge bg-danger">No</span>'}</td>
+                        <td>${r.TimeTakenSeconds}</td>
                     </tr>`;
                 });
-                html += '</tbody></table>';
+                html+='</tbody></table>';
                 $('#attemptDetailBody').html(html);
                 $('#attemptDetailModal').modal('show');
             });
 
-            // SignalR live updates (optional)
-            if (window.signalR && signalR.HubConnectionBuilder) {
-                const connection = new signalR.HubConnectionBuilder().withUrl("/quizMonitorHub").build();
-                connection.on("ReceiveSubmission", function (sub) {
+            // Live pulse
+            setInterval(function(){
+                const hasLive = filtered.some(x => (new Date(x.SubmissionDate) > new Date(Date.now()-5*60000)));
+                $('#livePulse').toggle(hasLive);
+            }, 3000);
+
+            // SignalR live (isteğe bağlı)
+            if(window.signalR){
+                const conn = new signalR.HubConnectionBuilder().withUrl('/quizMonitorHub').build();
+                conn.on('ReceiveSubmission', sub=>{
                     allData.push(sub);
                     filterAndRedraw();
                 });
-                connection.start().catch(err => console.error(err));
+                conn.start().catch(e=>console.error(e));
             }
         });
     </script>

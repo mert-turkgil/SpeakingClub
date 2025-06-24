@@ -1,7 +1,6 @@
 import * as THREE from '/lib/three/build/three.module.js';
 import { GLTFLoader } from '/lib/three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from '/lib/three/examples/jsm/loaders/DRACOLoader.js';
-import { OrbitControls } from '/lib/three/examples/jsm/controls/OrbitControls.js';
 import { gsap } from 'https://cdn.skypack.dev/gsap';
 import { GUI } from 'https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js';
 
@@ -26,11 +25,6 @@ const camera = new THREE.PerspectiveCamera(
 );
 camera.position.set(0, 50, 200);
 camera.lookAt(new THREE.Vector3(0, 0, 0));
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enabled = false; // Disable mouse controls—GUI only
-controls.target.set(0, 0, 0);
-controls.update();
 
 /* ===============================
    SKY GRADIENT (Custom Shader)
@@ -75,15 +69,18 @@ const sky = new THREE.Mesh(skyGeo, skyMat);
 scene.add(sky);
 
 /* ===============================
-   LOAD HOUSE MODEL
+   LOAD HOUSE MODEL (rotating)
 =============================== */
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('/lib/three/examples/jsm/libs/draco/');
 const gltfLoader = new GLTFLoader();
 gltfLoader.setDRACOLoader(dracoLoader);
 gltfLoader.setPath('/models/');
+
+let house = null; // Store for rotation
+
 gltfLoader.load('forest_house.glb', (gltf) => {
-  const house = gltf.scene;
+  house = gltf.scene;
   house.scale.set(4, 4, 4);
   house.traverse((child) => {
     if (child.isMesh) {
@@ -173,6 +170,9 @@ setInterval(updateCelestialPositions, 60000);
 =============================== */
 function animate() {
   requestAnimationFrame(animate);
+  if (house) {
+    house.rotation.y += 0.001; // 360° rotation
+  }
   renderer.render(scene, camera);
 }
 animate();
@@ -184,52 +184,6 @@ window.addEventListener('resize', () => {
   camera.aspect = width / height;
   camera.updateProjectionMatrix();
 });
-
-/* ===============================
-   CAMERA CONTROLS GUI (dat.GUI) INSIDE HERO SECTION
-=============================== */
-// Create the dat.GUI panel and append it to the container with id "Isik"
-const gui = new GUI({ autoPlace: false });
-const guiContainer = document.getElementById('Isik');
-guiContainer.appendChild(gui.domElement);
-
-// Style the GUI panel so it appears at top-right of the container.
-gui.domElement.style.position = 'absolute';
-gui.domElement.style.top = '10px';
-gui.domElement.style.right = '10px';
-gui.domElement.style.zIndex = '99999';
-gui.domElement.style.width = '200px';
-gui.domElement.style.maxHeight = '70vh';
-gui.domElement.style.overflowY = 'auto';
-
-const cameraFolder = gui.addFolder('Camera');
-const cameraSettings = {
-  posX: camera.position.x,
-  posY: camera.position.y,
-  posZ: camera.position.z,
-  rotX: THREE.MathUtils.radToDeg(camera.rotation.x),
-  rotY: THREE.MathUtils.radToDeg(camera.rotation.y),
-  rotZ: THREE.MathUtils.radToDeg(camera.rotation.z)
-};
-cameraFolder.add(cameraSettings, 'posX', -1000, 1000, 1).name('Pos X').onChange(val => {
-  camera.position.x = val;
-});
-cameraFolder.add(cameraSettings, 'posY', -1000, 1000, 1).name('Pos Y').onChange(val => {
-  camera.position.y = val;
-});
-cameraFolder.add(cameraSettings, 'posZ', 10, 1000, 1).name('Pos Z').onChange(val => {
-  camera.position.z = val;
-});
-cameraFolder.add(cameraSettings, 'rotX', -180, 180, 1).name('Rot X').onChange(val => {
-  camera.rotation.x = THREE.MathUtils.degToRad(val);
-});
-cameraFolder.add(cameraSettings, 'rotY', -180, 180, 1).name('Rot Y').onChange(val => {
-  camera.rotation.y = THREE.MathUtils.degToRad(val);
-});
-cameraFolder.add(cameraSettings, 'rotZ', -180, 180, 1).name('Rot Z').onChange(val => {
-  camera.rotation.z = THREE.MathUtils.degToRad(val);
-});
-cameraFolder.open();
 
 /* ===============================
    DOUBLE-CLICK: MOVE CAMERA CLOSER
@@ -260,7 +214,6 @@ window.addEventListener('scroll', () => {
       opacity: 1,
       ease: "power3.out"
     });
-    // Keep the original innerHTML intact.
   } else {
     gsap.to(overlayText, {
       duration: 0.5,

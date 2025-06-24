@@ -41,11 +41,6 @@ namespace SpeakingClub.Models
         public string RawMaps { get; set; } = string.Empty;
 
         // Translations
-        [Required(ErrorMessage = "English title is required.")]
-        public string TitleUS { get; set; }
-        [Required(ErrorMessage = "English content is required.")]
-        public string ContentUS { get; set; }
-
         [Required(ErrorMessage = "Turkish title is required.")]
         public string TitleTR { get; set; }
         [Required(ErrorMessage = "Turkish content is required.")]
@@ -66,7 +61,6 @@ namespace SpeakingClub.Models
         {
             return culture switch
             {
-                "en-US" => TitleUS,
                 "tr-TR" => TitleTR,
                 "de-DE" => TitleDE,
                 _ => Title
@@ -77,7 +71,6 @@ namespace SpeakingClub.Models
         {
             string content = culture switch
             {
-                "en-US" => ContentUS,
                 "tr-TR" => ContentTR,
                 "de-DE" => ContentDE,
                 _ => Content // Fallback to main content

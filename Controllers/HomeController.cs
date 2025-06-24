@@ -130,15 +130,11 @@ namespace SpeakingClub.Controllers
             // Define file paths for your templates.
             // Adjust the paths if your EmailTemplates folder is in a different location.
             string adminTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "AdminNotification.html");
-            // Determine the current culture (for example, "en-US", "de-DE", or "tr-TR")
+            // Determine the current culture (for example,   "de-DE", or "tr-TR")
             var currentCulture = CultureInfo.CurrentCulture.Name; // or use RequestCulture if available
 
             string userTemplatePath;
-            if (currentCulture.StartsWith("en", StringComparison.OrdinalIgnoreCase))
-            {
-                userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserNotification_en.html");
-            }
-            else if (currentCulture.StartsWith("de", StringComparison.OrdinalIgnoreCase))
+            if (currentCulture.StartsWith("de", StringComparison.OrdinalIgnoreCase))
             {
                 userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserNotification_de.html");
             }
@@ -328,7 +324,7 @@ namespace SpeakingClub.Controllers
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
-                // Get current culture code (e.g., "en", "tr", etc.)
+                // Get current culture code (e.g.,   "tr", etc.)
                 var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
                 var langCode = currentCulture.Substring(0, 2).ToLower();
 

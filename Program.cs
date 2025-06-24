@@ -128,7 +128,6 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     var supportedCultures = new List<CultureInfo>
     {
         new CultureInfo("de-DE"),
-        new CultureInfo("en-US"),
         new CultureInfo("tr-TR")
     };
 
