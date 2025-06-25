@@ -7,8 +7,12 @@
   </PropertyGroup>
   <ItemGroup>
   <None Update="appsettings.Production.json">
-    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
   </None>
+  <Content Include="logs\**\*.*">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+  </Content>
     <PackageReference Include="EPPlus" Version="8.0.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="8.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.11" />

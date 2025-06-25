@@ -20,10 +20,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Load configuration
 var config = builder.Configuration;
 builder.Configuration
-    .AddJsonFile("appsettings.Production.json", optional: false, reloadOnChange: true)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddUserSecrets<Program>(optional: true)
     .AddEnvironmentVariables();
-
+Console.WriteLine("ENV: " + builder.Environment.EnvironmentName);
 // Configure EmailSender settings
 var emailSettings = config.GetSection("EmailSender");
 var port = emailSettings.GetValue<int>("Port");
