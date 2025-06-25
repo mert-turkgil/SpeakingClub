@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using SpeakingClub.Data.Abstract;
 using SpeakingClub.Entity;
@@ -15,6 +16,10 @@ namespace SpeakingClub.Controllers
 {
     public class HomeController : Controller
     {
+        private static Dictionary<string, DateTime> _contactRateLimit = new();
+        private static readonly object _rateLimitLock = new();
+        private readonly IMemoryCache _memoryCache;
+        private readonly IConfiguration _configuration;
         private readonly ILogger<HomeController> _logger;
         private readonly LanguageService _localization;
         private readonly IUnitOfWork _unitOfWork;
@@ -23,13 +28,17 @@ namespace SpeakingClub.Controllers
         private readonly IDeeplService _deeplService;
 
         public HomeController(
+            IConfiguration configuration,
             ILogger<HomeController> logger,
             LanguageService localization,
             IUnitOfWork unitOfWork,
+            IMemoryCache memoryCache,
             IEmailSender emailSender,
             IDeeplService deeplService,
             IDictionaryService dictionaryService)
         {
+            _configuration = configuration;
+            _memoryCache = memoryCache;
             _logger = logger;
             _localization = localization;
             _unitOfWork = unitOfWork;
@@ -51,13 +60,18 @@ namespace SpeakingClub.Controllers
         #endregion
 
         #region Anasayfa
+        [HttpGet("")]
         public async Task<IActionResult> Index()
         {
+            ViewData["Title"] = "Ana Sayfa";
+            ViewData["Description"] = "Almanca Konuşma Kulübü - Almanca pratik ve topluluk.";
+            ViewData["Keywords"] = "almanca, konuşma, kulüp, speaking, deutsch";
+
             var entityBlogs = await _unitOfWork.Blogs.GetAllAsync();
             var selectedBlogs = entityBlogs.Where(b => b.isHome == true).ToList();
-                var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
-                var langCode = currentCulture.Substring(0, 2).ToLower();
-            var model = new IndexModel 
+            var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
+            var langCode = currentCulture.Substring(0, 2).ToLower();
+            var model = new IndexModel
             {
                 BlogItems = selectedBlogs.Any() ?
                     selectedBlogs.Select(b => new SpeakingClub.Entity.Blog
@@ -93,6 +107,7 @@ namespace SpeakingClub.Controllers
         #endregion
 
         #region Gizlilik
+        [HttpGet("privacy")]
         public IActionResult Privacy()
         {
             return View();
@@ -100,8 +115,10 @@ namespace SpeakingClub.Controllers
         #endregion
 
         #region Hakkında
+        [HttpGet("about")]
         public IActionResult About()
         {
+            ViewBag.RecaptchaSiteKey = _configuration["Recaptcha:SiteKey"];
             var model = CreateAboutPageViewModel();
             return View(model);
         }
@@ -112,10 +129,71 @@ namespace SpeakingClub.Controllers
         [HttpPost]
         public async Task<IActionResult> Contact(AboutPageViewModel model)
         {
+            if (!string.IsNullOrEmpty(Request.Form["honeypot"]))
+            {
+                // Honeypot doluysa --> Bot!
+                ModelState.AddModelError("", "Invalid request.");
+                var aboutModel = CreateAboutPageViewModel();
+                if (model?.ContactForm != null)
+                    aboutModel.ContactForm = model.ContactForm;
+                return View("About", aboutModel);
+
+            }
+            string userIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            lock (_rateLimitLock)
+            {
+                if (_contactRateLimit.TryGetValue(userIp, out var lastSubmit))
+                {
+                    if (DateTime.UtcNow - lastSubmit < TimeSpan.FromSeconds(30))
+                    {
+                        ModelState.AddModelError("", "Çok sık deneme yaptınız. Lütfen biraz bekleyin.");
+                        var aboutModel = CreateAboutPageViewModel();
+                        if (model?.ContactForm != null)
+                            aboutModel.ContactForm = model.ContactForm;
+                        return View("About", aboutModel);
+
+                    }
+                }
+                _contactRateLimit[userIp] = DateTime.UtcNow;
+            }
+
+            var ip = HttpContext.Connection.RemoteIpAddress != null
+                ? HttpContext.Connection.RemoteIpAddress.ToString()
+                : "unknown";
+            var cacheKey = $"LoginAttempts:{ip}";
+            int count = _memoryCache.GetOrCreate(cacheKey, entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
+                return 0;
+            });
+            if (count >= 5)
+            {
+                ModelState.AddModelError("", "Çok fazla deneme yaptınız. Lütfen 2 dakika sonra tekrar deneyin.");
+                var aboutModel = CreateAboutPageViewModel();
+                if (model?.ContactForm != null)
+                    aboutModel.ContactForm = model.ContactForm;
+                return View("About", aboutModel);
+
+            }
+            _memoryCache.Set(cacheKey, count + 1, TimeSpan.FromMinutes(2));
+            string? recaptchaResponse = Request.Form["g-recaptcha-response"];
+            if (!await RecaptchaIsValid(recaptchaResponse ?? ""))
+            {
+                ModelState.AddModelError("", "Lütfen robot olmadığınızı doğrulayın (reCAPTCHA).");
+                var aboutModel = CreateAboutPageViewModel();
+                if (model?.ContactForm != null)
+                    aboutModel.ContactForm = model.ContactForm;
+                return View("About", aboutModel);
+
+            }
             if (!ModelState.IsValid)
             {
                 // If validation fails, return the About view with the current model data.
-                return View("About", model);
+                var aboutModel = CreateAboutPageViewModel();
+                if (model?.ContactForm != null)
+                    aboutModel.ContactForm = model.ContactForm;
+                return View("About", aboutModel);
+
             }
 
             // Access the ContactForm properties from the model.
@@ -142,7 +220,7 @@ namespace SpeakingClub.Controllers
             {
                 userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserNotification_tr.html");
             }
-            
+
             // Read the HTML template content from files.
             string adminEmailBodyTemplate = await System.IO.File.ReadAllTextAsync(adminTemplatePath);
             string userEmailBodyTemplate = await System.IO.File.ReadAllTextAsync(userTemplatePath);
@@ -208,7 +286,7 @@ namespace SpeakingClub.Controllers
                     Title = _localization.GetKey("ProcessSectionTitle").Value,
                     Steps = new System.Collections.Generic.List<ProcessStepModel>
                     {
-                        new ProcessStepModel 
+                        new ProcessStepModel
                         {
                             Id = 1,
                             Title = _localization.GetKey("Step1_Title").Value,
@@ -216,15 +294,15 @@ namespace SpeakingClub.Controllers
                             LinkText = _localization.GetKey("Step1_Link").Value,
                             IconClass = "fa-regular fa-clipboard"
                         },
-                        new ProcessStepModel 
+                        new ProcessStepModel
                         {
                             Id = 2,
                             Title = _localization.GetKey("Step2_Title").Value,
                             Description = _localization.GetKey("Step2_Description").Value,
                             LinkText = _localization.GetKey("Step2_Link").Value,
-                            IconClass ="fa-regular fa-hand-point-up" 
+                            IconClass ="fa-regular fa-hand-point-up"
                         },
-                        new ProcessStepModel 
+                        new ProcessStepModel
                         {
                             Id = 3,
                             Title = _localization.GetKey("Step3_Title").Value,
@@ -232,15 +310,15 @@ namespace SpeakingClub.Controllers
                             LinkText = _localization.GetKey("Step3_Link").Value,
                             IconClass = "fa-regular fa-handshake"
                         },
-                        new ProcessStepModel 
+                        new ProcessStepModel
                         {
                             Id = 4,
                             Title = _localization.GetKey("Step4_Title").Value,
                             Description = _localization.GetKey("Step4_Description").Value,
                             LinkText = _localization.GetKey("Step4_Link").Value,
-                            IconClass = "fa-regular fa-circle-question" 
+                            IconClass = "fa-regular fa-circle-question"
                         },
-                        new ProcessStepModel 
+                        new ProcessStepModel
                         {
                             Id = 5,
                             Title = _localization.GetKey("Step5_Title").Value,
@@ -255,17 +333,17 @@ namespace SpeakingClub.Controllers
                     Title = _localization.GetKey("FAQSectionTitle").Value,
                     FAQItems = new System.Collections.Generic.List<FAQItemModel>
                     {
-                        new FAQItemModel 
+                        new FAQItemModel
                         {
                             Question = _localization.GetKey("FAQ1_Question").Value,
                             Answer = _localization.GetKey("FAQ1_Answer").Value
                         },
-                        new FAQItemModel 
+                        new FAQItemModel
                         {
                             Question = _localization.GetKey("FAQ2_Question").Value,
                             Answer = _localization.GetKey("FAQ2_Answer").Value
                         },
-                        new FAQItemModel 
+                        new FAQItemModel
                         {
                             Question = _localization.GetKey("FAQ3_Question").Value,
                             Answer = _localization.GetKey("FAQ3_Answer").Value
@@ -289,7 +367,7 @@ namespace SpeakingClub.Controllers
         #endregion
 
         #region Blog
-        [HttpGet]
+        [HttpGet("blog")]
         public async Task<IActionResult> Blog(string category, string tag, string searchTerm, int page = 1)
         {
             // Retrieve all blogs from the database and convert to IQueryable for filtering.
@@ -324,16 +402,16 @@ namespace SpeakingClub.Controllers
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
-                // Get current culture code (e.g.,   "tr", etc.)
-                var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
-                var langCode = currentCulture.Substring(0, 2).ToLower();
+            // Get current culture code (e.g.,   "tr", etc.)
+            var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
+            var langCode = currentCulture.Substring(0, 2).ToLower();
 
-                // Update each blog with its translated Title and Content if available.
-                foreach (var blog in blogs)
-                {
-                    blog.Title = _localization.GetKey($"Title_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Title;
-                    blog.Content = _localization.GetKey($"Content_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Content;
-                }
+            // Update each blog with its translated Title and Content if available.
+            foreach (var blog in blogs)
+            {
+                blog.Title = _localization.GetKey($"Title_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Title;
+                blog.Content = _localization.GetKey($"Content_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Content;
+            }
             // Get the list of categories.
             var categoriesFromRepo = await _unitOfWork.Categories.GetAllAsync();
             var categoryNames = categoriesFromRepo.Select(c => c.Name).ToList();
@@ -405,7 +483,7 @@ namespace SpeakingClub.Controllers
                     Author = blog.Author,
                     Image = blog.Image,
                     Tags = blog.Tags?.ToList() ?? new List<Tag>(),
-                    Quizzes = blog.Quiz 
+                    Quizzes = blog.Quiz
                 };
 
                 // Adjusting quiz question retrieval:
@@ -439,9 +517,10 @@ namespace SpeakingClub.Controllers
         #endregion
 
         #region Sözlük
-        [HttpGet]
+        [HttpGet("words")]
         public async Task<IActionResult> Words(string searchTerm)
         {
+            ViewBag.RecaptchaSiteKey = _configuration["Recaptcha:SiteKey"];
             var currentCulture = CultureInfo.CurrentCulture.Name;
             var langCode = currentCulture.Substring(0, 2).ToLower();
 
@@ -450,6 +529,21 @@ namespace SpeakingClub.Controllers
                 SearchTerm = searchTerm ?? string.Empty
             };
 
+            // Words GET action'ın başına ekle:
+            string userIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            string key = $"WordsSearch:{userIp}";
+            int count = _memoryCache.GetOrCreate(key, entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
+                return 0;
+            });
+            if (count >= 15) // 1 dakikada 15 aramadan fazlası engellenir
+            {
+                return Content("Çok fazla arama yaptınız, lütfen bir süre sonra tekrar deneyin.");
+            }
+            _memoryCache.Set(key, count + 1, TimeSpan.FromMinutes(1));
+
+
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 // First, check your local database (case-insensitive search).
@@ -457,21 +551,22 @@ namespace SpeakingClub.Controllers
 
                 if (wordFromDb != null && !string.IsNullOrWhiteSpace(wordFromDb.Definition))
                 {
-                    var eksikolabilir = await _dictionaryService.GetWordDetailsAsync(wordFromDb.Term.ToLower(),langCode,"de");
-                    model.Word = new Word {
-                    Definition = wordFromDb.Definition ?? eksikolabilir?.Word?.Definition ?? "Error:404",
-                    Origin = wordFromDb.Origin ?? eksikolabilir?.Word?.Origin??"Error:404" ,
-                    Pronunciation = wordFromDb.Pronunciation ?? eksikolabilir?.Word?.Pronunciation??"Error404",
-                    Synonyms=wordFromDb.Synonyms ?? eksikolabilir?.Word?.Synonyms??"Error404",
-                    Example = wordFromDb.Example ?? eksikolabilir?.Word?.Example??"Error404",
-                    IsFromApi = false,
-                    Term = wordFromDb.Term ?? eksikolabilir?.Word?.Term??"Error404"
+                    var eksikolabilir = await _dictionaryService.GetWordDetailsAsync(wordFromDb.Term.ToLower(), langCode, "de");
+                    model.Word = new Word
+                    {
+                        Definition = wordFromDb.Definition ?? eksikolabilir?.Word?.Definition ?? "Error:404",
+                        Origin = wordFromDb.Origin ?? eksikolabilir?.Word?.Origin ?? "Error:404",
+                        Pronunciation = wordFromDb.Pronunciation ?? eksikolabilir?.Word?.Pronunciation ?? "Error404",
+                        Synonyms = wordFromDb.Synonyms ?? eksikolabilir?.Word?.Synonyms ?? "Error404",
+                        Example = wordFromDb.Example ?? eksikolabilir?.Word?.Example ?? "Error404",
+                        IsFromApi = false,
+                        Term = wordFromDb.Term ?? eksikolabilir?.Word?.Term ?? "Error404"
                     };
                 }
                 else
                 {
                     // Try fetching details from the Free Dictionary API.
-                    var dictionaryResult = await _dictionaryService.GetWordDetailsAsync(searchTerm,langCode,"de");
+                    var dictionaryResult = await _dictionaryService.GetWordDetailsAsync(searchTerm, langCode, "de");
 
                     if (dictionaryResult?.Word != null)
                     {
@@ -486,7 +581,7 @@ namespace SpeakingClub.Controllers
                     {
 
                         // Use DeepL API as a fallback for translation.
-                        var deeplTranslation = await _deeplService.GetDefinitionByCultureAsync(searchTerm,langCode);
+                        var deeplTranslation = await _deeplService.GetDefinitionByCultureAsync(searchTerm, langCode);
 
                         if (!string.IsNullOrEmpty(deeplTranslation))
                         {
@@ -515,5 +610,21 @@ namespace SpeakingClub.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+        
+        private async Task<bool> RecaptchaIsValid(string recaptchaResponse)
+        {
+            var secret = _configuration["Recaptcha:SecretKey"];
+            using var httpClient = new HttpClient();
+            var content = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("secret", secret ?? string.Empty),
+                new KeyValuePair<string, string>("response", recaptchaResponse)
+            });
+            var response = await httpClient.PostAsync("https://www.google.com/recaptcha/api/siteverify", content);
+            var json = await response.Content.ReadAsStringAsync();
+            // Çok temel bir doğrulama, istersen JSON parse ile daha sağlam hale getirebiliriz.
+            return json.Contains("\"success\": true");
+        }
+
     }
 }

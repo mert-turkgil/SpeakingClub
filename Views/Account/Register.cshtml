@@ -56,6 +56,8 @@
 
 <div class="container py-5">
     <form method="post" class="animated-form">
+        <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
+        @Html.AntiForgeryToken()
         <h2 class="animated-title">@Localizer.GetKey("Register_Header")</h2>
         <p class="text-muted">@Localizer.GetKey("Register_Subtitle")</p>
 
@@ -95,7 +97,7 @@
             <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="••••••">
             <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
         </div>
-
+        <div class="g-recaptcha" data-sitekey="@ViewBag.RecaptchaSiteKey"></div>
         <button type="submit" class="btn btn-primary w-100 mt-2">@Localizer.GetKey("Button_CreateAccount")</button>
 
         <div class="text-center mt-3">
@@ -113,4 +115,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using SpeakingClub.Data.Abstract;
 using SpeakingClub.Entity;
@@ -17,6 +18,10 @@ namespace SpeakingClub.Controllers
     [Route("[controller]/[action]")]
     public class AccountController : Controller
     {
+        private static Dictionary<string, DateTime> _contactRateLimit = new();
+        private static readonly object _rateLimitLock = new();
+        private readonly IMemoryCache _memoryCache;
+        private readonly IConfiguration _configuration;
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly IEmailSender _emailSender;
@@ -25,11 +30,15 @@ namespace SpeakingClub.Controllers
 
         public AccountController(
             IUnitOfWork unitOfWork,
+            IConfiguration configuration,
             ILogger<AccountController> logger,
+            IMemoryCache memoryCache,
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             IEmailSender emailSender)
         {
+            _configuration = configuration;
+            _memoryCache = memoryCache;
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _signInManager = signInManager;
@@ -58,10 +67,10 @@ namespace SpeakingClub.Controllers
             }
             // Retrieve all quizzes from your repository
             var allQuizzes = await _unitOfWork.Quizzes.GetAllAsync();
-            
+
             // Get the current user.
             var user = await _userManager.GetUserAsync(User);
-            
+
             // Retrieve all quiz submissions
             var submissions = await _unitOfWork.QuizSubmissions.GetAllAsync();
             var userSubmissions = submissions.Where(s => s.UserId == user!.Id).ToList();
@@ -136,7 +145,7 @@ namespace SpeakingClub.Controllers
             if (submission == null)
                 return NotFound("No submission found.");
 
-            var details = submission.QuizResponses.Select(r => 
+            var details = submission.QuizResponses.Select(r =>
             {
                 var question = r.QuizAnswer?.Question;
                 return new AttemptDetailViewModel
@@ -266,7 +275,7 @@ namespace SpeakingClub.Controllers
                 TempData["Error"] = "Unable to load user data.";
                 return RedirectToAction("Login", "Account");
             }
-            
+
 
             var submissions = await _unitOfWork.QuizSubmissions.GetAllAsync();
             var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
@@ -299,7 +308,8 @@ namespace SpeakingClub.Controllers
                 // Prepare list of all attempts with quiz title and score (optional, for graphs)
                 var attemptsList = userSubmissions
                     .OrderBy(s => s.SubmissionDate)
-                    .Select(s => {
+                    .Select(s =>
+                    {
                         dynamic obj = new ExpandoObject();
                         obj.QuizTitle = quizzes.FirstOrDefault(q => q.Id == s.QuizId)?.Title ?? "Unknown";
                         obj.Score = s.Score;
@@ -394,6 +404,7 @@ namespace SpeakingClub.Controllers
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
+            ViewBag.RecaptchaSiteKey = _configuration["Recaptcha:SiteKey"];
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
@@ -404,32 +415,73 @@ namespace SpeakingClub.Controllers
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
+            if (!string.IsNullOrEmpty(Request.Form["honeypot"]))
+            {
+                // Honeypot doluysa --> Bot!
+                ModelState.AddModelError("", "Invalid request.");
+                return View(model);
+            }
+            string userIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            lock (_rateLimitLock)
+            {
+                if (_contactRateLimit.TryGetValue(userIp, out var lastSubmit))
+                {
+                    if (DateTime.UtcNow - lastSubmit < TimeSpan.FromSeconds(30))
+                    {
+                        ModelState.AddModelError("", "Çok sık deneme yaptınız. Lütfen biraz bekleyin.");
+                        return View(model);
+                    }
+                }
+                _contactRateLimit[userIp] = DateTime.UtcNow;
+            }
+
+            var ip = HttpContext.Connection.RemoteIpAddress != null
+                ? HttpContext.Connection.RemoteIpAddress.ToString()
+                : "unknown";
+            var cacheKey = $"LoginAttempts:{ip}";
+            int count = _memoryCache.GetOrCreate(cacheKey, entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
+                return 0;
+            });
+            if (count >= 5)
+            {
+                ModelState.AddModelError("", "Çok fazla deneme yaptınız. Lütfen 2 dakika sonra tekrar deneyin.");
+                return View(model);
+            }
+            _memoryCache.Set(cacheKey, count + 1, TimeSpan.FromMinutes(2));
+            string? recaptchaResponse = Request.Form["g-recaptcha-response"];
+            if (!await RecaptchaIsValid(recaptchaResponse ?? ""))
+            {
+                ModelState.AddModelError("", "Lütfen robot olmadığınızı doğrulayın (reCAPTCHA).");
+                return View(model);
+            }
 
             if (!ModelState.IsValid)
                 return View(model);
-                var user = await _userManager.FindByEmailAsync(model.Email);
-                if (user == null)
-                {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return View(model);
-                }
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return View(model);
+            }
 
-                if (!await _userManager.IsEmailConfirmedAsync(user))
-                {
-                    ModelState.AddModelError(string.Empty, "You must confirm your email before logging in.");
-                    return View(model);
-                }
-                var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, false);
-                if (result.Succeeded)
-                {
-                    _logger.LogInformation("User logged in.");
-                    return RedirectToLocal(returnUrl);
-                }
-                if (result.IsLockedOut)
-                {
-                    _logger.LogWarning("User account locked out.");
-                    return View("Lockout");
-                }
+            if (!await _userManager.IsEmailConfirmedAsync(user))
+            {
+                ModelState.AddModelError(string.Empty, "You must confirm your email before logging in.");
+                return View(model);
+            }
+            var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, false);
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("User logged in.");
+                return RedirectToLocal(returnUrl);
+            }
+            if (result.IsLockedOut)
+            {
+                _logger.LogWarning("User account locked out.");
+                return View("Lockout");
+            }
 
 
             if (result.Succeeded)
@@ -442,7 +494,7 @@ namespace SpeakingClub.Controllers
                 _logger.LogWarning("User account locked out.");
                 return View("Lockout");
             }
-            
+
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");
             return View(model);
         }
@@ -451,6 +503,7 @@ namespace SpeakingClub.Controllers
         [HttpGet]
         public IActionResult Register(string? returnUrl = null)
         {
+            ViewBag.RecaptchaSiteKey = _configuration["Recaptcha:SiteKey"];
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
@@ -461,7 +514,47 @@ namespace SpeakingClub.Controllers
         public async Task<IActionResult> Register(RegisterViewModel model, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
+            if (!string.IsNullOrEmpty(Request.Form["honeypot"]))
+            {
+                // Honeypot doluysa --> Bot!
+                ModelState.AddModelError("", "Invalid request.");
+                return View(model);
+            }
+            string userIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            lock (_rateLimitLock)
+            {
+                if (_contactRateLimit.TryGetValue(userIp, out var lastSubmit))
+                {
+                    if (DateTime.UtcNow - lastSubmit < TimeSpan.FromSeconds(30))
+                    {
+                        ModelState.AddModelError("", "Çok sık deneme yaptınız. Lütfen biraz bekleyin.");
+                        return View(model);
+                    }
+                }
+                _contactRateLimit[userIp] = DateTime.UtcNow;
+            }
 
+            var ip = HttpContext.Connection.RemoteIpAddress != null
+                ? HttpContext.Connection.RemoteIpAddress.ToString()
+                : "unknown";
+            var cacheKey = $"LoginAttempts:{ip}";
+            int count = _memoryCache.GetOrCreate(cacheKey, entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
+                return 0;
+            });
+            if (count >= 5)
+            {
+                ModelState.AddModelError("", "Çok fazla deneme yaptınız. Lütfen 2 dakika sonra tekrar deneyin.");
+                return View(model);
+            }
+            _memoryCache.Set(cacheKey, count + 1, TimeSpan.FromMinutes(2));
+            string? recaptchaResponse = Request.Form["g-recaptcha-response"];
+            if (!await RecaptchaIsValid(recaptchaResponse ?? ""))
+            {
+                ModelState.AddModelError("", "Lütfen robot olmadığınızı doğrulayın (reCAPTCHA).");
+                return View(model);
+            }
             if (!ModelState.IsValid)
                 return View(model);
 
@@ -500,10 +593,10 @@ namespace SpeakingClub.Controllers
                 string userEmailBody = userEmailBodyTemplate.Replace("{{ConfirmationLink}}", confirmationLink);
 
                 // Email Subject (Localized)
-                string emailSubject = currentCulture.StartsWith("de") 
-                    ? "Bitte bestätigen Sie Ihre E-Mail-Adresse" 
-                    : currentCulture.StartsWith("tr") 
-                        ? "Lütfen E-Posta Adresinizi Onaylayın" 
+                string emailSubject = currentCulture.StartsWith("de")
+                    ? "Bitte bestätigen Sie Ihre E-Mail-Adresse"
+                    : currentCulture.StartsWith("tr")
+                        ? "Lütfen E-Posta Adresinizi Onaylayın"
                         : "Please Confirm Your Email";
 
                 // Send email directly
@@ -569,5 +662,20 @@ namespace SpeakingClub.Controllers
         {
             return View("Error");
         }
+        private async Task<bool> RecaptchaIsValid(string recaptchaResponse)
+        {
+            var secret = _configuration["Recaptcha:SecretKey"];
+            using var httpClient = new HttpClient();
+            var content = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("secret", secret ?? string.Empty),
+                new KeyValuePair<string, string>("response", recaptchaResponse)
+            });
+            var response = await httpClient.PostAsync("https://www.google.com/recaptcha/api/siteverify", content);
+            var json = await response.Content.ReadAsStringAsync();
+            // Çok temel bir doğrulama, istersen JSON parse ile daha sağlam hale getirebiliriz.
+            return json.Contains("\"success\": true");
+        }
+
     }
 }

@@ -105,6 +105,7 @@ builder.Services.AddHttpClient<IDeeplService, DeeplService>()
         policyBuilder.WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromSeconds(10)));
 builder.Services.AddSingleton<IFileProvider>(new PhysicalFileProvider(resourcesPath));
 builder.Services.AddSignalR();
+builder.Services.AddMemoryCache();
 #endregion
 
 #region Localization and MVC Configuration
@@ -237,6 +238,20 @@ app.MapControllerRoute(
     name: "blogdetail",
     pattern: "blog/{url}",
     defaults: new { controller = "Home", action = "BlogDetail"});
+app.MapControllerRoute(
+    name: "about",
+    pattern: "about",
+    defaults: new { controller = "Home", action = "About" });
+
+app.MapControllerRoute(
+    name: "privacy",
+    pattern: "privacy",
+    defaults: new { controller = "Home", action = "Privacy" });
+
+app.MapControllerRoute(
+    name: "words",
+    pattern: "words",
+    defaults: new { controller = "Home", action = "Words" });
 #endregion
 #region SignalR Configuration
 app.MapHub<SpeakingClub.Hubs.QuizMonitorHub>("/quizMonitorHub");

@@ -65,6 +65,7 @@
 
         <form method="get" asp-action="Words" asp-controller="Home" class="search-box mt-4">
             @Html.AntiForgeryToken()
+            <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
             <div class="input-group">
                 <input type="text" class="form-control" placeholder="@Localizer.GetKey("SearchPlaceholder").Value" name="searchTerm" value="@Model.SearchTerm" required>
                 <button type="submit" class="btn btn-primary">@Localizer.GetKey("SearchButton").Value</button>
