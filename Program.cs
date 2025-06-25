@@ -19,6 +19,10 @@ var builder = WebApplication.CreateBuilder(args);
 #region Configuration
 // Load configuration
 var config = builder.Configuration;
+builder.Configuration
+    .AddJsonFile("appsettings.Production.json", optional: false, reloadOnChange: true)
+    .AddUserSecrets<Program>(optional: true)
+    .AddEnvironmentVariables();
 
 // Configure EmailSender settings
 var emailSettings = config.GetSection("EmailSender");
@@ -58,7 +62,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
-    options.SignIn.RequireConfirmedEmail = false;
+    options.SignIn.RequireConfirmedEmail = true;
+    options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedPhoneNumber = false;
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
@@ -73,19 +78,35 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(
-        builder =>
-        {
-            builder.WithOrigins("http://localhost:5049")
-                .AllowAnyHeader()
-                .WithMethods("GET", "POST")
-                .AllowCredentials();
-        });
-});
 #endregion
+#region Identity Cookie Configuration
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login"; // Giriş sayfası
+    options.LogoutPath = "/Account/Logout"; // Çıkış sayfası
+    options.AccessDeniedPath = "/Account/AccessDenied"; // Yetkisiz erişim
+    options.SlidingExpiration = true;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // Oturum süresi
+    options.Cookie = new CookieBuilder
+        {
+            Name = ".SpeakingClub.Security.Cookie",
+            HttpOnly = true,
+            SameSite = SameSiteMode.Lax,
+            SecurePolicy = CookieSecurePolicy.Always
+        };
+});
+
+#endregion
+#region Security
+
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+    options.Cookie.Name = ".SpeakingClub.AntiForgery";
+});
+
+#endregion
 #region Additional Services
 // Register UnitOfWork extension (repositories accessible via IUnitOfWork)
 builder.Services.AddUnitOfWork();
@@ -230,7 +251,7 @@ app.UseRequestLocalization(app.Services.GetRequiredService<IOptions<RequestLocal
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseAntiforgery();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
