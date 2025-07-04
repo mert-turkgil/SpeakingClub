@@ -1,6 +1,7 @@
 using System;
 using System.Dynamic;
 using System.Globalization;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -537,7 +538,7 @@ namespace SpeakingClub.Controllers
             var ip = HttpContext.Connection.RemoteIpAddress != null
                 ? HttpContext.Connection.RemoteIpAddress.ToString()
                 : "unknown";
-            var cacheKey = $"LoginAttempts:{ip}";
+            var cacheKey = $"RegisterAttempts:{ip}";
             int count = _memoryCache.GetOrCreate(cacheKey, entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(2);
@@ -612,8 +613,8 @@ namespace SpeakingClub.Controllers
                 }
 
                 // Optionally, sign in user or redirect to a confirmation page
-                await _signInManager.SignInAsync(user, isPersistent: false);
-                return RedirectToLocal(returnUrl);
+                TempData["Success"] = "Kayıt başarılı! Lütfen e-postanızı kontrol edip hesabınızı onayladıktan sonra giriş yapın. Spam klasörüne bakmayı unutmayın.";
+                return RedirectToAction("Login", "Account");
             }
 
             foreach (var error in result.Errors)
@@ -674,7 +675,8 @@ namespace SpeakingClub.Controllers
             var response = await httpClient.PostAsync("https://www.google.com/recaptcha/api/siteverify", content);
             var json = await response.Content.ReadAsStringAsync();
             // Çok temel bir doğrulama, istersen JSON parse ile daha sağlam hale getirebiliriz.
-            return json.Contains("\"success\": true");
+            var recaptchaResult = JsonSerializer.Deserialize<JsonElement>(json);
+            return recaptchaResult.GetProperty("success").GetBoolean();
         }
 
     }

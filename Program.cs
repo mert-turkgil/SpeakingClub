@@ -256,10 +256,10 @@ app.UseAntiforgery();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapControllerRoute(
-    name: "blogdetail",
-    pattern: "blog/{url}",
-    defaults: new { controller = "Home", action = "BlogDetail"});
+// app.MapControllerRoute(
+//     name: "blogdetail",
+//     pattern: "blog/{url}",
+//     defaults: new { controller = "Home", action = "BlogDetail"});
 app.MapControllerRoute(
     name: "about",
     pattern: "about",

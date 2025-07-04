@@ -4,6 +4,7 @@
 @inject SignInManager<User> SignInManager
 @inject UserManager<User> UserManager
 @inject IConfiguration Configuration
+@inject LanguageService Localizer
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,7 +44,19 @@
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" 
           href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
      @await RenderSectionAsync("Css", required: false)
+    <style>
+      .varela-round-regular {
+      font-family: 'Varela Round', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #000;
+      letter-spacing: 1px;
+    }
+    </style>
 </head>
 <body>
   @{
@@ -66,8 +79,8 @@
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
       <div class="container-xxl">
         <!-- Brand (Left) -->
-        <a class="navbar-brand d-none d-sm-block" href="/">
-          <i class="fa-solid fa-comments me-2"></i> @Logo
+        <a class="navbar-brand varela-round-regular" href="/">
+          <img src="~/img/logo.svg" alt="Logo" width="45" height="45" class="img-thumbnail"> @Logo
         </a>
         <!-- Offcanvas Toggler (visible on mobile) -->
         <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="offcanvas"
@@ -83,11 +96,34 @@
                 <i class="fa-solid fa-house me-1"></i> @Home
               </a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")" asp-controller="Home" asp-action="Blog">
-                <i class="fa-solid fa-newspaper me-1"></i> @Blog
-              </a>
-            </li>
+              @{
+                  var levelCodes = new[] { "A1", "A2", "B1", "B2", "C1" };
+              }
+              <li class="nav-item dropdown">
+                  <a class="nav-link @(currentController == "Account" && currentAction == "Quizzes" ? "active" : "")"
+                    href="#"
+                    id="kursDropdown"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                      <i class="fa-solid fa-graduation-cap me-1"></i> @Localizer.GetKey("Kurs").Value
+                  </a>
+                  <ul class="dropdown-menu rounded" aria-labelledby="kursDropdown">
+                      @foreach (var code in levelCodes)
+                      {
+                          var levelTitle = Localizer.GetKey($"Level_{code}_Title").Value;
+                          <li>
+                              <a class="dropdown-item px-2"
+                                style="border-radius: 10px;"
+                                href="@Url.Action("Quizzes", "Account", new { level = code })">
+                                  <span>@levelTitle</span>
+                                  <span class="badge bg-fourth">@code</span>
+                              </a>
+                          </li>
+                      }
+                  </ul>
+              </li>
+
             <li class="nav-item">
               <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")" asp-controller="Home" asp-action="About">
                 <i class="fa-solid fa-circle-info me-1"></i> @About
@@ -169,9 +205,10 @@
     <!-- Offcanvas for Mobile Menu -->
     <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
       <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="offcanvasNavbarLabel">
+        <h1 class="offcanvas-title varela-round-regular" id="offcanvasNavbarLabel">
+          <img src="~/img/logo.svg" alt="Logo" class="img-thumbnail w-50 d-block">
           @Logo
-        </h5>
+        </h1>
         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
       </div>
       <div class="offcanvas-body">
@@ -182,11 +219,30 @@
               <i class="fa-solid fa-house me-1"></i> @Home
             </a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")" asp-controller="Home" asp-action="Blog">
-              <i class="fa-solid fa-newspaper me-1"></i> @Blog
-            </a>
-          </li>
+              <li class="nav-item dropdown">
+                  <a class="nav-link @(currentController == "Account" && currentAction == "Quizzes" ? "active" : "")"
+                    href="#"
+                    id="kursDropdown"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                      <i class="fa-solid fa-graduation-cap me-1"></i> @Localizer.GetKey("Kurs").Value
+                  </a>
+                  <ul class="dropdown-menu rounded" aria-labelledby="kursDropdown">
+                      @foreach (var code in levelCodes)
+                      {
+                          var levelTitle = Localizer.GetKey($"Level_{code}_Title").Value;
+                          <li>
+                              <a class="dropdown-item px-2"
+                                style="border-radius: 10px;"
+                                href="@Url.Action("Quizzes", "Account", new { level = code })">
+                                  <span>@levelTitle</span>
+                                  <span class="badge bg-fourth">@code</span>
+                              </a>
+                          </li>
+                      }
+                  </ul>
+              </li>
           <li class="nav-item">
             <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")" asp-controller="Home" asp-action="About">
               <i class="fa-solid fa-circle-info me-1"></i> @About
@@ -261,7 +317,7 @@
         <div class="col-md-4 mb-4">
           <a href="#" class="d-flex align-items-center mb-2 text-dark text-decoration-none">
             <img src="~/img/footer_logo.png" alt="AKK Logo" style="height:40px;" class="me-2" />
-            <span class="fs-5">@Logo</span>
+            <span class="fs-5 varela-round-regular">@Logo</span>
           </a>
           <p class="text-muted">
             @FooterDescription
@@ -288,7 +344,7 @@
           <a href="https://www.youtube.com/@@almanca_konusma_kulubu_" target="_blank" class="text-dark"><i class="fa-brands fa-square-youtube fa-2xl"></i></i></a>
         </div>
       </div>
-      <div class="text-center text-muted">
+      <div class="text-center varela-round-regular text-muted">
         @Copyright
       </div>
     </div>

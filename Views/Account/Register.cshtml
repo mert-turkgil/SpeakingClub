@@ -53,8 +53,21 @@
     }
 </style>
 }
-
-<div class="container py-5">
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-warning mt-3">
+        @Localizer.GetKey("WarningMessage_Login_UnderDevelopment")
+    </div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
+<div class="container-xxl">
+    <div class="row py-5">
+        <div class="col">
     <form method="post" class="animated-form">
         <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
         @Html.AntiForgeryToken()
@@ -97,22 +110,22 @@
             <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="••••••">
             <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
         </div>
-        <div class="g-recaptcha" data-sitekey="@ViewBag.RecaptchaSiteKey"></div>
+        <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-8 col-md-6 d-flex justify-content-center">
+            <div class="g-recaptcha" data-sitekey="@ViewBag.RecaptchaSiteKey"></div>
+            </div>
+        </div>
+        </div>
         <button type="submit" class="btn btn-primary w-100 mt-2">@Localizer.GetKey("Button_CreateAccount")</button>
 
         <div class="text-center mt-3">
             @Localizer.GetKey("AlreadyHaveAccount") <a asp-action="Login" asp-route-returnUrl="@returnUrl">@Localizer.GetKey("Link_LoginHere")</a>
         </div>
-
-        @if (!ViewData.ModelState.IsValid)
-        {
-            <div class="alert alert-warning mt-3">
-                @Localizer.GetKey("WarningMessage_Login_UnderDevelopment")
-            </div>
-        }
     </form>
-</div>
-
+        </div>
+    </div>
+</div>    
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>

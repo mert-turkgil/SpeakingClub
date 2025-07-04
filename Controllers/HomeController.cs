@@ -366,155 +366,155 @@ namespace SpeakingClub.Controllers
         }
         #endregion
 
-        #region Blog
-        [HttpGet("blog")]
-        public async Task<IActionResult> Blog(string category, string tag, string searchTerm, int page = 1)
-        {
-            // Retrieve all blogs from the database and convert to IQueryable for filtering.
-            var entityBlogs = await _unitOfWork.Blogs.GetAllAsync();
-            var blogsQuery = entityBlogs.AsQueryable();
+        // #region Blog
+        // [HttpGet("blog")]
+        // public async Task<IActionResult> Blog(string category, string tag, string searchTerm, int page = 1)
+        // {
+        //     // Retrieve all blogs from the database and convert to IQueryable for filtering.
+        //     var entityBlogs = await _unitOfWork.Blogs.GetAllAsync();
+        //     var blogsQuery = entityBlogs.AsQueryable();
 
-            // Filter by category if provided.
-            if (!string.IsNullOrEmpty(category) && category != "All Categories")
-            {
-                blogsQuery = blogsQuery.Where(b => b.Category != null && b.Category.Name == category);
-            }
+        //     // Filter by category if provided.
+        //     if (!string.IsNullOrEmpty(category) && category != "All Categories")
+        //     {
+        //         blogsQuery = blogsQuery.Where(b => b.Category != null && b.Category.Name == category);
+        //     }
 
-            // Filter by tag if provided.
-            if (!string.IsNullOrEmpty(tag))
-            {
-                blogsQuery = blogsQuery.Where(b => b.Tags.Any(t => t.Name.ToLower().Contains(tag.ToLower())));
-            }
+        //     // Filter by tag if provided.
+        //     if (!string.IsNullOrEmpty(tag))
+        //     {
+        //         blogsQuery = blogsQuery.Where(b => b.Tags.Any(t => t.Name.ToLower().Contains(tag.ToLower())));
+        //     }
 
-            // Filter by search term on title or content.
-            if (!string.IsNullOrEmpty(searchTerm))
-            {
-                blogsQuery = blogsQuery.Where(b => b.Title.Contains(searchTerm) || b.Content.Contains(searchTerm));
-            }
+        //     // Filter by search term on title or content.
+        //     if (!string.IsNullOrEmpty(searchTerm))
+        //     {
+        //         blogsQuery = blogsQuery.Where(b => b.Title.Contains(searchTerm) || b.Content.Contains(searchTerm));
+        //     }
 
-            // Paging logic.
-            int pageSize = 9;
-            int totalBlogs = blogsQuery.Count();
-            int totalPages = (int)Math.Ceiling(totalBlogs / (double)pageSize);
+        //     // Paging logic.
+        //     int pageSize = 9;
+        //     int totalBlogs = blogsQuery.Count();
+        //     int totalPages = (int)Math.Ceiling(totalBlogs / (double)pageSize);
 
-            var blogs = blogsQuery
-                .OrderByDescending(b => b.Date)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
-            // Get current culture code (e.g.,   "tr", etc.)
-            var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
-            var langCode = currentCulture.Substring(0, 2).ToLower();
+        //     var blogs = blogsQuery
+        //         .OrderByDescending(b => b.Date)
+        //         .Skip((page - 1) * pageSize)
+        //         .Take(pageSize)
+        //         .ToList();
+        //     // Get current culture code (e.g.,   "tr", etc.)
+        //     var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
+        //     var langCode = currentCulture.Substring(0, 2).ToLower();
 
-            // Update each blog with its translated Title and Content if available.
-            foreach (var blog in blogs)
-            {
-                blog.Title = _localization.GetKey($"Title_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Title;
-                blog.Content = _localization.GetKey($"Content_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Content;
-            }
-            // Get the list of categories.
-            var categoriesFromRepo = await _unitOfWork.Categories.GetAllAsync();
-            var categoryNames = categoriesFromRepo.Select(c => c.Name).ToList();
-            categoryNames.Insert(0, "All Categories");
+        //     // Update each blog with its translated Title and Content if available.
+        //     foreach (var blog in blogs)
+        //     {
+        //         blog.Title = _localization.GetKey($"Title_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Title;
+        //         blog.Content = _localization.GetKey($"Content_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Content;
+        //     }
+        //     // Get the list of categories.
+        //     var categoriesFromRepo = await _unitOfWork.Categories.GetAllAsync();
+        //     var categoryNames = categoriesFromRepo.Select(c => c.Name).ToList();
+        //     categoryNames.Insert(0, "All Categories");
 
-            // Get the list of available tags from all blogs (distinct)
-            var availableTags = entityBlogs
-                .SelectMany(b => b.Tags.Select(t => t.Name))
-                .Distinct()
-                .OrderBy(t => t)
-                .ToList();
+        //     // Get the list of available tags from all blogs (distinct)
+        //     var availableTags = entityBlogs
+        //         .SelectMany(b => b.Tags.Select(t => t.Name))
+        //         .Distinct()
+        //         .OrderBy(t => t)
+        //         .ToList();
 
-            // Build the view model.
-            var model = new BlogFilterViewModel
-            {
-                Category = category,
-                Tag = tag,
-                SearchTerm = searchTerm,
-                CurrentPage = page,
-                TotalPages = totalPages,
-                Blogs = blogs, // Blogs are of type SpeakingClub.Entity.Blog
-                Categories = categoryNames,
-                AvailableTags = availableTags,
+        //     // Build the view model.
+        //     var model = new BlogFilterViewModel
+        //     {
+        //         Category = category,
+        //         Tag = tag,
+        //         SearchTerm = searchTerm,
+        //         CurrentPage = page,
+        //         TotalPages = totalPages,
+        //         Blogs = blogs, // Blogs are of type SpeakingClub.Entity.Blog
+        //         Categories = categoryNames,
+        //         AvailableTags = availableTags,
 
-                // UI text labels (static or from configuration)
-                BlogList_Title = _localization.GetKey("Blog").Value,
-                BlogList_Description = _localization.GetKey("BlogDesc").Value,
-                BlogList_SearchLabel = _localization.GetKey("Search").Value,
-                BlogList_AllCategories = _localization.GetKey("CategoryLabel").Value,
-                BlogList_TagLabel = _localization.GetKey("Tag").Value,              // New label for tag filter
-                BlogList_TagPlaceholder = "Select a tag", // Optional placeholder text
-                BlogList_ApplyFiltersButton = _localization.GetKey("Search").Value,
-                BlogList_NoPostsMessage = "No posts found.",
-                BlogList_ReadMore = _localization.GetKey("ReadMore").Value,
-            };
+        //         // UI text labels (static or from configuration)
+        //         BlogList_Title = _localization.GetKey("Blog").Value,
+        //         BlogList_Description = _localization.GetKey("BlogDesc").Value,
+        //         BlogList_SearchLabel = _localization.GetKey("Search").Value,
+        //         BlogList_AllCategories = _localization.GetKey("CategoryLabel").Value,
+        //         BlogList_TagLabel = _localization.GetKey("Tag").Value,              // New label for tag filter
+        //         BlogList_TagPlaceholder = "Select a tag", // Optional placeholder text
+        //         BlogList_ApplyFiltersButton = _localization.GetKey("Search").Value,
+        //         BlogList_NoPostsMessage = "No posts found.",
+        //         BlogList_ReadMore = _localization.GetKey("ReadMore").Value,
+        //     };
 
-            return View(model);
-        }
+        //     return View(model);
+        // }
 
-        [HttpGet("blog/{url}")]
-        public async Task<IActionResult> BlogDetail(string url)
-        {
-            try
-            {
-                _logger.LogInformation("Fetching blog detail for url {url}.", url);
+        // [HttpGet("blog/{url}")]
+        // public async Task<IActionResult> BlogDetail(string url)
+        // {
+        //     try
+        //     {
+        //         _logger.LogInformation("Fetching blog detail for url {url}.", url);
 
-                // Retrieve the blog using your slug
-                var blog = await _unitOfWork.Blogs.GetByUrlAsync(url);
-                if (blog == null)
-                {
-                    _logger.LogWarning("Blog with slug {url} not found.", url);
-                    return NotFound();
-                }
+        //         // Retrieve the blog using your slug
+        //         var blog = await _unitOfWork.Blogs.GetByUrlAsync(url);
+        //         if (blog == null)
+        //         {
+        //             _logger.LogWarning("Blog with slug {url} not found.", url);
+        //             return NotFound();
+        //         }
 
-                var currentCulture = CultureInfo.CurrentCulture.Name;
-                var langCode = currentCulture.Substring(0, 2).ToLower();
-                blog.Title = _localization.GetKey($"Title_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Title;
-                blog.Content = _localization.GetKey($"Content_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Content;
+        //         var currentCulture = CultureInfo.CurrentCulture.Name;
+        //         var langCode = currentCulture.Substring(0, 2).ToLower();
+        //         blog.Title = _localization.GetKey($"Title_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Title;
+        //         blog.Content = _localization.GetKey($"Content_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Content;
 
-                // Create the view model.
-                var viewModel = new BlogDetailViewModel
-                {
-                    BlogId = blog.BlogId,
-                    Title = blog.Title,
-                    Content = blog.Content,
-                    Date = blog.Date,
-                    RawMaps = blog.RawMaps,
-                    RawYT = blog.RawYT,
-                    Author = blog.Author,
-                    Image = blog.Image,
-                    Tags = blog.Tags?.ToList() ?? new List<Tag>(),
-                    Quizzes = blog.Quiz
-                };
+        //         // Create the view model.
+        //         var viewModel = new BlogDetailViewModel
+        //         {
+        //             BlogId = blog.BlogId,
+        //             Title = blog.Title,
+        //             Content = blog.Content,
+        //             Date = blog.Date,
+        //             RawMaps = blog.RawMaps,
+        //             RawYT = blog.RawYT,
+        //             Author = blog.Author,
+        //             Image = blog.Image,
+        //             Tags = blog.Tags?.ToList() ?? new List<Tag>(),
+        //             Quizzes = blog.Quiz
+        //         };
 
-                // Adjusting quiz question retrieval:
-                if (blog.SelectedQuestionId.HasValue)
-                {
-                    // Try to locate the question by its ID among all questions of the quizzes.
-                    var selectedQuestion = blog.Quiz.SelectMany(q => q.Questions)
-                                                    .FirstOrDefault(q => q.Id == blog.SelectedQuestionId.Value);
-                    viewModel.QuizQuestion = selectedQuestion;
-                }
-                else if (blog.Quiz != null && blog.Quiz.Any())
-                {
-                    // Fallback: select the first question from the first quiz.
-                    var firstQuiz = blog.Quiz.First();
-                    if (firstQuiz.Questions != null && firstQuiz.Questions.Any())
-                    {
-                        viewModel.QuizQuestion = firstQuiz.Questions.First();
-                    }
-                }
+        //         // Adjusting quiz question retrieval:
+        //         if (blog.SelectedQuestionId.HasValue)
+        //         {
+        //             // Try to locate the question by its ID among all questions of the quizzes.
+        //             var selectedQuestion = blog.Quiz.SelectMany(q => q.Questions)
+        //                                             .FirstOrDefault(q => q.Id == blog.SelectedQuestionId.Value);
+        //             viewModel.QuizQuestion = selectedQuestion;
+        //         }
+        //         else if (blog.Quiz != null && blog.Quiz.Any())
+        //         {
+        //             // Fallback: select the first question from the first quiz.
+        //             var firstQuiz = blog.Quiz.First();
+        //             if (firstQuiz.Questions != null && firstQuiz.Questions.Any())
+        //             {
+        //                 viewModel.QuizQuestion = firstQuiz.Questions.First();
+        //             }
+        //         }
 
-                return View(viewModel);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while retrieving blog detail for url {url}.", url);
-                TempData["ErrorMessage"] = "An error occurred while retrieving the blog post. Please try again later.";
-                return RedirectToAction("Index");
-            }
-        }
+        //         return View(viewModel);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError(ex, "An error occurred while retrieving blog detail for url {url}.", url);
+        //         TempData["ErrorMessage"] = "An error occurred while retrieving the blog post. Please try again later.";
+        //         return RedirectToAction("Index");
+        //     }
+        // }
 
-        #endregion
+        // #endregion
 
         #region Sözlük
         [HttpGet("words")]

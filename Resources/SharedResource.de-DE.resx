@@ -1,5 +1,64 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
+  <!--  
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -562,4 +621,41 @@
   <data name="Content_3_freefromdesire_de" xml:space="preserve">
     <value>&lt;h1&gt;Congratulations on setting up CKEditor 5! 🎉&lt;/h1&gt;&lt;p&gt;You've successfully created a CKEditor 5 project. Enjoy editing!&lt;/p&gt;&lt;figure class="image"&gt;&lt;img style="aspect-ratio:400/301;" src="/blog/gif/b089c981796de907176ec48516887acd.gif" width="400" height="301"&gt;&lt;/figure&gt;</value>
   </data>
+  <data name="Kurs" xml:space="preserve">
+    <value>Verlauf</value>
+    <comment>Kurs</comment>
+  </data>
+  <data name="Level_A1_Title" xml:space="preserve">
+  <value>Anfänger</value>
+</data>
+<data name="Level_A1_Desc" xml:space="preserve">
+  <value>A1 Niveau: Grundlegende Ausdrücke und alltägliche Gespräche.</value>
+</data>
+<data name="Level_A2_Title" xml:space="preserve">
+  <value>Grundstufe</value>
+</data>
+<data name="Level_A2_Desc" xml:space="preserve">
+  <value>A2 Niveau: Kurze Dialoge, grundlegende Kommunikation.</value>
+</data>
+<data name="Level_B1_Title" xml:space="preserve">
+  <value>Mittelstufe</value>
+</data>
+<data name="Level_B1_Desc" xml:space="preserve">
+  <value>B1 Niveau: Kommunikation im Alltag und Berufsleben.</value>
+</data>
+<data name="Level_B2_Title" xml:space="preserve">
+  <value>Obere Mittelstufe</value>
+</data>
+<data name="Level_B2_Desc" xml:space="preserve">
+  <value>B2 Niveau: Fließende Dialoge und Diskussionen.</value>
+</data>
+<data name="Level_C1_Title" xml:space="preserve">
+  <value>Fortgeschritten</value>
+</data>
+<data name="Level_C1_Desc" xml:space="preserve">
+  <value>C1 Niveau: Akademische und professionelle Kommunikation.</value>
+</data>
+<data name="TesteBasla" xml:space="preserve">
+  <value>Test beginnen</value>
+</data>
 </root>

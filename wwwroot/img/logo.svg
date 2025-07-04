@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <!-- Sarı Arka Balon -->
+  <rect x="260" y="120" width="280" height="180" rx="25" fill="#FFD966" stroke="#000" stroke-width="10"></rect>
+  <polygon points="400,300 440,360 480,300" fill="#000"></polygon>
+
+  <!-- Beyaz Ön Balon -->
+  <rect x="60" y="220" width="280" height="180" rx="25" fill="#FFFFFF" stroke="#000" stroke-width="10"></rect>
+  <polygon points="200,400 240,460 280,400" fill="#000"></polygon>
+
+  <!-- Almanya Bayrağı (Yuvarlak Köşeli Dikdörtgen) -->
+  <rect x="100" y="260" width="200" height="100" rx="20" stroke="#000" stroke-width="6" fill="#000"></rect>
+
+  <!-- Almanya Bayrağı Renkleri -->
+  <rect x="100" y="260" width="200" height="33.3" rx="20" fill="#000"></rect>
+  <rect x="100" y="293.3" width="200" height="33.3" fill="#DD0000"></rect>
+  <rect x="100" y="326.6" width="200" height="33.3" rx="0 0 20 20" fill="#FFCE00"></rect>
+</svg>

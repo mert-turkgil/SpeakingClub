@@ -53,8 +53,15 @@
     }
 </style>
 }
-
-<div style="height: 80vh;" class="container py-5">
+@if (!ViewData.ModelState.IsValid)
+{
+<div class="alert alert-warning mt-3">
+    @Localizer.GetKey("WarningMessage_Login_UnderDevelopment")
+</div>
+}
+<div class="container-xxl">
+<div class="row py-5">
+    <div class="col">
     <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl" method="post" class="animated-login-form">
         <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
         @Html.AntiForgeryToken()
@@ -84,19 +91,15 @@
 
         <button type="submit" class="btn btn-primary w-100 mt-2">@Localizer.GetKey("Button_Login")</button>
 
-        <div class="text-center mt-3">
+        <div class="text-center w-100 mt-3">
             @Localizer.GetKey("NoAccountYet") <a asp-action="Register" asp-route-returnUrl="@returnUrl">@Localizer.GetKey("Link_RegisterHere")</a>
         </div>
 
-        @if (!ViewData.ModelState.IsValid)
-        {
-            <div class="alert alert-warning mt-3">
-                @Localizer.GetKey("WarningMessage_Login_UnderDevelopment")
-            </div>
-        }
-    </form>
-</div>
 
+    </form>
+    </div>
+</div>
+</div>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
