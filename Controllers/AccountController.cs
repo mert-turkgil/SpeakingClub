@@ -580,11 +580,11 @@ namespace SpeakingClub.Controllers
                 string userTemplatePath;
                 if (currentCulture.StartsWith("de", StringComparison.OrdinalIgnoreCase))
                 {
-                    userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "EmailTemplates", "UserNotification_de.html");
+                    userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserNotification_de.html");
                 }
                 else
                 {
-                    userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "EmailTemplates", "UserNotification_tr.html");
+                    userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserNotification_tr.html");
                 }
 
                 // Read HTML content from template file
