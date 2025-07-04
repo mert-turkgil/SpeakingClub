@@ -65,10 +65,15 @@
         @TempData["Success"]
     </div>
 }
+@Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
 <div class="container-xxl">
     <div class="row py-5">
         <div class="col">
     <form method="post" class="animated-form">
+        @if (!ViewData.ModelState.IsValid)
+        {
+        <div asp-validation-summary="All" class="alert alert-danger"></div>
+        }
         <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
         @Html.AntiForgeryToken()
         <h2 class="animated-title">@Localizer.GetKey("Register_Header")</h2>
