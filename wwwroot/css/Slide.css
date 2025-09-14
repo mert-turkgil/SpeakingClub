@@ -24,6 +24,8 @@
 .slide-title {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 700;
 }
 
 .slide-description {
@@ -36,6 +38,8 @@
   background: linear-gradient(45deg, #000000aa, #ffffff22);
   backdrop-filter: blur(10px);
   color: white;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 700;
   border-radius: 10px;
   text-decoration: none;
   transition: transform 0.3s, box-shadow 0.3s;

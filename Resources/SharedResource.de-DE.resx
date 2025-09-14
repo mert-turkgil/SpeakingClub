@@ -128,7 +128,7 @@
   </data>
   <data name="About" xml:space="preserve">
     <value>Über</value>
-  </data>
+  <comment>N/A</comment></data>
   <data name="Sözlük" xml:space="preserve">
     <value>Wörterbuch</value>
   </data>
@@ -628,34 +628,62 @@
   <data name="Level_A1_Title" xml:space="preserve">
   <value>Anfänger</value>
 </data>
-<data name="Level_A1_Desc" xml:space="preserve">
+  <data name="Level_A1_Desc" xml:space="preserve">
   <value>A1 Niveau: Grundlegende Ausdrücke und alltägliche Gespräche.</value>
 </data>
-<data name="Level_A2_Title" xml:space="preserve">
+  <data name="Level_A2_Title" xml:space="preserve">
   <value>Grundstufe</value>
 </data>
-<data name="Level_A2_Desc" xml:space="preserve">
+  <data name="Level_A2_Desc" xml:space="preserve">
   <value>A2 Niveau: Kurze Dialoge, grundlegende Kommunikation.</value>
 </data>
-<data name="Level_B1_Title" xml:space="preserve">
+  <data name="Level_B1_Title" xml:space="preserve">
   <value>Mittelstufe</value>
 </data>
-<data name="Level_B1_Desc" xml:space="preserve">
+  <data name="Level_B1_Desc" xml:space="preserve">
   <value>B1 Niveau: Kommunikation im Alltag und Berufsleben.</value>
 </data>
-<data name="Level_B2_Title" xml:space="preserve">
+  <data name="Level_B2_Title" xml:space="preserve">
   <value>Obere Mittelstufe</value>
 </data>
-<data name="Level_B2_Desc" xml:space="preserve">
+  <data name="Level_B2_Desc" xml:space="preserve">
   <value>B2 Niveau: Fließende Dialoge und Diskussionen.</value>
 </data>
-<data name="Level_C1_Title" xml:space="preserve">
+  <data name="Level_C1_Title" xml:space="preserve">
   <value>Fortgeschritten</value>
 </data>
-<data name="Level_C1_Desc" xml:space="preserve">
+  <data name="Level_C1_Desc" xml:space="preserve">
   <value>C1 Niveau: Akademische und professionelle Kommunikation.</value>
 </data>
-<data name="TesteBasla" xml:space="preserve">
+  <data name="TesteBasla" xml:space="preserve">
   <value>Test beginnen</value>
 </data>
+  <data name="ftheader1" xml:space="preserve">
+    <value>Deutschunterricht und Erfahrung</value>
+    <comment>animasyon altındaki yer</comment>
+  </data>
+  <data name="ftheader2" xml:space="preserve">
+    <value>Fachgebiet &amp; Gesprächsclubs</value>
+    <comment>animasyon altındaki yer</comment>
+  </data>
+  <data name="ftheader3" xml:space="preserve">
+    <value>Unterstützender Unterrichtsansatz</value>
+    <comment>animsyon altındaki yer</comment>
+  </data>
+  <data name="ftbody1" xml:space="preserve">
+    <value>Da er in Deutschland geboren und aufgewachsen ist und viele Jahre im Bildungswesen gearbeitet hat, verfügt er über sehr gute Deutschkenntnisse.</value>
+    <comment>animasyon altındaki yer</comment>
+  </data>
+  <data name="ftbody2" xml:space="preserve">
+    <value>Nach seiner Pensionierung organisiert er Deutsch-Konversationsclubs für verschiedene Niveaustufen und konzentriert sich dabei auf Konversationsübungen, Präsentations- und Diskussionstechniken.</value>
+    <comment>animasyon altındaki yer</comment>
+  </data>
+  <data name="ftbody3" xml:space="preserve">
+    <value>In den Kursen werden alternative Satzvorschläge, bei Bedarf Grammatikunterstützung und dem Niveau entsprechende Themen behandelt, um den Schülern individuelle Entwicklungsmöglichkeiten zu bieten.</value>
+    <comment>animasyon altındaki yer</comment>
+  </data>
+  <data name="qt1" xml:space="preserve">
+    <value>„Verbessern Sie Ihre Deutschkenntnisse dank unserer regelmäßigen Inhalte und unterstützen Sie Ihren Lernprozess.“</value>
+    <comment>animasyon altındaki yer</comment>
+  </data>
 </root>

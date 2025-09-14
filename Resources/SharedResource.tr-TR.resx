@@ -315,7 +315,7 @@
   </data>
   <data name="About" xml:space="preserve">
     <value>Hakkında</value>
-  </data>
+  <comment>N/A</comment></data>
   <data name="Carousel_1_Title" xml:space="preserve">
     <value>Hakkında</value>
   </data>
@@ -627,36 +627,64 @@
     <comment>Kurs</comment>
   </data>
   <data name="Level_A1_Title" xml:space="preserve">
-  <value>Başlangıç</value>
-</data>
-<data name="Level_A1_Desc" xml:space="preserve">
-  <value>A1 seviyesi: Temel ifadeler ve günlük konuşmalar.</value>
-</data>
-<data name="Level_A2_Title" xml:space="preserve">
-  <value>Temel</value>
-</data>
-<data name="Level_A2_Desc" xml:space="preserve">
-  <value>A2 seviyesi: Kısa diyaloglar, temel iletişim.</value>
-</data>
-<data name="Level_B1_Title" xml:space="preserve">
-  <value>Orta</value>
-</data>
-<data name="Level_B1_Desc" xml:space="preserve">
-  <value>B1 seviyesi: Gündelik ve iş yaşamında iletişim.</value>
-</data>
-<data name="Level_B2_Title" xml:space="preserve">
-  <value>Orta-İleri</value>
-</data>
-<data name="Level_B2_Desc" xml:space="preserve">
-  <value>B2 seviyesi: Akıcı diyalog ve tartışma.</value>
-</data>
-<data name="Level_C1_Title" xml:space="preserve">
-  <value>İleri</value>
-</data>
-<data name="Level_C1_Desc" xml:space="preserve">
-  <value>C1 seviyesi: Akademik ve profesyonel iletişim.</value>
-</data>
-<data name="TesteBasla" xml:space="preserve">
-  <value>Teste Başla</value>
-</data>
+    <value>Başlangıç</value>
+  </data>
+  <data name="Level_A1_Desc" xml:space="preserve">
+    <value>A1 seviyesi: Temel ifadeler ve günlük konuşmalar.</value>
+  </data>
+  <data name="Level_A2_Title" xml:space="preserve">
+    <value>Temel</value>
+  </data>
+  <data name="Level_A2_Desc" xml:space="preserve">
+    <value>A2 seviyesi: Kısa diyaloglar, temel iletişim.</value>
+  </data>
+  <data name="Level_B1_Title" xml:space="preserve">
+    <value>Orta</value>
+  </data>
+  <data name="Level_B1_Desc" xml:space="preserve">
+    <value>B1 seviyesi: Gündelik ve iş yaşamında iletişim.</value>
+  </data>
+  <data name="Level_B2_Title" xml:space="preserve">
+    <value>Orta-İleri</value>
+  </data>
+  <data name="Level_B2_Desc" xml:space="preserve">
+    <value>B2 seviyesi: Akıcı diyalog ve tartışma.</value>
+  </data>
+  <data name="Level_C1_Title" xml:space="preserve">
+    <value>İleri</value>
+  </data>
+  <data name="Level_C1_Desc" xml:space="preserve">
+    <value>C1 seviyesi: Akademik ve profesyonel iletişim.</value>
+  </data>
+  <data name="TesteBasla" xml:space="preserve">
+    <value>Teste Başla</value>
+  </data>
+  <data name="ftheader1" xml:space="preserve">
+    <value>Almanca Eğitimi ve Deneyimi</value>
+    <comment>animasyon altındaki yer</comment>
+  </data>
+  <data name="ftheader2" xml:space="preserve">
+    <value>Uzmanlık Alanı &amp; Konuşma Kulüpleri</value>
+    <comment>animasyon altındaki yer</comment>
+  </data>
+  <data name="ftheader3" xml:space="preserve">
+    <value>Destekleyici Öğretim Yaklaşımı</value>
+    <comment>animsyon altındaki yer</comment>
+  </data>
+  <data name="ftbody1" xml:space="preserve">
+    <value>Almanya’da doğup büyümesi ve uzun yıllar eğitim sektöründe çalışması sayesinde güçlü bir Almanca dil altyapısına sahip.</value>
+    <comment>animasyon altındaki yer</comment>
+  </data>
+  <data name="ftbody2" xml:space="preserve">
+    <value>Emeklilikten sonra farklı seviyelere yönelik Almanca konuşma kulüpleri düzenleyerek, konuşma pratiği, sunum ve tartışma teknikleri üzerine odaklanıyor.</value>
+    <comment>animasyon altındaki yer</comment>
+  </data>
+  <data name="ftbody3" xml:space="preserve">
+    <value>Derslerde alternatif cümle önerileri, gerektiğinde gramer desteği ve seviyeye uygun konular işleyerek öğrencilere bireysel gelişim imkânı sunuyor.</value>
+    <comment>animasyon altındaki yer</comment>
+  </data>
+  <data name="qt1" xml:space="preserve">
+    <value>"Düzenli içeriklerimiz sayesinde Almanca pratiğinizi artırın, öğreniminize destek olun."</value>
+    <comment>animasyon altındaki yer</comment>
+  </data>
 </root>

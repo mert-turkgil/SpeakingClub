@@ -451,12 +451,12 @@ namespace SpeakingClub.Controllers
                 return View(model);
             }
             _memoryCache.Set(cacheKey, count + 1, TimeSpan.FromMinutes(2));
-            string? recaptchaResponse = Request.Form["g-recaptcha-response"];
-            if (!await RecaptchaIsValid(recaptchaResponse ?? ""))
-            {
-                ModelState.AddModelError("", "Lütfen robot olmadığınızı doğrulayın (reCAPTCHA).");
-                return View(model);
-            }
+             string? recaptchaResponse = Request.Form["g-recaptcha-response"];
+             if (!await RecaptchaIsValid(recaptchaResponse ?? ""))
+             {
+                 ModelState.AddModelError("", "Lütfen robot olmadığınızı doğrulayın (reCAPTCHA).");
+                 return View(model);
+             }
 
             if (!ModelState.IsValid)
                 return View(model);
@@ -565,7 +565,8 @@ namespace SpeakingClub.Controllers
             if (result.Succeeded)
             {
                 _logger.LogInformation("User created a new account.");
-
+                TempData["ShowSplash"] = true; 
+                TempData["SplashMessage"] = "Kayıt başarılı! E-postanızı kontrol edin ve hesabınızı onaylayın."; 
                 // Generate confirmation token
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 var confirmationLink = Url.Action(

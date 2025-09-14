@@ -8,6 +8,12 @@
           onerror="this.onerror=null;this.href='/css/dataTables.bootstrap5.min.css'">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" 
           onerror="this.onerror=null;this.href='/css/responsive.bootstrap5.min.css'">
+    <style>
+    mark {
+    background-color: yellow;
+    color: black;
+    }
+    </style>
 }
 @if (User.IsInRole("Admin") || User.IsInRole("Root"))
 {
@@ -35,14 +41,14 @@
     </div>
 </section>
 
-<section class="container-xxl" id="UserManagment">
+<section class="container-xxl" id="ResourceManagement">
     <div class="card shadow mt-4">
         <div class="card-header bg-primary text-white">
             <h3 class="card-title mb-0"><i class="fa-solid fa-passport"></i>Resource Managment</h3>
         </div>
         <div class="card-body">
             <!-- Invoke the User Management ViewComponent -->
-            @await Component.InvokeAsync("ResourceManagement")
+            @await Component.InvokeAsync("ResourceManagement", new { resourceLang = Context.Request.Query["resourceLang"].ToString() })
         </div>
     </div>
 </section>
@@ -115,6 +121,75 @@
 
 @section Scripts{
     <script>
+        $(document).ready(function () {
+            // Handle "Change" button click
+            $(".edit-btn").on("click", function () {
+                const key = $(this).data("key");
+                const value = $(this).data("value");
+                const comment = $(this).data("comment");
+                const lang = $("#langSelect").val();
+
+                $("#translationKey").val(key);
+                $("#translationValue").val(value);
+                $("#translationComment").val(comment);
+                $("#translationLang").val(lang);
+
+                $("#editTranslationModal").modal("show");
+            });
+
+            // Handle form submit (AJAX)
+            $("#editTranslationForm").on("submit", function (e) {
+                e.preventDefault();
+
+                $.ajax({
+                    url: '@Url.Action("EditTranslation", "Admin")',
+                    type: "POST",
+                    data: $(this).serialize(),
+                    success: function (res) {
+                        if (res.success) {
+                            alert(res.message);
+                            location.reload(); // reload table to see updates
+                        } else {
+                            alert("Error: " + res.message);
+                        }
+                    },
+                    error: function () {
+                        alert("Something went wrong.");
+                    }
+                });
+            });
+        });
+    </script>
+    <script>
+    $(document).ready(function () {
+        // Check if mark plugin is loaded
+        console.log("mark plugin:", typeof $.fn.mark);
+
+        // Initialize DataTable
+        var table = $('#localizationTable').DataTable({
+            language: { search: "Search in table:" },
+            responsive: true
+        });
+
+        // Highlight search terms
+        table.on('draw', function () {
+            var body = $(table.table().body());
+            body.unmark(); // remove previous highlights
+            var searchTerm = table.search();
+            if (searchTerm) {
+                body.mark(searchTerm, {
+                    "separateWordSearch": true
+                });
+            }
+        });
+
+        // Language selector
+        $("#langSelect").change(function () {
+            window.location.href = `?resourceLang=${this.value}`;
+        });
+    });
+    </script>
+    <script>
         $(document).ready(function() {
             $('#QuestionList').DataTable();
             $('#QuizList').DataTable();
@@ -122,39 +197,6 @@
             $('#WordList').DataTable();
             $('#CategoryList').DataTable();
             $('#BlogList').DataTable();
-            //#localizationTable
-            $('#localizationTable').DataTable();
-
-            $(".edit-translation-form").submit(function (event) {
-                event.preventDefault();
-
-                const form = $(this);
-                const formData = form.serialize();
-                const row = form.closest("tr");
-
-                $.ajax({
-                    type: "POST",
-                    url: form.attr("action"),
-                    data: formData,
-                    success: function (response) {
-                        if (response.success) {
-                            alert(response.message);
-                            row.css("background-color", "#d4edda");
-                            setTimeout(() => row.css("background-color", ""), 1000);
-                        } else {
-                            alert(response.message);
-                            row.css("background-color", "#f8d7da");
-                        }
-                    },
-                    error: function () {
-                        alert("An error occurred while saving the translation.");
-                    }
-                });
-            });
-
-            $("#langSelect").change(function () {
-                window.location.href = `?lang=${this.value}`;
-            });
             // Users Table
             $('#usersTable').DataTable({
                 responsive: {
