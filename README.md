@@ -17,7 +17,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License"></a>
-  <img src="https://img.shields.io/badge/.NET-6.0-blue" alt=".NET">
+  <img src="https://img.shields.io/badge/.NET-9.0-blue" alt=".NET">
   <img src="https://img.shields.io/badge/Bootstrap-5-purple" alt="Bootstrap">
   <img src="https://img.shields.io/badge/Status-Active-success" alt="Status">
   <img src="https://img.shields.io/badge/Contributions-Welcome-orange" alt="Contributions Welcome">
