@@ -236,50 +236,73 @@ using (var scope = app.Services.CreateScope())
 #endregion
 
 #region HTTP Pipeline Configuration
+
 if (!app.Environment.IsDevelopment())
 {
+    // Hata sayfası ve HSTS
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+// Middleware: ACME challenge ve HTTPS yönlendirme
 app.Use(async (context, next) =>
 {
     var path = context.Request.Path.Value;
+
+    // 1. ACME challenge → yönlendirme yok
     if (path != null && path.StartsWith("/.well-known/acme-challenge"))
     {
-        // Challenge isteği geldi → HTTPS yönlendirmesini atla
         await next();
+        return;
     }
-    else
+
+    // 2. Diğer tüm istekler → HTTPS’ye yönlendir
+    if (!context.Request.IsHttps)
     {
-        // Diğer tüm isteklerde HTTPS’ye yönlendir
-        if (!context.Request.IsHttps)
-        {
-            var httpsUrl = $"https://{context.Request.Host}{context.Request.Path}{context.Request.QueryString}";
-            context.Response.Redirect(httpsUrl, permanent: true);
-        }
-        else
-        {
-            await next();
-        }
+        var httpsUrl = $"https://{context.Request.Host}{context.Request.Path}{context.Request.QueryString}";
+        context.Response.Redirect(httpsUrl, permanent: true);
+        return;
     }
+
+    await next();
 });
+
+// 3. ACME challenge dosyalarını serve et
+var acmeChallengePath = Path.Combine(Directory.GetCurrentDirectory(), ".well-known", "acme-challenge");
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(acmeChallengePath),
+    RequestPath = "/.well-known/acme-challenge",
+    ServeUnknownFileTypes = true, // Uzantısı bilinmeyen dosyaları da sun
+    ContentTypeProvider = new FileExtensionContentTypeProvider()
+});
+
+// 4. Normal statik dosyalar
 app.UseStaticFiles(new StaticFileOptions
 {
     ContentTypeProvider = provider,
     ServeUnknownFileTypes = true
 });
+
+// Localization
 app.UseRequestLocalization(app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value);
+
+// Routing ve auth
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
+
+// MVC route'ları
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
 // app.MapControllerRoute(
 //     name: "blogdetail",
 //     pattern: "blog/{url}",
-//     defaults: new { controller = "Home", action = "BlogDetail"});
+//     defaults: new { controller = "Home", action = "BlogDetail" });
+
 app.MapControllerRoute(
     name: "about",
     pattern: "about",
@@ -294,8 +317,11 @@ app.MapControllerRoute(
     name: "words",
     pattern: "words",
     defaults: new { controller = "Home", action = "Words" });
+
 #endregion
+
 #region SignalR Configuration
 app.MapHub<SpeakingClub.Hubs.QuizMonitorHub>("/quizMonitorHub");
 #endregion
+
 app.Run();
