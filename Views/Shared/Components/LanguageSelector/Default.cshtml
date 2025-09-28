@@ -6,7 +6,7 @@
     // For reverse: bool isDe = currentCulture == "de-DE";
 }
 
-<form id="language-switcher" asp-controller="Home" asp-action="SetLanguage"
+<form asp-controller="Home" asp-action="SetLanguage"
       asp-route-returnUrl="@Context.Request.Path" method="post" style="display:inline;">
     <label class="switch" aria-label="Dil Değiştir">
         <input type="checkbox"
@@ -17,17 +17,14 @@
         <span class="d-inline"> <i class="fa-solid fa-globe me-1"></i>Türkçe</span>
         <span class="d-inline"> <i class="fa-solid fa-globe me-1"></i>Deutsch</span>
     </label>
-    <input type="hidden" name="culture" id="culture-hidden" value="@(isTr ? "tr-TR" : "de-DE")" />
+    <input type="hidden" name="culture" value="@(isTr ? "tr-TR" : "de-DE")" />
 </form>
 
 <script>
-    function toggleLanguage(checkbox) {
-        var hidden = document.getElementById('culture-hidden');
-        if (checkbox.checked) {
-            hidden.value = 'de-DE';
-        } else {
-            hidden.value = 'tr-TR';
-        }
+   function toggleLanguage(checkbox) {
+        // Find the hidden input by its name inside the same form
+        var hidden = checkbox.form.querySelector('input[type="hidden"][name="culture"]');
+        hidden.value = checkbox.checked ? 'de-DE' : 'tr-TR';
         checkbox.form.submit();
     }
 </script>
