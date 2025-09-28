@@ -241,8 +241,28 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-
-app.UseHttpsRedirection();
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value;
+    if (path != null && path.StartsWith("/.well-known/acme-challenge"))
+    {
+        // Challenge isteği geldi → HTTPS yönlendirmesini atla
+        await next();
+    }
+    else
+    {
+        // Diğer tüm isteklerde HTTPS’ye yönlendir
+        if (!context.Request.IsHttps)
+        {
+            var httpsUrl = $"https://{context.Request.Host}{context.Request.Path}{context.Request.QueryString}";
+            context.Response.Redirect(httpsUrl, permanent: true);
+        }
+        else
+        {
+            await next();
+        }
+    }
+});
 app.UseStaticFiles(new StaticFileOptions
 {
     ContentTypeProvider = provider,
