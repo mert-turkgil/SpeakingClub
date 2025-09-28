@@ -20,6 +20,7 @@ namespace SpeakingClub.Controllers
     public class AccountController : Controller
     {
         private static Dictionary<string, DateTime> _contactRateLimit = new();
+        private static Dictionary<string, (int Count, DateTime FirstAttempt)> _contactAttempts = new();
         private static readonly object _rateLimitLock = new();
         private readonly IMemoryCache _memoryCache;
         private readonly IConfiguration _configuration;
@@ -425,15 +426,31 @@ namespace SpeakingClub.Controllers
             string userIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
             lock (_rateLimitLock)
             {
-                if (_contactRateLimit.TryGetValue(userIp, out var lastSubmit))
+                if (_contactAttempts.TryGetValue(userIp, out var attemptInfo))
                 {
-                    if (DateTime.UtcNow - lastSubmit < TimeSpan.FromSeconds(30))
+                    // If already 5 or more attempts, check for the 1-minute block period.
+                    if (attemptInfo.Count >= 5)
                     {
-                        ModelState.AddModelError("", "Çok sık deneme yaptınız. Lütfen biraz bekleyin.");
-                        return View(model);
+                        if (DateTime.UtcNow - attemptInfo.FirstAttempt < TimeSpan.FromMinutes(1))
+                        {
+                            ModelState.AddModelError("", "Çok fazla deneme yaptınız. Lütfen 1 dakika sonra tekrar deneyin.");
+                            return View(model);
+                        }
+                        else
+                        {
+                            // Reset attempt count after blocking period has passed.
+                            _contactAttempts[userIp] = (1, DateTime.UtcNow);
+                        }
+                    }
+                    else
+                    {
+                        _contactAttempts[userIp] = (attemptInfo.Count + 1, attemptInfo.FirstAttempt);
                     }
                 }
-                _contactRateLimit[userIp] = DateTime.UtcNow;
+                else
+                {
+                    _contactAttempts[userIp] = (1, DateTime.UtcNow);
+                }
             }
 
             var ip = HttpContext.Connection.RemoteIpAddress != null
@@ -524,15 +541,31 @@ namespace SpeakingClub.Controllers
             string userIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
             lock (_rateLimitLock)
             {
-                if (_contactRateLimit.TryGetValue(userIp, out var lastSubmit))
+                if (_contactAttempts.TryGetValue(userIp, out var attemptInfo))
                 {
-                    if (DateTime.UtcNow - lastSubmit < TimeSpan.FromSeconds(30))
+                    // If already 5 or more attempts, check for the 1-minute block period.
+                    if (attemptInfo.Count >= 5)
                     {
-                        ModelState.AddModelError("", "Çok sık deneme yaptınız. Lütfen biraz bekleyin.");
-                        return View(model);
+                        if (DateTime.UtcNow - attemptInfo.FirstAttempt < TimeSpan.FromMinutes(1))
+                        {
+                            ModelState.AddModelError("", "Çok fazla deneme yaptınız. Lütfen 1 dakika sonra tekrar deneyin.");
+                            return View(model);
+                        }
+                        else
+                        {
+                            // Reset attempt count after blocking period has passed.
+                            _contactAttempts[userIp] = (1, DateTime.UtcNow);
+                        }
+                    }
+                    else
+                    {
+                        _contactAttempts[userIp] = (attemptInfo.Count + 1, attemptInfo.FirstAttempt);
                     }
                 }
-                _contactRateLimit[userIp] = DateTime.UtcNow;
+                else
+                {
+                    _contactAttempts[userIp] = (1, DateTime.UtcNow);
+                }
             }
 
             var ip = HttpContext.Connection.RemoteIpAddress != null

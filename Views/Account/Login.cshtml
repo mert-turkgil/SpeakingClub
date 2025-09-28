@@ -105,31 +105,30 @@
         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
         <div>
-            <label asp-for="Email" class="form-label">@Localizer.GetKey("Label_Email")</label>
-            <input asp-for="Email" class="form-control" placeholder="@Localizer.GetKey("Placeholder_Email")">
-            <span asp-validation-for="Email" class="text-danger"></span>
+             <label asp-for="Email" class="form-label">@Localizer.GetKey("Label_Email")</label>
+             <input asp-for="Email" class="form-control" placeholder="@Localizer.GetKey("Placeholder_Email")">
+             <span asp-validation-for="Email" class="text-danger"></span>
         </div>
 
         <div>
-            <label asp-for="Password" class="form-label">@Localizer.GetKey("Label_Password")</label>
-            <input asp-for="Password" type="password" class="form-control" placeholder="••••••">
-            <span asp-validation-for="Password" class="text-danger"></span>
+             <label asp-for="Password" class="form-label">@Localizer.GetKey("Label_Password")</label>
+             <input asp-for="Password" type="password" class="form-control" placeholder="••••••">
+             <span asp-validation-for="Password" class="text-danger"></span>
         </div>
 
         <div class="form-check">
-            <input asp-for="RememberMe" class="form-check-input">
-            <label asp-for="RememberMe" class="form-check-label">@Localizer.GetKey("Label_RememberMe")</label>
+             <input asp-for="RememberMe" class="form-check-input">
+             <label asp-for="RememberMe" class="form-check-label">@Localizer.GetKey("Label_RememberMe")</label>
         </div>
-         <div class="g-recaptcha" data-sitekey="@ViewBag.RecaptchaSiteKey"></div>
-
+        
+        <!-- Always display the reCAPTCHA widget -->
+        <div class="g-recaptcha" data-sitekey="@ViewBag.RecaptchaSiteKey"></div>
 
         <button type="submit" class="btn btn-primary w-100 mt-2">@Localizer.GetKey("Button_Login")</button>
-
+        
         <div class="text-center w-100 mt-3">
-            @Localizer.GetKey("NoAccountYet") <a asp-action="Register" asp-route-returnUrl="@returnUrl">@Localizer.GetKey("Link_RegisterHere")</a>
+             @Localizer.GetKey("NoAccountYet") <a asp-action="Register" asp-route-returnUrl="@returnUrl">@Localizer.GetKey("Link_RegisterHere")</a>
         </div>
-
-
     </form>
     </div>
 </div>
