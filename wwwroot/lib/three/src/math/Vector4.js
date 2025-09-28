@@ -489,7 +489,7 @@ class Vector4 {
 	 */
 	setAxisAngleFromQuaternion( q ) {
 
-		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/index.htm
+		// https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/index.htm
 
 		// q is assumed to be normalized
 
@@ -524,7 +524,7 @@ class Vector4 {
 	 */
 	setAxisAngleFromRotationMatrix( m ) {
 
-		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToAngle/index.htm
+		// https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToAngle/index.htm
 
 		// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
 

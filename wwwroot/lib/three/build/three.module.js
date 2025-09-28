@@ -4463,7 +4463,7 @@ function flatten( array, nBlocks, blockSize ) {
 
 	if ( firstElem <= 0 || firstElem > 0 ) return array;
 	// unoptimized: ! isNaN( firstElem )
-	// see http://jacksondunstan.com/articles/983
+	// see https://jacksondunstan.com/articles/983
 
 	const n = nBlocks * blockSize;
 	let r = arrayCacheF32[ n ];

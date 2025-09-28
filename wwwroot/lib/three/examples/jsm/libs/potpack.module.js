@@ -8,7 +8,7 @@
  *
  * A variation of algorithms used in [rectpack2D](https://github.com/TeamHypersomnia/rectpack2D)
  * and [bin-pack](https://github.com/bryanburgers/bin-pack), which are in turn based 
- * on [this article by Blackpawn](http://blackpawn.com/texts/lightmaps/default.html).
+ * on [this article by Blackpawn](https://blackpawn.com/texts/lightmaps/default.html).
  * 
  * @license
  * ISC License

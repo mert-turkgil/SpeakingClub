@@ -336,7 +336,7 @@ class Curve {
 	 */
 	computeFrenetFrames( segments, closed = false ) {
 
-		// see http://www.cs.indiana.edu/pub/techreports/TR425.pdf
+		// see https://www.cs.indiana.edu/pub/techreports/TR425.pdf
 
 		const normal = new Vector3();
 

@@ -13,7 +13,7 @@
  * Time complexity is O(1) for linear access crossing at most two points
  * and O(log N) for random access, where N is the number of positions.
  *
- * References: {@link http://www.oodesign.com/template-method-pattern.html}
+ * References: {@link https://www.oodesign.com/template-method-pattern.html}
  *
  * @abstract
  */
@@ -104,7 +104,7 @@ class Interpolant {
 
 				linear_scan: {
 
-					//- See http://jsperf.com/comparison-to-undefined/3
+					//- See https://jsperf.com/comparison-to-undefined/3
 					//- slower code:
 					//-
 					//- 				if ( t >= t1 || t1 === undefined ) {

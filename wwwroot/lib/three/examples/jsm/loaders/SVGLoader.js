@@ -134,7 +134,7 @@ class SVGLoader extends Loader {
 				case 'use':
 					style = parseStyle( node, style );
 
-					const href = node.getAttributeNS( 'http://www.w3.org/1999/xlink', 'href' ) || '';
+					const href = node.getAttributeNS( 'https://www.w3.org/1999/xlink', 'href' ) || '';
 					const usedNodeId = href.substring( 1 );
 					const usedNode = node.viewportElement.getElementById( usedNodeId );
 					if ( usedNode ) {
@@ -1042,7 +1042,7 @@ class SVGLoader extends Loader {
 
 		}
 
-		// http://www.w3.org/TR/SVG11/implnote.html#PathElementImplementationNotes
+		// https://www.w3.org/TR/SVG11/implnote.html#PathElementImplementationNotes
 
 		function getReflection( a, b ) {
 

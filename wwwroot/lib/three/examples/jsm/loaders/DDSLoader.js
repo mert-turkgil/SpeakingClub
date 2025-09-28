@@ -25,7 +25,7 @@ class DDSLoader extends CompressedTextureLoader {
 		// https://github.com/toji/webgl-texture-utils/blob/master/texture-util/dds.js
 
 		// All values and structures referenced from:
-		// http://msdn.microsoft.com/en-us/library/bb943991.aspx/
+		// https://msdn.microsoft.com/en-us/library/bb943991.aspx/
 
 		const DDS_MAGIC = 0x20534444;
 

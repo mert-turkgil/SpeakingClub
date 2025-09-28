@@ -1,6 +1,6 @@
 import { LinearTransfer, Matrix3, SRGBTransfer } from 'three';
 
-// Reference: http://www.russellcottrell.com/photo/matrixCalculator.htm
+// Reference: https://www.russellcottrell.com/photo/matrixCalculator.htm
 
 const P3_PRIMARIES = [ 0.680, 0.320, 0.265, 0.690, 0.150, 0.060 ];
 const P3_LUMINANCE_COEFFICIENTS = [ 0.2289, 0.6917, 0.0793 ];

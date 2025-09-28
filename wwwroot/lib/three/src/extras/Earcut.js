@@ -488,7 +488,7 @@ function indexCurve( start, minX, minY, invSize ) {
 }
 
 // Simon Tatham's linked list merge sort algorithm
-// http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
+// https://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
 function sortLinked( list ) {
 
 	let i, p, q, e, tail, numMerges, pSize, qSize,

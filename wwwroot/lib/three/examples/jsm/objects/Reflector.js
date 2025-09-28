@@ -117,8 +117,8 @@ class Reflector extends Mesh {
 			textureMatrix.multiply( virtualCamera.matrixWorldInverse );
 			textureMatrix.multiply( scope.matrixWorld );
 
-			// Now update projection matrix with new clip plane, implementing code from: http://www.terathon.com/code/oblique.html
-			// Paper explaining this technique: http://www.terathon.com/lengyel/Lengyel-Oblique.pdf
+			// Now update projection matrix with new clip plane, implementing code from: https://www.terathon.com/code/oblique.html
+			// Paper explaining this technique: https://www.terathon.com/lengyel/Lengyel-Oblique.pdf
 			reflectorPlane.setFromNormalAndCoplanarPoint( normal, reflectorWorldPosition );
 			reflectorPlane.applyMatrix4( virtualCamera.matrixWorldInverse );
 

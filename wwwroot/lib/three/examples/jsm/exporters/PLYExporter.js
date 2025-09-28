@@ -16,7 +16,7 @@ import {
  *  exporter.parse(mesh, data => console.log(data), { binary: true, excludeAttributes: [ 'color' ], littleEndian: true });
  *
  * Format Definition:
- * http://paulbourke.net/dataformats/ply/
+ * https://paulbourke.net/dataformats/ply/
  */
 
 class PLYExporter {

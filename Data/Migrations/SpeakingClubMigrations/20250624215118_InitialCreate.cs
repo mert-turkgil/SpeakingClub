@@ -501,8 +501,8 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 columns: new[] { "SlideId", "CarouselDescription", "CarouselImage", "CarouselImage1200w", "CarouselImage600w", "CarouselLink", "CarouselLinkText", "CarouselTitle", "DateAdded" },
                 values: new object[,]
                 {
-                    { 1, "Description for slide 1", "slide1.jpg", "slide1_1200w.jpg", "slide1_600w.jpg", "http://example.com/slide1", "Learn More", "Slide 1", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) },
-                    { 2, "Description for slide 2", "slide2.jpg", "slide2_1200w.jpg", "slide2_600w.jpg", "http://example.com/slide2", "Learn More", "Slide 2", new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified) }
+                    { 1, "Description for slide 1", "slide1.jpg", "slide1_1200w.jpg", "slide1_600w.jpg", "https://example.com/slide1", "Learn More", "Slide 1", new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) },
+                    { 2, "Description for slide 2", "slide2.jpg", "slide2_1200w.jpg", "slide2_600w.jpg", "https://example.com/slide2", "Learn More", "Slide 2", new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified) }
                 });
 
             migrationBuilder.InsertData(
@@ -541,14 +541,14 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 columns: new[] { "BlogId", "Author", "CategoryId", "Content", "Date", "Image", "RawMaps", "RawYT", "SelectedQuestionId", "Title", "Url", "isHome" },
                 values: new object[,]
                 {
-                    { 1, "Author1", 1, "Content of blog post 1.", new DateTime(2025, 2, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "blog1.jpg", "", "", null, "Blog Post 1", "http://example.com/blog1", true },
-                    { 2, "Author2", 2, "Content of blog post 2.", new DateTime(2025, 3, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "blog2.jpg", "", "", null, "Blog Post 2", "http://example.com/blog2", true }
+                    { 1, "Author1", 1, "Content of blog post 1.", new DateTime(2025, 2, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "blog1.jpg", "", "", null, "Blog Post 1", "https://example.com/blog1", true },
+                    { 2, "Author2", 2, "Content of blog post 2.", new DateTime(2025, 3, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "blog2.jpg", "", "", null, "Blog Post 2", "https://example.com/blog2", true }
                 });
 
             migrationBuilder.InsertData(
                 table: "Quizzes",
                 columns: new[] { "Id", "AudioUrl", "CategoryId", "Description", "ImageUrl", "TeacherId", "Title", "YouTubeVideoUrl" },
-                values: new object[] { 1, "http://example.com/audio1.mp3", 1, "A quiz to test your general knowledge.", null, "teacher1", "General Knowledge Quiz", "http://youtube.com/vid1" });
+                values: new object[] { 1, "https://example.com/audio1.mp3", 1, "A quiz to test your general knowledge.", null, "teacher1", "General Knowledge Quiz", "https://youtube.com/vid1" });
 
             migrationBuilder.InsertData(
                 table: "BlogQuizzes",
@@ -570,9 +570,9 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 values: new object[,]
                 {
                     { 1, null, null, "What is 2 + 2?", 1, null },
-                    { 2, null, "http://example.com/images/france.jpg", "What is the capital of France?", 1, null },
-                    { 3, "http://example.com/audio/instrument.mp3", null, "Identify the instrument in the audio clip.", 1, null },
-                    { 4, null, null, "Watch the video and answer: Who is the speaker?", 1, "http://youtube.com/watch?v=example" }
+                    { 2, null, "https://example.com/images/france.jpg", "What is the capital of France?", 1, null },
+                    { 3, "https://example.com/audio/instrument.mp3", null, "Identify the instrument in the audio clip.", 1, null },
+                    { 4, null, null, "Watch the video and answer: Who is the speaker?", 1, "https://youtube.com/watch?v=example" }
                 });
 
             migrationBuilder.InsertData(

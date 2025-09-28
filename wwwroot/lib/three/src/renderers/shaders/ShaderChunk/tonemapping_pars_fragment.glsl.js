@@ -21,7 +21,7 @@ vec3 ReinhardToneMapping( vec3 color ) {
 
 }
 
-// source: http://filmicworlds.com/blog/filmic-tonemapping-operators/
+// source: https://filmicworlds.com/blog/filmic-tonemapping-operators/
 vec3 CineonToneMapping( vec3 color ) {
 
 	// filmic operator by Jim Hejl and Richard Burgess-Dawson

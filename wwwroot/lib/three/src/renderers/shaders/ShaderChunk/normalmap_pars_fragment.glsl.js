@@ -15,7 +15,7 @@ export default /* glsl */`
 #if ! defined ( USE_TANGENT ) && ( defined ( USE_NORMALMAP_TANGENTSPACE ) || defined ( USE_CLEARCOAT_NORMALMAP ) || defined( USE_ANISOTROPY ) )
 
 	// Normal Mapping Without Precomputed Tangents
-	// http://www.thetenthplanet.de/archives/1180
+	// https://www.thetenthplanet.de/archives/1180
 
 	mat3 getTangentFrame( vec3 eye_pos, vec3 surf_norm, vec2 uv ) {
 

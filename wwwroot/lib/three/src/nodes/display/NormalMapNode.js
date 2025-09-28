@@ -11,7 +11,7 @@ import { Fn, nodeProxy, vec3 } from '../tsl/TSLBase.js';
 import { TangentSpaceNormalMap, ObjectSpaceNormalMap } from '../../constants.js';
 
 // Normal Mapping Without Precomputed Tangents
-// http://www.thetenthplanet.de/archives/1180
+// https://www.thetenthplanet.de/archives/1180
 
 const perturbNormal2Arb = /*@__PURE__*/ Fn( ( inputs ) => {
 

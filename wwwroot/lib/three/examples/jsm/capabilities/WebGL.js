@@ -50,7 +50,7 @@ class WebGL {
 			2: window.WebGL2RenderingContext
 		};
 
-		let message = 'Your $0 does not seem to support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">$1</a>';
+		let message = 'Your $0 does not seem to support <a href="https://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">$1</a>';
 
 		const element = document.createElement( 'div' );
 		element.id = 'webglmessage';

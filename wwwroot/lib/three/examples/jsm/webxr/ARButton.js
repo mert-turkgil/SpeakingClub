@@ -12,7 +12,7 @@ class ARButton {
 				overlay.style.display = 'none';
 				document.body.appendChild( overlay );
 
-				const svg = document.createElementNS( 'http://www.w3.org/2000/svg', 'svg' );
+				const svg = document.createElementNS( 'https://www.w3.org/2000/svg', 'svg' );
 				svg.setAttribute( 'width', 38 );
 				svg.setAttribute( 'height', 38 );
 				svg.style.position = 'absolute';
@@ -25,7 +25,7 @@ class ARButton {
 				} );
 				overlay.appendChild( svg );
 
-				const path = document.createElementNS( 'http://www.w3.org/2000/svg', 'path' );
+				const path = document.createElementNS( 'https://www.w3.org/2000/svg', 'path' );
 				path.setAttribute( 'd', 'M 12,12 L 28,28 M 28,12 12,28' );
 				path.setAttribute( 'stroke', '#fff' );
 				path.setAttribute( 'stroke-width', 2 );
@@ -205,7 +205,7 @@ class ARButton {
 
 			if ( window.isSecureContext === false ) {
 
-				message.href = document.location.href.replace( /^http:/, 'https:' );
+				message.href = document.location.href.replace( /^https:/, 'https:' );
 				message.innerHTML = 'WEBXR NEEDS HTTPS'; // TODO Improve message
 
 			} else {

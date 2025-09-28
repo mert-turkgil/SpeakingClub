@@ -25,8 +25,8 @@ import {
  * blinn - Jim Blinn scaled the original data vertically by dividing by about 1.3 to look
  *   nicer. If you want to see the original teapot, similar to the real-world model, set
  *   this to false. True by default.
- *   See http://en.wikipedia.org/wiki/File:Original_Utah_Teapot.jpg for the original
- *   real-world teapot (from http://en.wikipedia.org/wiki/Utah_teapot).
+ *   See https://en.wikipedia.org/wiki/File:Original_Utah_Teapot.jpg for the original
+ *   real-world teapot (from https://en.wikipedia.org/wiki/Utah_teapot).
  *
  * Note that the bottom (the last four patches) is not flat - blame Frank Crow, not me.
  *
@@ -46,8 +46,8 @@ import {
  *      20       25440
  *      30       57360
  *
- * Code converted from my ancient SPD software, http://tog.acm.org/resources/SPD/
- * Created for the Udacity course "Interactive Rendering", http://bit.ly/ericity
+ * Code converted from my ancient SPD software, https://tog.acm.org/resources/SPD/
+ * Created for the Udacity course "Interactive Rendering", https://bit.ly/ericity
  * YouTube video on teapot history: https://www.youtube.com/watch?v=DxMfblPzFNc
  *
  * See https://en.wikipedia.org/wiki/Utah_teapot for the history of the teapot
@@ -446,7 +446,7 @@ class TeapotGeometry extends BufferGeometry {
 		const dtp = [];
 
 		// M * G * M matrix, sort of see
-		// http://www.cs.helsinki.fi/group/goa/mallinnus/curves/surfaces.html
+		// https://www.cs.helsinki.fi/group/goa/mallinnus/curves/surfaces.html
 		const mgm = [];
 
 		const vert = [];

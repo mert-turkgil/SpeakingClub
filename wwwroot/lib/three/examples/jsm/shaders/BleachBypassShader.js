@@ -1,7 +1,7 @@
 /**
- * Bleach bypass shader [http://en.wikipedia.org/wiki/Bleach_bypass]
+ * Bleach bypass shader [https://en.wikipedia.org/wiki/Bleach_bypass]
  * - based on Nvidia example
- * http://developer.download.nvidia.com/shaderlibrary/webpages/shader_library.html#post_bleach_bypass
+ * https://developer.download.nvidia.com/shaderlibrary/webpages/shader_library.html#post_bleach_bypass
  */
 
 const BleachBypassShader = {

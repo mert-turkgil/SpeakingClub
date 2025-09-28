@@ -5,7 +5,7 @@
   <img src="https://github.com/user-attachments/assets/c596c1b9-d9b0-49aa-ae27-807392884582" alt="SpeakingClub Logo" width="200" />
 
   <!-- SVG Banner -->
-  <svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <svg xmlns="https://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
     <!-- Sarı Arka Balon -->
     <rect x="260" y="120" width="280" height="180" rx="25" fill="#FFD966" stroke="#000" stroke-width="10"></rect>
     <polygon points="400,300 440,360 480,300" fill="#000"></polygon>

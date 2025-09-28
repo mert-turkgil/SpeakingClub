@@ -204,7 +204,7 @@ export const viewZToLogarithmicDepth = ( viewZ, near, far ) => {
 
 	// NOTE: viewZ must be negative--see explanation at the end of this comment block.
 	// The final logarithmic depth formula used here is adapted from one described in an
-	// article by Thatcher Ulrich (see http://tulrich.com/geekstuff/log_depth_buffer.txt),
+	// article by Thatcher Ulrich (see https://tulrich.com/geekstuff/log_depth_buffer.txt),
 	// which was an improvement upon an earlier formula one described in an
 	// Outerra article (https://outerra.blogspot.com/2009/08/logarithmic-z-buffer.html).
 	// Ulrich's formula is the following:

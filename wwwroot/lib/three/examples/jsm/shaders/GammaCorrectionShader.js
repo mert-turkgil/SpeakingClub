@@ -1,6 +1,6 @@
 /**
  * Gamma Correction Shader
- * http://en.wikipedia.org/wiki/gamma_correction
+ * https://en.wikipedia.org/wiki/gamma_correction
  */
 
 const GammaCorrectionShader = {

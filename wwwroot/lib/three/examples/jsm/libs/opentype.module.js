@@ -530,7 +530,7 @@ BoundingBox.prototype.addY = function(y) {
  * @param {number} y - The ending Y coordinate.
  */
 BoundingBox.prototype.addBezier = function(x0, y0, x1, y1, x2, y2, x, y) {
-    // This code is based on http://nishiohirokazu.blogspot.com/2009/06/how-to-calculate-bezier-curves-bounding.html
+    // This code is based on https://nishiohirokazu.blogspot.com/2009/06/how-to-calculate-bezier-curves-bounding.html
     // and https://github.com/icons8/svg-path-bounding-box
 
     var p0 = [x0, y0];
@@ -818,7 +818,7 @@ Path.prototype.draw = function(ctx) {
 
 /**
  * Convert the Path to a string of path data instructions
- * See http://www.w3.org/TR/SVG/paths.html#PathData
+ * See https://www.w3.org/TR/SVG/paths.html#PathData
  * @param  {number} [decimalPlaces=2] - The amount of decimal places for floating-point values
  * @return {string}
  */
@@ -900,7 +900,7 @@ Path.prototype.toSVG = function(decimalPlaces) {
  */
 Path.prototype.toDOMElement = function(decimalPlaces) {
     var temporaryPath = this.toPathData(decimalPlaces);
-    var newPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    var newPath = document.createElementNS('https://www.w3.org/2000/svg', 'path');
 
     newPath.setAttribute('d', temporaryPath);
 
@@ -1344,7 +1344,7 @@ var eightBitMacEncodings = {
     'x-mac-cyrillic':  // Python: 'mac_cyrillic'
     'АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ†°Ґ£§•¶І®©™Ђђ≠Ѓѓ∞±≤≥іµґЈЄєЇїЉљЊњ' +
     'јЅ¬√ƒ≈∆«»… ЋћЌќѕ–—“”‘’÷„ЎўЏџ№Ёёяабвгдежзийклмнопрстуфхцчшщъыьэю',
-    'x-mac-gaelic': // http://unicode.org/Public/MAPPINGS/VENDORS/APPLE/GAELIC.TXT
+    'x-mac-gaelic': // https://unicode.org/Public/MAPPINGS/VENDORS/APPLE/GAELIC.TXT
     'ÄÅÇÉÑÖÜáàâäãåçéèêëíìîïñóòôöõúùûü†°¢£§•¶ß®©™´¨≠ÆØḂ±≤≥ḃĊċḊḋḞḟĠġṀæø' +
     'ṁṖṗɼƒſṠ«»… ÀÃÕŒœ–—“”‘’ṡẛÿŸṪ€‹›Ŷŷṫ·Ỳỳ⁊ÂÊÁËÈÍÎÏÌÓÔ♣ÒÚÛÙıÝýŴŵẄẅẀẁẂẃ',
     'x-mac-greek':  // Python: 'mac_greek'
@@ -1353,7 +1353,7 @@ var eightBitMacEncodings = {
     'x-mac-icelandic':  // Python: 'mac_iceland'
     'ÄÅÇÉÑÖÜáàâäãåçéèêëíìîïñóòôöõúùûüÝ°¢£§•¶ß®©™´¨≠ÆØ∞±≤≥¥µ∂∑∏π∫ªºΩæø' +
     '¿¡¬√ƒ≈∆«»… ÀÃÕŒœ–—“”‘’÷◊ÿŸ⁄€ÐðÞþý·‚„‰ÂÊÁËÈÍÎÏÌÓÔÒÚÛÙıˆ˜¯˘˙˚¸˝˛ˇ',
-    'x-mac-inuit': // http://unicode.org/Public/MAPPINGS/VENDORS/APPLE/INUIT.TXT
+    'x-mac-inuit': // https://unicode.org/Public/MAPPINGS/VENDORS/APPLE/INUIT.TXT
     'ᐃᐄᐅᐆᐊᐋᐱᐲᐳᐴᐸᐹᑉᑎᑏᑐᑑᑕᑖᑦᑭᑮᑯᑰᑲᑳᒃᒋᒌᒍᒎᒐᒑ°ᒡᒥᒦ•¶ᒧ®©™ᒨᒪᒫᒻᓂᓃᓄᓅᓇᓈᓐᓯᓰᓱᓲᓴᓵᔅᓕᓖᓗ' +
     'ᓘᓚᓛᓪᔨᔩᔪᔫᔭ… ᔮᔾᕕᕖᕗ–—“”‘’ᕘᕙᕚᕝᕆᕇᕈᕉᕋᕌᕐᕿᖀᖁᖂᖃᖄᖅᖏᖐᖑᖒᖓᖔᖕᙱᙲᙳᙴᙵᙶᖖᖠᖡᖢᖣᖤᖥᖦᕼŁł',
     'x-mac-ce':  // Python: 'mac_latin2'
@@ -5571,7 +5571,7 @@ var macLanguages = {
 // Syllables but MacOS had run out of available script codes, so this was
 // done as a (pretty radical) "modification" of Ethiopic.
 //
-// http://unicode.org/Public/MAPPINGS/VENDORS/APPLE/Readme.txt
+// https://unicode.org/Public/MAPPINGS/VENDORS/APPLE/Readme.txt
 var macLanguageToScript = {
     0: 0,  // langEnglish → smRoman
     1: 0,  // langFrench → smRoman
@@ -5708,8 +5708,8 @@ var macLanguageToScript = {
 // this to 'hr-BA' and not 'hr-Latn-BA' because Latin is the default script
 // for the Croatian language, according to IANA.
 //
-// http://www.unicode.org/cldr/charts/latest/supplemental/likely_subtags.html
-// http://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
+// https://www.unicode.org/cldr/charts/latest/supplemental/likely_subtags.html
+// https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
 var windowsLanguages = {
     0x0436: 'af',
     0x041C: 'sq',
@@ -5991,7 +5991,7 @@ var macScriptEncodings = {
 // tables, we need to emit a MacOS script ID. Therefore, we cannot
 // merge macScriptEncodings into macLanguageEncodings.
 //
-// http://unicode.org/Public/MAPPINGS/VENDORS/APPLE/Readme.txt
+// https://unicode.org/Public/MAPPINGS/VENDORS/APPLE/Readme.txt
 var macLanguageEncodings = {
     15: 'x-mac-icelandic',    // langIcelandic
     17: 'x-mac-turkish',      // langTurkish
@@ -7234,7 +7234,7 @@ function fontToSfntTable(font) {
         ulUnicodeRange2: ulUnicodeRange2,
         ulUnicodeRange3: ulUnicodeRange3,
         ulUnicodeRange4: ulUnicodeRange4,
-        // See http://typophile.com/node/13081 for more info on vertical metrics.
+        // See https://typophile.com/node/13081 for more info on vertical metrics.
         // We get metrics for typical characters (such as "x" for xHeight).
         // We provide some fallback characters if characters are unavailable: their
         // ordering was chosen experimentally.
@@ -8590,7 +8590,7 @@ var roundSuper = function (v) {
 
     v += phase;
 
-    // according to http://xgridfit.sourceforge.net/round.html
+    // according to https://xgridfit.sourceforge.net/round.html
     if (v < 0) { return phase * sign; }
 
     return v * sign;

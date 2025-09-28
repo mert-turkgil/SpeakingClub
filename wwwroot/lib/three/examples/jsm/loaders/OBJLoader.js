@@ -681,7 +681,7 @@ class OBJLoader extends Loader {
 				// Example asset: examples/models/obj/cerberus/Cerberus.obj
 
 				/*
-					 * http://paulbourke.net/dataformats/obj/
+					 * https://paulbourke.net/dataformats/obj/
 					 *
 					 * From chapter "Grouping" Syntax explanation "s group_number":
 					 * "group_number is the smoothing group number. To turn off smoothing groups, use a value of 0 or off.

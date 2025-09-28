@@ -1530,7 +1530,7 @@ class ColladaLoader extends Loader {
 
 			let loader;
 
-			let extension = image.slice( ( image.lastIndexOf( '.' ) - 1 >>> 0 ) + 2 ); // http://www.jstips.co/en/javascript/get-file-extension/
+			let extension = image.slice( ( image.lastIndexOf( '.' ) - 1 >>> 0 ) + 2 ); // https://www.jstips.co/en/javascript/get-file-extension/
 			extension = extension.toLowerCase();
 
 			switch ( extension ) {

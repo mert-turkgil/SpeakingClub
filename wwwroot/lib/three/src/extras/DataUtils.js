@@ -1,6 +1,6 @@
 import { clamp } from '../math/MathUtils.js';
 
-// Fast Half Float Conversions, http://www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
+// Fast Half Float Conversions, https://www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
 
 const _tables = /*@__PURE__*/ _generateTables();
 

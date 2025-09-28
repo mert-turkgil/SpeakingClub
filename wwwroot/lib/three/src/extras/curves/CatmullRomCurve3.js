@@ -6,7 +6,7 @@ function CubicPoly() {
 	/**
 	 * Centripetal CatmullRom Curve - which is useful for avoiding
 	* cusps and self-intersections in non-uniform catmull rom curves.
-	* http://www.cemyuksel.com/research/catmullrom_param/catmullrom.pdf
+	* https://www.cemyuksel.com/research/catmullrom_param/catmullrom.pdf
 	*
 	* curve.type accepts centripetal(default), chordal and catmullrom
 	* curve.tension is used for catmullrom which defaults to 0.5
@@ -14,8 +14,8 @@ function CubicPoly() {
 
 	/*
 	Based on an optimized c++ solution in
-	- http://stackoverflow.com/questions/9489736/catmull-rom-curve-with-no-cusps-and-no-self-intersections/
-	- http://ideone.com/NoEbVM
+	- https://stackoverflow.com/questions/9489736/catmull-rom-curve-with-no-cusps-and-no-self-intersections/
+	- https://ideone.com/NoEbVM
 
 	This CubicPoly class could be used for reusing some variables and calculations,
 	but for three.js curve use, it could be possible inlined and flatten into a single function call

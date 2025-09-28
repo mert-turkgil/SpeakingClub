@@ -138,7 +138,7 @@ class MD2Loader extends Loader {
 
 		const data = new DataView( buffer );
 
-		// http://tfc.duke.free.fr/coding/md2-specs-en.html
+		// https://tfc.duke.free.fr/coding/md2-specs-en.html
 
 		const header = {};
 		const headerNames = [

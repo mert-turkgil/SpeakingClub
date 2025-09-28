@@ -6,7 +6,7 @@ import {
 } from 'three';
 
 /**
- * Based on http://www.emagix.net/academic/mscs-project/item/camera-sync-with-css3-and-webgl-threejs
+ * Based on https://www.emagix.net/academic/mscs-project/item/camera-sync-with-css3-and-webgl-threejs
  */
 
 const _position = new Vector3();
@@ -291,7 +291,7 @@ class CSS3DRenderer {
 
 					if ( object.isCSS3DSprite ) {
 
-						// http://swiftcoder.wordpress.com/2008/11/25/constructing-a-billboard-matrix/
+						// https://swiftcoder.wordpress.com/2008/11/25/constructing-a-billboard-matrix/
 
 						_matrix.copy( camera.matrixWorldInverse );
 						_matrix.transpose();

@@ -19,7 +19,7 @@ import {
  * orientation — Orientation of the decal projector
  * size — Size of the decal projector
  *
- * reference: http://blog.wolfire.com/2009/06/how-to-project-decals/
+ * reference: https://blog.wolfire.com/2009/06/how-to-project-decals/
  *
  */
 

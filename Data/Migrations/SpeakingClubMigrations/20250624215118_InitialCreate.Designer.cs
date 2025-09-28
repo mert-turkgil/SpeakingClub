@@ -178,7 +178,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             RawMaps = "",
                             RawYT = "",
                             Title = "Blog Post 1",
-                            Url = "http://example.com/blog1",
+                            Url = "https://example.com/blog1",
                             isHome = true
                         },
                         new
@@ -192,7 +192,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             RawMaps = "",
                             RawYT = "",
                             Title = "Blog Post 2",
-                            Url = "http://example.com/blog2",
+                            Url = "https://example.com/blog2",
                             isHome = true
                         });
                 });
@@ -328,14 +328,14 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         new
                         {
                             Id = 2,
-                            ImageUrl = "http://example.com/images/france.jpg",
+                            ImageUrl = "https://example.com/images/france.jpg",
                             QuestionText = "What is the capital of France?",
                             QuizId = 1
                         },
                         new
                         {
                             Id = 3,
-                            AudioUrl = "http://example.com/audio/instrument.mp3",
+                            AudioUrl = "https://example.com/audio/instrument.mp3",
                             QuestionText = "Identify the instrument in the audio clip.",
                             QuizId = 1
                         },
@@ -344,7 +344,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             Id = 4,
                             QuestionText = "Watch the video and answer: Who is the speaker?",
                             QuizId = 1,
-                            VideoUrl = "http://youtube.com/watch?v=example"
+                            VideoUrl = "https://youtube.com/watch?v=example"
                         });
                 });
 
@@ -390,12 +390,12 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         new
                         {
                             Id = 1,
-                            AudioUrl = "http://example.com/audio1.mp3",
+                            AudioUrl = "https://example.com/audio1.mp3",
                             CategoryId = 1,
                             Description = "A quiz to test your general knowledge.",
                             TeacherId = "teacher1",
                             Title = "General Knowledge Quiz",
-                            YouTubeVideoUrl = "http://youtube.com/vid1"
+                            YouTubeVideoUrl = "https://youtube.com/vid1"
                         });
                 });
 
@@ -798,7 +798,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             CarouselImage = "slide1.jpg",
                             CarouselImage1200w = "slide1_1200w.jpg",
                             CarouselImage600w = "slide1_600w.jpg",
-                            CarouselLink = "http://example.com/slide1",
+                            CarouselLink = "https://example.com/slide1",
                             CarouselLinkText = "Learn More",
                             CarouselTitle = "Slide 1",
                             DateAdded = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
@@ -810,7 +810,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             CarouselImage = "slide2.jpg",
                             CarouselImage1200w = "slide2_1200w.jpg",
                             CarouselImage600w = "slide2_600w.jpg",
-                            CarouselLink = "http://example.com/slide2",
+                            CarouselLink = "https://example.com/slide2",
                             CarouselLinkText = "Learn More",
                             CarouselTitle = "Slide 2",
                             DateAdded = new DateTime(2025, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified)

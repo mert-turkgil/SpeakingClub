@@ -5,7 +5,7 @@ import {
 } from 'three';
 
 /**
- * peppers ghost effect based on http://www.instructables.com/id/Reflective-Prism/?ALLSTEPS
+ * peppers ghost effect based on https://www.instructables.com/id/Reflective-Prism/?ALLSTEPS
  */
 
 class PeppersGhostEffect {

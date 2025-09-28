@@ -14,7 +14,7 @@ import {
  *
  * - other AO algorithms that are not implemented here:
  *   - Screen Space Ambient Occlusion (SSAO), see also SSAOShader.js
- *	 - http://john-chapman-graphics.blogspot.com/2013/01/ssao-tutorial.html
+ *	 - https://john-chapman-graphics.blogspot.com/2013/01/ssao-tutorial.html
  *	 - https://learnopengl.com/Advanced-Lighting/SSAO
  *	 - https://creativecoding.soe.ucsc.edu/courses/cmpm164/_schedule/AmbientOcclusion.pdf
  *	 - https://drive.google.com/file/d/1SyagcEVplIm2KkRD3WQYSO9O0Iyi1hfy/edit
@@ -24,7 +24,7 @@ import {
  *   - N8HO
  *	 - https://github.com/N8python/n8ao
  *   - Horizon Based Ambient Occlusion (HBAO)
- *	 - http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.577.2286&rep=rep1&type=pdf
+ *	 - https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.577.2286&rep=rep1&type=pdf
  *	 - https://www.derschmale.com/2013/12/20/an-alternative-implementation-for-hbao-2/
  *
  * - further reading

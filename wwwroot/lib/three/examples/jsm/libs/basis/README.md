@@ -1,6 +1,6 @@
 # Basis Universal GPU Texture Compression
 
-Basis Universal is a "[supercompressed](http://gamma.cs.unc.edu/GST/gst.pdf)"
+Basis Universal is a "[supercompressed](https://gamma.cs.unc.edu/GST/gst.pdf)"
 GPU texture and texture video compression system that outputs a highly
 compressed intermediate file format (.basis) that can be quickly transcoded to
 a wide variety of GPU texture compression formats.

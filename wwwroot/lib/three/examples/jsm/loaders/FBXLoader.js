@@ -377,7 +377,7 @@ class FBXTreeParser {
 		const valueU = wrapModeU !== undefined ? wrapModeU.value : 0;
 		const valueV = wrapModeV !== undefined ? wrapModeV.value : 0;
 
-		// http://download.autodesk.com/us/fbx/SDKdocs/FBX_SDK_Help/files/fbxsdkref/class_k_fbx_texture.html#889640e63e2e681259ea81061b85143a
+		// https://download.autodesk.com/us/fbx/SDKdocs/FBX_SDK_Help/files/fbxsdkref/class_k_fbx_texture.html#889640e63e2e681259ea81061b85143a
 		// 0: repeat(default), 1: clamp
 
 		texture.wrapS = valueU === 0 ? RepeatWrapping : ClampToEdgeWrapping;
@@ -4158,7 +4158,7 @@ const tempVec = new Vector3();
 
 // generate transformation from FBX transform data
 // ref: https://help.autodesk.com/view/FBX/2017/ENU/?guid=__files_GUID_10CDD63C_79C1_4F2D_BB28_AD2BE65A02ED_htm
-// ref: http://docs.autodesk.com/FBX/2014/ENU/FBX-SDK-Documentation/index.html?url=cpp_ref/_transformations_2main_8cxx-example.html,topicNumber=cpp_ref__transformations_2main_8cxx_example_htmlfc10a1e1-b18d-4e72-9dc0-70d0f1959f5e
+// ref: https://docs.autodesk.com/FBX/2014/ENU/FBX-SDK-Documentation/index.html?url=cpp_ref/_transformations_2main_8cxx-example.html,topicNumber=cpp_ref__transformations_2main_8cxx_example_htmlfc10a1e1-b18d-4e72-9dc0-70d0f1959f5e
 function generateTransform( transformData ) {
 
 	const lTranslationM = new Matrix4();
@@ -4277,7 +4277,7 @@ function generateTransform( transformData ) {
 }
 
 // Returns the three.js intrinsic Euler order corresponding to FBX extrinsic Euler order
-// ref: http://help.autodesk.com/view/FBX/2017/ENU/?guid=__cpp_ref_class_fbx_euler_html
+// ref: https://help.autodesk.com/view/FBX/2017/ENU/?guid=__cpp_ref_class_fbx_euler_html
 function getEulerOrder( order ) {
 
 	order = order || 0;

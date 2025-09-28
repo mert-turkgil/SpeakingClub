@@ -428,8 +428,8 @@ class ReflectorBaseNode extends Node {
 		virtualCamera.updateMatrixWorld();
 		virtualCamera.projectionMatrix.copy( camera.projectionMatrix );
 
-		// Now update projection matrix with new clip plane, implementing code from: http://www.terathon.com/code/oblique.html
-		// Paper explaining this technique: http://www.terathon.com/lengyel/Lengyel-Oblique.pdf
+		// Now update projection matrix with new clip plane, implementing code from: https://www.terathon.com/code/oblique.html
+		// Paper explaining this technique: https://www.terathon.com/lengyel/Lengyel-Oblique.pdf
 		_reflectorPlane.setFromNormalAndCoplanarPoint( _normal, _reflectorWorldPosition );
 		_reflectorPlane.applyMatrix4( virtualCamera.matrixWorldInverse );
 

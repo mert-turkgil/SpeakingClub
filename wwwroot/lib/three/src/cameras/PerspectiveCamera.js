@@ -163,7 +163,7 @@ class PerspectiveCamera extends Camera {
 	 */
 	setFocalLength( focalLength ) {
 
-		/** see {@link http://www.bobatkins.com/photography/technical/field_of_view.html} */
+		/** see {@link https://www.bobatkins.com/photography/technical/field_of_view.html} */
 		const vExtentSlope = 0.5 * this.getFilmHeight() / focalLength;
 
 		this.fov = RAD2DEG * 2 * Math.atan( vExtentSlope );

@@ -42,7 +42,7 @@ namespace SpeakingClub.Data.Configuration
                     CarouselImage600w = "slide1_600w.jpg",
                     CarouselImage1200w = "slide1_1200w.jpg",
                     CarouselDescription = "Description for slide 1",
-                    CarouselLink = "http://example.com/slide1",
+                    CarouselLink = "https://example.com/slide1",
                     CarouselLinkText = "Learn More",
                     DateAdded = new DateTime(2025, 1, 1)
                 },
@@ -54,7 +54,7 @@ namespace SpeakingClub.Data.Configuration
                     CarouselImage600w = "slide2_600w.jpg",
                     CarouselImage1200w = "slide2_1200w.jpg",
                     CarouselDescription = "Description for slide 2",
-                    CarouselLink = "http://example.com/slide2",
+                    CarouselLink = "https://example.com/slide2",
                     CarouselLinkText = "Learn More",
                     DateAdded = new DateTime(2025, 1, 15)
                 }
@@ -116,8 +116,8 @@ namespace SpeakingClub.Data.Configuration
                     Id = 1,
                     Title = "General Knowledge Quiz",
                     Description = "A quiz to test your general knowledge.",
-                    AudioUrl = "http://example.com/audio1.mp3",
-                    YouTubeVideoUrl = "http://youtube.com/vid1",
+                    AudioUrl = "https://example.com/audio1.mp3",
+                    YouTubeVideoUrl = "https://youtube.com/vid1",
                     TeacherId = "teacher1",
                     CategoryId = 1
                 }
@@ -139,7 +139,7 @@ namespace SpeakingClub.Data.Configuration
                     Id = 2,
                     QuizId = 1,
                     QuestionText = "What is the capital of France?",
-                    ImageUrl = "http://example.com/images/france.jpg",
+                    ImageUrl = "https://example.com/images/france.jpg",
                     AudioUrl = null,
                     VideoUrl = null
                 },
@@ -149,7 +149,7 @@ namespace SpeakingClub.Data.Configuration
                     QuizId = 1,
                     QuestionText = "Identify the instrument in the audio clip.",
                     ImageUrl = null,
-                    AudioUrl = "http://example.com/audio/instrument.mp3",
+                    AudioUrl = "https://example.com/audio/instrument.mp3",
                     VideoUrl = null
                 },
                 new Question
@@ -159,7 +159,7 @@ namespace SpeakingClub.Data.Configuration
                     QuestionText = "Watch the video and answer: Who is the speaker?",
                     ImageUrl = null,
                     AudioUrl = null,
-                    VideoUrl = "http://youtube.com/watch?v=example"
+                    VideoUrl = "https://youtube.com/watch?v=example"
                 }
             );
 

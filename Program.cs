@@ -273,7 +273,7 @@ app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(acmeChallengePath),
     RequestPath = "/.well-known/acme-challenge",
-    ServeUnknownFileTypes = true, // Uzantısı bilinmeyen dosyaları da sun
+    ServeUnknownFileTypes = true,
     ContentTypeProvider = new FileExtensionContentTypeProvider()
 });
 

@@ -5,7 +5,7 @@ import { Vector3 } from 'three';
  * Generates 2D-Coordinates in a very fast way.
  *
  * Based on work by:
- * @link http://www.openprocessing.org/sketch/15493
+ * @link https://www.openprocessing.org/sketch/15493
  *
  * @param {Vector3} center - Center of Hilbert curve.
  * @param {number} [size=10] - Total width of Hilbert curve.

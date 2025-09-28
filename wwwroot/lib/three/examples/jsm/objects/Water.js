@@ -17,7 +17,7 @@ import {
  * Work based on :
  * https://github.com/Slayvin: Flat mirror for three.js
  * https://home.adelphi.edu/~stemkoski/ : An implementation of water shader based on the flat mirror
- * http://29a.ch/ && http://29a.ch/slides/2012/webglwater/ : Water shader explanations in WebGL
+ * https://29a.ch/ && https://29a.ch/slides/2012/webglwater/ : Water shader explanations in WebGL
  */
 
 class Water extends Mesh {
@@ -263,8 +263,8 @@ class Water extends Mesh {
 			textureMatrix.multiply( mirrorCamera.projectionMatrix );
 			textureMatrix.multiply( mirrorCamera.matrixWorldInverse );
 
-			// Now update projection matrix with new clip plane, implementing code from: http://www.terathon.com/code/oblique.html
-			// Paper explaining this technique: http://www.terathon.com/lengyel/Lengyel-Oblique.pdf
+			// Now update projection matrix with new clip plane, implementing code from: https://www.terathon.com/code/oblique.html
+			// Paper explaining this technique: https://www.terathon.com/lengyel/Lengyel-Oblique.pdf
 			mirrorPlane.setFromNormalAndCoplanarPoint( normal, mirrorWorldPosition );
 			mirrorPlane.applyMatrix4( mirrorCamera.matrixWorldInverse );
 

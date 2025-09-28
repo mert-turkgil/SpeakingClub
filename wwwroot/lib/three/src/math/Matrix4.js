@@ -601,7 +601,7 @@ class Matrix4 {
 	/**
 	 * Computes and returns the determinant of this matrix.
 	 *
-	 * Based on the method outlined [here]{@link http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.html}.
+	 * Based on the method outlined [here]{@link https://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.html}.
 	 *
 	 * @return {number} The determinant.
 	 */
@@ -716,7 +716,7 @@ class Matrix4 {
 	 */
 	invert() {
 
-		// based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm
+		// based on https://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm
 		const te = this.elements,
 
 			n11 = te[ 0 ], n21 = te[ 1 ], n31 = te[ 2 ], n41 = te[ 3 ],
@@ -919,7 +919,7 @@ class Matrix4 {
 	 */
 	makeRotationAxis( axis, angle ) {
 
-		// Based on http://www.gamedev.net/reference/articles/article1199.asp
+		// Based on https://www.gamedev.net/reference/articles/article1199.asp
 
 		const c = Math.cos( angle );
 		const s = Math.sin( angle );

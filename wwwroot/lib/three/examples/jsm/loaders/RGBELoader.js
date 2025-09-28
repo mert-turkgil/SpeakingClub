@@ -8,7 +8,7 @@ import {
 } from 'three';
 
 // https://github.com/mrdoob/three.js/issues/5552
-// http://en.wikipedia.org/wiki/RGBE_image_format
+// https://en.wikipedia.org/wiki/RGBE_image_format
 
 class RGBELoader extends DataTextureLoader {
 
@@ -20,7 +20,7 @@ class RGBELoader extends DataTextureLoader {
 
 	}
 
-	// adapted from http://www.graphics.cornell.edu/~bjw/rgbe.html
+	// adapted from https://www.graphics.cornell.edu/~bjw/rgbe.html
 
 	parse( buffer ) {
 

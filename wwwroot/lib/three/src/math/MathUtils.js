@@ -14,7 +14,7 @@ const RAD2DEG = 180 / Math.PI;
  */
 function generateUUID() {
 
-	// http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
+	// https://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
 
 	const d0 = Math.random() * 0xffffffff | 0;
 	const d1 = Math.random() * 0xffffffff | 0;
@@ -120,7 +120,7 @@ function lerp( x, y, t ) {
 /**
  * Smoothly interpolate a number from `x` to `y` in  a spring-like manner using a delta
  * time to maintain frame rate independent movement. For details, see
- * [Frame rate independent damping using lerp]{@link http://www.rorydriscoll.com/2016/03/07/frame-rate-independent-damping-using-lerp/}.
+ * [Frame rate independent damping using lerp]{@link https://www.rorydriscoll.com/2016/03/07/frame-rate-independent-damping-using-lerp/}.
  *
  * @param {number} x - The current point.
  * @param {number} y - The target point.
@@ -155,7 +155,7 @@ function pingpong( x, length = 1 ) {
  * moved between `min` and `max`, but smoothed or slowed down the closer `x` is to
  * the `min` and `max`.
  *
- * See [Smoothstep]{@link http://en.wikipedia.org/wiki/Smoothstep} for more details.
+ * See [Smoothstep]{@link https://en.wikipedia.org/wiki/Smoothstep} for more details.
  *
  * @param {number} x - The value to evaluate based on its position between min and max.
  * @param {number} min - The min value. Any x value below min will be `0`.

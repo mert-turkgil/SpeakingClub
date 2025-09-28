@@ -7,7 +7,7 @@
  * uncompressed DataTexture and Data3DTexture formats.
  *
  * References:
- * - KTX: http://github.khronos.org/KTX-Specification/
+ * - KTX: https://github.khronos.org/KTX-Specification/
  * - DFD: https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#basicdescriptor
  * - BasisU HDR: https://github.com/BinomialLLC/basis_universal/wiki/UASTC-HDR-Texture-Specification-v1.0
  */

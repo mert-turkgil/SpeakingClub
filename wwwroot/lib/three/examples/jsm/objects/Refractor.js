@@ -161,7 +161,7 @@ class Refractor extends Mesh {
 		} )();
 
 		// This will update the texture matrix that is used for projective texture mapping in the shader.
-		// see: http://developer.download.nvidia.com/assets/gamedev/docs/projective_texture_mapping.pdf
+		// see: https://developer.download.nvidia.com/assets/gamedev/docs/projective_texture_mapping.pdf
 
 		function updateTextureMatrix( camera ) {
 

@@ -54,7 +54,7 @@ export const reinhardToneMapping = /*@__PURE__*/ Fn( ( [ color, exposure ] ) => 
 /**
  * Cineon tone mapping.
  *
- * Reference: {@link http://filmicworlds.com/blog/filmic-tonemapping-operators/}
+ * Reference: {@link https://filmicworlds.com/blog/filmic-tonemapping-operators/}
  *
  * @tsl
  * @function

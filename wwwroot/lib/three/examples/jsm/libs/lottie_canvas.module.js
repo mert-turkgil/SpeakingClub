@@ -2,7 +2,7 @@ const lottie = {};
 
 if (typeof document !== 'undefined') {
 
-const svgNS = 'http://www.w3.org/2000/svg';
+const svgNS = 'https://www.w3.org/2000/svg';
 
 let locationHref = '';
 let _useWebWorker = false;
@@ -1149,7 +1149,7 @@ const ImagePreloader = (function () {
       ob.img = proxyImage;
       this._imageLoaded();
     }.bind(this), false);
-    img.setAttributeNS('http://www.w3.org/1999/xlink', 'href', path);
+    img.setAttributeNS('https://www.w3.org/1999/xlink', 'href', path);
     if (this._elementHelper.append) {
       this._elementHelper.append(img);
     } else {
@@ -8710,7 +8710,7 @@ IImageElement.prototype.createContent = function () {
   this.innerElem.setAttribute('width', this.assetData.w + 'px');
   this.innerElem.setAttribute('height', this.assetData.h + 'px');
   this.innerElem.setAttribute('preserveAspectRatio', this.assetData.pr || this.globalData.renderConfig.imagePreserveAspectRatio);
-  this.innerElem.setAttributeNS('http://www.w3.org/1999/xlink', 'href', assetPath);
+  this.innerElem.setAttributeNS('https://www.w3.org/1999/xlink', 'href', assetPath);
 
   this.layerElement.appendChild(this.innerElem);
 };
@@ -11300,7 +11300,7 @@ SVGTextLottieElement.prototype.buildNewText = function () {
           tSpan.setAttribute('transform', 'translate(' + matrixHelper.props[12] + ',' + matrixHelper.props[13] + ')');
         }
         tSpan.textContent = letters[i].val;
-        tSpan.setAttributeNS('http://www.w3.org/XML/1998/namespace', 'xml:space', 'preserve');
+        tSpan.setAttributeNS('https://www.w3.org/XML/1998/namespace', 'xml:space', 'preserve');
       }
       //
     }
@@ -11464,7 +11464,7 @@ SVGRendererBase.prototype.createSolid = function (data) {
 };
 
 SVGRendererBase.prototype.configAnimation = function (animData) {
-  this.svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  this.svgElement.setAttribute('xmlns', 'https://www.w3.org/2000/svg');
   if (this.renderConfig.viewBoxSize) {
     this.svgElement.setAttribute('viewBox', this.renderConfig.viewBoxSize);
   } else {
@@ -13460,7 +13460,7 @@ function seedRandom(pool, math) {
             return r;
             // For robust unpredictability, the function call below automatically
             // discards an initial batch of values.  This is called RC4-drop[256].
-            // See http://google.com/search?q=rsa+fluhrer+response&btnI
+            // See https://google.com/search?q=rsa+fluhrer+response&btnI
         };
     }
 

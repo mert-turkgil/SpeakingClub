@@ -68,7 +68,7 @@ class SVGRenderer {
 			_svgPathPool = [],
 
 			_projector = new Projector(),
-			_svg = document.createElementNS( 'http://www.w3.org/2000/svg', 'svg' );
+			_svg = document.createElementNS( 'https://www.w3.org/2000/svg', 'svg' );
 
 		this.domElement = _svg;
 
@@ -535,7 +535,7 @@ class SVGRenderer {
 
 			if ( _svgPathPool[ id ] == null ) {
 
-				_svgPathPool[ id ] = document.createElementNS( 'http://www.w3.org/2000/svg', 'path' );
+				_svgPathPool[ id ] = document.createElementNS( 'https://www.w3.org/2000/svg', 'path' );
 
 				if ( _quality == 0 ) {
 

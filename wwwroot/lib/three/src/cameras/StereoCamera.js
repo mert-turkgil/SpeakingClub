@@ -101,7 +101,7 @@ class StereoCamera {
 			cache.eyeSep = this.eyeSep;
 
 			// Off-axis stereoscopic effect based on
-			// http://paulbourke.net/stereographics/stereorender/
+			// https://paulbourke.net/stereographics/stereorender/
 
 			_projectionMatrix.copy( camera.projectionMatrix );
 			const eyeSepHalf = cache.eyeSep / 2;

@@ -62,7 +62,7 @@ namespace SpeakingClub.Controllers
             }
 
             // XML oluştur
-            XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
+            XNamespace ns = "https://www.sitemaps.org/schemas/sitemap/0.9";
             var sitemap = new XDocument(
                 new XDeclaration("1.0", "utf-8", "yes"),
                 new XElement(ns + "urlset", urls)
@@ -75,7 +75,7 @@ namespace SpeakingClub.Controllers
 
         private XElement CreateUrl(string loc, DateTime? lastmod = null)
         {
-            XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
+            XNamespace ns = "https://www.sitemaps.org/schemas/sitemap/0.9";
             var url = new XElement(ns + "url",
                 new XElement(ns + "loc", loc)
             );

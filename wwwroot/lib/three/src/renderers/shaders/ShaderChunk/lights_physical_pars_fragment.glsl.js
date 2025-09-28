@@ -77,7 +77,7 @@ float V_GGX_SmithCorrelated( const in float alpha, const in float dotNL, const i
 }
 
 // Microfacet Models for Refraction through Rough Surfaces - equation (33)
-// http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
+// https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
 // alpha is "roughness squared" in Disney’s reparameterization
 float D_GGX( const in float alpha, const in float dotNH ) {
 
@@ -402,7 +402,7 @@ vec3 EnvironmentBRDF( const in vec3 normal, const in vec3 viewDir, const in vec3
 
 // Fdez-Agüera's "Multiple-Scattering Microfacet Model for Real-Time Image Based Lighting"
 // Approximates multiscattering in order to preserve energy.
-// http://www.jcgt.org/published/0008/01/03/
+// https://www.jcgt.org/published/0008/01/03/
 #ifdef USE_IRIDESCENCE
 void computeMultiscatteringIridescence( const in vec3 normal, const in vec3 viewDir, const in vec3 specularColor, const in float specularF90, const in float iridescence, const in vec3 iridescenceF0, const in float roughness, inout vec3 singleScatter, inout vec3 multiScatter ) {
 #else
@@ -465,7 +465,7 @@ void computeMultiscattering( const in vec3 normal, const in vec3 viewDir, const 
 		);
 
 		// LTC Fresnel Approximation by Stephen Hill
-		// http://blog.selfshadow.com/publications/s2016-advances/s2016_ltc_fresnel.pdf
+		// https://blog.selfshadow.com/publications/s2016-advances/s2016_ltc_fresnel.pdf
 		vec3 fresnel = ( material.specularColor * t2.x + ( vec3( 1.0 ) - material.specularColor ) * t2.y );
 
 		reflectedLight.directSpecular += lightColor * fresnel * LTC_Evaluate( normal, viewDir, position, mInv, rectCoords );

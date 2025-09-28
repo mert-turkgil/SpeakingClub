@@ -236,7 +236,7 @@ class ExtrudeGeometry extends BufferGeometry {
 				let v_trans_x, v_trans_y, shrink_by; // resulting translation vector for inPt
 
 				// good reading for geometry algorithms (here: line-line intersection)
-				// http://geomalgorithms.com/a05-_intersect-1.html
+				// https://geomalgorithms.com/a05-_intersect-1.html
 
 				const v_prev_x = inPt.x - inPrev.x,
 					v_prev_y = inPt.y - inPrev.y;

@@ -367,7 +367,7 @@ const RAD2DEG = 180 / Math.PI;
  */
 function generateUUID() {
 
-	// http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
+	// https://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
 
 	const d0 = Math.random() * 0xffffffff | 0;
 	const d1 = Math.random() * 0xffffffff | 0;
@@ -473,7 +473,7 @@ function lerp( x, y, t ) {
 /**
  * Smoothly interpolate a number from `x` to `y` in  a spring-like manner using a delta
  * time to maintain frame rate independent movement. For details, see
- * [Frame rate independent damping using lerp]{@link http://www.rorydriscoll.com/2016/03/07/frame-rate-independent-damping-using-lerp/}.
+ * [Frame rate independent damping using lerp]{@link https://www.rorydriscoll.com/2016/03/07/frame-rate-independent-damping-using-lerp/}.
  *
  * @param {number} x - The current point.
  * @param {number} y - The target point.
@@ -508,7 +508,7 @@ function pingpong( x, length = 1 ) {
  * moved between `min` and `max`, but smoothed or slowed down the closer `x` is to
  * the `min` and `max`.
  *
- * See [Smoothstep]{@link http://en.wikipedia.org/wiki/Smoothstep} for more details.
+ * See [Smoothstep]{@link https://en.wikipedia.org/wiki/Smoothstep} for more details.
  *
  * @param {number} x - The value to evaluate based on its position between min and max.
  * @param {number} min - The min value. Any x value below min will be `0`.
@@ -2359,7 +2359,7 @@ function getTypedArray( type, buffer ) {
 
 function createElementNS( name ) {
 
-	return document.createElementNS( 'http://www.w3.org/1999/xhtml', name );
+	return document.createElementNS( 'https://www.w3.org/1999/xhtml', name );
 
 }
 
@@ -3157,7 +3157,7 @@ class Texture extends EventDispatcher {
 		 * @type {number}
 		 * @default 4
 		 */
-		this.unpackAlignment = 4;	// valid values: 1, 2, 4, 8 (see http://www.khronos.org/opengles/sdk/docs/man/xhtml/glPixelStorei.xml)
+		this.unpackAlignment = 4;	// valid values: 1, 2, 4, 8 (see https://www.khronos.org/opengles/sdk/docs/man/xhtml/glPixelStorei.xml)
 
 		/**
 		 * Textures containing color data should be annotated with `SRGBColorSpace` or `LinearSRGBColorSpace`.
@@ -4042,7 +4042,7 @@ class Vector4 {
 	 */
 	setAxisAngleFromQuaternion( q ) {
 
-		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/index.htm
+		// https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/index.htm
 
 		// q is assumed to be normalized
 
@@ -4077,7 +4077,7 @@ class Vector4 {
 	 */
 	setAxisAngleFromRotationMatrix( m ) {
 
-		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToAngle/index.htm
+		// https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToAngle/index.htm
 
 		// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
 
@@ -5212,7 +5212,7 @@ class Quaternion {
 
 		const x = euler._x, y = euler._y, z = euler._z, order = euler._order;
 
-		// http://www.mathworks.com/matlabcentral/fileexchange/
+		// https://www.mathworks.com/matlabcentral/fileexchange/
 		// 	20696-function-to-convert-between-dcm-euler-angles-quaternions-and-euler-vectors/
 		//	content/SpinCalc.m
 
@@ -5291,7 +5291,7 @@ class Quaternion {
 	 */
 	setFromAxisAngle( axis, angle ) {
 
-		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
+		// https://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
 
 		const halfAngle = angle / 2, s = Math.sin( halfAngle );
 
@@ -5314,7 +5314,7 @@ class Quaternion {
 	 */
 	setFromRotationMatrix( m ) {
 
-		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
+		// https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
 
 		// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
 
@@ -5603,7 +5603,7 @@ class Quaternion {
 	 */
 	multiplyQuaternions( a, b ) {
 
-		// from http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/code/index.htm
+		// from https://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/code/index.htm
 
 		const qax = a._x, qay = a._y, qaz = a._z, qaw = a._w;
 		const qbx = b._x, qby = b._y, qbz = b._z, qbw = b._w;
@@ -5633,7 +5633,7 @@ class Quaternion {
 
 		const x = this._x, y = this._y, z = this._z, w = this._w;
 
-		// http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/
+		// https://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/
 
 		let cosHalfTheta = w * qb._w + x * qb._x + y * qb._y + z * qb._z;
 
@@ -9510,7 +9510,7 @@ class Matrix4 {
 	/**
 	 * Computes and returns the determinant of this matrix.
 	 *
-	 * Based on the method outlined [here]{@link http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.html}.
+	 * Based on the method outlined [here]{@link https://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.html}.
 	 *
 	 * @return {number} The determinant.
 	 */
@@ -9625,7 +9625,7 @@ class Matrix4 {
 	 */
 	invert() {
 
-		// based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm
+		// based on https://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm
 		const te = this.elements,
 
 			n11 = te[ 0 ], n21 = te[ 1 ], n31 = te[ 2 ], n41 = te[ 3 ],
@@ -9828,7 +9828,7 @@ class Matrix4 {
 	 */
 	makeRotationAxis( axis, angle ) {
 
-		// Based on http://www.gamedev.net/reference/articles/article1199.asp
+		// Based on https://www.gamedev.net/reference/articles/article1199.asp
 
 		const c = Math.cos( angle );
 		const s = Math.sin( angle );
@@ -12363,7 +12363,7 @@ class Triangle {
 	 */
 	static getBarycoord( point, a, b, c, target ) {
 
-		// based on: http://www.blackpawn.com/texts/pointinpoly/default.html
+		// based on: https://www.blackpawn.com/texts/pointinpoly/default.html
 
 		_v0$2.subVectors( c, a );
 		_v1$3.subVectors( b, a );
@@ -14832,7 +14832,7 @@ class MeshBasicMaterial extends Material {
 
 }
 
-// Fast Half Float Conversions, http://www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
+// Fast Half Float Conversions, https://www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
 
 const _tables = /*@__PURE__*/ _generateTables();
 
@@ -16159,7 +16159,7 @@ class BufferGeometry extends EventDispatcher {
 		const index = this.index;
 		const attributes = this.attributes;
 
-		// based on http://www.terathon.com/code/tangent.html
+		// based on https://www.terathon.com/code/tangent.html
 		// (per vertex tangents)
 
 		if ( index === null ||
@@ -18006,7 +18006,7 @@ class PerspectiveCamera extends Camera {
 	 */
 	setFocalLength( focalLength ) {
 
-		/** see {@link http://www.bobatkins.com/photography/technical/field_of_view.html} */
+		/** see {@link https://www.bobatkins.com/photography/technical/field_of_view.html} */
 		const vExtentSlope = 0.5 * this.getFilmHeight() / focalLength;
 
 		this.fov = RAD2DEG * 2 * Math.atan( vExtentSlope );
@@ -21653,7 +21653,7 @@ const _normalMatrix = /*@__PURE__*/ new Matrix3();
 
 /**
  * A two dimensional surface that extends infinitely in 3D space, represented
- * in [Hessian normal form]{@link http://mathworld.wolfram.com/HessianNormalForm.html}
+ * in [Hessian normal form]{@link https://mathworld.wolfram.com/HessianNormalForm.html}
  * by a unit length normal vector and a constant.
  */
 class Plane {
@@ -25198,7 +25198,7 @@ class Curve {
 	 */
 	computeFrenetFrames( segments, closed = false ) {
 
-		// see http://www.cs.indiana.edu/pub/techreports/TR425.pdf
+		// see https://www.cs.indiana.edu/pub/techreports/TR425.pdf
 
 		const normal = new Vector3();
 
@@ -25669,7 +25669,7 @@ function CubicPoly() {
 	/**
 	 * Centripetal CatmullRom Curve - which is useful for avoiding
 	* cusps and self-intersections in non-uniform catmull rom curves.
-	* http://www.cemyuksel.com/research/catmullrom_param/catmullrom.pdf
+	* https://www.cemyuksel.com/research/catmullrom_param/catmullrom.pdf
 	*
 	* curve.type accepts centripetal(default), chordal and catmullrom
 	* curve.tension is used for catmullrom which defaults to 0.5
@@ -25677,8 +25677,8 @@ function CubicPoly() {
 
 	/*
 	Based on an optimized c++ solution in
-	- http://stackoverflow.com/questions/9489736/catmull-rom-curve-with-no-cusps-and-no-self-intersections/
-	- http://ideone.com/NoEbVM
+	- https://stackoverflow.com/questions/9489736/catmull-rom-curve-with-no-cusps-and-no-self-intersections/
+	- https://ideone.com/NoEbVM
 
 	This CubicPoly class could be used for reusing some variables and calculations,
 	but for three.js curve use, it could be possible inlined and flatten into a single function call
@@ -29675,7 +29675,7 @@ function indexCurve( start, minX, minY, invSize ) {
 }
 
 // Simon Tatham's linked list merge sort algorithm
-// http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
+// https://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
 function sortLinked( list ) {
 
 	let i, p, q, e, tail, numMerges, pSize, qSize,
@@ -30326,7 +30326,7 @@ class ExtrudeGeometry extends BufferGeometry {
 				let v_trans_x, v_trans_y, shrink_by; // resulting translation vector for inPt
 
 				// good reading for geometry algorithms (here: line-line intersection)
-				// http://geomalgorithms.com/a05-_intersect-1.html
+				// https://geomalgorithms.com/a05-_intersect-1.html
 
 				const v_prev_x = inPt.x - inPrev.x,
 					v_prev_y = inPt.y - inPrev.y;
@@ -33962,7 +33962,7 @@ const AnimationUtils = {
  * Time complexity is O(1) for linear access crossing at most two points
  * and O(log N) for random access, where N is the number of positions.
  *
- * References: {@link http://www.oodesign.com/template-method-pattern.html}
+ * References: {@link https://www.oodesign.com/template-method-pattern.html}
  *
  * @abstract
  */
@@ -34053,7 +34053,7 @@ class Interpolant {
 
 				linear_scan: {
 
-					//- See http://jsperf.com/comparison-to-undefined/3
+					//- See https://jsperf.com/comparison-to-undefined/3
 					//- slower code:
 					//-
 					//- 				if ( t >= t1 || t1 === undefined ) {
@@ -38940,7 +38940,7 @@ class LoaderUtils {
 
 		}
 
-		// Absolute URL http://,https://,//
+		// Absolute URL https://,https://,//
 		if ( /^(https?:)?\/\//i.test( url ) ) return url;
 
 		// Data URI
@@ -40631,7 +40631,7 @@ class StereoCamera {
 			cache.eyeSep = this.eyeSep;
 
 			// Off-axis stereoscopic effect based on
-			// http://paulbourke.net/stereographics/stereorender/
+			// https://paulbourke.net/stereographics/stereorender/
 
 			_projectionMatrix.copy( camera.projectionMatrix );
 			const eyeSepHalf = cache.eyeSep / 2;
@@ -53286,7 +53286,7 @@ function flatten( array, nBlocks, blockSize ) {
 
 	if ( firstElem <= 0 || firstElem > 0 ) return array;
 	// unoptimized: ! isNaN( firstElem )
-	// see http://jacksondunstan.com/articles/983
+	// see https://jacksondunstan.com/articles/983
 
 	const n = nBlocks * blockSize;
 	let r = arrayCacheF32[ n ];

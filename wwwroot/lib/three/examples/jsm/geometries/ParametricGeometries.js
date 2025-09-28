@@ -53,7 +53,7 @@ const ParametricGeometries = {
 	mobius: function ( u, t, target ) {
 
 		// flat mobius strip
-		// http://www.wolframalpha.com/input/?i=M%C3%B6bius+strip+parametric+equations&lk=1&a=ClashPrefs_*Surface.MoebiusStrip.SurfaceProperty.ParametricEquations-
+		// https://www.wolframalpha.com/input/?i=M%C3%B6bius+strip+parametric+equations&lk=1&a=ClashPrefs_*Surface.MoebiusStrip.SurfaceProperty.ParametricEquations-
 		u = u - 0.5;
 		const v = 2 * Math.PI * t;
 

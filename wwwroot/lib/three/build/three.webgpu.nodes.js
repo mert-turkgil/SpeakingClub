@@ -12169,7 +12169,7 @@ const transformedBentNormalView = /*@__PURE__*/ ( () => {
 } )();
 
 // Normal Mapping Without Precomputed Tangents
-// http://www.thetenthplanet.de/archives/1180
+// https://www.thetenthplanet.de/archives/1180
 
 const perturbNormal2Arb = /*@__PURE__*/ Fn( ( inputs ) => {
 
@@ -15508,7 +15508,7 @@ const viewZToLogarithmicDepth = ( viewZ, near, far ) => {
 
 	// NOTE: viewZ must be negative--see explanation at the end of this comment block.
 	// The final logarithmic depth formula used here is adapted from one described in an
-	// article by Thatcher Ulrich (see http://tulrich.com/geekstuff/log_depth_buffer.txt),
+	// article by Thatcher Ulrich (see https://tulrich.com/geekstuff/log_depth_buffer.txt),
 	// which was an improvement upon an earlier formula one described in an
 	// Outerra article (https://outerra.blogspot.com/2009/08/logarithmic-z-buffer.html).
 	// Ulrich's formula is the following:
@@ -19076,7 +19076,7 @@ const V_GGX_SmithCorrelated_Anisotropic = /*@__PURE__*/ Fn( ( { alphaT, alphaB, 
 } );
 
 // Microfacet Models for Refraction through Rough Surfaces - equation (33)
-// http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
+// https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
 // alpha is "roughness squared" in Disney’s reparameterization
 const D_GGX = /*@__PURE__*/ Fn( ( { alpha, dotNH } ) => {
 
@@ -20039,7 +20039,7 @@ class PhysicalLightingModel extends LightingModel {
 
 	// Fdez-Agüera's "Multiple-Scattering Microfacet Model for Real-Time Image Based Lighting"
 	// Approximates multi-scattering in order to preserve energy.
-	// http://www.jcgt.org/published/0008/01/03/
+	// https://www.jcgt.org/published/0008/01/03/
 
 	computeMultiscattering( singleScatter, multiScatter, specularF90 ) {
 
@@ -20124,7 +20124,7 @@ class PhysicalLightingModel extends LightingModel {
 		).toVar();
 
 		// LTC Fresnel Approximation by Stephen Hill
-		// http://blog.selfshadow.com/publications/s2016-advances/s2016_ltc_fresnel.pdf
+		// https://blog.selfshadow.com/publications/s2016-advances/s2016_ltc_fresnel.pdf
 		const fresnel = specularColor.mul( t2.x ).add( specularColor.oneMinus().mul( t2.y ) ).toVar();
 
 		reflectedLight.directSpecular.addAssign( lightColor.mul( fresnel ).mul( LTC_Evaluate( { N, V, P, mInv, p0, p1, p2, p3 } ) ) );
@@ -30053,8 +30053,8 @@ class ReflectorBaseNode extends Node {
 		virtualCamera.updateMatrixWorld();
 		virtualCamera.projectionMatrix.copy( camera.projectionMatrix );
 
-		// Now update projection matrix with new clip plane, implementing code from: http://www.terathon.com/code/oblique.html
-		// Paper explaining this technique: http://www.terathon.com/lengyel/Lengyel-Oblique.pdf
+		// Now update projection matrix with new clip plane, implementing code from: https://www.terathon.com/code/oblique.html
+		// Paper explaining this technique: https://www.terathon.com/lengyel/Lengyel-Oblique.pdf
 		_reflectorPlane.setFromNormalAndCoplanarPoint( _normal, _reflectorWorldPosition );
 		_reflectorPlane.applyMatrix4( virtualCamera.matrixWorldInverse );
 
@@ -33580,7 +33580,7 @@ const reinhardToneMapping = /*@__PURE__*/ Fn( ( [ color, exposure ] ) => {
 /**
  * Cineon tone mapping.
  *
- * Reference: {@link http://filmicworlds.com/blog/filmic-tonemapping-operators/}
+ * Reference: {@link https://filmicworlds.com/blog/filmic-tonemapping-operators/}
  *
  * @tsl
  * @function

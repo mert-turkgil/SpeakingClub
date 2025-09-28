@@ -546,7 +546,7 @@ class PhysicalLightingModel extends LightingModel {
 
 	// Fdez-Agüera's "Multiple-Scattering Microfacet Model for Real-Time Image Based Lighting"
 	// Approximates multi-scattering in order to preserve energy.
-	// http://www.jcgt.org/published/0008/01/03/
+	// https://www.jcgt.org/published/0008/01/03/
 
 	computeMultiscattering( singleScatter, multiScatter, specularF90 ) {
 
@@ -631,7 +631,7 @@ class PhysicalLightingModel extends LightingModel {
 		).toVar();
 
 		// LTC Fresnel Approximation by Stephen Hill
-		// http://blog.selfshadow.com/publications/s2016-advances/s2016_ltc_fresnel.pdf
+		// https://blog.selfshadow.com/publications/s2016-advances/s2016_ltc_fresnel.pdf
 		const fresnel = specularColor.mul( t2.x ).add( specularColor.oneMinus().mul( t2.y ) ).toVar();
 
 		reflectedLight.directSpecular.addAssign( lightColor.mul( fresnel ).mul( LTC_Evaluate( { N, V, P, mInv, p0, p1, p2, p3 } ) ) );

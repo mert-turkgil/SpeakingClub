@@ -58,7 +58,7 @@ class LoaderUtils {
 
 		}
 
-		// Absolute URL http://,https://,//
+		// Absolute URL https://,https://,//
 		if ( /^(https?:)?\/\//i.test( url ) ) return url;
 
 		// Data URI

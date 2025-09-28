@@ -4,7 +4,7 @@ import {
 
 /**
  * Luminosity
- * http://en.wikipedia.org/wiki/Luminosity
+ * https://en.wikipedia.org/wiki/Luminosity
  */
 
 const LuminosityHighPassShader = {

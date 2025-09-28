@@ -11,7 +11,7 @@ import {
  * random samples may be selected in O(logn) time. Memory usage is O(n).
  *
  * References:
- * - http://www.joesfer.com/?p=84
+ * - https://www.joesfer.com/?p=84
  * - https://stackoverflow.com/a/4322940/1314762
  */
 

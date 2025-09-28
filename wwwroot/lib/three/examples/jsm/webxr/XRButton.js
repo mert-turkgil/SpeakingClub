@@ -196,7 +196,7 @@ class XRButton {
 
 			if ( window.isSecureContext === false ) {
 
-				message.href = document.location.href.replace( /^http:/, 'https:' );
+				message.href = document.location.href.replace( /^https:/, 'https:' );
 				message.innerHTML = 'WEBXR NEEDS HTTPS'; // TODO Improve message
 
 			} else {

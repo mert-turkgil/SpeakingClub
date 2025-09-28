@@ -13,7 +13,7 @@ import * as BufferGeometryUtils from '../utils/BufferGeometryUtils.js';
  *    - based on code and technique
  *	  - by Stan Melax in 1998
  *	  - Progressive Mesh type Polygon Reduction Algorithm
- *    - http://www.melax.com/polychop/
+ *    - https://www.melax.com/polychop/
  */
 
 const _cb = new Vector3(), _ab = new Vector3();

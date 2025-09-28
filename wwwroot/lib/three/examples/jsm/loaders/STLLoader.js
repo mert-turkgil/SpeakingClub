@@ -17,7 +17,7 @@ import {
  * The loader returns a non-indexed buffer geometry.
  *
  * Limitations:
- *  Binary decoding supports "Magics" color format (http://en.wikipedia.org/wiki/STL_(file_format)#Color_in_binary_STL).
+ *  Binary decoding supports "Magics" color format (https://en.wikipedia.org/wiki/STL_(file_format)#Color_in_binary_STL).
  *  There is perhaps some question as to how valid it is to always assume little-endian-ness.
  *  ASCII decoding assumes file is UTF-8.
  *

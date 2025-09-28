@@ -18,7 +18,7 @@ import {
  *
  * References:
  *
- * Sousa2008 - Crysis Next Gen Effects, GDC2008, http://www.crytek.com/sites/default/files/GDC08_SousaT_CrysisEffects.ppt
+ * Sousa2008 - Crysis Next Gen Effects, GDC2008, https://www.crytek.com/sites/default/files/GDC08_SousaT_CrysisEffects.ppt
  */
 
 const GodRaysDepthMaskShader = {
@@ -133,7 +133,7 @@ const GodRaysGenerateShader = {
 			float col = 0.0;
 
 		// This breaks ANGLE in Chrome 22
-		//	- see http://code.google.com/p/chromium/issues/detail?id=153105
+		//	- see https://code.google.com/p/chromium/issues/detail?id=153105
 
 		/*
 		// Unrolling didn't do much on my hardware (ATI Mobility Radeon 3450),

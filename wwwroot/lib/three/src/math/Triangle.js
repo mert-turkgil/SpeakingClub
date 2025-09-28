@@ -93,7 +93,7 @@ class Triangle {
 	 */
 	static getBarycoord( point, a, b, c, target ) {
 
-		// based on: http://www.blackpawn.com/texts/pointinpoly/default.html
+		// based on: https://www.blackpawn.com/texts/pointinpoly/default.html
 
 		_v0.subVectors( c, a );
 		_v1.subVectors( b, a );

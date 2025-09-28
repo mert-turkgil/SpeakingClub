@@ -514,7 +514,7 @@ class BufferGeometry extends EventDispatcher {
 		const index = this.index;
 		const attributes = this.attributes;
 
-		// based on http://www.terathon.com/code/tangent.html
+		// based on https://www.terathon.com/code/tangent.html
 		// (per vertex tangents)
 
 		if ( index === null ||

@@ -76,14 +76,14 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                 keyColumn: "BlogId",
                 keyValue: 1,
                 column: "Url",
-                value: "http://example.com/blog1");
+                value: "https://example.com/blog1");
 
             migrationBuilder.UpdateData(
                 table: "Blogs",
                 keyColumn: "BlogId",
                 keyValue: 2,
                 column: "Url",
-                value: "http://example.com/blog2");
+                value: "https://example.com/blog2");
 
             migrationBuilder.UpdateData(
                 table: "QuizSubmissions",

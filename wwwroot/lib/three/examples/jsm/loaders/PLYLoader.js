@@ -339,7 +339,7 @@ class PLYLoader extends Loader {
 
 		function parseASCII( data, header ) {
 
-			// PLY ascii format specification, as per http://en.wikipedia.org/wiki/PLY_(file_format)
+			// PLY ascii format specification, as per https://en.wikipedia.org/wiki/PLY_(file_format)
 
 			const buffer = createBuffer();
 
