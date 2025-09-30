@@ -9,6 +9,8 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Polly;
 using SpeakingClub.Data;
+using SpeakingClub.Data.Abstract;
+using SpeakingClub.Data.Concrete;
 using SpeakingClub.Data.Configuration;
 using SpeakingClub.Identity;
 using SpeakingClub.Models;

@@ -17,7 +17,7 @@
 }
 @if (User.IsInRole("Admin") || User.IsInRole("Root"))
 {
-<section class="container-xxl" id="RoleManagment">
+<section id="RoleManagement" class="container-xxl">
     <div class="card shadow mt-4">
         <div class="card-header bg-primary text-white">
             <h3 class="card-title mb-0"><i class="fas fa-tv"></i> Role Managment</h3>
@@ -29,10 +29,10 @@
     </div>
 </section>
 
-<section class="container-xxl" id="UserManagment">
+<section id="UserManagement" class="container-xxl">
     <div class="card shadow mt-4">
         <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0"><i class="fas fa-tv"></i> User Managment</h3>
+            <h3 class="card-title mb-0"><i class="fas fa-tv"></i> User Management</h3>
         </div>
         <div class="card-body">
             <!-- Invoke the User Management ViewComponent -->
@@ -56,7 +56,7 @@
 }
 @if (User.IsInRole("Admin") || User.IsInRole("Root")||User.IsInRole("Teacher"))
 {
-    <section class="container-xxl" >
+    <section id="WordsManagement" class="container-xxl">
     <div class="card shadow my-3">
         <div class="card-header bg-primary text-white">
             <h3 class="card-title mb-0"> <i class="fa-solid fa-square-check"></i> Words Pronunciation Etc.</h3>
@@ -66,7 +66,7 @@
         </div>
     </div>
     </section>
-    <section class="container-xxl" >
+    <section id="QuizzesManagement" class="container-xxl">
     <div class="card shadow my-3">
         <div class="card-header bg-primary text-white">
             <h3 class="card-title mb-0"> <i class="fa-solid fa-clipboard-question"></i> Quizzes List</h3>
@@ -76,7 +76,7 @@
         </div>
     </div>
     </section>
-    <section class="container-xxl" >
+    <section id="BlogManagement" class="container-xxl">
     <div class="card shadow my-3">
         <div class="card-header bg-primary text-white">
             <h3 class="card-title mb-0"> <i class="fa-solid fa-blog"></i> Blog List</h3>
@@ -86,7 +86,7 @@
         </div>
     </div>
     </section>
-    <section class="container-xxl" >
+    <section id="CategoryManagement" class="container-xxl">
     <div class="card shadow my-3">
         <div class="card-header bg-primary text-white">
             <h3 class="card-title mb-0"> <i class="fa-solid fa-layer-group"></i> Category List</h3>
@@ -96,7 +96,7 @@
         </div>
     </div>
     </section>
-    <section class="container-xxl" >
+    <section id="TagManagement" class="container-xxl">
     <div class="card shadow my-3">
         <div class="card-header bg-primary text-white">
             <h3 class="card-title mb-0"> <i class="fa-solid fa-hashtag"></i> Tag List</h3>
@@ -106,7 +106,7 @@
         </div>
     </div>
     </section>
-        <section class="container-xxl" >
+    <section id="QuestionsManagement" class="container-xxl">
     <div class="card shadow my-3">
         <div class="card-header bg-primary text-white">
             <h3 class="card-title mb-0"> <i class="fa-solid fa-person-circle-question"></i> Questions List</h3>
@@ -116,10 +116,32 @@
         </div>
     </div>
     </section>
-    
+    <section id="SlideListManagement" class="container-xxl">
+    <div class="card shadow my-3">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title mb-0"> <i class="fa-solid fa-image"></i> Slide List</h3>
+        </div>
+        <div class="card-body">
+            @await Component.InvokeAsync("GenericList", new { entityType = "slides" })
+        </div>
+    </div>
+    </section>
 }
 
 @section Scripts{
+    <script>
+        $(window).on('load', function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const scrollToId = urlParams.get('scrollTo');
+            if (scrollToId) {
+                const target = document.getElementById(scrollToId);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        });
+    </script>
+
     <script>
         $(document).ready(function () {
             // Handle "Change" button click
@@ -196,6 +218,7 @@
             $('#TagList').DataTable();
             $('#WordList').DataTable();
             $('#CategoryList').DataTable();
+            $('#carouselTable').DataTable();
             $('#BlogList').DataTable();
             // Users Table
             $('#usersTable').DataTable({

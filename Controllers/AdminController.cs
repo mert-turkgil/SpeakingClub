@@ -1024,9 +1024,9 @@ namespace SpeakingClub.Controllers
         private void SaveContentToResxEdit(BlogResultModel model, string updatedContent, int id)
         {
             // Supported languages and their codes
-            string[] cultures = {   "tr-TR", "de-DE" };
-            string[] langCodes = {   "tr", "de" };
-            string[] titles = {  model.TitleTR, model.TitleDE };
+            string[] cultures = { "tr-TR", "de-DE" };
+            string[] langCodes = { "tr", "de" };
+            string[] titles = { model.TitleTR, model.TitleDE };
             string[] contents = { model.ContentTR, model.ContentDE };
 
             for (int i = 0; i < cultures.Length; i++)
@@ -1525,8 +1525,13 @@ namespace SpeakingClub.Controllers
                 // Remove questions and their answers
                 foreach (var question in quiz.Questions.ToList())
                 {
-                    question.Answers?.Clear();
-                    _unitOfWork.Questions.Remove(question);
+                    // First, remove all answers associated with the question
+                    foreach (var answer in question.Answers.ToList())
+                    {
+                        _unitOfWork.GenericRepository<Entity.QuizAnswer>().Remove(answer);
+                    }
+                    // Now, remove the question itself using the generic repository
+                    _unitOfWork.GenericRepository<Entity.Question>().Remove(question);
                 }
 
                 // Remove the quiz itself
@@ -1662,7 +1667,7 @@ namespace SpeakingClub.Controllers
         }
         #endregion
 
-        [HttpGet("QuizEdit/{id}")]
+        [HttpGet("QuizEdit/{id:int}")]
         public async Task<IActionResult> QuizEdit(int id)
         {
             var quiz = await _unitOfWork.Quizzes.GetByIdAsync(id);
@@ -1691,7 +1696,7 @@ namespace SpeakingClub.Controllers
                     {
                         AnswerId = a.Id,
                         AnswerText = a.AnswerText,
-                        IsCorrect = a.IsCorrect
+                        IsCorrect = a.IsCorrect.ToString().ToLower()
                     }).ToList()
                 }).ToList(),
                 Categories = (await _unitOfWork.Categories.GetAllAsync())
@@ -1705,15 +1710,22 @@ namespace SpeakingClub.Controllers
             return View(model);
         }
 
-        [HttpPost]
+        [HttpPost("QuizEdit/{id:int}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> QuizEdit(QuizEditViewModel model)
+        public async Task<IActionResult> QuizEdit(int id, QuizEditViewModel model) // CHANGE: Added 'int id' parameter
         {
+            // Add a check to ensure the route ID matches the model ID for security.
+            if (id != model.QuizId)
+            {
+                return BadRequest("ID mismatch between route and form data.");
+            }
+
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
             if (!ModelState.IsValid)
             {
+                // If validation fails, you must repopulate the dropdowns before returning the view.
                 model.Categories = await RepopulateCategories();
                 model.Tags = await RepopulateTags();
                 model.Words = await RepopulateWords();
@@ -1734,7 +1746,6 @@ namespace SpeakingClub.Controllers
                 quiz.Title = model.Title;
                 quiz.Description = model.Description;
                 quiz.CategoryId = model.CategoryId;
-                quiz.TeacherId = user.Id;
 
                 // Update relationships
                 await UpdateQuizRelationships(quiz, model);
@@ -1742,12 +1753,15 @@ namespace SpeakingClub.Controllers
                 // Update questions and answers
                 await UpdateQuestionsAndAnswers(quiz, model);
 
-                _unitOfWork.Quizzes.Update(quiz);
+                // THE FIX: Use the new Update method from the repository,
+                // telling it NOT to modify the TeacherId.
+                _unitOfWork.Quizzes.Update(quiz, modifyTeacherId: false);
+
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();
 
                 TempData["SuccessMessage"] = "Quiz updated successfully!";
-                return RedirectToAction("QuizList");
+                return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
@@ -1774,52 +1788,76 @@ namespace SpeakingClub.Controllers
             quiz.Words = selectedWords.ToList();
         }
 
-        private Task UpdateQuestionsAndAnswers(SpeakingClub.Entity.Quiz quiz, QuizEditViewModel model)
+        private async Task UpdateQuestionsAndAnswers(SpeakingClub.Entity.Quiz quiz, QuizEditViewModel model)
         {
-            // Remove deleted questions
-            var questionIds = model.Questions.Select(q => q.QuestionId).ToList();
-            var questionsToRemove = quiz.Questions.Where(q => !questionIds.Contains(q.Id)).ToList();
+            // Get IDs of questions submitted from the form (only existing ones)
+            var questionIdsFromModel = model.Questions.Select(q => q.QuestionId).Where(id => id > 0).ToHashSet();
+
+            // Identify and remove questions that were deleted from the UI
+            var questionsToRemove = quiz.Questions.Where(q => !questionIdsFromModel.Contains(q.Id)).ToList();
             foreach (var question in questionsToRemove)
             {
-                quiz.Questions.Remove(question);
+                // EF Core will handle deleting the orphaned answers when the question is removed
+                _unitOfWork.GenericRepository<Entity.Question>().Remove(question);
             }
 
+
+            // Process submitted questions (update existing or add new)
             foreach (var questionModel in model.Questions)
             {
-                var question = quiz.Questions.FirstOrDefault(q => q.Id == questionModel.QuestionId) ?? new Entity.Question();
+                Entity.Question? question; // Make question nullable to handle potential null from FirstOrDefault
 
-                question.QuestionText = questionModel.QuestionText;
-                question.ImageUrl = questionModel.ImageUrl;
-                question.AudioUrl = questionModel.AudioUrl;
-                question.VideoUrl = questionModel.VideoUrl;
-
-                // Update answers
-                var answerIds = questionModel.Answers.Select(a => a.AnswerId).ToList();
-                var answersToRemove = question.Answers.Where(a => answerIds.Contains(a.Id)).ToList();
-                foreach (var answer in answersToRemove)
+                if (questionModel.QuestionId > 0)
                 {
-                    question.Answers.Remove(answer);
+                    // Find existing question
+                    question = quiz.Questions.FirstOrDefault(q => q.Id == questionModel.QuestionId);
+                    if (question == null) continue; // Skip if not found
                 }
-
-                foreach (var answerModel in questionModel.Answers)
+                else
                 {
-                    var answer = question.Answers.FirstOrDefault(a => a.Id == answerModel.AnswerId) ?? new Entity.QuizAnswer();
-                    answer.AnswerText = answerModel.AnswerText;
-                    answer.IsCorrect = answerModel.IsCorrect;
-
-                    if (answer.Id == 0)
-                    {
-                        question.Answers.Add(answer);
-                    }
-                }
-
-                if (question.Id == 0)
-                {
+                    // Create a new question and add it to the quiz
+                    question = new Entity.Question();
                     quiz.Questions.Add(question);
                 }
-            }
 
-            return Task.CompletedTask;
+                // Update question properties
+                question.QuestionText = questionModel.QuestionText;
+                question.VideoUrl = questionModel.VideoUrl;
+                if (questionModel.ImageFile != null)
+                {
+                    question.ImageUrl = await ProcessImageUpload(questionModel.ImageFile);
+                }
+
+                // --- Manage Answers for this Question ---
+                var answerIdsFromModel = questionModel.Answers.Select(a => a.AnswerId).Where(id => id > 0).ToHashSet();
+
+                // Identify and remove answers deleted from the UI
+                var answersToRemove = question.Answers.Where(a => !answerIdsFromModel.Contains(a.Id)).ToList();
+                foreach (var answer in answersToRemove)
+                {
+                    // Directly remove from the context
+                    _unitOfWork.GenericRepository<Entity.QuizAnswer>().Remove(answer);
+                }
+
+                // Process submitted answers (update existing or add new)
+                foreach (var answerModel in questionModel.Answers)
+                {
+                    Entity.QuizAnswer? answer; // Make answer nullable
+                    if (answerModel.AnswerId > 0)
+                    {
+                        answer = question.Answers.FirstOrDefault(a => a.Id == answerModel.AnswerId);
+                        if (answer == null) continue;
+                    }
+                    else
+                    {
+                        answer = new Entity.QuizAnswer();
+                        question.Answers.Add(answer);
+                    }
+                    answer.AnswerText = answerModel.AnswerText;
+                    // CHANGE THIS: Check for the string "true"
+                    answer.IsCorrect = answerModel.IsCorrect == "true";
+                }
+            }
         }
         private async Task<IEnumerable<SelectListItem>> RepopulateCategories()
         {
@@ -1838,620 +1876,412 @@ namespace SpeakingClub.Controllers
             return (await _unitOfWork.Words.GetAllAsync())
                 .Select(w => new SelectListItem(w.Term, w.WordId.ToString()));
         }
-        #endregion
-        #endregion
 
-        #region Blog
-        #region Blog Create
-        [HttpGet("BlogCreate")]
-        public async Task<IActionResult> BlogCreate()
-        {
-            // Fetch Categories, Quizzes, and Tags for selection lists.
-            var categories = await _unitOfWork.Categories.GetAllAsync();
-            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-            var tags = await _unitOfWork.Tags.GetAllAsync();
-
-            // Debug log: count total questions loaded (for logging only).
-            int totalQuestions = quizzes.Sum(q => q.Questions?.Count ?? 0);
-            Console.WriteLine($"[DEBUG] Total quiz questions loaded: {totalQuestions}");
-
-            // Populate ViewBag for Categories.
-            ViewBag.Categories = categories.Select(c => new SelectListItem
-            {
-                Value = c.CategoryId.ToString(),
-                Text = c.Name
-            }).ToList();
-
-            // Populate ViewBag for Quizzes (for single quiz selection).
-            ViewBag.Quizzes = quizzes.Select(q => new SelectListItem
-            {
-                Value = q.Id.ToString(),
-                Text = q.Title
-            }).ToList();
-
-            // NOTE: We no longer aggregate quiz questions here as they are fetched
-            // via an AJAX call using GetByIdWithQuestions.
-
-            // Populate ViewBag for Tags.
-            ViewBag.Tags = tags.Select(t => new SelectListItem
-            {
-                Value = t.TagId.ToString(),
-                Text = t.Name
-            }).ToList();
-
-            // Create an initial empty BlogCreateModel.
-            var model = new BlogCreateModel
-            {
-                SelectedCategoryIds = new List<int>(),
-                // Use single quiz selection (if you have introduced a property like SelectedQuizId, use that)
-                SelectedQuizIds = null,
-                SelectedTagIds = new List<int>(),
-                IsHome = false,
-                SelectedQuestionId = null // No quiz question selected by default.
-            };
-
-            Console.WriteLine("[DEBUG] BlogCreate GET page loaded successfully.");
-            return View(model);
-        }
-
-
-        [HttpPost("BlogCreate")]
-        public async Task<IActionResult> BlogCreate(BlogCreateModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                Console.WriteLine("[ERROR] BlogCreate model validation failed.");
-
-                // Re-fetch categories, quizzes, and tags to repopulate dropdowns.
-                var categories = await _unitOfWork.Categories.GetAllAsync();
-                var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-                var tags = await _unitOfWork.Tags.GetAllAsync();
-
-                ViewBag.Categories = categories.Select(c => new SelectListItem
-                {
-                    Value = c.CategoryId.ToString(),
-                    Text = c.Name
-                }).ToList();
-
-                ViewBag.Quizzes = quizzes.Select(q => new SelectListItem
-                {
-                    Value = q.Id.ToString(),
-                    Text = q.Title
-                }).ToList();
-
-                ViewBag.Tags = tags.Select(t => new SelectListItem
-                {
-                    Value = t.TagId.ToString(),
-                    Text = t.Name
-                }).ToList();
-
-                return View(model);
-            }
-
-            // Define necessary paths.
-            string tempPath = Path.Combine(_env.WebRootPath, "temp");
-            string imgPath = Path.Combine(_env.WebRootPath, "blog", "img");
-            string gifPath = Path.Combine(_env.WebRootPath, "blog", "gif");
-            string coverPath = Path.Combine(_env.WebRootPath, "img");
-
-            Directory.CreateDirectory(tempPath);
-            Directory.CreateDirectory(imgPath);
-            Directory.CreateDirectory(gifPath);
-            Directory.CreateDirectory(coverPath);
-
-            // Process and move any images in the temp folder.
-            var fileMappings = new Dictionary<string, string>();
-            foreach (var file in Directory.GetFiles(tempPath))
-            {
-                var fileName = Path.GetFileName(file);
-                var fileExtension = Path.GetExtension(file).ToLower();
-
-                var destination = fileExtension == ".gif"
-                    ? Path.Combine(gifPath, fileName)
-                    : Path.Combine(imgPath, fileName);
-
-                if (!System.IO.File.Exists(destination))
-                {
-                    System.IO.File.Move(file, destination);
-                    Console.WriteLine($"[DEBUG] Moved content image: {fileName}");
-                }
-
-                fileMappings[$"/temp/{fileName}"] = $"/blog/{(fileExtension == ".gif" ? "gif" : "img")}/{fileName}";
-            }
-
-            // Process content images for main content and translations.
-            string updatedContent = ProcessContentImages(model.Content, fileMappings);
-            string updatedContentTR = ProcessContentImages(model.ContentTR, fileMappings);
-            string updatedContentDE = ProcessContentImages(model.ContentDE, fileMappings);
-
-            // Process Cover Image Upload if provided.
-            string? coverFileName = null;
-            if (model.ImageFile != null && model.ImageFile.Length > 0)
-            {
-                coverFileName = $"{model.Url}_cover{Path.GetExtension(model.ImageFile.FileName)}";
-                string coverFilePath = Path.Combine(coverPath, coverFileName);
-
-                using var stream = new FileStream(coverFilePath, FileMode.Create);
-                await model.ImageFile.CopyToAsync(stream);
-                Console.WriteLine($"[DEBUG] Saved cover image: {coverFileName}");
-            }
-
-            // Create and populate the Blog entity.
-            var blog = new Blog
-            {
-                Title = model.Title,
-                Content = updatedContent,
-                Url = model.Url,
-                Image = coverFileName,
-                Date = DateTime.Now,
-                Author = model.Author,
-                RawYT = model.RawYT,
-                RawMaps = model.RawMaps,
-                CategoryId = model.SelectedCategoryIds?.FirstOrDefault(),
-                isHome = model.IsHome
-            };
-
-            // If any quizzes were selected, assign them.
-            if (model.SelectedQuizIds?.Any() == true)
-            {
-                var quizzesToAdd = await _unitOfWork.Quizzes.GetAllAsync();
-                blog.Quiz = quizzesToAdd.Where(q => model.SelectedQuizIds.Contains(q.Id)).ToList();
-            }
-
-            // If any tags were selected, assign them.
-            if (model.SelectedTagIds?.Any() == true)
-            {
-                var tagsToAdd = await _unitOfWork.Tags.GetAllAsync();
-                blog.Tags = tagsToAdd.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList();
-            }
-
-            // Optionally assign the chosen quiz question to the blog.
-            if (model.SelectedQuestionId.HasValue)
-            {
-                blog.SelectedQuestionId = model.SelectedQuestionId.Value;
-            }
-
-            await _unitOfWork.Blogs.AddAsync(blog);
-            await _unitOfWork.SaveAsync();
-
-            // Save translations to resource files.
-            SaveContentToResx(new BlogCreateModel
-            {
-                TitleTR = model.TitleTR,
-                ContentTR = updatedContentTR,
-                TitleDE = model.TitleDE,
-                ContentDE = updatedContentDE,
-                Url = model.Url
-            }, blog.BlogId);
-
-            Console.WriteLine($"[DEBUG] Blog '{blog.Title}' saved successfully with ID {blog.BlogId}.");
-            return RedirectToAction("Index");
-        }
-
-        #endregion
-
-        #region Blog Edit
-        [HttpGet("BlogEdit/{id}")]
-        public async Task<IActionResult> BlogEdit(int id)
-        {
-            // Fetch the blog by its ID.
-            var blog = await _unitOfWork.Blogs.GetAsync(id);
-            if (blog == null)
-            {
-                return NotFound();
-            }
-
-            // Fetch supporting lists.
-            var categories = await _unitOfWork.Categories.GetAllAsync();
-            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-            var tags = await _unitOfWork.Tags.GetAllAsync();
-
-            // Populate ViewBag lists.
-            ViewBag.Categories = categories.Select(c => new SelectListItem
-            {
-                Value = c.CategoryId.ToString(),
-                Text = c.Name
-            }).ToList();
-
-            ViewBag.Quizzes = quizzes.Select(q => new SelectListItem
-            {
-                Value = q.Id.ToString(),
-                Text = q.Title
-            }).ToList();
-
-            ViewBag.Tags = tags.Select(t => new SelectListItem
-            {
-                Value = t.TagId.ToString(),
-                Text = t.Name
-            }).ToList();
-
-            // Populate the edit model.
-            var model = new BlogEditModel
-            {
-                BlogId = blog.BlogId,
-                Title = blog.Title,
-                Content = blog.Content,
-                Url = blog.Url,
-                Author = blog.Author,
-                RawYT = blog.RawYT,
-                RawMaps = blog.RawMaps,
-                // Set CoverImageUrl by assuming the cover image is stored in wwwroot/img.
-                CoverImageUrl = !string.IsNullOrEmpty(blog.Image) ? $"~/img/{blog.Image}" : string.Empty,
-                SelectedCategoryIds = blog.CategoryId.HasValue
-                                    ? new List<int> { blog.CategoryId.Value }
-                                    : new List<int>(),
-                SelectedQuizIds = null, // Quiz selection can be implemented as needed.
-                SelectedQuestionId = blog.SelectedQuestionId,
-                SelectedTagIds = blog.Tags?.Select(t => t.TagId).ToList() ?? new List<int>(),
-                IsHome = blog.isHome
-            };
-
-            // Set the cover image URL.
-            // Assuming cover images are stored in wwwroot/img and blog.Image holds the file name.
-            model.CoverImageUrl = !string.IsNullOrEmpty(blog.Image)
-                                ? $"/img/{blog.Image}"
-                                : string.Empty;
-
-            // Read translations from resource files using your helper service.
-            // Note: Keys must match those used when saving translations.
-
-
-            model.TitleTR = _manageResourceService.ReadResourceValue($"Title_{blog.BlogId}_{blog.Url}_tr", "tr-TR") ?? string.Empty;
-            model.ContentTR = _manageResourceService.ReadResourceValue($"Content_{blog.BlogId}_{blog.Url}_tr", "tr-TR") ?? string.Empty;
-
-            model.TitleDE = _manageResourceService.ReadResourceValue($"Title_{blog.BlogId}_{blog.Url}_de", "de-DE") ?? string.Empty;
-            model.ContentDE = _manageResourceService.ReadResourceValue($"Content_{blog.BlogId}_{blog.Url}_de", "de-DE") ?? string.Empty;
-
-            return View(model);
-        }
-
-        [HttpPost("BlogEdit/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> BlogEdit(BlogEditModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                // Repopulate dropdown lists if validation fails.
-                var categories = await _unitOfWork.Categories.GetAllAsync();
-                var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-                var tags = await _unitOfWork.Tags.GetAllAsync();
-
-                ViewBag.Categories = categories.Select(c => new SelectListItem
-                {
-                    Value = c.CategoryId.ToString(),
-                    Text = c.Name
-                }).ToList();
-
-                ViewBag.Quizzes = quizzes.Select(q => new SelectListItem
-                {
-                    Value = q.Id.ToString(),
-                    Text = q.Title
-                }).ToList();
-
-                ViewBag.Tags = tags.Select(t => new SelectListItem
-                {
-                    Value = t.TagId.ToString(),
-                    Text = t.Name
-                }).ToList();
-
-                return View(model);
-            }
-
-            // Retrieve the existing blog from the database.
-            var blog = await _unitOfWork.Blogs.GetAsync(model.BlogId);
-            if (blog == null)
-            {
-                return NotFound();
-            }
-
-            // Define necessary paths.
-            string tempPath = Path.Combine(_env.WebRootPath, "temp");
-            string imgPath = Path.Combine(_env.WebRootPath, "blog", "img");
-            string gifPath = Path.Combine(_env.WebRootPath, "blog", "gif");
-            string coverPath = Path.Combine(_env.WebRootPath, "img");
-
-            Directory.CreateDirectory(tempPath);
-            Directory.CreateDirectory(imgPath);
-            Directory.CreateDirectory(gifPath);
-            Directory.CreateDirectory(coverPath);
-
-            // Process any images that have been uploaded to the temporary folder.
-            var fileMappings = new Dictionary<string, string>();
-            foreach (var file in Directory.GetFiles(tempPath))
-            {
-                var fileName = Path.GetFileName(file);
-                var fileExtension = Path.GetExtension(file).ToLower();
-                var destination = fileExtension == ".gif"
-                    ? Path.Combine(gifPath, fileName)
-                    : Path.Combine(imgPath, fileName);
-
-                if (!System.IO.File.Exists(destination))
-                {
-                    System.IO.File.Move(file, destination);
-                    Console.WriteLine($"[DEBUG] Moved content image: {fileName}");
-                }
-                fileMappings[$"/temp/{fileName}"] = $"/blog/{(fileExtension == ".gif" ? "gif" : "img")}/{fileName}";
-            }
-
-            // Process content images for main content and translations.
-            string updatedContent = ProcessContentImages(model.Content, fileMappings);
-            string updatedContentTR = ProcessContentImages(model.ContentTR, fileMappings);
-            string updatedContentDE = ProcessContentImages(model.ContentDE, fileMappings);
-
-            // Process cover image update: retain the existing cover image if no new file is uploaded.
-            string? coverFileName = blog.Image;
-            if (model.ImageFile != null && model.ImageFile.Length > 0)
-            {
-                coverFileName = $"{model.Url}_cover{Path.GetExtension(model.ImageFile.FileName)}";
-                string coverFilePath = Path.Combine(coverPath, coverFileName);
-                using (var stream = new FileStream(coverFilePath, FileMode.Create))
-                {
-                    await model.ImageFile.CopyToAsync(stream);
-                }
-                Console.WriteLine($"[DEBUG] Updated cover image: {coverFileName}");
-            }
-
-            // Update blog properties.
-            blog.Title = model.Title;
-            blog.Content = updatedContent;
-            blog.Url = model.Url;
-            blog.Author = model.Author;
-            blog.RawYT = model.RawYT;
-            blog.RawMaps = model.RawMaps;
-            blog.CategoryId = model.SelectedCategoryIds?.FirstOrDefault();
-            blog.isHome = model.IsHome;
-            blog.Image = coverFileName;
-
-            // Update quiz question ID.
-            blog.SelectedQuestionId = (model.SelectedQuestionId.HasValue && model.SelectedQuestionId.Value > 0)
-                                        ? model.SelectedQuestionId.Value
-                                        : null;
-
-            // (Optional) Update related quizzes if applicable.
-            if (model.SelectedQuizIds != null && model.SelectedQuizIds.Any())
-            {
-                var quizzesToAdd = await _unitOfWork.Quizzes.GetAllAsync();
-                blog.Quiz = quizzesToAdd.Where(q => model.SelectedQuizIds.Contains(q.Id)).ToList();
-            }
-            // Update associated tags.
-            if (model.SelectedTagIds != null && model.SelectedTagIds.Any())
-            {
-                var tagsToAdd = await _unitOfWork.Tags.GetAllAsync();
-                blog.Tags = tagsToAdd.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList();
-            }
-
-            // Update translations using the helper method.
-            SaveContentToResx(new BlogCreateModel
-            {
-                TitleTR = model.TitleTR,
-                ContentTR = updatedContentTR,
-                TitleDE = model.TitleDE,
-                ContentDE = updatedContentDE,
-                Url = model.Url
-            }, blog.BlogId);
-
-            // Save the updated blog.
-            _unitOfWork.Blogs.Update(blog);
-            await _unitOfWork.SaveAsync();
-
-            Console.WriteLine($"[DEBUG] Blog '{blog.Title}' updated successfully with ID {blog.BlogId}.");
-            return RedirectToAction("Index");
-        }
-
-
-        #endregion
-        #endregion
-
-        #region Question
-
-        [HttpGet("QuestionCreate")]
-        public async Task<IActionResult> QuestionCreate()
-        {
-            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-            var model = new QuestionEditViewModel
-            {
-                AvailableQuizzes = quizzes.Select(q => new SelectListItem
-                {
-                    Value = q.Id.ToString(),
-                    Text = q.Title
-                }),
-                Answers = new List<AnswerEditViewModel>
-                {
-                    new AnswerEditViewModel(),
-                    new AnswerEditViewModel()
-                }
-            };
-            return View("QuestionCreateEdit", model); 
-        }
-
-
-
-        [HttpPost("QuestionCreate")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> QuestionCreate(QuestionEditViewModel model)
-        {
-            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-            model.AvailableQuizzes = quizzes.Select(q => new SelectListItem
-            {
-                Value = q.Id.ToString(),
-                Text = q.Title
-            });
-
-            if (!ModelState.IsValid)
-                return View("QuestionCreateEdit", model);
-
-            // Use your helper for image upload
-            string? imageUrl = null;
-            if (model.ImageFile != null && model.ImageFile.Length > 0)
-                imageUrl = await ProcessImageUpload(model.ImageFile);
-
-            // Use your helper for audio upload
-            string? audioUrl = null;
-            if (model.AudioFile != null && model.AudioFile.Length > 0)
-                audioUrl = await ProcessAudioUpload(model.AudioFile);
-
-            var question = new SpeakingClub.Entity.Question
-            {
-                QuestionText = model.QuestionText,
-                ImageUrl = imageUrl,
-                AudioUrl = audioUrl,
-                VideoUrl = model.VideoUrl,
-                QuizId = model.QuizId,
-                Answers = model.Answers.Select(a => new SpeakingClub.Entity.QuizAnswer
-                {
-                    AnswerText = a.AnswerText,
-                    IsCorrect = a.IsCorrect
-                }).ToList()
-            };
-
-            await _unitOfWork.Questions.AddAsync(question);
-            await _unitOfWork.SaveAsync();
-
-            TempData["SuccessMessage"] = "Question created successfully!";
-            return RedirectToAction("QuestionList");
-        }
-
-        [HttpGet("QuestionEdit/{id}")]
-        public async Task<IActionResult> QuestionEdit(int id)
-        {
-            var question = await _unitOfWork.Questions.GetByIdAsync(id);
-            if (question == null) return NotFound();
-
-            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-            var model = new QuestionEditViewModel
-            {
-                QuestionId = question.Id,
-                QuestionText = question.QuestionText,
-                ImageUrl = question.ImageUrl,
-                AudioUrl = question.AudioUrl,
-                VideoUrl = question.VideoUrl,
-                QuizId = question.QuizId,
-                AvailableQuizzes = quizzes.Select(q => new SelectListItem
-                {
-                    Value = q.Id.ToString(),
-                    Text = q.Title
-                }),
-                Answers = question.Answers.Select(a => new AnswerEditViewModel
-                {
-                    AnswerId = a.Id,
-                    AnswerText = a.AnswerText,
-                    IsCorrect = a.IsCorrect
-                }).ToList()
-            };
-            return View("QuestionCreateEdit", model);
-        }
-
-
-        [HttpPost("QuestionEdit/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> QuestionEdit(QuestionEditViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-                model.AvailableQuizzes = quizzes.Select(q => new SelectListItem
-                {
-                    Value = q.Id.ToString(),
-                    Text = q.Title
-                });
-                return View(model);
-            }
-
-            var question = await _unitOfWork.Questions.GetByIdAsync(model.QuestionId);
-            if (question == null) return NotFound();
-
-            question.QuestionText = model.QuestionText;
-            question.VideoUrl = model.VideoUrl;
-            question.ImageUrl = model.ImageUrl;
-            question.AudioUrl = model.AudioUrl;
-
-            // Update Quiz binding (unbinding from previous if changed)
-            if (question.QuizId != model.QuizId)
-                question.QuizId = model.QuizId;
-
-            // Update Answers (add/edit/remove)
-            // Remove deleted answers
-            var answerIds = model.Answers.Select(a => a.AnswerId).ToList();
-            var answersToRemove = question.Answers.Where(a => !answerIds.Contains(a.Id)).ToList();
-            foreach (var ans in answersToRemove)
-                question.Answers.Remove(ans);
-
-            // Add or update existing answers
-            foreach (var answerVm in model.Answers)
-            {
-                var answer = question.Answers.FirstOrDefault(a => a.Id == answerVm.AnswerId);
-                if (answer == null)
-                {
-                    answer = new Entity.QuizAnswer
-                    {
-                        AnswerText = answerVm.AnswerText,
-                        IsCorrect = answerVm.IsCorrect
-                    };
-                    question.Answers.Add(answer);
-                }
-                else
-                {
-                    answer.AnswerText = answerVm.AnswerText;
-                    answer.IsCorrect = answerVm.IsCorrect;
-                }
-            }
-
-            _unitOfWork.Questions.Update(question);
-            await _unitOfWork.SaveAsync();
-
-            TempData["SuccessMessage"] = "Question updated successfully!";
-            return RedirectToAction("QuestionList");
-        }
-
-        [HttpPost("QuestionDelete/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> QuestionDelete(int id)
-        {
-            var question = await _unitOfWork.Questions.GetByIdAsync(id);
-            if (question == null)
-            {
-                TempData["ErrorMessage"] = "Question not found.";
-                return RedirectToAction("QuestionList");
-            }
-
-            // Remove from associated quiz's Questions collection
-            if (question.Quiz != null)
-                question.Quiz.Questions.Remove(question);
-
-            // Answers cascade delete should be handled by EF, but you can clear manually
-            question.Answers?.Clear();
-
-            _unitOfWork.Questions.Remove(question);
-            await _unitOfWork.SaveAsync();
-
-            TempData["SuccessMessage"] = "Question deleted successfully!";
-            return RedirectToAction("QuestionList");
-        }
-
-
-        #region helpers for question
-        private async Task<string?> ProcessImageUpload(IFormFile imageFile)
+        private async Task<string?> ProcessImageUpload(IFormFile? imageFile)
         {
             if (imageFile == null || imageFile.Length == 0)
-                return null;
+            {
+                return null; // No file uploaded, return null.
+            }
 
-            // Save to wwwroot/img
-            var uploadsFolder = Path.Combine(_env.WebRootPath, "img");
+            // Define a specific folder for quiz images to keep them organized.
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "img", "quiz-images");
             if (!Directory.Exists(uploadsFolder))
+            {
                 Directory.CreateDirectory(uploadsFolder);
+            }
 
+            // Generate a unique filename to prevent overwrites.
             var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(imageFile.FileName)}";
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
+            // Save the file to the server.
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 await imageFile.CopyToAsync(fileStream);
             }
 
-            // Return the relative path (so you can use it directly in <img src="">)
-            return $"/img/{uniqueFileName}";
+            // Return the public-facing URL path.
+            return $"/img/quiz-images/{uniqueFileName}";
         }
         #endregion
         #endregion
+
+        #region Slides
+        #region Caraousel
+        [HttpGet("Admin/CarouselCreate")]
+        public IActionResult CarouselCreate()
+        {
+            return View(new CarouselViewModel());
+        }
+
+
+        [HttpPost("Admin/CarouselCreate")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CarouselCreate(CarouselViewModel model, [FromServices] IManageResourceService resourceService)
+        {
+            if (!ModelState.IsValid)
+            {
+                Console.WriteLine("[WARN] Model validation failed.");
+                return View(model);
+            }
+
+            var carousel = new Entity.SlideShow
+            {
+                CarouselTitle = model.CarouselTitle,
+                CarouselDescription = model.CarouselDescription,
+                CarouselLink = model.CarouselLink,
+                CarouselLinkText = model.CarouselLinkText,
+                DateAdded = DateTime.UtcNow,
+            };
+
+            try
+            {
+                // Handle image uploads
+                carousel.CarouselImage = model.CarouselImage != null ? await SaveFile(model.CarouselImage) : string.Empty;
+                carousel.CarouselImage600w = model.CarouselImage600w != null ? await SaveFile(model.CarouselImage600w) : string.Empty;
+                carousel.CarouselImage1200w = model.CarouselImage1200w != null ? await SaveFile(model.CarouselImage1200w) : string.Empty;
+
+                // Save to database and retrieve entity with assigned ID
+                carousel = await _unitOfWork.Slides.CreateAndReturn(carousel);
+
+                // Ensure the ID is valid
+                int carouselId = carousel.SlideId; // Correct ID from DB
+                if (carouselId <= 0)
+                {
+                    Console.WriteLine("[ERROR] Failed to generate a valid ID for carousel.");
+                    TempData["ErrorMessage"] = "An error occurred while creating the carousel.";
+                    return View(model);
+                }
+
+                Console.WriteLine($"[INFO] Carousel created successfully with ID: {carouselId}");
+
+                // Save translations using the valid ID
+                SaveAllTranslations(_manageResourceService, carouselId, model);
+
+                TempData["SuccessMessage"] = "Carousel created successfully!";
+                return RedirectToAction("Carousels");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Failed to create carousel. Exception: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while creating the carousel.";
+                return View(model);
+            }
+        }
+
+
+
+        [HttpGet("Admin/CarouselEdit/{id}")]
+        public async Task<IActionResult> CarouselEdit(int id)
+        {
+            Console.WriteLine($"[INFO] Loading edit view for Carousel ID: {id}");
+
+            // Fetch carousel from the database
+            var carousel = await _unitOfWork.Slides.GetByIdAsync(id);
+            if (carousel == null)
+            {
+                Console.WriteLine($"[WARN] Carousel with ID {id} not found.");
+                return NotFound();
+            }
+
+            // Fetch translations with null checks and default values
+            string GetTranslation(string key, string culture, string defaultValue)
+            {
+                var value = _manageResourceService.Read(key, culture);
+                if (string.IsNullOrEmpty(value))
+                {
+                    Console.WriteLine($"[WARN] Resource key '{key}' not found in '{culture}' resource file.");
+                    return defaultValue; // Provide a fallback value if the key is missing
+                }
+                return value;
+            }
+
+            // Create model
+            var model = new CarouselEditModel
+            {
+                CarouselId = carousel.SlideId,
+                CarouselTitle = carousel.CarouselTitle,
+                CarouselDescription = carousel.CarouselDescription,
+                CarouselLink = carousel.CarouselLink,
+                CarouselLinkText = carousel.CarouselLinkText,
+                DateAdded = carousel.DateAdded,
+                CarouselImagePath = carousel.CarouselImage,
+                CarouselImage1200wPath = carousel.CarouselImage1200w,
+                CarouselImage600wPath = carousel.CarouselImage600w,
+                // TR Translations
+                CarouselTitleTR = GetTranslation($"Carousel_{carousel.SlideId}_Title", "tr-TR", carousel.CarouselTitle),
+                CarouselDescriptionTR = GetTranslation($"Carousel_{carousel.SlideId}_Description", "tr-TR", carousel.CarouselDescription),
+                CarouselLinkTextTR = GetTranslation($"Carousel_{carousel.SlideId}_LinkText", "tr-TR", carousel.CarouselLinkText),
+
+                // DE Translations
+                CarouselTitleDE = GetTranslation($"Carousel_{carousel.SlideId}_Title", "de-DE", carousel.CarouselTitle),
+                CarouselDescriptionDE = GetTranslation($"Carousel_{carousel.SlideId}_Description", "de-DE", carousel.CarouselDescription),
+                CarouselLinkTextDE = GetTranslation($"Carousel_{carousel.SlideId}_LinkText", "de-DE", carousel.CarouselLinkText)
+            };
+
+            Console.WriteLine("[INFO] Loaded carousel and translations successfully.");
+            return View(model);
+        }
+
+
+
+
+        [HttpPost("Admin/CarouselEdit")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CarouselEdit(CarouselEditModel model)
+        {
+            Console.WriteLine($"[INFO] Processing update for Carousel ID: {model.CarouselId}");
+
+            if (!ModelState.IsValid)
+            {
+                Console.WriteLine("[WARN] Model validation failed.");
+                return View(model);
+            }
+
+            var carousel = await _unitOfWork.Slides.GetByIdAsync(model.CarouselId);
+            if (carousel == null)
+            {
+                Console.WriteLine($"[WARN] Carousel with ID {model.CarouselId} not found.");
+                return NotFound();
+            }
+
+            // Update carousel properties
+            carousel.CarouselTitle = model.CarouselTitle;
+            carousel.CarouselDescription = model.CarouselDescription;
+            carousel.CarouselLink = model.CarouselLink;
+            carousel.CarouselLinkText = model.CarouselLinkText;
+
+            // Image validation and update
+            carousel.CarouselImage = await ValidateAndSaveImage(model.CarouselImage, carousel.CarouselImage, "CarouselImage");
+            carousel.CarouselImage1200w = await ValidateAndSaveImage(model.CarouselImage1200w, carousel.CarouselImage1200w, "CarouselImage1200w");
+            carousel.CarouselImage600w = await ValidateAndSaveImage(model.CarouselImage600w, carousel.CarouselImage600w, "CarouselImage600w");
+
+            // Update translations
+            UpdateTranslations(carousel.SlideId, model);
+
+            // Save carousel
+            await _unitOfWork.Slides.UpdateAsync(carousel);
+            Console.WriteLine($"[INFO] Carousel with ID {model.CarouselId} updated successfully!");
+            TempData["SuccessMessage"] = "Carousel updated successfully!";
+            return RedirectToAction("Carousels");
+        }
+
+
+        [HttpPost("CarouselDelete/{id}")]
+        public async Task<IActionResult> CarouselDelete(int id)
+        {
+            Console.WriteLine($"[INFO] Starting deletion process for Carousel ID: {id}");
+
+            // Step 1: Retrieve the carousel
+            var carousel = await _unitOfWork.Slides.GetByIdAsync(id);
+            if (carousel == null)
+            {
+                Console.WriteLine($"[WARN] Carousel with ID {id} not found.");
+                TempData["ErrorMessage"] = "Carousel not found.";
+                return RedirectToAction("Carousels");
+            }
+
+            Console.WriteLine($"[INFO] Found Carousel - Title: {carousel.CarouselTitle}");
+
+            try
+            {
+                // Step 2: Delete associated files
+                DeleteFile(carousel.CarouselImage, "CarouselImage");
+                DeleteFile(carousel.CarouselImage600w, "CarouselImage600w");
+                DeleteFile(carousel.CarouselImage1200w, "CarouselImage1200w");
+
+                // Step 3: Delete translations using IManageResourceService
+                var baseKey = $"Carousel_{carousel.SlideId}";
+
+                // Languages
+                string[] cultures = { "en-US", "tr-TR", "de-DE", "fr-FR", "ar-SA" };
+                string[] keys = { "Title", "Description", "LinkText" };
+
+                foreach (var culture in cultures)
+                {
+                    foreach (var key in keys)
+                    {
+                        string resourceKey = $"{baseKey}_{key}";
+                        var success = _manageResourceService.Delete(resourceKey, culture); // Using IManageResourceService for deletion
+                        if (success)
+                        {
+                            Console.WriteLine($"[INFO] Successfully deleted translation: {resourceKey} in {culture}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[WARN] Failed to delete translation: {resourceKey} in {culture}");
+                        }
+                    }
+                }
+
+                // Step 4: Delete the carousel from the database
+                await _unitOfWork.Slides.DeleteAsync(id);
+                Console.WriteLine($"[INFO] Carousel with ID {id} deleted successfully!");
+
+                TempData["SuccessMessage"] = "Carousel deleted successfully!";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Failed to delete carousel with ID {id}. Exception: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while deleting the carousel.";
+            }
+
+            // Step 5: Redirect to the carousels page
+            Console.WriteLine("[INFO] Redirecting to Carousels page...");
+            return RedirectToAction("Carousels");
+        }
+
+        #endregion
+        #endregion
+        #region File Management
+        // Helper method for image validation and saving
+        private async Task<string> ValidateAndSaveImage(IFormFile image, string existingImagePath, string imageType)
+        {
+            if (image == null) return existingImagePath;  // No new image uploaded, return the existing one.
+
+            // Validate image format and size
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            var fileExtension = Path.GetExtension(image.FileName).ToLower();
+
+            if (!allowedExtensions.Contains(fileExtension) || image.Length > 2 * 1024 * 1024)
+            {
+                ModelState.AddModelError(imageType, "Invalid image format or size.");
+               
+                return existingImagePath;
+            }
+
+            // Save new image
+            string newImagePath = await SaveFile(image);
+
+            // Delete old image if it exists
+            if (!string.IsNullOrEmpty(existingImagePath))
+            {
+                var oldImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", existingImagePath);
+                if (System.IO.File.Exists(oldImagePath))
+                {
+                    System.IO.File.Delete(oldImagePath);
+                    Console.WriteLine($"[INFO] Deleted old {imageType} image: {oldImagePath}");
+                }
+            }
+
+            Console.WriteLine($"[INFO] Updated {imageType} image path: {newImagePath}");
+            return newImagePath;
+        }
+        private void DeleteFile(string filePath, string fileType)
+        {
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                var fullPath = Path.Combine(_env.WebRootPath, "img", filePath.TrimStart('/'));
+                if (System.IO.File.Exists(fullPath))
+                {
+                    try
+                    {
+                        System.IO.File.Delete(fullPath);
+                        Console.WriteLine($"[INFO] Deleted {fileType} file: {fullPath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[ERROR] Failed to delete {fileType} file: {fullPath}. Exception: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"[WARN] {fileType} file not found at: {fullPath}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"[INFO] No {fileType} file associated.");
+            }
+        }
+
+
+        // Helper to save files
+        private async Task<string> SaveFile(IFormFile file)
+        {
+            var uploadsFolder = Path.Combine(_env.WebRootPath, "img");
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            Directory.CreateDirectory(uploadsFolder);
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return $"{fileName}";
+        }
+        private void UpdateTranslations(int id, CarouselEditModel model)
+        {
+            var baseKey = $"Carousel_{id}";
+            var translations = new Dictionary<string, (string Title, string Desc, string LinkText)> {
+                { "tr-TR", (model.CarouselTitleTR, model.CarouselDescriptionTR, model.CarouselLinkTextTR) },
+                { "de-DE", (model.CarouselTitleDE, model.CarouselDescriptionDE, model.CarouselLinkTextDE) }
+            };
+
+            foreach (var kvp in translations)
+            {
+                var culture = kvp.Key;
+                var (title, desc, linkText) = kvp.Value;
+
+                if (!string.IsNullOrWhiteSpace(title))
+                    _manageResourceService.AddOrUpdate($"{baseKey}_Title", title, culture);
+                if (!string.IsNullOrWhiteSpace(desc))
+                    _manageResourceService.AddOrUpdate($"{baseKey}_Description", desc, culture);
+                if (!string.IsNullOrWhiteSpace(linkText))
+                    _manageResourceService.AddOrUpdate($"{baseKey}_LinkText", linkText, culture);
+            }
+        }
+        private void SaveAllTranslations(IManageResourceService resourceService, int baseKey, CarouselViewModel model)
+        {
+            // Validate baseKey
+            if (baseKey <= 0)
+            {
+                Console.WriteLine("[ERROR] Invalid baseKey provided for translations.");
+                return;
+            }
+
+            // Prepare translations
+            var translations = new Dictionary<string, (string Title, string Description, string LinkText)>
+            {
+                { "tr-TR", (model.TranslationsTR.Title, model.TranslationsTR.Description, model.TranslationsTR.LinkText) },
+                { "de-DE", (model.TranslationsDE.Title, model.TranslationsDE.Description, model.TranslationsDE.LinkText) }
+            };
+
+            foreach (var translation in translations)
+            {
+                var culture = translation.Key;
+                var (title, description, linkText) = translation.Value;
+
+                // Unique keys with carousel prefix
+                string keyPrefix = $"Carousel_{baseKey}";
+
+                if (!string.IsNullOrEmpty(title))
+                    SaveTranslation(resourceService, $"{keyPrefix}_Title", title, culture);
+
+                if (!string.IsNullOrEmpty(description))
+                    SaveTranslation(resourceService, $"{keyPrefix}_Description", description, culture);
+
+                if (!string.IsNullOrEmpty(linkText))
+                    SaveTranslation(resourceService, $"{keyPrefix}_LinkText", linkText, culture);
+
+                Console.WriteLine($"[INFO] Saved translations for culture '{culture}' with key prefix '{keyPrefix}'");
+            }
+        }
+        private void SaveTranslation(IManageResourceService resourceService, string key, string value, string culture)
+        {
+            Console.WriteLine($"[DEBUG] Saving translation: Key='{key}', Value='{value}', Culture='{culture}'");
+
+            if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value) || string.IsNullOrEmpty(culture))
+            {
+                Console.WriteLine($"[ERROR] Invalid translation data. Key: '{key}', Value: '{value}', Culture: '{culture}'");
+                return;
+            }
+
+            resourceService.AddOrUpdate(key, value, culture); // Save key-value using IManageResourceService
+        }
+    #endregion
+
     }
 }

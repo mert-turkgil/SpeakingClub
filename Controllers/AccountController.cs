@@ -468,12 +468,12 @@ namespace SpeakingClub.Controllers
                 return View(model);
             }
             _memoryCache.Set(cacheKey, count + 1, TimeSpan.FromMinutes(2));
-             string? recaptchaResponse = Request.Form["g-recaptcha-response"];
-             if (!await RecaptchaIsValid(recaptchaResponse ?? ""))
-             {
-                 ModelState.AddModelError("", "Lütfen robot olmadığınızı doğrulayın (reCAPTCHA).");
-                 return View(model);
-             }
+            //  string? recaptchaResponse = Request.Form["g-recaptcha-response"];
+            //  if (!await RecaptchaIsValid(recaptchaResponse ?? ""))
+            //  {
+            //      ModelState.AddModelError("", "Lütfen robot olmadığınızı doğrulayın (reCAPTCHA).");
+            //      return View(model);
+            //  }
 
             if (!ModelState.IsValid)
                 return View(model);

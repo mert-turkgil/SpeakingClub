@@ -1,0 +1,81 @@
+@model SpeakingClub.Models.CarouselViewModel
+
+@{
+    ViewData["Title"] = "Create Carousel";
+}
+
+<h1 class="mb-4 text-center">Create New Carousel</h1>
+
+<form method="post" enctype="multipart/form-data" class="container">
+    <!-- General Information -->
+    <fieldset class="border p-4 mb-4">
+        <legend class="w-auto text-primary fw-bold">General Information</legend>
+        <div class="mb-3">
+            <label asp-for="CarouselTitle" class="form-label">Title</label>
+            <input asp-for="CarouselTitle" class="form-control" placeholder="Enter title" />
+            <span asp-validation-for="CarouselTitle" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="CarouselDescription" class="form-label">Description</label>
+            <textarea asp-for="CarouselDescription" class="form-control" rows="3" placeholder="Enter description"></textarea>
+            <span asp-validation-for="CarouselDescription" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="CarouselLink" class="form-label">Link (Blog,Contact,Services,Privacy,About)</label>
+            <input asp-for="CarouselLink" class="form-control" placeholder="Enter link URL ,-- must be like this :Blog" />
+        </div>
+        <div class="mb-3">
+            <label asp-for="CarouselLinkText" class="form-label">Link Text</label>
+            <input asp-for="CarouselLinkText" class="form-control" placeholder="Enter link text" />
+        </div>
+    </fieldset>
+
+    <!-- Image Uploads -->
+    <fieldset class="border p-4 mb-4">
+        <legend class="w-auto text-primary fw-bold">Images</legend>
+        <div class="mb-3">
+            <label asp-for="CarouselImage" class="form-label">Primary Image</label>
+            <input asp-for="CarouselImage" type="file" class="form-control" />
+            <span asp-validation-for="CarouselImage" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="CarouselImage600w" class="form-label">Image (600w)</label>
+            <input asp-for="CarouselImage600w" type="file" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label asp-for="CarouselImage1200w" class="form-label">Image (1200w)</label>
+            <input asp-for="CarouselImage1200w" type="file" class="form-control" />
+        </div>
+    </fieldset>
+
+    <!-- Translations -->
+    <fieldset class="border p-4 mb-4">
+        <legend class="w-auto text-primary fw-bold">Translations</legend>
+        <div class="row">
+            <div class="col-md-6">
+                <h5 class="fw-bold">Turkish (TR)</h5>
+                <input asp-for="TranslationsTR.Title" class="form-control mb-2" placeholder="Title (TR)" />
+                <textarea asp-for="TranslationsTR.Description" class="form-control mb-2" rows="2" placeholder="Description (TR)"></textarea>
+                <input asp-for="TranslationsTR.LinkText" class="form-control" placeholder="Link Text (TR)" />
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <h5 class="fw-bold">German (DE)</h5>
+                <input asp-for="TranslationsDE.Title" class="form-control mb-2" placeholder="Title (DE)" />
+                <textarea asp-for="TranslationsDE.Description" class="form-control mb-2" rows="2" placeholder="Description (DE)"></textarea>
+                <input asp-for="TranslationsDE.LinkText" class="form-control" placeholder="Link Text (DE)" />
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- Buttons -->
+    <div class="d-flex justify-content-end gap-2">
+        <button type="submit" class="btn btn-primary">Create</button>
+        <a asp-controller="Admin" asp-route-scrollTo="SlideListManagement" asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

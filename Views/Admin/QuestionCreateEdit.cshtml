@@ -118,7 +118,7 @@
         <button type="submit" class="btn btn-primary btn-lg px-4 shadow">
             <i class="fas fa-save"></i> @(isEdit ? "Update" : "Create")
         </button>
-        <a asp-action="QuestionList" class="btn btn-outline-secondary ms-3 btn-lg">Cancel</a>
+        <a asp-controller="Admin" asp-route-scrollTo="QuestionsManagement" asp-action="Index" class="btn btn-outline-secondary ms-3 btn-lg">Cancel</a>
     </div>
 </form>
 </section>

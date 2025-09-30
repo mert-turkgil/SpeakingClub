@@ -3,146 +3,383 @@
     ViewBag.Title = "Edit Quiz";
 }
 
-<h2>Edit Quiz</h2>
-
-<form asp-action="QuizEdit" enctype="multipart/form-data" method="post">
-    @Html.AntiForgeryToken()
-    @Html.HiddenFor(m => m.QuizId)
-
-    <div class="form-group">
-        <label asp-for="Title"></label>
-        <input asp-for="Title" class="form-control" />
-        <span asp-validation-for="Title" class="text-danger"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="Description"></label>
-        <textarea asp-for="Description" class="form-control"></textarea>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="CategoryId"></label>
-        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-control"></select>
-    </div>
-
-    <div class="form-group">
-        <label>Tags</label>
-        <select asp-for="SelectedTagIds" asp-items="Model.Tags" class="form-control" multiple="multiple"></select>
-    </div>
-    <div class="form-group">
-        <label>Words</label>
-        <select asp-for="SelectedWordIds" asp-items="Model.Words" class="form-control" multiple="multiple"></select>
-    </div>
-
-    <hr />
-    <h4>Questions</h4>
-    <div id="questions">
-        @for (int i = 0; i < Model.Questions.Count; i++)
-        {
-            <div class="card mb-4 p-3">
-                <h5>Question @(i+1)</h5>
-                <input type="hidden" asp-for="Questions[@i].QuestionId" />
-
-                <div class="form-group">
-                    <label asp-for="Questions[@i].QuestionText">Question Text</label>
-                    <input asp-for="Questions[@i].QuestionText" class="form-control" />
-                    <span asp-validation-for="Questions[@i].QuestionText" class="text-danger"></span>
-                </div>
-
-                <!-- Question Image Upload & Preview -->
-                <div class="form-group">
-                    <label>Image</label>
-                    @if (!string.IsNullOrEmpty(Model.Questions[i].ImageUrl))
-                    {
-                        <div>
-                            <img src="@Model.Questions[i].ImageUrl" style="max-width:180px;max-height:120px" class="mb-2" />
-                        </div>
-                    }
-                    <input type="file" name="Questions[@i].ImageFile" accept="image/*" class="form-control" />
-                </div>
-
-                <!-- Question MP3 Upload & Preview -->
-                <div class="form-group">
-                    <label>MP3 Audio (upload or record)</label>
-                    @if (!string.IsNullOrEmpty(Model.Questions[i].AudioUrl))
-                    {
-                        <audio controls class="mb-2">
-                            <source src="@Model.Questions[i].AudioUrl" type="audio/mpeg" />
-                            Your browser does not support the audio element.
-                        </audio>
-                    }
-                    <input type="file" name="Questions[@i].AudioFile" accept="audio/*" class="form-control" />
-                </div>
-
-                <!-- Question YouTube Video Link & Embed Preview -->
-                <div class="form-group">
-                    <label>YouTube Video URL (Paste full link or embed code)</label>
-                    <input asp-for="Questions[@i].VideoUrl" class="form-control" />
-                    @if (!string.IsNullOrWhiteSpace(Model.Questions[i].VideoUrl))
-                    {
-                        <div class="mt-2">
-                            <iframe width="420" height="240" src="@GetYouTubeEmbedUrl(Model.Questions[i].VideoUrl?? "")" frameborder="0" allowfullscreen></iframe>
-                        </div>
-                    }
-                </div>
-
-                <!-- Answers List -->
-                <div>
-                    <label>Answers</label>
-                    @for (int j = 0; j < Model.Questions[i].Answers.Count; j++)
-                    {
-                        <div class="form-inline mb-2">
-                            <input type="hidden" asp-for="Questions[@i].Answers[@j].AnswerId" />
-                            <input asp-for="Questions[@i].Answers[@j].AnswerText" class="form-control mr-2" style="width: 70%;" placeholder="Answer" />
-                            <label class="ml-2">
-                                <input asp-for="Questions[@i].Answers[@j].IsCorrect" type="checkbox" /> Correct
-                            </label>
-                        </div>
-                    }
-                </div>
-            </div>
+@section Css {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <style>
+        .question-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
         }
+        .question-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .answer-item {
+            border-left: 4px solid #dee2e6;
+            transition: border-color 0.3s ease;
+        }
+        .answer-item.correct {
+            border-left-color: #28a745;
+            background: rgba(40, 167, 69, 0.05);
+        }
+        .drag-handle {
+            cursor: move;
+            opacity: 0.5;
+            transition: opacity 0.2s ease;
+        }
+        .drag-handle:hover {
+            opacity: 1;
+        }
+        .media-preview {
+            max-width: 200px;
+            border-radius: 8px;
+            display: block; /* Show existing images by default */
+            margin-top: 0.5rem;
+        }
+        .question-toolbar {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .question-card:hover .question-toolbar {
+            opacity: 1;
+        }
+    </style>
+}
+
+<div class="container-xxl py-5">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-primary text-white py-4">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-edit me-2"></i>Edit Quiz
+            </h1>
+        </div>
+        
+        <div class="card-body p-4">
+            <form id="quizForm" asp-action="QuizEdit" asp-route-id="@Model.QuizId" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="All" class="alert alert-danger"></div>
+                <input type="hidden" asp-for="QuizId" />
+
+                <!-- Basic Info Section -->
+                <div class="row g-4 mb-5">
+                    <div class="col-md-8">
+                        <div class="form-floating">
+                            <input asp-for="Title" class="form-control form-control-lg" placeholder="Quiz Title" />
+                            <label asp-for="Title"></label>
+                        </div>
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select form-select-lg">
+                                <option value="">Select Category</option>
+                            </select>
+                            <label asp-for="CategoryId"></label>
+                        </div>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-12">
+                        <div class="form-floating">
+                            <textarea asp-for="Description" class="form-control" style="height: 100px" placeholder="Quiz Description"></textarea>
+                            <label asp-for="Description"></label>
+                        </div>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Relationships Section -->
+                <div class="row g-4 mb-5">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold mb-3"><i class="fas fa-tags me-2"></i>Tags</label>
+                        <select asp-for="SelectedTagIds" asp-items="Model.Tags" class="form-select select2-tags" multiple="multiple"></select>
+                        <span asp-validation-for="SelectedTagIds" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold mb-3"><i class="fas fa-book me-2"></i>Associated Words</label>
+                        <select asp-for="SelectedWordIds" asp-items="Model.Words" class="form-select select2-words" multiple="multiple"></select>
+                        <span asp-validation-for="SelectedWordIds" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Questions Section -->
+                <div class="mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="h5 mb-0"><i class="fas fa-question-circle me-2"></i>Questions</h3>
+                        <button type="button" class="btn btn-primary btn-sm" id="addQuestion"><i class="fas fa-plus me-2"></i>Add Question</button>
+                    </div>
+
+                    <div id="questionsContainer" class="row g-4">
+                        @for (var i = 0; i < Model.Questions.Count; i++)
+                        {
+                            <div class="col-12 question-card p-4 mb-4">
+                                <input type="hidden" asp-for="Questions[i].QuestionId" />
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h4 class="h6 mb-0">Question #<span class="question-number">@(i + 1)</span></h4>
+                                    <div class="question-toolbar">
+                                        <button type="button" class="btn btn-link text-danger btn-sm remove-question"><i class="fas fa-trash"></i></button>
+                                        <span class="drag-handle btn btn-link text-muted btn-sm"><i class="fas fa-arrows-alt"></i></span>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3">
+                                            <input asp-for="Questions[i].QuestionText" class="form-control" placeholder="Question text" />
+                                            <label asp-for="Questions[i].QuestionText"></label>
+                                        </div>
+                                        <span asp-validation-for="Questions[i].QuestionText" class="text-danger"></span>
+
+                                        <!-- Media Uploads -->
+                                        <div class="row g-2 mb-3">
+                                            <div class="col">
+                                                @if (!string.IsNullOrEmpty(Model.Questions[i].ImageUrl))
+                                                {
+                                                    <img src="@Model.Questions[i].ImageUrl" class="media-preview mb-2" alt="Image preview" />
+                                                }
+                                                <input type="file" name="Questions[@i].ImageFile" class="form-control media-upload" accept="image/*" />
+                                            </div>
+                                            <div class="col">
+                                                @if (!string.IsNullOrWhiteSpace(Model.Questions[i].VideoUrl))
+                                                {
+                                                    <div class="mt-2 mb-2">
+                                                        <iframe width="100%" height="140" src="@GetYouTubeEmbedUrl(Model.Questions[i].VideoUrl)" frameborder="0" allowfullscreen></iframe>
+                                                    </div>
+                                                }
+                                                <input asp-for="Questions[i].VideoUrl" class="form-control" placeholder="YouTube URL" />
+                                                <span asp-validation-for="Questions[i].VideoUrl" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="answers-container">
+                                            @for (var j = 0; j < Model.Questions[i].Answers.Count; j++)
+                                            {
+                                                <div class="answer-item p-3 mb-3">
+                                                    <input type="hidden" asp-for="Questions[i].Answers[j].AnswerId" />
+                                                    <div class="d-flex gap-2">
+                                                        <div class="form-floating flex-grow-1">
+                                                            <input asp-for="Questions[i].Answers[j].AnswerText" class="form-control" placeholder="Answer text" />
+                                                            <label asp-for="Questions[i].Answers[j].AnswerText">Answer</label>
+                                                            <span asp-validation-for="Questions[i].Answers[j].AnswerText" class="text-danger"></span>
+                                                        </div>
+                                                        <div class="d-flex align-items-center ps-2">
+                                                            <div class="form-check form-switch">
+                                                                <input asp-for="Questions[i].Answers[j].IsCorrect" class="form-check-input correct-answer" type="checkbox" />
+                                                                <label class="form-check-label small">Correct</label>
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="btn btn-link text-danger remove-answer"><i class="fas fa-times"></i></button>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm add-answer"><i class="fas fa-plus me-2"></i>Add Answer</button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-success btn-lg px-5"><i class="fas fa-save me-2"></i>Save Changes</button>
+                    <a asp-controller="Admin" asp-route-scrollTo="QuizzesManagement" asp-action="Index" class="btn btn-outline-secondary btn-lg"><i class="fas fa-arrow-left me-2"></i>Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
-    <button type="submit" class="btn btn-success">Save Changes</button>
-</form>
+</div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <partial name="_ValidationScriptsPartial" />
     <script>
-        // You can enhance for dynamic question/answer add/remove with JS if needed
+        $(document).ready(function() {
+            // Initialize Select2
+            $('.select2-tags, .select2-words').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Select options',
+                closeOnSelect: false
+            });
+
+            // Drag & Drop Sorting for Questions
+            const questionsContainer = document.getElementById('questionsContainer');
+            if(questionsContainer) {
+                Sortable.create(questionsContainer, {
+                    handle: '.drag-handle',
+                    animation: 150,
+                    onUpdate: updateAllNames
+                });
+            }
+
+            // --- DYNAMIC QUESTION MANAGEMENT ---
+            $('#addQuestion').click(function() {
+                const questionIndex = $('#questionsContainer .question-card').length;
+                const questionTemplate = `
+                    <div class="col-12 question-card p-4 mb-4">
+                        <input type="hidden" name="Questions[${questionIndex}].QuestionId" value="0" />
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="h6 mb-0">Question #<span class="question-number">${questionIndex + 1}</span></h4>
+                            <div class="question-toolbar" style="opacity:1;">
+                                <button type="button" class="btn btn-link text-danger btn-sm remove-question"><i class="fas fa-trash"></i></button>
+                                <span class="drag-handle btn btn-link text-muted btn-sm"><i class="fas fa-arrows-alt"></i></span>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input name="Questions[${questionIndex}].QuestionText" class="form-control" placeholder="Question text" />
+                                    <label for="Questions_${questionIndex}__QuestionText">Question text</label>
+                                </div>
+                                <span class="text-danger" data-valmsg-for="Questions[${questionIndex}].QuestionText" data-valmsg-replace="true"></span>
+                                <div class="row g-2 mb-3">
+                                    <div class="col">
+                                        <input type="file" name="Questions[${questionIndex}].ImageFile" class="form-control media-upload" accept="image/*" />
+                                    </div>
+                                    <div class="col">
+                                        <input name="Questions[${questionIndex}].VideoUrl" class="form-control" placeholder="YouTube URL" />
+                                        <span class="text-danger" data-valmsg-for="Questions[${questionIndex}].VideoUrl" data-valmsg-replace="true"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="answers-container"></div>
+                                <button type="button" class="btn btn-outline-secondary btn-sm add-answer"><i class="fas fa-plus me-2"></i>Add Answer</button>
+                            </div>
+                        </div>
+                    </div>`;
+                
+                const $newQuestion = $(questionTemplate);
+                $('#questionsContainer').append($newQuestion);
+                updateAllNames(); // Call updateAllNames which now handles validation re-parsing
+                gsap.from($newQuestion, { duration: 0.5, opacity: 0, y: 20 });
+            });
+
+            // Remove Question
+            $(document).on('click', '.remove-question', function() {
+                const $questionCard = $(this).closest('.question-card');
+                gsap.to($questionCard, { duration: 0.3, opacity: 0, x: -50, onComplete: () => {
+                    $questionCard.remove();
+                    updateAllNames();
+                }});
+            });
+
+            // --- DYNAMIC ANSWER MANAGEMENT ---
+            $(document).on('click', '.add-answer', function() {
+                const $answersContainer = $(this).siblings('.answers-container');
+                const questionIndex = $(this).closest('.question-card').index();
+                const answerIndex = $answersContainer.find('.answer-item').length;
+                
+                // THE FIX IS IN THIS TEMPLATE
+                const answerTemplate = `
+                    <div class="answer-item p-3 mb-3">
+                        <input type="hidden" name="Questions[${questionIndex}].Answers[${answerIndex}].AnswerId" value="0" />
+                        <div class="d-flex gap-2">
+                            <div class="form-floating flex-grow-1">
+                                <input name="Questions[${questionIndex}].Answers[${answerIndex}].AnswerText" class="form-control" placeholder="Answer text" />
+                                <label for="Questions_${questionIndex}__Answers_${answerIndex}__AnswerText">Answer</label>
+                                <span class="text-danger" data-valmsg-for="Questions[${questionIndex}].Answers[${answerIndex}].AnswerText" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="d-flex align-items-center ps-2">
+                                <div class="form-check form-switch">
+                                    <input name="Questions[${questionIndex}].Answers[${answerIndex}].IsCorrect" class="form-check-input correct-answer" type="checkbox" value="true" />
+                                    <input type="hidden" name="Questions[${questionIndex}].Answers[${answerIndex}].IsCorrect" value="false" />
+                                    <label class="form-check-label small">Correct</label>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-link text-danger remove-answer"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>`;
+
+                const $newAnswer = $(answerTemplate);
+                $answersContainer.append($newAnswer);
+                updateAllNames(); // Call updateAllNames which now handles validation re-parsing
+                gsap.from($newAnswer, { duration: 0.3, opacity: 0, x: 20 });
+            });
+
+            // Remove Answer
+            $(document).on('click', '.remove-answer', function() {
+                const $answerItem = $(this).closest('.answer-item');
+                gsap.to($answerItem, { duration: 0.3, opacity: 0, height: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0, onComplete: () => {
+                    const $questionCard = $answerItem.closest('.question-card');
+                    $answerItem.remove();
+                    updateAnswerNames($questionCard);
+                }});
+            });
+
+            // --- HELPER FUNCTIONS ---
+            function updateAllNames() {
+                $('#questionsContainer .question-card').each(function(q_idx) {
+                    $(this).find('.question-number').text(q_idx + 1);
+                    
+                    $(this).find('input, select, textarea, span[data-valmsg-for]').each(function() {
+                        if (this.name) {
+                            this.name = this.name.replace(/Questions\[\d+\]/, `Questions[${q_idx}]`);
+                        }
+                        const valFor = $(this).attr('data-valmsg-for');
+                        if (valFor) {
+                            $(this).attr('data-valmsg-for', valFor.replace(/Questions\[\d+\]/, `Questions[${q_idx}]`));
+                        }
+                    });
+                    updateAnswerNames($(this));
+                });
+
+                // *** THE FIX: Re-parse the form validator after any change ***
+                const form = $('#quizForm');
+                form.removeData('validator');
+                form.removeData('unobtrusiveValidation');
+                $.validator.unobtrusive.parse(form);
+            }
+
+            function updateAnswerNames($questionCard) {
+                const questionIndex = $questionCard.index();
+                 $questionCard.find('.answer-item').each(function(a_idx) {
+                    $(this).find('input, span[data-valmsg-for]').each(function() {
+                         if (this.name) {
+                            this.name = this.name.replace(/Questions\[\d+\]\.Answers\[\d+\]/, `Questions[${questionIndex}].Answers[${a_idx}]`);
+                        }
+                        const valFor = $(this).attr('data-valmsg-for');
+                        if (valFor) {
+                            $(this).attr('data-valmsg-for', valFor.replace(/Questions\[\d+\]\.Answers\[\d+\]/, `Questions[${questionIndex}].Answers[${a_idx}]`));
+                        }
+                    });
+                });
+            }
+        });
     </script>
 }
 
 @functions {
     public static string GetYouTubeEmbedUrl(string? url)
     {
-        if (string.IsNullOrWhiteSpace(url))
-            return "";
-
+        if (string.IsNullOrWhiteSpace(url)) return "";
         string? videoId = null;
-
-        // Handle regular youtube.com and youtu.be links
-        if (url.Contains("youtube.com"))
+        if (url.Contains("youtube.com/watch?v="))
         {
             var uri = new Uri(url);
             var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
             videoId = query["v"];
         }
-        else if (url.Contains("youtu.be"))
+        else if (url.Contains("youtu.be/"))
         {
             var uri = new Uri(url);
             videoId = uri.AbsolutePath.Trim('/');
         }
-        // Support for direct embed code
-        if (url.Contains("embed"))
+        else if (url.Contains("/embed/"))
         {
-            // Already embed format
-            return url;
+            return url; // Already an embed URL
         }
-        if (!string.IsNullOrWhiteSpace(videoId))
-            return $"https://www.youtube.com/embed/{videoId}";
-
-        return url;
+        return !string.IsNullOrWhiteSpace(videoId) ? $"https://www.youtube.com/embed/{videoId}" : url;
     }
 }
 

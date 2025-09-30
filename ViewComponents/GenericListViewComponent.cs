@@ -37,6 +37,7 @@ namespace SpeakingClub.ViewComponents
                 "quizzes" => View("QuizList", await _uow.Quizzes.GetAllAsync()),
                 "tags" => View("TagList", await _uow.Tags.GetAllAsync()),
                 "questions" => View("QuestionList", await _uow.Questions.GetAllAsync()),
+                "slides" => View("SlideList", await _uow.Slides.GetAllAsync()),
                 _ => Content("Invalid entity type")
             };
         }

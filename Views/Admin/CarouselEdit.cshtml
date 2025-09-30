@@ -1,0 +1,173 @@
+@model SpeakingClub.Models.CarouselEditModel
+
+@{
+    ViewData["Title"] = "Edit Carousel";
+}
+
+@section Css {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .form-container {
+            padding: 20px;
+            margin: 20px auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background: #f9f9f9;
+        }
+
+        .form-section {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fff;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .form-section h5 {
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .btn-animated {
+            transition: all 0.3s ease;
+        }
+
+        .btn-animated:hover {
+            transform: scale(1.05);
+        }
+
+        .preview-img {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            console.log("Carousel Edit Page Loaded");
+
+            $(".form-control").on("focus", function () {
+                $(this).css("border-color", "#007bff");
+            }).on("blur", function () {
+                $(this).css("border-color", "");
+            });
+        });
+    </script>
+}
+
+<div class="container form-container animate__animated animate__fadeIn">
+    <form method="post" enctype="multipart/form-data">
+        <input type="hidden" asp-for="CarouselId" />
+
+        <!-- General Information -->
+        <div class="form-section">
+            <h5>General Information</h5>
+            <div class="mb-3">
+                <label asp-for="CarouselTitle" class="form-label">Title</label>
+                <input asp-for="CarouselTitle" class="form-control" />
+                <span asp-validation-for="CarouselTitle" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="CarouselDescription" class="form-label">Description</label>
+                <textarea asp-for="CarouselDescription" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="CarouselDescription" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="CarouselLink" class="form-label">Link (Blog,Contact,Services,Privacy,About)</label>
+                <textarea asp-for="CarouselLink" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="CarouselLink" class="text-danger"></span>
+            </div>
+        </div>
+
+        <!-- Image Upload -->
+        <div class="form-section">
+            <h5>Images</h5>
+
+            <!-- Main Image -->
+            <div class="mb-3">
+                <label class="form-label">Upload Main Image</label>
+                <input type="file" name="CarouselImage" class="form-control" />
+            </div>
+            @if (!string.IsNullOrEmpty(Model.CarouselImagePath))
+            {
+                <div class="mb-3">
+                    <label class="form-label">Current Main Image:</label>
+                    <img src="~/img/@Model.CarouselImagePath" class="preview-img" alt="Carousel Image" />
+                </div>
+            }
+
+            <!-- 600w Image -->
+            <div class="mb-3">
+                <label class="form-label">Upload 600w Image</label>
+                <input type="file" name="CarouselImage600w" class="form-control" />
+            </div>
+            @if (!string.IsNullOrEmpty(Model.CarouselImage600wPath))
+            {
+                <div class="mb-3">
+                    <label class="form-label">Current 600w Image:</label>
+                    <img src="~/img/@Model.CarouselImage600wPath" class="preview-img" alt="Carousel Image 600w" />
+                </div>
+            }
+
+            <!-- 1200w Image -->
+            <div class="mb-3">
+                <label class="form-label">Upload 1200w Image</label>
+                <input type="file" name="CarouselImage1200w" class="form-control" />
+            </div>
+            @if (!string.IsNullOrEmpty(Model.CarouselImage1200wPath))
+            {
+                <div class="mb-3">
+                    <label class="form-label">Current 1200w Image:</label>
+                    <img src="~/img/@Model.CarouselImage1200wPath" class="preview-img" alt="Carousel Image 1200w" />
+                </div>
+            }
+        </div>
+                <!-- Translations -->
+        <div class="form-section">
+            <h5>Translations</h5>
+            <!-- TR Translations -->
+            <h6>Turkish (TR)</h6>
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input asp-for="CarouselTitleTR" class="form-control" />
+                <label class="form-label">Description</label>
+                <textarea asp-for="CarouselDescriptionTR" class="form-control" rows="2"></textarea>
+                <label class="form-label">Link Text</label>
+                <input asp-for="CarouselLinkTextTR" class="form-control" />
+            </div>
+
+            <!-- DE Translations -->
+            <h6>German (DE)</h6>
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input asp-for="CarouselTitleDE" class="form-control" />
+                <label class="form-label">Description</label>
+                <textarea asp-for="CarouselDescriptionDE" class="form-control" rows="2"></textarea>
+                <label class="form-label">Link Text</label>
+                <input asp-for="CarouselLinkTextDE" class="form-control" />
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="d-flex justify-content-between mt-4">
+            <button type="submit" class="btn btn-primary btn-animated">Save Changes</button>
+            <a asp-controller="Admin" asp-route-scrollTo="SlideListManagement" asp-action="Index" class="btn btn-secondary btn-animated">Cancel</a>
+        </div>
+    </form>
+</div>

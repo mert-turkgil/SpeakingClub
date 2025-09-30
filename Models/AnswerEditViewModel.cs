@@ -8,10 +8,11 @@ namespace SpeakingClub.Models
 {
     public class AnswerEditViewModel
     {
-    public int AnswerId { get; set; }
+        public int AnswerId { get; set; }
 
-    [Required]
-    public string AnswerText { get; set; } = string.Empty;
-    public bool IsCorrect { get; set; }
+        [Required]
+        public string AnswerText { get; set; } = string.Empty;
+        public string IsCorrect { get; set; } = "false";
+    
     }
 }

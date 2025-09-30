@@ -75,5 +75,17 @@ namespace SpeakingClub.Data.Concrete
                 .FirstOrDefaultAsync(q => q.Id == quizId);
         }
 
+        public void Update(Quiz quiz, bool modifyTeacherId = true)
+        {
+            // Attach the entity to the context and mark it as modified.
+            // THE FIX: Use the correct plural property name 'Quizzes'.
+            _database.Quizzes.Update(quiz);
+
+            // If modifyTeacherId is false, explicitly tell EF Core not to update it.
+            if (!modifyTeacherId)
+            {
+                _database.Entry(quiz).Property(x => x.TeacherId).IsModified = false;
+            }
+        }
     }
 }

@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using SpeakingClub.Models;
 
 namespace SpeakingClub.Services
 {
     public interface IManageResourceService
     {
-                /// <summary>
+        /// <summary>
         /// Adds or updates a resource key-value pair in the specified culture's resource file.
         /// </summary>
         /// <param name="key">The resource key.</param>
@@ -29,5 +30,13 @@ namespace SpeakingClub.Services
         /// <param name="culture">The culture name (e.g.,   "fr-FR").</param>
         /// <returns>The resource value if found; otherwise, null.</returns>
         string ReadResourceValue(string key, string culture);
+        List<LocalizationModel> LoadAll(string culture);
+        bool AddOrUpdate(string key, string value, string culture, string? comment = null);
+        bool Delete(string key, string culture);
+        string? Read(string key, string culture);
+        bool Exists(string key, string culture);
+        List<string> GetAvailableLanguages();
+        List<string> ExtractImagePaths(string keyPrefix, string culture);
+        string GetResourcePath(string culture);
     }
 }
