@@ -5,7 +5,10 @@
 
 @section Css {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
     <style>
+        /* Hide alert boxes that are empty (defensive) */
+        .alert:empty { display: none !important; }
         .question-card {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
@@ -59,7 +62,10 @@
         <div class="card-body p-4">
             <form id="quizForm" asp-action="QuizEdit" asp-route-id="@Model.QuizId" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
-                <div asp-validation-summary="All" class="alert alert-danger"></div>
+                @if (ViewData.ModelState.Values.Any(v => v.Errors.Count > 0))
+                {
+                    <div asp-validation-summary="All" class="alert alert-danger"></div>
+                }
                 <input type="hidden" asp-for="QuizId" />
 
                 <!-- Basic Info Section -->
@@ -73,13 +79,13 @@
                     </div>
                     
                     <div class="col-md-4">
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
                         <div class="form-floating">
-                            <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select form-select-lg">
+                            <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select form-select-lg pb-2">
                                 <option value="">Select Category</option>
                             </select>
-                            <label asp-for="CategoryId"></label>
+                            <label asp-for="CategoryId">Category</label>
                         </div>
-                        <span asp-validation-for="CategoryId" class="text-danger"></span>
                     </div>
                     
                     <div class="col-12">
@@ -89,17 +95,52 @@
                         </div>
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
+
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="AudioUrl" class="form-control" placeholder="Audio URL" />
+                            <label asp-for="AudioUrl">Audio URL</label>
+                        </div>
+                        <span asp-validation-for="AudioUrl" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="YouTubeVideoUrl" class="form-control" placeholder="YouTube Video URL" />
+                            <label asp-for="YouTubeVideoUrl">YouTube Video URL</label>
+                        </div>
+                        <span asp-validation-for="YouTubeVideoUrl" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Teacher / Anonymity -->
+                <div class="row g-4 mb-4">
+                    <input type="hidden" asp-for="TeacherId" />
+                    <div class="col-md-6">
+                        <label class="form-label">Teacher</label>
+                        <input id="teacherNameReadonly" class="form-control" value="@Model.TeacherName" readonly />
+
+                        <select id="teacherSelect" asp-for="TeacherId" asp-items="Model.TeacherOptions" class="form-select mt-2 d-none">
+                            <option value="">(Select a teacher)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-center">
+                        <div class="form-check">
+                            <input asp-for="IsAnonymous" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsAnonymous" class="form-check-label">Make anonymous</label>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Relationships Section -->
                 <div class="row g-4 mb-5">
-                    <div class="col-md-6">
+                    <div class="col-md-6 card">
                         <label class="form-label fw-bold mb-3"><i class="fas fa-tags me-2"></i>Tags</label>
                         <select asp-for="SelectedTagIds" asp-items="Model.Tags" class="form-select select2-tags" multiple="multiple"></select>
                         <span asp-validation-for="SelectedTagIds" class="text-danger"></span>
                     </div>
                     
-                    <div class="col-md-6">
+                    <div class="col-md-6 card">
                         <label class="form-label fw-bold mb-3"><i class="fas fa-book me-2"></i>Associated Words</label>
                         <select asp-for="SelectedWordIds" asp-items="Model.Words" class="form-select select2-words" multiple="multiple"></select>
                         <span asp-validation-for="SelectedWordIds" class="text-danger"></span>
@@ -170,7 +211,7 @@
                                                         </div>
                                                         <div class="d-flex align-items-center ps-2">
                                                             <div class="form-check form-switch">
-                                                                <input asp-for="Questions[i].Answers[j].IsCorrect" class="form-check-input correct-answer" type="checkbox" />
+                                                                <input asp-for="Questions[i].Answers[j].IsCorrect" class="form-check-input correct-answer" role="switch" type="checkbox" />
                                                                 <label class="form-check-label small">Correct</label>
                                                             </div>
                                                         </div>
@@ -198,6 +239,7 @@
 </div>
 
 @section Scripts {
+    <!-- Bootstrap/Popper scripts are loaded in the shared layout; avoid duplicating them here -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -322,13 +364,33 @@
                 $('#questionsContainer .question-card').each(function(q_idx) {
                     $(this).find('.question-number').text(q_idx + 1);
                     
-                    $(this).find('input, select, textarea, span[data-valmsg-for]').each(function() {
+                    $(this).find('input, select, textarea, label, span[data-valmsg-for]').each(function() {
+                        // Update name-based indexes
                         if (this.name) {
                             this.name = this.name.replace(/Questions\[\d+\]/, `Questions[${q_idx}]`);
                         }
+                        // If element has a data-valmsg-for attribute, update it too
                         const valFor = $(this).attr('data-valmsg-for');
                         if (valFor) {
                             $(this).attr('data-valmsg-for', valFor.replace(/Questions\[\d+\]/, `Questions[${q_idx}]`));
+                        }
+
+                        // Rebuild id/from name so label 'for' targets are correct
+                        if (this.name) {
+                            // Convert a name like Questions[0].Answers[1].IsCorrect -> Questions_0__Answers_1__IsCorrect
+                            const generatedId = this.name.replace(/\[(\d+)\]/g, '_$1__').replace(/\./g, '_');
+                            // Set id for inputs/selects/textareas
+                            if (this.tagName && /INPUT|SELECT|TEXTAREA/.test(this.tagName)) {
+                                this.id = generatedId;
+                            }
+                            // Set 'for' on labels that refer to this name pattern
+                            if (this.tagName === 'LABEL') {
+                                // If label has a 'for' attribute, rewrite it
+                                const curFor = $(this).attr('for');
+                                if (curFor && /Questions_\d+__/.test(curFor)) {
+                                    $(this).attr('for', curFor.replace(/Questions_\d+__/, `Questions_${q_idx}__`));
+                                }
+                            }
                         }
                     });
                     updateAnswerNames($(this));
@@ -340,6 +402,32 @@
                 form.removeData('unobtrusiveValidation');
                 $.validator.unobtrusive.parse(form);
             }
+
+            // Toggle teacher input/select when the anonymous checkbox changes
+            function toggleTeacherInput() {
+                const isAnonymous = $('#IsAnonymous').is(':checked');
+                if (isAnonymous) {
+                    $('#teacherSelect').addClass('d-none');
+                    $('#teacherNameReadonly').removeClass('d-none');
+                } else {
+                    $('#teacherSelect').removeClass('d-none');
+                    $('#teacherNameReadonly').addClass('d-none');
+                }
+            }
+
+            // Initialize teacher toggle
+            toggleTeacherInput();
+
+            // When checkbox changes, toggle inputs
+            $(document).on('change', '#IsAnonymous', function() {
+                toggleTeacherInput();
+            });
+
+            // When a teacher is selected, update the readonly display value
+            $(document).on('change', '#teacherSelect', function() {
+                var selectedText = $(this).find('option:selected').text();
+                $('#teacherNameReadonly').val(selectedText);
+            });
 
             function updateAnswerNames($questionCard) {
                 const questionIndex = $questionCard.index();

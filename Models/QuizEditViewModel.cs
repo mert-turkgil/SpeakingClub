@@ -29,6 +29,24 @@ namespace SpeakingClub.Models
 
         public List<QuestionEditViewModel> Questions { get; set; } = new List<QuestionEditViewModel>();
 
+    // Media fields
+    [Display(Name = "Audio URL")]
+    public string AudioUrl { get; set; } = string.Empty;
+
+    [Display(Name = "YouTube Video URL")]
+    public string YouTubeVideoUrl { get; set; } = string.Empty;
+
+    // Teacher information (editable later on the backend). TeacherId will be posted but not shown for editing.
+    public string? TeacherId { get; set; }
+    [Display(Name = "Teacher")]
+    public string TeacherName { get; set; } = string.Empty;
+    // Options to allow selecting a teacher when not anonymous
+    public IEnumerable<SelectListItem> TeacherOptions { get; set; } = new List<SelectListItem>();
+
+    // Allow making a quiz anonymous
+    [Display(Name = "Anonymous")] 
+    public bool IsAnonymous { get; set; } = false;
+
         // Available options
         public IEnumerable<SelectListItem> Categories { get; set; } = new List<SelectListItem>();
         public IEnumerable<SelectListItem> Tags { get; set; } = new List<SelectListItem>();

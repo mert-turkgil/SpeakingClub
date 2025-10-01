@@ -1575,6 +1575,23 @@ namespace SpeakingClub.Controllers
                 }
             });
 
+            // Populate teacher selection options and default to current user
+            var currentUser = await _userManager.GetUserAsync(User);
+            var users = _userManager.Users.ToList();
+            model.TeacherOptions = users.Select(u => new SelectListItem
+            {
+                Value = u.Id,
+                Text = (!string.IsNullOrWhiteSpace(u.FirstName) || !string.IsNullOrWhiteSpace(u.LastName)) ?
+                        string.Join(' ', new[] { u.FirstName, u.LastName }.Where(s => !string.IsNullOrWhiteSpace(s))) :
+                        (u.UserName ?? u.Email ?? "(unknown)")
+            }).ToList();
+            if (currentUser != null)
+            {
+                model.TeacherId = currentUser.Id;
+                model.TeacherName = string.Join(' ', new[] { currentUser.FirstName, currentUser.LastName }.Where(s => !string.IsNullOrWhiteSpace(s)));
+                if (string.IsNullOrWhiteSpace(model.TeacherName)) model.TeacherName = currentUser.UserName ?? currentUser.Email ?? string.Empty;
+            }
+
             return View(model);
         }
 
@@ -1585,20 +1602,39 @@ namespace SpeakingClub.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
+            // If a teacher was selected (and not anonymous), validate it exists
+            if (!model.IsAnonymous && !string.IsNullOrWhiteSpace(model.TeacherId))
+            {
+                var selectedTeacher = await _userManager.FindByIdAsync(model.TeacherId);
+                if (selectedTeacher == null)
+                {
+                    // Instead of immediately failing, log and fallback to current user to avoid FK insert errors
+                    _logger.LogWarning("Selected TeacherId '{TeacherId}' not found. Falling back to current user '{UserId}'.", model.TeacherId, user.Id);
+                    model.TeacherId = user.Id;
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 using var transaction = await _unitOfWork.BeginTransactionAsync();
                 try
                 {
-                    var audioUrl = model.AudioFile != null ? await ProcessAudioUpload(model.AudioFile) : null;
+                    var uploadedAudioUrl = model.AudioFile != null ? await ProcessAudioUpload(model.AudioFile) : null;
+                    // Prefer uploaded audio file, otherwise accept user-provided AudioUrl string
+                    var finalAudioUrl = !string.IsNullOrWhiteSpace(uploadedAudioUrl) ? uploadedAudioUrl :
+                                       (!string.IsNullOrWhiteSpace(model.AudioUrl) ? model.AudioUrl.Trim() : null);
+                    var finalYouTubeUrl = !string.IsNullOrWhiteSpace(model.YouTubeVideoUrl) ? model.YouTubeVideoUrl.Trim() : null;
                     var taglist = await _unitOfWork.Tags.GetAllAsync();
                     var wordlist = await _unitOfWork.Words.GetAllAsync();
                     var quiz = new SpeakingClub.Entity.Quiz
                     {
                         Title = model.Title,
                         Description = model.Description,
-                        TeacherId = user.Id,
+                        // Determine teacher: anonymous -> null, selected -> selected, otherwise default to current user
+                        TeacherId = model.IsAnonymous ? null : (!string.IsNullOrWhiteSpace(model.TeacherId) ? model.TeacherId : user.Id),
                         CategoryId = model.CategoryId,
+                        AudioUrl = finalAudioUrl,
+                        YouTubeVideoUrl = finalYouTubeUrl,
                         Tags = taglist.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList(),
                         Words = wordlist.Where(w => model.SelectedWordIds.Contains(w.WordId)).ToList()
                     };
@@ -1631,6 +1667,42 @@ namespace SpeakingClub.Controllers
                 {
                     await transaction.RollbackAsync();
                     ModelState.AddModelError("", $"Error creating quiz: {ex.Message}");
+                }
+            }
+
+            // If ModelState is invalid, log ModelState errors and the incoming form keys/values to help diagnose binding issues
+            if (!ModelState.IsValid)
+            {
+                try
+                {
+                    // Log ModelState errors
+                    foreach (var kvp in ModelState)
+                    {
+                        var key = kvp.Key ?? "(null)";
+                        var errors = kvp.Value.Errors.Select(e => e.ErrorMessage).Where(msg => !string.IsNullOrWhiteSpace(msg)).ToList();
+                        if (errors.Count > 0)
+                        {
+                            _logger.LogWarning("ModelState error for key '{Key}': {Errors}", key, string.Join("; ", errors));
+                        }
+                    }
+
+                    // Log Request.Form contents
+                    if (Request?.HasFormContentType ?? false)
+                    {
+                        foreach (var formKey in Request.Form.Keys)
+                        {
+                            var values = Request.Form[formKey];
+                            _logger.LogWarning("Form[{Key}] = {Values}", formKey, string.Join(",", values.ToArray()));
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Request does not contain form data or HasFormContentType is false.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error while logging ModelState/Form data for QuizCreate POST");
                 }
             }
 
@@ -1699,6 +1771,12 @@ namespace SpeakingClub.Controllers
                         IsCorrect = a.IsCorrect.ToString().ToLower()
                     }).ToList()
                 }).ToList(),
+                // new media and teacher fields
+                AudioUrl = quiz.AudioUrl ?? string.Empty,
+                YouTubeVideoUrl = quiz.YouTubeVideoUrl ?? string.Empty,
+                TeacherId = quiz.TeacherId,
+                IsAnonymous = string.IsNullOrWhiteSpace(quiz.TeacherId),
+
                 Categories = (await _unitOfWork.Categories.GetAllAsync())
                     .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString())),
                 Tags = (await _unitOfWork.Tags.GetAllAsync())
@@ -1706,6 +1784,36 @@ namespace SpeakingClub.Controllers
                 Words = (await _unitOfWork.Words.GetAllAsync())
                     .Select(w => new SelectListItem(w.Term, w.WordId.ToString()))
             };
+
+            // Populate teacher selection options (show user display names)
+            var users = _userManager.Users.ToList();
+            model.TeacherOptions = users.Select(u => new SelectListItem
+            {
+                Value = u.Id,
+                Text = (!string.IsNullOrWhiteSpace(u.FirstName) || !string.IsNullOrWhiteSpace(u.LastName)) ?
+                        string.Join(' ', new[] { u.FirstName, u.LastName }.Where(s => !string.IsNullOrWhiteSpace(s))) :
+                        (u.UserName ?? u.Email ?? "(unknown)")
+            }).ToList();
+
+            // Resolve teacher name if teacher is set
+            if (!string.IsNullOrWhiteSpace(model.TeacherId))
+            {
+                var teacher = await _userManager.FindByIdAsync(model.TeacherId);
+                if (teacher != null)
+                {
+                    // Prefer FirstName + LastName if available otherwise Username/Email
+                    var nameParts = new[] { teacher.FirstName, teacher.LastName }.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
+                    model.TeacherName = nameParts.Length > 0 ? string.Join(' ', nameParts) : teacher.UserName ?? teacher.Email ?? "Unknown";
+                }
+                else
+                {
+                    model.TeacherName = "Unknown";
+                }
+            }
+            else
+            {
+                model.TeacherName = "Anonymous";
+            }
 
             return View(model);
         }
@@ -1747,15 +1855,39 @@ namespace SpeakingClub.Controllers
                 quiz.Description = model.Description;
                 quiz.CategoryId = model.CategoryId;
 
+                // Update media fields
+                quiz.AudioUrl = string.IsNullOrWhiteSpace(model.AudioUrl) ? null : model.AudioUrl.Trim();
+                quiz.YouTubeVideoUrl = string.IsNullOrWhiteSpace(model.YouTubeVideoUrl) ? null : model.YouTubeVideoUrl.Trim();
+
                 // Update relationships
                 await UpdateQuizRelationships(quiz, model);
 
                 // Update questions and answers
                 await UpdateQuestionsAndAnswers(quiz, model);
 
-                // THE FIX: Use the new Update method from the repository,
-                // telling it NOT to modify the TeacherId.
-                _unitOfWork.Quizzes.Update(quiz, modifyTeacherId: false);
+                // Determine whether teacher should be updated
+                var originalTeacherId = quiz.TeacherId;
+                bool teacherChanged = false;
+                if (model.IsAnonymous)
+                {
+                    if (!string.IsNullOrWhiteSpace(originalTeacherId))
+                    {
+                        quiz.TeacherId = null;
+                        teacherChanged = true;
+                    }
+                }
+                else
+                {
+                    // If the model provided a TeacherId different from current, update it
+                    if (!string.IsNullOrWhiteSpace(model.TeacherId) && model.TeacherId != originalTeacherId)
+                    {
+                        quiz.TeacherId = model.TeacherId;
+                        teacherChanged = true;
+                    }
+                }
+
+                // Persist changes. Only allow repository to modify TeacherId when it actually changed.
+                _unitOfWork.Quizzes.Update(quiz, modifyTeacherId: teacherChanged);
 
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();

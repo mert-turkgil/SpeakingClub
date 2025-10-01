@@ -1,7 +1,11 @@
 @model QuizCreateViewModel
+@{
+    ViewBag.Title = "Create Quiz";
+}
 
 @section Css {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
     <style>
         .question-card {
             background: rgba(255, 255, 255, 0.95);
@@ -41,8 +45,15 @@
             display: none;
         }
 
+        /* Improve checkbox visibility and use Bootstrap primary color when possible */
+        input[type="checkbox"].form-check-input {
+            accent-color: var(--bs-primary);
+            width: 1.2em;
+            height: 1.2em;
+        }
+
         .question-toolbar {
-            opacity: 0;
+            opacity: 0.1;
             transition: opacity 0.2s ease;
         }
 
@@ -63,7 +74,10 @@
         <div class="card-body p-4">
             <form id="quizForm" asp-action="QuizCreate" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
-                
+                @if (ViewData.ModelState.Values.Any(v => v.Errors.Count > 0))
+                {
+                    <div asp-validation-summary="All" class="alert alert-danger"></div>
+                }
                 <!-- Basic Info Section -->
                 <div class="row g-4 mb-5">
                     <div class="col-md-8">
@@ -78,7 +92,7 @@
                     <div class="col-md-4">
                         <div class="form-floating">
                             <select asp-for="CategoryId" asp-items="Model.Categories" 
-                                    class="form-select form-select-lg">
+                                    class="form-select form-select-lg pb-2">
                                 <option value="">Select Category</option>
                             </select>
                             <label>Category</label>
@@ -90,6 +104,42 @@
                             <textarea asp-for="Description" class="form-control" 
                                       style="height: 100px" placeholder="Quiz Description"></textarea>
                             <label asp-for="Description"></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-5">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="AudioUrl" class="form-control" placeholder="Audio URL" />
+                            <label asp-for="AudioUrl">Audio URL</label>
+                        </div>
+                        <span asp-validation-for="AudioUrl" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input asp-for="YouTubeVideoUrl" class="form-control" placeholder="YouTube Video URL" />
+                            <label asp-for="YouTubeVideoUrl">YouTube Video URL</label>
+                        </div>
+                        <span asp-validation-for="YouTubeVideoUrl" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- Teacher / Anonymity -->
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Teacher</label>
+                        <input id="teacherNameReadonly" class="form-control" value="@Model.TeacherName" readonly />
+
+                        <select id="teacherSelect" asp-for="TeacherId" asp-items="Model.TeacherOptions" class="form-select mt-2 d-none">
+                            <option value="">(Select a teacher)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-center">
+                        <div class="form-check form-switch">
+                            <input asp-for="IsAnonymous" class="form-check-input" type="checkbox" id="IsAnonymous" />
+                            <label asp-for="IsAnonymous" class="form-check-label">Make anonymous</label>
                         </div>
                     </div>
                 </div>
@@ -180,12 +230,18 @@
                                                             <label>Answer</label>
                                                         </div>
                                                         <div class="d-flex align-items-center ps-2">
-                                                            <div class="form-check form-switch">
-                                                                <input asp-for="Questions[q].Answers[a].IsCorrect" 
-                                                                       class="form-check-input correct-answer" type="checkbox" />
-                                                                <label class="form-check-label small">Correct</label>
-                                                            </div>
-                                                        </div>
+                                                                    <div class="form-check form-switch">
+                                                                        @{
+                                                                            // Build explicit name and id so the posted fields are deterministic for model binding
+                                                                            var isName = $"Questions[{q}].Answers[{a}].IsCorrect";
+                                                                            // emulate MVC generated id: replace [n] -> _n__ and dots -> _
+                                                                            var isId = System.Text.RegularExpressions.Regex.Replace(isName, "\\[(\\d+)\\]", "_$1__").Replace('.', '_');
+                                                                        }
+                                                                        
+                                                                        <input type="checkbox" name="@isName" id="@isId" class="form-check-input correct-answer" value="true" @(Model.Questions[q].Answers[a].IsCorrect ? "checked" : "") />
+                                                                        <label for="@isId" class="form-check-label small">Correct</label>
+                                                                    </div>
+                                                                    </div>
                                                         <button type="button" class="btn btn-link text-danger remove-answer">
                                                             <i class="fas fa-times"></i>
                                                         </button>
@@ -218,10 +274,11 @@
 </div>
 
 @section Scripts {
+    <!-- Ensure jQuery Validate and unobtrusive are available before our inline script -->
+    <partial name="_ValidationScriptsPartial" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
     <script>
         $(document).ready(function() {
             // Initialize Select2
@@ -235,16 +292,145 @@
             // Add Question
             let questionIndex = @Model.Questions.Count;
             $('#addQuestion').click(function() {
+                try {
+                console.log('addQuestion clicked');
+                // Template uses placeholder QUESTIONS_INDEX__ and ANS_INDEX which will be replaced later
                 const template = `
                     <div class="col-12 question-card p-4 mb-4">
-                        ${/* ... Question template ... */} 
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="h6 mb-0">Question #<span class="question-number">__NUM__</span></h4>
+                            <div class="question-toolbar">
+                                <button type="button" class="btn btn-link text-danger btn-sm remove-question">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <span class="drag-handle btn btn-link text-muted btn-sm">
+                                    <i class="fas fa-arrows-alt"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input name="QUESTIONS_INDEX__.QuestionText" class="form-control" placeholder="Question text" required data-val="true" data-val-required="The QuestionText field is required." />
+                                    <label>Question Text</label>
+                                    <span data-valmsg-for="Questions[__INDEX__].QuestionText" class="text-danger"></span>
+                                </div>
+
+                                <div class="row g-2 mb-3">
+                                    <div class="col">
+                                        <input name="QUESTIONS_INDEX__.ImageUrl" type="file" class="form-control media-upload" data-type="image" accept="image/*" hidden />
+                                        <button type="button" class="btn btn-outline-secondary w-100 media-upload-btn" data-target="QUESTIONS_INDEX__.ImageUrl">
+                                            <i class="fas fa-image me-2"></i>Add Image
+                                        </button>
+                                        <img class="media-preview mt-2" alt="Image preview" />
+                                    </div>
+                                    <div class="col">
+                                        <input name="QUESTIONS_INDEX__.VideoUrl" class="form-control" placeholder="YouTube URL" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="answers-container">
+                                    <!-- add two default answers -->
+                                    <div class="answer-item p-3 mb-3">
+                                        <div class="d-flex gap-2">
+                                            <div class="form-floating flex-grow-1">
+                                                <input name="QUESTIONS_INDEX__.Answers[0].AnswerText" class="form-control" placeholder="Answer text" />
+                                                <label>Answer</label>
+                                            </div>
+                                            <div class="d-flex align-items-center ps-2">
+                                                <div class="form-check form-switch">
+                                                    <input type="checkbox" name="QUESTIONS_INDEX__.Answers[0].IsCorrect" class="form-check-input correct-answer" value="true" />
+                                                    <label class="form-check-label small">Correct</label>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-link text-danger remove-answer"><i class="fas fa-times"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="answer-item p-3 mb-3">
+                                        <div class="d-flex gap-2">
+                                            <div class="form-floating flex-grow-1">
+                                                <input name="QUESTIONS_INDEX__.Answers[1].AnswerText" class="form-control" placeholder="Answer text" />
+                                                <label>Answer</label>
+                                            </div>
+                                            <div class="d-flex align-items-center ps-2">
+                                                <div class="form-check form-switch">
+                                                    <input type="checkbox" name="QUESTIONS_INDEX__.Answers[1].IsCorrect" class="form-check-input correct-answer" value="true" />
+                                                    <label class="form-check-label small">Correct</label>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-link text-danger remove-answer"><i class="fas fa-times"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-secondary btn-sm add-answer">
+                                    <i class="fas fa-plus me-2"></i>Add Answer
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 `;
-                
-                const $newQuestion = $(template);
-                gsap.from($newQuestion, { duration: 0.3, opacity: 0, y: 20 });
+
+                let $newQuestion = $(template);
+                // Replace placeholders with current index values
+                const currentIndex = $('#questionsContainer .question-card').length;
+                let html = $newQuestion.html();
+                html = html.replace(/QUESTIONS_INDEX__/g, `Questions[${currentIndex}]`);
+                html = html.replace(/__INDEX__/g, `${currentIndex}`);
+                html = html.replace(/__NUM__/g, `${currentIndex + 1}`);
+                html = html.replace(/ANS_INDEX/g, function() { return 0; });
+                $newQuestion.html(html);
+                // Also replace the numbering placeholder
+                $newQuestion.find('.question-number').text(currentIndex + 1);
+
+                gsap.from($newQuestion, { duration: 0.3, opacity: 1, y: 20 });
                 $('#questionsContainer').append($newQuestion);
-                updateQuestionNumbers();
+                // Debug: highlight and scroll the newly inserted question so it's visible
+                try {
+                    console.log('Appended question HTML:', $newQuestion.prop('outerHTML'));
+                    // Make the new question visually obvious even if a fixed header is overlapping
+                    $newQuestion.css({ 'outline': '3px solid rgba(13,110,253,1)', 'position': 'relative', 'z-index': 9999, 'background-color': '#e9f5ff' });
+                    // Focus the QuestionText input inside the new card so the browser brings attention to it
+                    const $firstInput = $newQuestion.find('input[name$=".QuestionText"]').first();
+                    if ($firstInput && $firstInput.length) {
+                        try { $firstInput.focus(); } catch (fErr) { console.warn('focus failed', fErr); }
+                    }
+
+                    // scroll the page to the new question, offset by ~110px to account for fixed headers
+                    const top = $newQuestion.offset() ? $newQuestion.offset().top : null;
+                    if (top !== null) {
+                        const scrollTarget = Math.max(0, top - 110);
+                        $('html, body').animate({ scrollTop: scrollTarget }, 300);
+                    } else if ($newQuestion[0] && $newQuestion[0].scrollIntoView) {
+                        $newQuestion[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+
+                    // remove debug styles after a short delay
+                    setTimeout(function() { $newQuestion.css({ 'outline': 'none', 'z-index': '', 'background-color': '' }); }, 2200);
+                } catch (dbgErr) {
+                    console.error('Debug highlight failed', dbgErr);
+                }
+                // Reindex names/ids and reparse validator after a short delay to avoid race conditions
+                setTimeout(function() {
+                    try {
+                        updateQuestionNumbers();
+                        reparseValidator();
+                    } catch (innerErr) {
+                        console.error('Error during post-insert reindex/reparse', innerErr);
+                        // show a visual hint during debugging including message and stack
+                        const msg = innerErr && innerErr.message ? innerErr.message : 'Unknown error';
+                        const stack = innerErr && innerErr.stack ? innerErr.stack : '';
+                        const $alert = $(`<div class="alert alert-danger"><strong>Error updating question indexes</strong><div style="white-space:pre-wrap;font-size:12px;margin-top:6px;">${msg}<br/>${stack}</div></div>`);
+                        $alert.insertBefore('#questionsContainer');
+                        // auto-remove after some time
+                        setTimeout(function() { $alert.fadeOut(500, function() { $(this).remove(); }); }, 8000);
+                    }
+                }, 50);
+                } catch (err) {
+                    console.error('addQuestion handler error', err);
+                    alert('Error adding question: ' + err.message);
+                }
             });
 
             // Drag & Drop Sorting
@@ -271,34 +457,300 @@
             // Dynamic Answer Management
             $(document).on('click', '.add-answer', function() {
                 const $container = $(this).siblings('.answers-container');
-                const index = $container.children().length;
+                const answerIndex = $container.children().length;
+                // Build answer template with proper name placeholders. We'll replace the question index when inserting.
                 const template = `
                     <div class="answer-item p-3 mb-3">
-                        ${/* ... Answer template ... */} 
+                        <div class="d-flex gap-2">
+                            <div class="form-floating flex-grow-1">
+                                <input name="QUESTIONS_INDEX__.Answers[ANS_INDEX].AnswerText" class="form-control" placeholder="Answer text" />
+                                <label>Answer</label>
+                            </div>
+                            <div class="d-flex align-items-center ps-2">
+                                <div class="form-check form-switch">
+                                    <!-- hidden fallback so unchecked boxes post false -->
+                                    <input type="checkbox" name="QUESTIONS_INDEX__.Answers[ANS_INDEX].IsCorrect" class="form-check-input correct-answer" value="true" />
+                                    <label class="form-check-label small">Correct</label>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-link text-danger remove-answer">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
                 `;
-                
+
+                // Insert and fix names/ids according to parent question index
                 const $newAnswer = $(template);
+                const questionCard = $(this).closest('.question-card');
+                const questionIndex = questionCard.index();
+                // Replace placeholder tokens
+                $newAnswer.html($newAnswer.html().replace(/QUESTIONS_INDEX__/g, `Questions[${questionIndex}]`).replace(/ANS_INDEX/g, answerIndex));
+
+                // Convert name attributes into ids and update label 'for' where necessary
+                $newAnswer.find('input, select, textarea, label, span[data-valmsg-for]').each(function() {
+                    const $el = $(this);
+                    const name = $el.attr('name');
+                    if (name) {
+                        const generatedId = name.replace(/\[(\d+)\]/g, '_$1__').replace(/\./g, '_');
+                        if ($el.is('input,select,textarea')) {
+                            $el.attr('id', generatedId);
+                        }
+                        // If it's a hidden fallback input, don't change its name (we need two inputs with same name)
+                    }
+                });
+
                 gsap.from($newAnswer, { duration: 0.2, opacity: 0, x: 20 });
                 $container.append($newAnswer);
+                // After DOM change reparse validator and reindex ids
+                updateQuestionNumbers();
+                reparseValidator();
+            });
+
+            // Remove answer
+            $(document).on('click', '.remove-answer', function() {
+                const $ans = $(this).closest('.answer-item');
+                $ans.remove();
+                updateQuestionNumbers();
+                reparseValidator();
+            });
+
+            // Remove question
+            $(document).on('click', '.remove-question', function() {
+                const $q = $(this).closest('.question-card');
+                $q.remove();
+                // After removing a question, fix numbering and names
+                updateQuestionNumbers();
+                reparseValidator();
             });
 
             // Form Validation
-            $('#quizForm').validate({
-                rules: {
-                    Title: { required: true, maxlength: 200 },
-                    'Questions[0].QuestionText': { required: true }
-                },
-                errorPlacement: function(error, element) {
-                    error.addClass('small text-danger mt-1');
-                    element.closest('.form-floating').after(error);
+            function initClientValidation() {
+                try {
+                    if (!$.fn || !$.fn.validate) {
+                        console.warn('jQuery validate plugin not present when initializing.');
+                        return false;
+                    }
+                    $('#quizForm').validate({
+                        rules: {
+                            Title: { required: true, maxlength: 200 },
+                            'Questions[0].QuestionText': { required: true }
+                        },
+                        errorPlacement: function(error, element) {
+                            error.addClass('small text-danger mt-1');
+                            element.closest('.form-floating').after(error);
+                        }
+                    });
+                    return true;
+                } catch (vErr) {
+                    console.error('initClientValidation error', vErr);
+                    return false;
                 }
+            }
+
+            // Try to initialize immediately; if plugin is missing, attempt to load it dynamically
+            if (!initClientValidation()) {
+                // load jquery.validate and unobtrusive from CDN as a fallback
+                console.warn('Attempting to load jQuery Validate and Unobtrusive dynamically...');
+                $.when(
+                    $.getScript('https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js'),
+                    $.getScript('https://cdnjs.cloudflare.com/ajax/libs/jquery-validate-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js')
+                ).done(function() {
+                    console.info('jQuery Validate loaded dynamically. Initializing.');
+                    initClientValidation();
+                }).fail(function(err) {
+                    console.error('Failed to load jQuery Validate scripts dynamically', err);
+                });
+            }
+
+            // Toggle teacher input/select when the anonymous checkbox changes
+            function toggleTeacherInput() {
+                const isAnonymous = $('#IsAnonymous').is(':checked');
+                if (isAnonymous) {
+                    $('#teacherSelect').addClass('d-none');
+                    $('#teacherNameReadonly').removeClass('d-none');
+                } else {
+                    $('#teacherSelect').removeClass('d-none');
+                    $('#teacherNameReadonly').addClass('d-none');
+                }
+            }
+
+            // Initialize teacher toggle
+            toggleTeacherInput();
+
+            // When checkbox changes, toggle inputs
+            $(document).on('change', '#IsAnonymous', function() {
+                toggleTeacherInput();
+            });
+
+            // When a teacher is selected, update the readonly display value
+            $(document).on('change', '#teacherSelect', function() {
+                var selectedText = $(this).find('option:selected').text();
+                $('#teacherNameReadonly').val(selectedText);
+            });
+
+            // Re-parse validator after dynamic additions
+            function reparseValidator() {
+                try {
+                    const form = $('#quizForm');
+                    // defensive: ensure jquery validate and unobtrusive are loaded
+                    if (!window.jQuery) {
+                        console.warn('jQuery not found — skipping validator parse');
+                        return;
+                    }
+                    if (!$.validator || !$.validator.unobtrusive) {
+                        console.warn('jQuery validator or unobtrusive missing — skipping parse');
+                        return;
+                    }
+                    form.removeData('validator');
+                    form.removeData('unobtrusiveValidation');
+                    $.validator.unobtrusive.parse(form);
+                } catch (e) {
+                    console.error('reparseValidator error', e);
+                }
+            }
+
+            // Normalize all dynamic input names/ids right before submit so model binding works
+            function normalizeFormNames() {
+                $('#questionsContainer .question-card').each(function(qIndex) {
+                    const $card = $(this);
+                    // Question text
+                    const $qText = $card.find('input[name$=".QuestionText"]').first();
+                    if ($qText.length) {
+                        const qName = `Questions[${qIndex}].QuestionText`;
+                        $qText.attr('name', qName).attr('id', qName.replace(/\[(\d+)\]/g, '_$1__').replace(/\./g, '_'));
+                    }
+
+                    // Image and Video
+                    $card.find('input[name$=".ImageUrl"], input[name$=".VideoUrl"]').each(function() {
+                        const $el = $(this);
+                        const suffix = $el.attr('name').split('.').pop();
+                        const newName = `Questions[${qIndex}].${suffix}`;
+                        $el.attr('name', newName).attr('id', newName.replace(/\[(\d+)\]/g, '_$1__').replace(/\./g, '_'));
+                    });
+
+                    // Answers
+                    $card.find('.answers-container > .answer-item').each(function(aIndex) {
+                        const $ans = $(this);
+                        // AnswerText
+                        const $ansText = $ans.find('input[name$=".AnswerText"]').first();
+                        if ($ansText.length) {
+                            const ansName = `Questions[${qIndex}].Answers[${aIndex}].AnswerText`;
+                            $ansText.attr('name', ansName).attr('id', ansName.replace(/\[(\d+)\]/g, '_$1__').replace(/\./g, '_'));
+                        }
+
+                        // IsCorrect checkbox + ensure hidden fallback exists
+                        let $checkbox = $ans.find('input[type="checkbox"][name$=".IsCorrect"]').first();
+                        if ($checkbox.length) {
+                            const isName = `Questions[${qIndex}].Answers[${aIndex}].IsCorrect`;
+                            // ensure a hidden fallback immediately before checkbox
+                            let $hidden = $ans.find(`input[type="hidden"][name="${isName}"]`);
+                            if ($hidden.length === 0) {
+                                // remove any other hidden IsCorrect with different name
+                                $ans.find('input[type="hidden"][name$=".IsCorrect"]').remove();
+                                $checkbox.before(`<input type="hidden" name="${isName}" value="false" />`);
+                            }
+                            $checkbox.attr('name', isName).attr('id', isName.replace(/\[(\d+)\]/g, '_$1__').replace(/\./g, '_'));
+                            // update label(for)
+                            const $label = $ans.find('label').filter(function() { return $(this).text().trim().toLowerCase().indexOf('correct') !== -1; }).first();
+                            if ($label && $label.length) {
+                                $label.attr('for', isName.replace(/\[(\d+)\]/g, '_$1__').replace(/\./g, '_'));
+                            }
+                        } else {
+                            // If no checkbox exists (edge-case), ensure hidden input still has correct name
+                            const $hiddenAny = $ans.find('input[type="hidden"][name$=".IsCorrect"]').first();
+                            if ($hiddenAny.length) {
+                                const hidName = `Questions[${qIndex}].Answers[${aIndex}].IsCorrect`;
+                                $hiddenAny.attr('name', hidName).attr('id', hidName.replace(/\[(\d+)\]/g, '_$1__').replace(/\./g, '_'));
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Run normalizeFormNames before the form posts
+            $('#quizForm').on('submit', function(e) {
+                try {
+                    // Client-side guard: ensure each question has at least one checked correct-answer
+                    let badIndex = -1;
+                    $('#questionsContainer .question-card').each(function(qIdx) {
+                        const $card = $(this);
+                        const hasCorrect = $card.find('.answers-container input.correct-answer:checked').length > 0;
+                        if (!hasCorrect && badIndex === -1) {
+                            badIndex = qIdx;
+                        }
+                    });
+                    if (badIndex !== -1) {
+                        // show inline message and prevent submit
+                        const $card = $('#questionsContainer .question-card').eq(badIndex);
+                        const $alert = $(`<div class="alert alert-warning">Please select at least one correct answer for Question ${badIndex + 1}.</div>`);
+                        $alert.insertBefore($card);
+                        $('html, body').animate({ scrollTop: Math.max(0, $card.offset().top - 110) }, 300);
+                        e.preventDefault();
+                        return false;
+                    }
+
+                    normalizeFormNames();
+                    // ensure unobtrusive parse if available
+                    reparseValidator();
+                } catch (submitErr) {
+                    console.error('Error normalizing form before submit', submitErr);
+                }
+                // allow submit to continue
             });
 
             // Helper Functions
             function updateQuestionNumbers() {
                 $('#questionsContainer .question-number').each(function(index) {
                     $(this).text(index + 1);
+                });
+
+                // For each question-card, fix the names -> ids and label 'for' and validation spans
+                $('#questionsContainer .question-card').each(function(qIndex) {
+                    const $card = $(this);
+                    // Update names that still have numeric indexes (if any) and rebuild ids
+                    $card.find('input[name], select[name], textarea[name]').each(function() {
+                        try {
+                            const $el = $(this);
+                            let name = $el.attr('name');
+                            if (!name) return;
+                            // Ensure the question index inside the name matches current qIndex
+                            name = name.replace(/Questions\[\d+\]/, `Questions[${qIndex}]`);
+                            $el.attr('name', name);
+                            // Generate id from name (MVC default style)
+                            const generatedId = name.replace(/\[(\d+)\]/g, '_$1__').replace(/\./g, '_');
+                            $el.attr('id', generatedId);
+                        } catch (eEl) {
+                            console.error('updateQuestionNumbers element error', eEl, this);
+                        }
+                    });
+
+                    // Update labels inside this card to point to the new ids
+                    $card.find('label[for]').each(function() {
+                        try {
+                            const $label = $(this);
+                            const forAttr = $label.attr('for');
+                            if (!forAttr) return;
+                            // Replace only the question index portion if present
+                            const newFor = forAttr.replace(/Questions_\d+__/, `Questions_${qIndex}__`);
+                            $label.attr('for', newFor);
+                        } catch (eLab) {
+                            console.error('updateQuestionNumbers label error', eLab, this);
+                        }
+                    });
+
+                    // Update data-valmsg-for spans so unobtrusive validation messages attach correctly
+                    $card.find('span[data-valmsg-for]').each(function() {
+                        try {
+                            const $span = $(this);
+                            const valFor = $span.attr('data-valmsg-for');
+                            if (!valFor) return;
+                            const newValFor = valFor.replace(/Questions\[\d+\]/, `Questions[${qIndex}]`);
+                            $span.attr('data-valmsg-for', newValFor);
+                        } catch (eSpan) {
+                            console.error('updateQuestionNumbers valmsg error', eSpan, this);
+                        }
+                    });
                 });
             }
         });

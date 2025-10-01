@@ -36,5 +36,17 @@ namespace SpeakingClub.Models
         public IEnumerable<SelectListItem>? Categories { get; set; }
         public IEnumerable<SelectListItem>? Tags { get; set; }
         public IEnumerable<SelectListItem>? Words { get; set; }
+    // Media fields (optional URLs)
+    [Display(Name = "Audio URL")]
+    public string? AudioUrl { get; set; }
+
+    [Display(Name = "YouTube Video URL")]
+    public string? YouTubeVideoUrl { get; set; }
+
+    // Teacher selection (frontend only for now)
+    public string? TeacherId { get; set; }
+    public string TeacherName { get; set; } = string.Empty;
+    public IEnumerable<SelectListItem> TeacherOptions { get; set; } = new List<SelectListItem>();
+    public bool IsAnonymous { get; set; } = false;
     }
 }
