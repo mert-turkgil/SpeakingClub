@@ -33,8 +33,7 @@ namespace SpeakingClub.Entity
         public string ImageUrl { get; set; }
 
         // The teacher (user) who created the quiz.
-        public string TeacherId { get; set; }
-        public User Teacher { get; set; }
+        public string TeacherName { get; set; }
 
         public ICollection<Question> Questions { get; set; }
 

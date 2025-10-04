@@ -1615,20 +1615,25 @@ namespace SpeakingClub.Controllers
             model.Questions = new List<QuestionViewModel>();
 
             // Populate teacher selection options and default to current user
+            // Use USERNAME as value instead of ID (since there are two separate databases)
             var currentUser = await _userManager.GetUserAsync(User);
             var users = _userManager.Users.ToList();
             model.TeacherOptions = users.Select(u => new SelectListItem
             {
-                Value = u.Id,
+                Value = u.UserName ?? u.Id,  // Use Username as value
                 Text = (!string.IsNullOrWhiteSpace(u.FirstName) || !string.IsNullOrWhiteSpace(u.LastName)) ?
                         string.Join(' ', new[] { u.FirstName, u.LastName }.Where(s => !string.IsNullOrWhiteSpace(s))) :
                         (u.UserName ?? u.Email ?? "(unknown)")
             }).ToList();
             if (currentUser != null)
             {
-                model.TeacherId = currentUser.Id;
+                // TeacherId holds the username for dropdown binding
+                model.TeacherId = currentUser.UserName ?? currentUser.Id;
+                
+                // TeacherName is the display name (FirstName + LastName or fallback to Username/Email)
                 model.TeacherName = string.Join(' ', new[] { currentUser.FirstName, currentUser.LastName }.Where(s => !string.IsNullOrWhiteSpace(s)));
-                if (string.IsNullOrWhiteSpace(model.TeacherName)) model.TeacherName = currentUser.UserName ?? currentUser.Email ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(model.TeacherName)) 
+                    model.TeacherName = currentUser.UserName ?? currentUser.Email ?? string.Empty;
             }
 
             return View(model);
@@ -1641,33 +1646,35 @@ namespace SpeakingClub.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            // Determine the final TeacherId to use
-            string? finalTeacherId = null;
+            // Determine the final TeacherName (username) to use
+            string? finalTeacherName = null;
             
             if (model.IsAnonymous)
             {
                 // Anonymous quiz - no teacher
-                finalTeacherId = null;
+                finalTeacherName = null;
             }
             else if (!string.IsNullOrWhiteSpace(model.TeacherId))
             {
-                // Validate that the selected teacher exists
-                var selectedTeacher = await _userManager.FindByIdAsync(model.TeacherId);
+                // Find teacher by USERNAME (TeacherId contains username from frontend)
+                _logger.LogInformation("Searching for teacher with username: '{Username}'", model.TeacherId);
+                var selectedTeacher = await _userManager.FindByNameAsync(model.TeacherId);
                 if (selectedTeacher != null)
                 {
-                    finalTeacherId = model.TeacherId;
+                    finalTeacherName = selectedTeacher.UserName;
+                    _logger.LogInformation("✓ Found teacher by username '{Username}'", model.TeacherId);
                 }
                 else
                 {
-                    // Teacher not found, use current user as fallback
-                    _logger.LogWarning("Selected TeacherId '{TeacherId}' not found. Using current user '{UserId}'.", model.TeacherId, user.Id);
-                    finalTeacherId = user.Id;
+                    // Teacher not found by username, use current user as fallback
+                    _logger.LogWarning("✗ Teacher username '{Username}' NOT FOUND in database. Using current user '{Username}' as fallback.", model.TeacherId, user.UserName);
+                    finalTeacherName = user.UserName;
                 }
             }
             else
             {
                 // No teacher selected, default to current user
-                finalTeacherId = user.Id;
+                finalTeacherName = user.UserName;
             }
 
             if (ModelState.IsValid)
@@ -1686,11 +1693,15 @@ namespace SpeakingClub.Controllers
                     
                     var taglist = await _unitOfWork.Tags.GetAllAsync();
                     var wordlist = await _unitOfWork.Words.GetAllAsync();
+                    
+                    _logger.LogInformation("Creating quiz with TeacherName: '{TeacherName}' (IsAnonymous: {IsAnonymous})", 
+                        finalTeacherName ?? "NULL", model.IsAnonymous);
+                    
                     var quiz = new SpeakingClub.Entity.Quiz
                     {
                         Title = model.Title,
                         Description = model.Description,
-                        TeacherId = finalTeacherId,
+                        TeacherName = finalTeacherName,
                         CategoryId = model.CategoryId,
                         ImageUrl = uploadedImageUrl,
                         AudioUrl = uploadedAudioUrl,
@@ -1787,6 +1798,16 @@ namespace SpeakingClub.Controllers
                 .Select(t => new SelectListItem(t.Name, t.TagId.ToString()));
             model.Words = (await _unitOfWork.Words.GetAllAsync())
                 .Select(w => new SelectListItem(w.Term, w.WordId.ToString()));
+            
+            // Repopulate teacher options using USERNAME as value
+            var users = _userManager.Users.ToList();
+            model.TeacherOptions = users.Select(u => new SelectListItem
+            {
+                Value = u.UserName ?? u.Id,
+                Text = (!string.IsNullOrWhiteSpace(u.FirstName) || !string.IsNullOrWhiteSpace(u.LastName)) ?
+                        string.Join(' ', new[] { u.FirstName, u.LastName }.Where(s => !string.IsNullOrWhiteSpace(s))) :
+                        (u.UserName ?? u.Email ?? "(unknown)")
+            }).ToList();
 
             return View(model);
         }
@@ -1827,9 +1848,9 @@ namespace SpeakingClub.Controllers
                 ImageUrl = quiz.ImageUrl ?? string.Empty,
                 AudioUrl = quiz.AudioUrl ?? string.Empty,
                 YouTubeVideoUrl = quiz.YouTubeVideoUrl ?? string.Empty,
-                // Teacher fields
-                TeacherId = quiz.TeacherId,
-                IsAnonymous = string.IsNullOrWhiteSpace(quiz.TeacherId),
+                // Teacher fields - TeacherId now holds username for frontend selection
+                TeacherId = quiz.TeacherName,  // Store username in TeacherId for dropdown binding
+                IsAnonymous = string.IsNullOrWhiteSpace(quiz.TeacherName),
 
                 Categories = (await _unitOfWork.Categories.GetAllAsync())
                     .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString())),
@@ -1839,20 +1860,20 @@ namespace SpeakingClub.Controllers
                     .Select(w => new SelectListItem(w.Term, w.WordId.ToString()))
             };
 
-            // Populate teacher selection options (show user display names)
+            // Populate teacher selection options using USERNAME as value
             var users = _userManager.Users.ToList();
             model.TeacherOptions = users.Select(u => new SelectListItem
             {
-                Value = u.Id,
+                Value = u.UserName ?? u.Id,  // Use username as value
                 Text = (!string.IsNullOrWhiteSpace(u.FirstName) || !string.IsNullOrWhiteSpace(u.LastName)) ?
                         string.Join(' ', new[] { u.FirstName, u.LastName }.Where(s => !string.IsNullOrWhiteSpace(s))) :
                         (u.UserName ?? u.Email ?? "(unknown)")
             }).ToList();
 
-            // Resolve teacher name if teacher is set
-            if (!string.IsNullOrWhiteSpace(model.TeacherId))
+            // Resolve teacher display name from username
+            if (!string.IsNullOrWhiteSpace(quiz.TeacherName))
             {
-                var teacher = await _userManager.FindByIdAsync(model.TeacherId);
+                var teacher = await _userManager.FindByNameAsync(quiz.TeacherName);
                 if (teacher != null)
                 {
                     // Prefer FirstName + LastName if available otherwise Username/Email
@@ -1943,27 +1964,34 @@ namespace SpeakingClub.Controllers
                 // Update questions and answers
                 await UpdateQuestionsAndAnswers(quiz, model);
 
-                // Handle teacher assignment
-                var originalTeacherId = quiz.TeacherId;
+                // Handle teacher assignment - model.TeacherId contains username
+                var originalTeacherName = quiz.TeacherName;
                 bool teacherChanged = false;
                 if (model.IsAnonymous)
                 {
-                    if (!string.IsNullOrWhiteSpace(originalTeacherId))
+                    if (!string.IsNullOrWhiteSpace(originalTeacherName))
                     {
-                        quiz.TeacherId = null;
+                        quiz.TeacherName = null;
                         teacherChanged = true;
+                        _logger.LogInformation("Quiz {QuizId} set to anonymous", quiz.Id);
                     }
                 }
                 else
                 {
-                    if (!string.IsNullOrWhiteSpace(model.TeacherId) && model.TeacherId != originalTeacherId)
+                    // model.TeacherId contains the selected username
+                    if (!string.IsNullOrWhiteSpace(model.TeacherId) && model.TeacherId != originalTeacherName)
                     {
-                        quiz.TeacherId = model.TeacherId;
-                        teacherChanged = true;
+                        var selectedTeacher = await _userManager.FindByNameAsync(model.TeacherId);
+                        if (selectedTeacher != null)
+                        {
+                            quiz.TeacherName = selectedTeacher.UserName;
+                            teacherChanged = true;
+                            _logger.LogInformation("Quiz {QuizId} teacher changed to '{TeacherName}'", quiz.Id, selectedTeacher.UserName);
+                        }
                     }
                 }
 
-                _unitOfWork.Quizzes.Update(quiz, modifyTeacherId: teacherChanged);
+                _unitOfWork.Quizzes.Update(quiz, modifyTeacherName: teacherChanged);
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();
 

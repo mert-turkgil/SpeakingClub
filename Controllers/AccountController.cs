@@ -116,7 +116,7 @@ namespace SpeakingClub.Controllers
                     QuizTitle = q.Title,
                     QuizDescription = q.Description,
                     ImageUrl = !string.IsNullOrEmpty(q.ImageUrl) ? q.ImageUrl : Url.Content("~/img/header_logo.png"),
-                    TeacherName = q.Teacher != null ? $"{q.Teacher.FirstName} {q.Teacher.LastName}" : "Unknown Instructor",
+                    TeacherName = q.TeacherName ?? "Unknown Instructor",
                     CategoryName = q.Category != null ? q.Category.Name : "General",
                     AttemptCount = userSubmissions.Count(s => s.QuizId == q.Id),
                     LastScore = lastSubmission?.Score,

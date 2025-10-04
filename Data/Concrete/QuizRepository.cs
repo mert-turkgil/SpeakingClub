@@ -25,10 +25,10 @@ namespace SpeakingClub.Data.Concrete
                 .Include(q => q.Words)
                 .ToListAsync();
         }
-        public async Task<IEnumerable<Quiz>> GetQuizzesByTeacherIdAsync(string teacherId)
+        public async Task<IEnumerable<Quiz>> GetQuizzesByTeacherNameAsync(string teacherName)
         {
             return await _dbSet
-                .Where(q => q.TeacherId == teacherId)
+                .Where(q => q.TeacherName == teacherName)
                 .ToListAsync();
         }
         
@@ -75,16 +75,15 @@ namespace SpeakingClub.Data.Concrete
                 .FirstOrDefaultAsync(q => q.Id == quizId);
         }
 
-        public void Update(Quiz quiz, bool modifyTeacherId = true)
+        public void Update(Quiz quiz, bool modifyTeacherName = true)
         {
             // Attach the entity to the context and mark it as modified.
-            // THE FIX: Use the correct plural property name 'Quizzes'.
             _database.Quizzes.Update(quiz);
 
-            // If modifyTeacherId is false, explicitly tell EF Core not to update it.
-            if (!modifyTeacherId)
+            // If modifyTeacherName is false, explicitly tell EF Core not to update the teacher name.
+            if (!modifyTeacherName)
             {
-                _database.Entry(quiz).Property(x => x.TeacherId).IsModified = false;
+                _database.Entry(quiz).Property(x => x.TeacherName).IsModified = false;
             }
         }
     }

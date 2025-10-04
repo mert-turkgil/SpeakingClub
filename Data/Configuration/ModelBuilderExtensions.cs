@@ -118,7 +118,7 @@ namespace SpeakingClub.Data.Configuration
                     Description = "A quiz to test your general knowledge.",
                     AudioUrl = "https://example.com/audio1.mp3",
                     YouTubeVideoUrl = "https://youtube.com/vid1",
-                    TeacherId = "teacher1",
+                    TeacherName = "teacher1",
                     CategoryId = 1
                 }
             );
