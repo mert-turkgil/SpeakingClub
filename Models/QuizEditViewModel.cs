@@ -10,13 +10,22 @@ namespace SpeakingClub.Models
     public class QuizEditViewModel
     {
         public int QuizId { get; set; }
-
+        
         [Required]
-        [StringLength(200)]
-        public string Title { get; set; } = string.Empty;
-
-        [DataType(DataType.MultilineText)]
-        public string Description { get; set; } = string.Empty;
+        public required string Title { get; set; }
+        
+        public string? Description { get; set; }
+        
+        // File uploads (not required)
+        public IFormFile? AudioFile { get; set; }
+        public IFormFile? ImageFile { get; set; }
+        
+        // Existing file paths (for display)
+        public string? AudioUrl { get; set; }
+        public string? ImageUrl { get; set; }
+        
+        // YouTube is text field (not required)
+        public string? YouTubeVideoUrl { get; set; }
 
         [Display(Name = "Category")]
         public int? CategoryId { get; set; }
@@ -28,13 +37,6 @@ namespace SpeakingClub.Models
         public List<int> SelectedWordIds { get; set; } = new List<int>();
 
         public List<QuestionEditViewModel> Questions { get; set; } = new List<QuestionEditViewModel>();
-
-    // Media fields
-    [Display(Name = "Audio URL")]
-    public string AudioUrl { get; set; } = string.Empty;
-
-    [Display(Name = "YouTube Video URL")]
-    public string YouTubeVideoUrl { get; set; } = string.Empty;
 
     // Teacher information (editable later on the backend). TeacherId will be posted but not shown for editing.
     public string? TeacherId { get; set; }

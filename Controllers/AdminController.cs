@@ -1492,7 +1492,7 @@ namespace SpeakingClub.Controllers
         [HttpPost("QuizDelete/{id}")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Root,Admin,Teacher")]
-        public async Task<IActionResult> QuizDelete(int id)
+        public async Task<IActionResult> QuizDelete(int id, bool deleteQuestions = false)
         {
             using var transaction = await _unitOfWork.BeginTransactionAsync();
             try
@@ -1501,8 +1501,11 @@ namespace SpeakingClub.Controllers
                 if (quiz == null)
                 {
                     TempData["ErrorMessage"] = "Quiz not found!";
-                    return RedirectToAction("QuizList");
+                    return RedirectToAction("Index");
                 }
+
+                // Delete quiz media files (audio/video)
+                DeleteQuizMediaFiles(quiz);
 
                 // Remove related quiz submissions & responses
                 var submissions = (await _unitOfWork.QuizSubmissions.GetAllAsync())
@@ -1522,16 +1525,34 @@ namespace SpeakingClub.Controllers
                 quiz.Words?.Clear();
                 quiz.Tags?.Clear();
 
-                // Remove questions and their answers
-                foreach (var question in quiz.Questions.ToList())
+                if (deleteQuestions)
                 {
-                    // First, remove all answers associated with the question
-                    foreach (var answer in question.Answers.ToList())
+                    // User chose to delete questions and their files
+                    foreach (var question in quiz.Questions.ToList())
                     {
-                        _unitOfWork.GenericRepository<Entity.QuizAnswer>().Remove(answer);
+                        // Delete question media files (images, audio, videos)
+                        DeleteQuestionMediaFiles(question);
+
+                        // First, remove all answers associated with the question
+                        foreach (var answer in question.Answers.ToList())
+                        {
+                            _unitOfWork.GenericRepository<Entity.QuizAnswer>().Remove(answer);
+                        }
+                        // Now, remove the question itself using the generic repository
+                        _unitOfWork.GenericRepository<Entity.Question>().Remove(question);
                     }
-                    // Now, remove the question itself using the generic repository
-                    _unitOfWork.GenericRepository<Entity.Question>().Remove(question);
+                    _logger.LogInformation("Deleted quiz {QuizId} with {QuestionCount} questions and their files", id, quiz.Questions.Count);
+                }
+                else
+                {
+                    // User chose NOT to delete questions - unlink them from quiz
+                    foreach (var question in quiz.Questions.ToList())
+                    {
+                        question.QuizId = 0;
+                        question.Quiz = null;
+                        _unitOfWork.GenericRepository<Entity.Question>().Update(question);
+                    }
+                    _logger.LogInformation("Deleted quiz {QuizId} but preserved {QuestionCount} questions", id, quiz.Questions.Count);
                 }
 
                 // Remove the quiz itself
@@ -1540,20 +1561,44 @@ namespace SpeakingClub.Controllers
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();
 
-                TempData["SuccessMessage"] = "Quiz deleted successfully!";
+                TempData["SuccessMessage"] = deleteQuestions 
+                    ? "Quiz and associated questions deleted successfully!" 
+                    : "Quiz deleted successfully! Questions have been preserved.";
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error deleting quiz {QuizId}", id);
                 TempData["ErrorMessage"] = $"Error deleting quiz: {ex.Message}";
             }
-            return RedirectToAction("QuizList");
+            return RedirectToAction("Index", new { scrollTo = "QuizzesManagement" });
         }
 
 
         [HttpGet("QuizCreate")]
         public async Task<IActionResult> QuizCreate()
         {
+            // Fetch only UNASSIGNED questions (not linked to any quiz) to prevent conflicts
+            // Questions with QuizId will be excluded to avoid issues when editing/deleting quizzes
+            var allQuestions = await _unitOfWork.Questions.GetAllAsync();
+            var unassignedQuestions = allQuestions.Where(q => q.QuizId == 0 || q.Quiz == null);
+            
+            var availableQuestions = unassignedQuestions.Select(q => new QuestionViewModel
+            {
+                Id = q.Id,
+                QuestionText = q.QuestionText,
+                ImageUrl = q.ImageUrl,
+                AudioUrl = q.AudioUrl,
+                VideoUrl = q.VideoUrl,
+                QuizTitle = "Available (Not assigned)",
+                Answers = q.Answers?.Select(a => new AnswerViewModel
+                {
+                    Id = a.Id,
+                    AnswerText = a.AnswerText,
+                    IsCorrect = a.IsCorrect
+                }).ToList() ?? new List<AnswerViewModel>()
+            }).ToList();
+
             var model = new QuizCreateViewModel
             {
                 Title = string.Empty,
@@ -1563,17 +1608,11 @@ namespace SpeakingClub.Controllers
                 Tags = (await _unitOfWork.Tags.GetAllAsync())
                     .Select(t => new SelectListItem(t.Name, t.TagId.ToString())),
                 Words = (await _unitOfWork.Words.GetAllAsync())
-                    .Select(w => new SelectListItem(w.Term, w.WordId.ToString()))
+                    .Select(w => new SelectListItem(w.Term, w.WordId.ToString())),
+                AvailableQuestions = availableQuestions
             };
-            model.Questions.Add(new QuestionViewModel
-            {
-                QuestionText = string.Empty,
-                Answers = new List<AnswerViewModel>
-                {
-                    new AnswerViewModel { AnswerText = string.Empty },
-                    new AnswerViewModel { AnswerText = string.Empty }
-                }
-            });
+            // Start with empty questions list (user can add from available or create new)
+            model.Questions = new List<QuestionViewModel>();
 
             // Populate teacher selection options and default to current user
             var currentUser = await _userManager.GetUserAsync(User);
@@ -1602,16 +1641,33 @@ namespace SpeakingClub.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            // If a teacher was selected (and not anonymous), validate it exists
-            if (!model.IsAnonymous && !string.IsNullOrWhiteSpace(model.TeacherId))
+            // Determine the final TeacherId to use
+            string? finalTeacherId = null;
+            
+            if (model.IsAnonymous)
             {
+                // Anonymous quiz - no teacher
+                finalTeacherId = null;
+            }
+            else if (!string.IsNullOrWhiteSpace(model.TeacherId))
+            {
+                // Validate that the selected teacher exists
                 var selectedTeacher = await _userManager.FindByIdAsync(model.TeacherId);
-                if (selectedTeacher == null)
+                if (selectedTeacher != null)
                 {
-                    // Instead of immediately failing, log and fallback to current user to avoid FK insert errors
-                    _logger.LogWarning("Selected TeacherId '{TeacherId}' not found. Falling back to current user '{UserId}'.", model.TeacherId, user.Id);
-                    model.TeacherId = user.Id;
+                    finalTeacherId = model.TeacherId;
                 }
+                else
+                {
+                    // Teacher not found, use current user as fallback
+                    _logger.LogWarning("Selected TeacherId '{TeacherId}' not found. Using current user '{UserId}'.", model.TeacherId, user.Id);
+                    finalTeacherId = user.Id;
+                }
+            }
+            else
+            {
+                // No teacher selected, default to current user
+                finalTeacherId = user.Id;
             }
 
             if (ModelState.IsValid)
@@ -1619,21 +1675,25 @@ namespace SpeakingClub.Controllers
                 using var transaction = await _unitOfWork.BeginTransactionAsync();
                 try
                 {
-                    var uploadedAudioUrl = model.AudioFile != null ? await ProcessAudioUpload(model.AudioFile) : null;
-                    // Prefer uploaded audio file, otherwise accept user-provided AudioUrl string
-                    var finalAudioUrl = !string.IsNullOrWhiteSpace(uploadedAudioUrl) ? uploadedAudioUrl :
-                                       (!string.IsNullOrWhiteSpace(model.AudioUrl) ? model.AudioUrl.Trim() : null);
+                    // Handle Quiz Image Upload
+                    var uploadedImageUrl = model.ImageFile != null ? await ProcessQuizImageUpload(model.ImageFile) : null;
+                    
+                    // Handle Quiz Audio Upload
+                    var uploadedAudioUrl = model.AudioFile != null ? await ProcessQuizAudioUpload(model.AudioFile) : null;
+                    
+                    // Handle YouTube URL (text field)
                     var finalYouTubeUrl = !string.IsNullOrWhiteSpace(model.YouTubeVideoUrl) ? model.YouTubeVideoUrl.Trim() : null;
+                    
                     var taglist = await _unitOfWork.Tags.GetAllAsync();
                     var wordlist = await _unitOfWork.Words.GetAllAsync();
                     var quiz = new SpeakingClub.Entity.Quiz
                     {
                         Title = model.Title,
                         Description = model.Description,
-                        // Determine teacher: anonymous -> null, selected -> selected, otherwise default to current user
-                        TeacherId = model.IsAnonymous ? null : (!string.IsNullOrWhiteSpace(model.TeacherId) ? model.TeacherId : user.Id),
+                        TeacherId = finalTeacherId,
                         CategoryId = model.CategoryId,
-                        AudioUrl = finalAudioUrl,
+                        ImageUrl = uploadedImageUrl,
+                        AudioUrl = uploadedAudioUrl,
                         YouTubeVideoUrl = finalYouTubeUrl,
                         Tags = taglist.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList(),
                         Words = wordlist.Where(w => model.SelectedWordIds.Contains(w.WordId)).ToList()
@@ -1641,12 +1701,26 @@ namespace SpeakingClub.Controllers
 
                     foreach (var questionModel in model.Questions)
                     {
-                        var question = new SpeakingClub.Entity.Question // Use Entity namespace
+                        // Handle Question Image Upload
+                        string? questionImageUrl = null;
+                        if (questionModel.ImageFile != null && questionModel.ImageFile.Length > 0)
+                        {
+                            questionImageUrl = await ProcessQuizImageUpload(questionModel.ImageFile);
+                        }
+                        
+                        // Handle Question Audio Upload
+                        string? questionAudioUrl = null;
+                        if (questionModel.AudioFile != null && questionModel.AudioFile.Length > 0)
+                        {
+                            questionAudioUrl = await ProcessQuizAudioUpload(questionModel.AudioFile);
+                        }
+                        
+                        var question = new SpeakingClub.Entity.Question
                         {
                             QuestionText = questionModel.QuestionText,
-                            ImageUrl = questionModel.ImageUrl,
-                            AudioUrl = questionModel.AudioUrl,
-                            VideoUrl = questionModel.VideoUrl,
+                            ImageUrl = questionImageUrl,
+                            AudioUrl = questionAudioUrl,
+                            VideoUrl = !string.IsNullOrWhiteSpace(questionModel.VideoUrl) ? questionModel.VideoUrl.Trim() : null,
                             Answers = questionModel.Answers.Select(a => new SpeakingClub.Entity.QuizAnswer
                             {
                                 AnswerText = a.AnswerText,
@@ -1661,7 +1735,7 @@ namespace SpeakingClub.Controllers
                     await transaction.CommitAsync();
 
                     TempData["SuccessMessage"] = "Quiz created successfully!";
-                    return RedirectToAction("QuizList");
+                    return RedirectToAction("Index");
                 }
                 catch (Exception ex)
                 {
@@ -1717,28 +1791,6 @@ namespace SpeakingClub.Controllers
             return View(model);
         }
 
-        #region Mp3
-        private async Task<string?> ProcessAudioUpload(IFormFile audioFile)
-        {
-            if (audioFile == null || audioFile.Length == 0)
-                return null;
-
-            var uploadsFolder = Path.Combine(_env.WebRootPath, "mp3");
-            if (!Directory.Exists(uploadsFolder))
-                Directory.CreateDirectory(uploadsFolder);
-
-            var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(audioFile.FileName)}";
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
-            {
-                await audioFile.CopyToAsync(fileStream);
-            }
-
-            return $"/uploads/audio/{uniqueFileName}";
-        }
-        #endregion
-
         [HttpGet("QuizEdit/{id:int}")]
         public async Task<IActionResult> QuizEdit(int id)
         {
@@ -1771,9 +1823,11 @@ namespace SpeakingClub.Controllers
                         IsCorrect = a.IsCorrect.ToString().ToLower()
                     }).ToList()
                 }).ToList(),
-                // new media and teacher fields
+                // Quiz media fields (for display)
+                ImageUrl = quiz.ImageUrl ?? string.Empty,
                 AudioUrl = quiz.AudioUrl ?? string.Empty,
                 YouTubeVideoUrl = quiz.YouTubeVideoUrl ?? string.Empty,
+                // Teacher fields
                 TeacherId = quiz.TeacherId,
                 IsAnonymous = string.IsNullOrWhiteSpace(quiz.TeacherId),
 
@@ -1820,9 +1874,8 @@ namespace SpeakingClub.Controllers
 
         [HttpPost("QuizEdit/{id:int}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> QuizEdit(int id, QuizEditViewModel model) // CHANGE: Added 'int id' parameter
+        public async Task<IActionResult> QuizEdit(int id, QuizEditViewModel model)
         {
-            // Add a check to ensure the route ID matches the model ID for security.
             if (id != model.QuizId)
             {
                 return BadRequest("ID mismatch between route and form data.");
@@ -1831,9 +1884,10 @@ namespace SpeakingClub.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
+            ValidateQuestions(model);
+
             if (!ModelState.IsValid)
             {
-                // If validation fails, you must repopulate the dropdowns before returning the view.
                 model.Categories = await RepopulateCategories();
                 model.Tags = await RepopulateTags();
                 model.Words = await RepopulateWords();
@@ -1844,7 +1898,6 @@ namespace SpeakingClub.Controllers
             try
             {
                 var quiz = await _unitOfWork.Quizzes.GetByIdAsync(model.QuizId);
-
                 if (quiz == null)
                 {
                     return NotFound();
@@ -1855,9 +1908,34 @@ namespace SpeakingClub.Controllers
                 quiz.Description = model.Description;
                 quiz.CategoryId = model.CategoryId;
 
-                // Update media fields
-                quiz.AudioUrl = string.IsNullOrWhiteSpace(model.AudioUrl) ? null : model.AudioUrl.Trim();
-                quiz.YouTubeVideoUrl = string.IsNullOrWhiteSpace(model.YouTubeVideoUrl) ? null : model.YouTubeVideoUrl.Trim();
+                // Handle Image Upload
+                if (model.ImageFile != null && model.ImageFile.Length > 0)
+                {
+                    // Delete old image if exists
+                    if (!string.IsNullOrEmpty(quiz.ImageUrl))
+                    {
+                        DeleteQuizMediaFile(quiz.ImageUrl);
+                    }
+                    // Upload new image
+                    quiz.ImageUrl = await ProcessQuizImageUpload(model.ImageFile);
+                }
+
+                // Handle Audio Upload
+                if (model.AudioFile != null && model.AudioFile.Length > 0)
+                {
+                    // Delete old audio if exists
+                    if (!string.IsNullOrEmpty(quiz.AudioUrl))
+                    {
+                        DeleteQuizMediaFile(quiz.AudioUrl, "quiz audio");
+                    }
+                    // Upload new audio
+                    quiz.AudioUrl = await ProcessQuizAudioUpload(model.AudioFile);
+                }
+
+                // Update YouTube URL (text field)
+                quiz.YouTubeVideoUrl = string.IsNullOrWhiteSpace(model.YouTubeVideoUrl) 
+                    ? null 
+                    : model.YouTubeVideoUrl.Trim();
 
                 // Update relationships
                 await UpdateQuizRelationships(quiz, model);
@@ -1865,7 +1943,7 @@ namespace SpeakingClub.Controllers
                 // Update questions and answers
                 await UpdateQuestionsAndAnswers(quiz, model);
 
-                // Determine whether teacher should be updated
+                // Handle teacher assignment
                 var originalTeacherId = quiz.TeacherId;
                 bool teacherChanged = false;
                 if (model.IsAnonymous)
@@ -1878,7 +1956,6 @@ namespace SpeakingClub.Controllers
                 }
                 else
                 {
-                    // If the model provided a TeacherId different from current, update it
                     if (!string.IsNullOrWhiteSpace(model.TeacherId) && model.TeacherId != originalTeacherId)
                     {
                         quiz.TeacherId = model.TeacherId;
@@ -1886,9 +1963,7 @@ namespace SpeakingClub.Controllers
                     }
                 }
 
-                // Persist changes. Only allow repository to modify TeacherId when it actually changed.
                 _unitOfWork.Quizzes.Update(quiz, modifyTeacherId: teacherChanged);
-
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();
 
@@ -1907,6 +1982,164 @@ namespace SpeakingClub.Controllers
         }
 
         #region helpers for quiz
+        #region Quiz Media File Helpers
+
+        /// <summary>
+        /// Uploads a media file (image or audio) to the specified folder and returns the public URL path.
+        /// </summary>
+        /// <param name="file">The file to upload</param>
+        /// <param name="subFolder">The subfolder name (e.g., "quiz-images", "quiz-audio")</param>
+        /// <param name="allowedExtensions">Optional array of allowed file extensions</param>
+        /// <param name="maxSizeInMB">Optional maximum file size in MB (default 10MB)</param>
+        /// <returns>The public URL path to the uploaded file, or null if upload fails</returns>
+        private async Task<string?> ProcessQuizMediaUpload(
+            IFormFile? file, 
+            string subFolder, 
+            string[]? allowedExtensions = null,
+            int maxSizeInMB = 10)
+        {
+            if (file == null || file.Length == 0)
+                return null;
+
+            // Default allowed extensions if not specified
+            if (allowedExtensions == null)
+            {
+                allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".mp3", ".wav", ".ogg", ".m4a" };
+            }
+
+            // Validate file extension
+            var fileExtension = Path.GetExtension(file.FileName).ToLower();
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                _logger.LogWarning($"Invalid file extension: {fileExtension}. Allowed: {string.Join(", ", allowedExtensions)}");
+                return null;
+            }
+
+            // Validate file size
+            var maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+            if (file.Length > maxSizeInBytes)
+            {
+                _logger.LogWarning($"File size {file.Length} bytes exceeds maximum {maxSizeInBytes} bytes");
+                return null;
+            }
+
+            try
+            {
+                // Create upload folder if it doesn't exist
+                var uploadsFolder = Path.Combine(_env.WebRootPath, subFolder);
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
+
+                // Generate unique filename
+                var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                // Save file to server
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+
+                _logger.LogInformation($"Uploaded file: {filePath}");
+
+                // Return public URL path
+                return $"/{subFolder}/{uniqueFileName}";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error uploading file to {subFolder}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Uploads a quiz image file
+        /// </summary>
+        private async Task<string?> ProcessQuizImageUpload(IFormFile? imageFile)
+        {
+            return await ProcessQuizMediaUpload(
+                imageFile, 
+                "img/quiz-images",
+                new[] { ".jpg", ".jpeg", ".png", ".gif" },
+                maxSizeInMB: 5
+            );
+        }
+
+        /// <summary>
+        /// Uploads a quiz audio file
+        /// </summary>
+        private async Task<string?> ProcessQuizAudioUpload(IFormFile? audioFile)
+        {
+            return await ProcessQuizMediaUpload(
+                audioFile,
+                "mp3",
+                new[] { ".mp3", ".wav", ".ogg", ".m4a" },
+                maxSizeInMB: 10
+            );
+        }
+
+        /// <summary>
+        /// Deletes a media file from the server if it exists and is a local file (not external URL)
+        /// </summary>
+        /// <param name="fileUrl">The file URL path to delete (e.g., "/img/quiz-images/abc123.jpg")</param>
+        /// <param name="fileType">Optional description of file type for logging purposes</param>
+        private void DeleteQuizMediaFile(string? fileUrl, string fileType = "media file")
+        {
+            // Check if URL is null, empty, or an external URL
+            if (string.IsNullOrEmpty(fileUrl) || fileUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogInformation($"Skipping deletion for {fileType}: {fileUrl ?? "(null)"} (external or null)");
+                return;
+            }
+
+            try
+            {
+                // Convert URL path to physical file path
+                var filePath = Path.Combine(
+                    _env.WebRootPath, 
+                    fileUrl.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString())
+                );
+
+                // Delete file if it exists
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                    _logger.LogInformation($"Deleted {fileType}: {filePath}");
+                }
+                else
+                {
+                    _logger.LogWarning($"{fileType} not found: {filePath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't throw - we don't want file deletion errors to break the application
+                _logger.LogError(ex, $"Error deleting {fileType}: {fileUrl}");
+            }
+        }
+
+        /// <summary>
+        /// Deletes all media files associated with a quiz (image, audio)
+        /// </summary>
+        private void DeleteQuizMediaFiles(Entity.Quiz quiz)
+        {
+            DeleteQuizMediaFile(quiz.ImageUrl, "quiz image");
+            DeleteQuizMediaFile(quiz.AudioUrl, "quiz audio");
+            // Note: YouTubeVideoUrl is just a URL, no file to delete
+        }
+
+        /// <summary>
+        /// Deletes all media files associated with a question (image, audio)
+        /// Note: VideoUrl is just a URL link, no file to delete
+        /// </summary>
+        private void DeleteQuestionMediaFiles(Entity.Question question)
+        {
+            DeleteQuizMediaFile(question.ImageUrl, "question image");
+            DeleteQuizMediaFile(question.AudioUrl, "question audio");
+            // Note: VideoUrl is just a URL (like YouTube link), no file to delete
+        }
+
+        #endregion
         private async Task UpdateQuizRelationships(Entity.Quiz quiz, QuizEditViewModel model)
         {
             // Update Tags
@@ -1922,14 +2155,39 @@ namespace SpeakingClub.Controllers
 
         private async Task UpdateQuestionsAndAnswers(SpeakingClub.Entity.Quiz quiz, QuizEditViewModel model)
         {
-            // Get IDs of questions submitted from the form (only existing ones)
-            var questionIdsFromModel = model.Questions.Select(q => q.QuestionId).Where(id => id > 0).ToHashSet();
+            // Define what constitutes an empty question
+            bool IsEmptyQuestion(QuestionEditViewModel qm) =>
+                string.IsNullOrWhiteSpace(qm.QuestionText)
+                && qm.ImageFile == null
+                && string.IsNullOrWhiteSpace(qm.VideoUrl)
+                && (qm.Answers == null || qm.Answers.All(a => string.IsNullOrWhiteSpace(a.AnswerText)));
+
+            // Get IDs of questions submitted from the form (only existing ones that are NOT empty)
+            // This ensures deleted questions (submitted as empty) are excluded and will be removed
+            var questionIdsFromModel = model.Questions
+                .Where(q => q.QuestionId > 0 && !IsEmptyQuestion(q))
+                .Select(q => q.QuestionId)
+                .ToHashSet();
 
             // Identify and remove questions that were deleted from the UI
             var questionsToRemove = quiz.Questions.Where(q => !questionIdsFromModel.Contains(q.Id)).ToList();
             foreach (var question in questionsToRemove)
             {
-                // EF Core will handle deleting the orphaned answers when the question is removed
+                // Delete associated media files (images and audio)
+                DeleteQuestionMediaFiles(question);
+
+                // Remove from the parent collection so EF Core won't try to re-add it when saving
+                quiz.Questions.Remove(question);
+                // Also make sure any child answers are removed from the question collection to avoid tracked entities
+                if (question.Answers != null && question.Answers.Any())
+                {
+                    foreach (var a in question.Answers.ToList())
+                    {
+                        question.Answers.Remove(a);
+                        _unitOfWork.GenericRepository<Entity.QuizAnswer>().Remove(a);
+                    }
+                }
+                // Finally remove the question entity itself
                 _unitOfWork.GenericRepository<Entity.Question>().Remove(question);
             }
 
@@ -1937,6 +2195,13 @@ namespace SpeakingClub.Controllers
             // Process submitted questions (update existing or add new)
             foreach (var questionModel in model.Questions)
             {
+                // Skip fully empty question models (already handled in removal loop above)
+                if (IsEmptyQuestion(questionModel))
+                {
+                    // Skip creating/updating this empty question
+                    continue;
+                }
+
                 Entity.Question? question; // Make question nullable to handle potential null from FirstOrDefault
 
                 if (questionModel.QuestionId > 0)
@@ -1955,42 +2220,159 @@ namespace SpeakingClub.Controllers
                 // Update question properties
                 question.QuestionText = questionModel.QuestionText;
                 question.VideoUrl = questionModel.VideoUrl;
-                if (questionModel.ImageFile != null)
+                
+                // Handle Question Image Upload
+                if (questionModel.ImageFile != null && questionModel.ImageFile.Length > 0)
                 {
-                    question.ImageUrl = await ProcessImageUpload(questionModel.ImageFile);
+                    // Delete old image if exists (for existing questions being updated)
+                    if (questionModel.QuestionId > 0 && !string.IsNullOrEmpty(question.ImageUrl))
+                    {
+                        DeleteQuizMediaFile(question.ImageUrl, "question image");
+                    }
+                    question.ImageUrl = await ProcessQuizImageUpload(questionModel.ImageFile);
+                }
+                
+                // Handle Question Audio Upload
+                if (questionModel.AudioFile != null && questionModel.AudioFile.Length > 0)
+                {
+                    // Delete old audio if exists (for existing questions being updated)
+                    if (questionModel.QuestionId > 0 && !string.IsNullOrEmpty(question.AudioUrl))
+                    {
+                        DeleteQuizMediaFile(question.AudioUrl, "question audio");
+                    }
+                    question.AudioUrl = await ProcessQuizAudioUpload(questionModel.AudioFile);
                 }
 
                 // --- Manage Answers for this Question ---
-                var answerIdsFromModel = questionModel.Answers.Select(a => a.AnswerId).Where(id => id > 0).ToHashSet();
+                var answerIdsFromModel = (questionModel.Answers ?? Enumerable.Empty<AnswerEditViewModel>())
+                                            .Select(a => a.AnswerId)
+                                            .Where(id => id > 0)
+                                            .ToHashSet();
 
-                // Identify and remove answers deleted from the UI
-                var answersToRemove = question.Answers.Where(a => !answerIdsFromModel.Contains(a.Id)).ToList();
+                // Identify and remove answers deleted from the UI OR those existing answers that were submitted empty
+                var answersToRemove = (question.Answers ?? Enumerable.Empty<Entity.QuizAnswer>())
+                    .Where(a =>
+                        !answerIdsFromModel.Contains(a.Id) ||
+                        // also remove if user submitted an existing answer but cleared its text
+                        ((questionModel.Answers ?? Enumerable.Empty<AnswerEditViewModel>())
+                            .Any(am => am.AnswerId == a.Id && string.IsNullOrWhiteSpace(am.AnswerText)))
+                    ).ToList();
+
                 foreach (var answer in answersToRemove)
                 {
+                    // Remove from parent collection first to avoid reattachment by change tracker
+                    if (question.Answers != null && question.Answers.Contains(answer))
+                    {
+                        question.Answers.Remove(answer);
+                    }
                     // Directly remove from the context
                     _unitOfWork.GenericRepository<Entity.QuizAnswer>().Remove(answer);
                 }
 
-                // Process submitted answers (update existing or add new)
-                foreach (var answerModel in questionModel.Answers)
+                // Process submitted answers (update existing or add new), but skip blank new answers
+                foreach (var answerModel in questionModel.Answers ?? Enumerable.Empty<AnswerEditViewModel>())
                 {
-                    Entity.QuizAnswer? answer; // Make answer nullable
+                    // If answer text is empty:
+                    if (string.IsNullOrWhiteSpace(answerModel.AnswerText))
+                    {
+                        // If it was an existing answer, it has already been queued for removal above.
+                        // Skip adding/updating blank answers.
+                        continue;
+                    }
+
+                    Entity.QuizAnswer? answer;
                     if (answerModel.AnswerId > 0)
                     {
-                        answer = question.Answers.FirstOrDefault(a => a.Id == answerModel.AnswerId);
-                        if (answer == null) continue;
+                        // question.Answers may be null for newly created questions; use null-conditional access
+                        answer = question.Answers?.FirstOrDefault(a => a.Id == answerModel.AnswerId);
+                        if (answer == null)
+                        {
+                            // This can happen if we removed it above; skip safely
+                            continue;
+                        }
+                        // Update existing answer
+                        answer.AnswerText = answerModel.AnswerText;
+                        answer.IsCorrect = answerModel.IsCorrect == "true";
                     }
                     else
                     {
-                        answer = new Entity.QuizAnswer();
+                        // Ensure the Answers collection is initialized before adding
+                        if (question.Answers == null)
+                        {
+                            question.Answers = new System.Collections.Generic.List<Entity.QuizAnswer>();
+                        }
+                        // New answer with non-empty text -> add it
+                        answer = new Entity.QuizAnswer
+                        {
+                            AnswerText = answerModel.AnswerText,
+                            IsCorrect = answerModel.IsCorrect == "true"
+                        };
                         question.Answers.Add(answer);
                     }
-                    answer.AnswerText = answerModel.AnswerText;
-                    // CHANGE THIS: Check for the string "true"
-                    answer.IsCorrect = answerModel.IsCorrect == "true";
                 }
             }
         }
+
+        private void ValidateQuestions(QuizEditViewModel model)
+        {
+            // Helper to check if a question is empty
+            bool IsEmptyQuestion(QuestionEditViewModel qm) =>
+                string.IsNullOrWhiteSpace(qm.QuestionText)
+                && qm.ImageFile == null
+                && string.IsNullOrWhiteSpace(qm.VideoUrl)
+                && (qm.Answers == null || qm.Answers.All(a => string.IsNullOrWhiteSpace(a.AnswerText)));
+
+            for (int i = 0; i < model.Questions.Count; i++)
+            {
+                var question = model.Questions[i];
+                
+                // Skip validation for empty questions (they will be filtered out)
+                if (IsEmptyQuestion(question))
+                {
+                    continue;
+                }
+
+                // Non-empty question must have question text
+                if (string.IsNullOrWhiteSpace(question.QuestionText))
+                {
+                    ModelState.AddModelError($"Questions[{i}].QuestionText", "Question text is required for non-empty questions.");
+                }
+
+                // Check that at least one answer has text
+                bool hasAnyAnswerText = question.Answers != null && question.Answers.Any(a => !string.IsNullOrWhiteSpace(a.AnswerText));
+                if (!hasAnyAnswerText)
+                {
+                    ModelState.AddModelError($"Questions[{i}].Answers", "At least one answer is required for each question.");
+                }
+
+                // Validate individual answers that are not empty
+                if (question.Answers != null)
+                {
+                    for (int j = 0; j < question.Answers.Count; j++)
+                    {
+                        var answer = question.Answers[j];
+                        // If answer has an ID (existing) or other data, it should have text
+                        if (answer.AnswerId > 0 && string.IsNullOrWhiteSpace(answer.AnswerText))
+                        {
+                            // This will be handled by removal logic, so skip
+                            continue;
+                        }
+                    }
+                }
+
+                // Check that at least one answer is marked as correct (if there are any non-empty answers)
+                if (hasAnyAnswerText)
+                {
+                    bool hasCorrectAnswer = question.Answers != null && 
+                                          question.Answers.Any(a => !string.IsNullOrWhiteSpace(a.AnswerText) && a.IsCorrect == "true");
+                    if (!hasCorrectAnswer)
+                    {
+                        ModelState.AddModelError($"Questions[{i}].Answers", "At least one answer must be marked as correct.");
+                    }
+                }
+            }
+        }
+
         private async Task<IEnumerable<SelectListItem>> RepopulateCategories()
         {
             return (await _unitOfWork.Categories.GetAllAsync())
@@ -2007,34 +2389,6 @@ namespace SpeakingClub.Controllers
         {
             return (await _unitOfWork.Words.GetAllAsync())
                 .Select(w => new SelectListItem(w.Term, w.WordId.ToString()));
-        }
-
-        private async Task<string?> ProcessImageUpload(IFormFile? imageFile)
-        {
-            if (imageFile == null || imageFile.Length == 0)
-            {
-                return null; // No file uploaded, return null.
-            }
-
-            // Define a specific folder for quiz images to keep them organized.
-            var uploadsFolder = Path.Combine(_env.WebRootPath, "img", "quiz-images");
-            if (!Directory.Exists(uploadsFolder))
-            {
-                Directory.CreateDirectory(uploadsFolder);
-            }
-
-            // Generate a unique filename to prevent overwrites.
-            var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(imageFile.FileName)}";
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            // Save the file to the server.
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
-            {
-                await imageFile.CopyToAsync(fileStream);
-            }
-
-            // Return the public-facing URL path.
-            return $"/img/quiz-images/{uniqueFileName}";
         }
         #endregion
         #endregion

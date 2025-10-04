@@ -12,7 +12,6 @@ namespace SpeakingClub.Models
     {
         public int QuestionId { get; set; }
 
-        [Required]
         public string QuestionText { get; set; } = string.Empty;
         public string? ImageUrl { get; set; }
         public string? AudioUrl { get; set; }

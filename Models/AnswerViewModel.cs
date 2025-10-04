@@ -8,8 +8,8 @@ namespace SpeakingClub.Models
 {
     public class AnswerViewModel
     {
-        [Required]
-        public required string AnswerText { get; set; }= string.Empty;
+        public int Id { get; set; }
+        public string AnswerText { get; set; } = string.Empty;
         public bool IsCorrect { get; set; }
     }
 }

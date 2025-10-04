@@ -40,16 +40,85 @@
                                asp-route-id="@quiz.Id" class="btn btn-sm btn-warning mb-1">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
-                            <form asp-action="QuizDelete" asp-route-id="@quiz.Id" method="post" style="display:inline;">
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
-                                @Html.AntiForgeryToken()
-                            </form>
+                            <button type="button" class="btn btn-sm btn-danger mb-1" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#deleteQuizModal-@quiz.Id">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
+
+    <!-- Delete Confirmation Modals (Outside the table) -->
+    @foreach (var quiz in Model)
+    {
+        <div class="modal fade" id="deleteQuizModal-@quiz.Id" tabindex="-1" aria-labelledby="deleteQuizModalLabel-@quiz.Id" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="deleteQuizModalLabel-@quiz.Id">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Confirm Quiz Deletion
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-3">Are you sure you want to delete the quiz: <strong>@quiz.Title</strong>?</p>
+                        
+                        @if (quiz.Questions.Count > 0)
+                        {
+                            <div class="alert alert-warning">
+                                <p><strong>This quiz has @quiz.Questions.Count question(s).</strong></p>
+                                <p class="mb-2">Choose an option:</p>
+                                
+                                <form asp-controller="Admin" asp-action="QuizDelete" asp-route-id="@quiz.Id" method="post" class="mb-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="deleteQuestions" value="false" />
+                                    <button type="submit" class="btn btn-warning w-100">
+                                        <i class="fas fa-unlink me-1"></i>Delete Quiz Only (Preserve Questions)
+                                    </button>
+                                    <small class="text-muted d-block mt-1">Questions will be unlinked and available for reuse</small>
+                                </form>
+                                
+                                <form asp-controller="Admin" asp-action="QuizDelete" asp-route-id="@quiz.Id" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="deleteQuestions" value="true" />
+                                    <button type="submit" class="btn btn-danger w-100">
+                                        <i class="fas fa-trash-alt me-1"></i>Delete Quiz + All Questions & Files
+                                    </button>
+                                    <small class="text-muted d-block mt-1">Permanently delete questions, answers, and media files (images, audio, videos)</small>
+                                </form>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info">
+                                <p><i class="fas fa-info-circle me-1"></i>This quiz has no questions.</p>
+                            </div>
+                            <form asp-controller="Admin" asp-action="QuizDelete" asp-route-id="@quiz.Id" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="deleteQuestions" value="false" />
+                                <button type="submit" class="btn btn-danger w-100">
+                                    <i class="fas fa-trash me-1"></i>Delete Quiz
+                                </button>
+                            </form>
+                        }
+                        
+                        <div class="alert alert-info mt-3 mb-0">
+                            <small><i class="fas fa-info-circle me-1"></i>Quiz files (audio/video) will be deleted automatically.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 }
 else
 {

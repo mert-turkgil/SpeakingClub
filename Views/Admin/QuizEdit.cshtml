@@ -96,20 +96,46 @@
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
 
+                    <!-- Quiz Image Upload -->
                     <div class="col-md-6">
-                        <div class="form-floating">
-                            <input asp-for="AudioUrl" class="form-control" placeholder="Audio URL" />
-                            <label asp-for="AudioUrl">Audio URL</label>
-                        </div>
-                        <span asp-validation-for="AudioUrl" class="text-danger"></span>
+                        <label class="form-label">Quiz Image (Optional)</label>
+                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        {
+                            <img src="@Model.ImageUrl" class="media-preview mb-2" alt="Current quiz image" />
+                            <p class="text-muted small">Current image will be replaced if you upload a new one</p>
+                        }
+                        <input type="file" asp-for="ImageFile" class="form-control" accept="image/*" />
+                        <span asp-validation-for="ImageFile" class="text-danger"></span>
                     </div>
 
+                    <!-- Quiz Audio Upload -->
                     <div class="col-md-6">
+                        <label class="form-label">Quiz Audio (Optional)</label>
+                        @if (!string.IsNullOrEmpty(Model.AudioUrl))
+                        {
+                            <audio controls class="w-100 mb-2">
+                                <source src="@Model.AudioUrl" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <p class="text-muted small">Current audio will be replaced if you upload a new one</p>
+                        }
+                        <input type="file" asp-for="AudioFile" class="form-control" accept="audio/*" />
+                        <span asp-validation-for="AudioFile" class="text-danger"></span>
+                    </div>
+
+                    <!-- YouTube Video URL (text field) -->
+                    <div class="col-12">
                         <div class="form-floating">
                             <input asp-for="YouTubeVideoUrl" class="form-control" placeholder="YouTube Video URL" />
-                            <label asp-for="YouTubeVideoUrl">YouTube Video URL</label>
+                            <label asp-for="YouTubeVideoUrl">YouTube Video URL (Optional)</label>
                         </div>
                         <span asp-validation-for="YouTubeVideoUrl" class="text-danger"></span>
+                        @if (!string.IsNullOrWhiteSpace(Model.YouTubeVideoUrl))
+                        {
+                            <div class="mt-2">
+                                <iframe width="100%" height="315" src="@GetYouTubeEmbedUrl(Model.YouTubeVideoUrl)" frameborder="0" allowfullscreen></iframe>
+                            </div>
+                        }
                     </div>
                 </div>
 
@@ -177,21 +203,41 @@
 
                                         <!-- Media Uploads -->
                                         <div class="row g-2 mb-3">
-                                            <div class="col">
+                                            <!-- Question Image Upload -->
+                                            <div class="col-md-4">
+                                                <label class="form-label small">Image</label>
                                                 @if (!string.IsNullOrEmpty(Model.Questions[i].ImageUrl))
                                                 {
-                                                    <img src="@Model.Questions[i].ImageUrl" class="media-preview mb-2" alt="Image preview" />
+                                                    <img src="@Model.Questions[i].ImageUrl" class="media-preview mb-2" alt="Question image" />
+                                                    <p class="text-muted small">Replace with new image:</p>
                                                 }
-                                                <input type="file" name="Questions[@i].ImageFile" class="form-control media-upload" accept="image/*" />
+                                                <input type="file" name="Questions[@i].ImageFile" class="form-control form-control-sm media-upload" accept="image/*" />
                                             </div>
-                                            <div class="col">
+                                            
+                                            <!-- Question Audio Upload -->
+                                            <div class="col-md-4">
+                                                <label class="form-label small">Audio</label>
+                                                @if (!string.IsNullOrEmpty(Model.Questions[i].AudioUrl))
+                                                {
+                                                    <audio controls class="w-100 mb-2" style="height: 40px;">
+                                                        <source src="@Model.Questions[i].AudioUrl" type="audio/mpeg">
+                                                        Your browser does not support the audio element.
+                                                    </audio>
+                                                    <p class="text-muted small">Replace with new audio:</p>
+                                                }
+                                                <input type="file" name="Questions[@i].AudioFile" class="form-control form-control-sm media-upload" accept="audio/*" />
+                                            </div>
+                                            
+                                            <!-- Question Video URL (YouTube) -->
+                                            <div class="col-md-4">
+                                                <label class="form-label small">Video URL</label>
                                                 @if (!string.IsNullOrWhiteSpace(Model.Questions[i].VideoUrl))
                                                 {
-                                                    <div class="mt-2 mb-2">
-                                                        <iframe width="100%" height="140" src="@GetYouTubeEmbedUrl(Model.Questions[i].VideoUrl)" frameborder="0" allowfullscreen></iframe>
+                                                    <div class="mb-2">
+                                                        <iframe width="100%" height="100" src="@GetYouTubeEmbedUrl(Model.Questions[i].VideoUrl)" frameborder="0" allowfullscreen></iframe>
                                                     </div>
                                                 }
-                                                <input asp-for="Questions[i].VideoUrl" class="form-control" placeholder="YouTube URL" />
+                                                <input asp-for="Questions[i].VideoUrl" class="form-control form-control-sm" placeholder="YouTube URL" />
                                                 <span asp-validation-for="Questions[i].VideoUrl" class="text-danger"></span>
                                             </div>
                                         </div>
@@ -285,11 +331,17 @@
                                 </div>
                                 <span class="text-danger" data-valmsg-for="Questions[${questionIndex}].QuestionText" data-valmsg-replace="true"></span>
                                 <div class="row g-2 mb-3">
-                                    <div class="col">
-                                        <input type="file" name="Questions[${questionIndex}].ImageFile" class="form-control media-upload" accept="image/*" />
+                                    <div class="col-md-4">
+                                        <label class="form-label small">Image</label>
+                                        <input type="file" name="Questions[${questionIndex}].ImageFile" class="form-control form-control-sm media-upload" accept="image/*" />
                                     </div>
-                                    <div class="col">
-                                        <input name="Questions[${questionIndex}].VideoUrl" class="form-control" placeholder="YouTube URL" />
+                                    <div class="col-md-4">
+                                        <label class="form-label small">Audio</label>
+                                        <input type="file" name="Questions[${questionIndex}].AudioFile" class="form-control form-control-sm media-upload" accept="audio/*" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">Video URL</label>
+                                        <input name="Questions[${questionIndex}].VideoUrl" class="form-control form-control-sm" placeholder="YouTube URL" />
                                         <span class="text-danger" data-valmsg-for="Questions[${questionIndex}].VideoUrl" data-valmsg-replace="true"></span>
                                     </div>
                                 </div>
@@ -308,12 +360,21 @@
             });
 
             // Remove Question
-            $(document).on('click', '.remove-question', function() {
+            $(document).on('click', '.remove-question', function(e) {
+                // Prevent form submission or other handlers from running
+                e.preventDefault();
+                e.stopPropagation();
+
                 const $questionCard = $(this).closest('.question-card');
-                gsap.to($questionCard, { duration: 0.3, opacity: 0, x: -50, onComplete: () => {
-                    $questionCard.remove();
-                    updateAllNames();
-                }});
+                gsap.to($questionCard, {
+                    duration: 0.3,
+                    opacity: 0,
+                    x: -50,
+                    onComplete: () => {
+                        $questionCard.remove();
+                        updateAllNames();
+                    }
+                });
             });
 
             // --- DYNAMIC ANSWER MANAGEMENT ---

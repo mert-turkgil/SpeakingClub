@@ -10,7 +10,6 @@ namespace SpeakingClub.Models
     {
         public int AnswerId { get; set; }
 
-        [Required]
         public string AnswerText { get; set; } = string.Empty;
         public string IsCorrect { get; set; } = "false";
     
