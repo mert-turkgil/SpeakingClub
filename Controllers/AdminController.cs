@@ -130,7 +130,7 @@ namespace SpeakingClub.Controllers
             if (user == null)
             {
                 TempData["ErrorMessage"] = "User not found.";
-                return RedirectToAction("Account");
+                return RedirectToAction("Index");
             }
 
             // Get the current logged-in user
@@ -138,7 +138,7 @@ namespace SpeakingClub.Controllers
             if (currentUser == null)
             {
                 TempData["ErrorMessage"] = "Current user not found.";
-                return RedirectToAction("Account");
+                return RedirectToAction("Index");
             }
 
             // Check if the target user is the Root user
@@ -153,14 +153,14 @@ namespace SpeakingClub.Controllers
                 TempData["ErrorMessage"] = isTargetRoot
                     ? "You cannot delete the Root user."
                     : "Only Root users can delete Admin users.";
-                return RedirectToAction("Account");
+                return RedirectToAction("Index");
             }
 
             // Additional protection: Don't allow users to delete themselves
             if (user.Id == currentUser.Id)
             {
                 TempData["ErrorMessage"] = "You cannot delete your own account.";
-                return RedirectToAction("Account");
+                return RedirectToAction("Index");
             }
 
             // Proceed to delete the user
@@ -175,7 +175,7 @@ namespace SpeakingClub.Controllers
                     string.Join(", ", result.Errors.Select(e => e.Description));
             }
 
-            return RedirectToAction("Account");
+            return RedirectToAction("Index");
         }
 
         // Edit User Method (GET)
@@ -1617,8 +1617,20 @@ namespace SpeakingClub.Controllers
             // Populate teacher selection options and default to current user
             // Use USERNAME as value instead of ID (since there are two separate databases)
             var currentUser = await _userManager.GetUserAsync(User);
-            var users = _userManager.Users.ToList();
-            model.TeacherOptions = users.Select(u => new SelectListItem
+            var allUsers = _userManager.Users.ToList();
+            
+            // Filter to only show users with Teacher, Admin, or Root roles
+            var teacherUsers = new List<User>();
+            foreach (var user in allUsers)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                if (roles.Any(r => r == "Root" || r == "Admin" || r == "Teacher"))
+                {
+                    teacherUsers.Add(user);
+                }
+            }
+            
+            model.TeacherOptions = teacherUsers.Select(u => new SelectListItem
             {
                 Value = u.UserName ?? u.Id,  // Use Username as value
                 Text = (!string.IsNullOrWhiteSpace(u.FirstName) || !string.IsNullOrWhiteSpace(u.LastName)) ?
@@ -1800,8 +1812,19 @@ namespace SpeakingClub.Controllers
                 .Select(w => new SelectListItem(w.Term, w.WordId.ToString()));
             
             // Repopulate teacher options using USERNAME as value
-            var users = _userManager.Users.ToList();
-            model.TeacherOptions = users.Select(u => new SelectListItem
+            // Filter to only show users with Teacher, Admin, or Root roles
+            var allUsersForRepopulate = _userManager.Users.ToList();
+            var teacherUsersForRepopulate = new List<User>();
+            foreach (var usr in allUsersForRepopulate)
+            {
+                var roles = await _userManager.GetRolesAsync(usr);
+                if (roles.Any(r => r == "Root" || r == "Admin" || r == "Teacher"))
+                {
+                    teacherUsersForRepopulate.Add(usr);
+                }
+            }
+            
+            model.TeacherOptions = teacherUsersForRepopulate.Select(u => new SelectListItem
             {
                 Value = u.UserName ?? u.Id,
                 Text = (!string.IsNullOrWhiteSpace(u.FirstName) || !string.IsNullOrWhiteSpace(u.LastName)) ?
@@ -1861,8 +1884,19 @@ namespace SpeakingClub.Controllers
             };
 
             // Populate teacher selection options using USERNAME as value
-            var users = _userManager.Users.ToList();
-            model.TeacherOptions = users.Select(u => new SelectListItem
+            // Filter to only show users with Teacher, Admin, or Root roles
+            var allUsers = _userManager.Users.ToList();
+            var teacherUsers = new List<User>();
+            foreach (var user in allUsers)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                if (roles.Any(r => r == "Root" || r == "Admin" || r == "Teacher"))
+                {
+                    teacherUsers.Add(user);
+                }
+            }
+            
+            model.TeacherOptions = teacherUsers.Select(u => new SelectListItem
             {
                 Value = u.UserName ?? u.Id,  // Use username as value
                 Text = (!string.IsNullOrWhiteSpace(u.FirstName) || !string.IsNullOrWhiteSpace(u.LastName)) ?
@@ -2211,6 +2245,16 @@ namespace SpeakingClub.Controllers
                 {
                     foreach (var a in question.Answers.ToList())
                     {
+                        // CRITICAL: Delete all QuizResponses that reference this answer BEFORE deleting the answer
+                        var responsesToDelete = (await _unitOfWork.QuizResponses.GetAllAsync())
+                            .Where(r => r.QuizAnswerId == a.Id)
+                            .ToList();
+                        
+                        foreach (var response in responsesToDelete)
+                        {
+                            _unitOfWork.QuizResponses.Remove(response);
+                        }
+
                         question.Answers.Remove(a);
                         _unitOfWork.GenericRepository<Entity.QuizAnswer>().Remove(a);
                     }
@@ -2288,6 +2332,17 @@ namespace SpeakingClub.Controllers
 
                 foreach (var answer in answersToRemove)
                 {
+                    // CRITICAL: Delete all QuizResponses that reference this answer BEFORE deleting the answer
+                    // This prevents foreign key constraint violations
+                    var responsesToDelete = (await _unitOfWork.QuizResponses.GetAllAsync())
+                        .Where(r => r.QuizAnswerId == answer.Id)
+                        .ToList();
+                    
+                    foreach (var response in responsesToDelete)
+                    {
+                        _unitOfWork.QuizResponses.Remove(response);
+                    }
+
                     // Remove from parent collection first to avoid reattachment by change tracker
                     if (question.Answers != null && question.Answers.Contains(answer))
                     {
