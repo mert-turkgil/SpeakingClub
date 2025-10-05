@@ -81,7 +81,6 @@ dotnet run
 ![Threejs](https://github.com/user-attachments/assets/96122992-6d07-4a0b-926f-a0069c9f2505)
 ![Adsız video ‐ Clipchamp ile yapıldı](https://github.com/user-attachments/assets/f618bce6-3d41-4d2f-9a72-f8a01333f537)
 <img width="1893" height="1035" alt="image" src="https://github.com/user-attachments/assets/024f9506-db74-43aa-9bc3-52266e412370" />
-<img width="1788" height="2907" alt="image" src="https://github.com/user-attachments/assets/ded970b4-e0cb-4cee-b3dd-0490b6024ca6" />
 <img width="1788" height="1232" alt="image" src="https://github.com/user-attachments/assets/4a53846e-3cae-4fc4-8017-21e1d9fe669d" />
 <img width="1788" height="3614" alt="image" src="https://github.com/user-attachments/assets/bd7fa48c-d7a2-4018-9095-d8f15938383a" />
 
