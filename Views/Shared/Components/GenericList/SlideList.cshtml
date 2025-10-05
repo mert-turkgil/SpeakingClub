@@ -96,7 +96,7 @@
 <div class="container table-container">
     <!-- Header Section -->
     <div class="header-section">
-        <a asp-action="CarouselCreate" asp-controller="Admin" class="btn btn-info w-100 mb-3">
+        <a asp-action="CarouselCreate" class="btn btn-info w-100 mb-3">
             <i class="fas fa-plus"></i> Create New Carousel
         </a>
     </div>
@@ -132,14 +132,18 @@
                     </td>
                     <td>@carousel.DateAdded.ToString(format: "yyyy-MM-dd")</td>
                     <td>
-                        <a asp-action="CarouselEdit" asp-controller="Admin" asp-route-id="@carousel.SlideId" 
-                           class="btn btn-warning edit-btn">Edit</a>
+                        <a asp-action="CarouselEdit" asp-route-id="@carousel.SlideId" 
+                           class="btn btn-warning edit-btn">
+                           <i class="fas fa-edit"></i> Edit
+                        </a>
 
-                        <form asp-action="CarouselDelete" asp-controller="Admin" method="post" 
-                              onsubmit="return confirm('Are you sure you want to delete this carousel?');" 
+                        <form asp-action="CarouselDelete" asp-route-id="@carousel.SlideId" 
+                              method="post" onsubmit="return confirm('Are you sure you want to delete this carousel?');" 
                               style="display: inline;">
-                            <input type="hidden" name="id" value="@carousel.SlideId" />
-                            <button type="submit" class="btn btn-danger delete-btn">Delete</button>
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-danger delete-btn">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
                         </form>
                     </td>
                 </tr>
@@ -151,23 +155,6 @@
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script>
-        $(document).ready(function () {
-            $('#carouselTable').DataTable({
-                responsive: true,
-                language: {
-                    search: "Search:",
-                    lengthMenu: "Show _MENU_ carousels",
-                    info: "Showing _START_ to _END_ of _TOTAL_ carousels",
-                    paginate: {
-                        next: "Next",
-                        previous: "Previous"
-                    }
-                },
-                columnDefs: [{ orderable: false, targets: -1 }] // Disable sorting for Actions column
-            });
-        });
-    </script>
         <!-- 2. Bootstrap Bundle (uses jQuery) -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 

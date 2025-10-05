@@ -4,6 +4,7 @@
     bool isEdit = Model.QuestionId != 0;
 }
 @section Css {
+    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.3.1/ckeditor5.css">
     <style>
         .answer-row .input-group-text {
             min-width: 110px;
@@ -12,154 +13,381 @@
             max-width: 150px; max-height: 130px;
         }
         .form-label > i { margin-right: 6px; }
+        .ck-editor__editable {
+            min-height: 150px;
+        }
+        .answer-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .answer-item:hover {
+            background: #e9ecef;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .answer-item.correct-answer {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        .media-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
     </style>
 }
 <section class="container mt-0 pt-5 pb-5 bg-first">
-<h2 class="mb-4 fw-bold">
-    <i class="fas fa-question-circle text-primary"></i>
-    @(isEdit ? "Edit" : "Create") Question
-</h2>
+<div class="row justify-content-center">
+    <div class="col-xl-11">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-primary text-white py-3">
+                <h2 class="mb-0 fw-bold">
+                    <i class="fas fa-question-circle"></i>
+                    @(isEdit ? "Edit" : "Create") Question
+                </h2>
+            </div>
+            <div class="card-body p-4">
 
 <form asp-action="@(isEdit ? "QuestionEdit" : "QuestionCreate")"
       asp-route-id="@(isEdit ? Model.QuestionId : null)"
-      enctype="multipart/form-data" method="post" class="needs-validation" novalidate autocomplete="off">
+      enctype="multipart/form-data" method="post" class="needs-validation" novalidate autocomplete="off" id="questionForm">
     @if (isEdit)
     {
         <input type="hidden" asp-for="QuestionId" />
     }
     <div class="row g-4">
         <div class="col-lg-7">
-            <div class="mb-3">
-                <label asp-for="QuestionText" class="form-label fw-semibold">
-                    <i class="fas fa-pen"></i> Question Text
+            <!-- Question Text with CKEditor -->
+            <div class="mb-4">
+                <label asp-for="QuestionText" class="form-label fw-semibold fs-5">
+                    <i class="fas fa-pen"></i> Question Text <span class="text-danger">*</span>
                 </label>
-                <textarea asp-for="QuestionText" class="form-control" rows="2" required maxlength="250"></textarea>
+                <textarea asp-for="QuestionText" id="QuestionTextEditor" class="form-control" rows="4"></textarea>
                 <span asp-validation-for="QuestionText" class="text-danger"></span>
+                <small class="text-muted">Use the rich text editor to format your question. You can add bold, italic, lists, etc.</small>
             </div>
-            <div class="mb-3">
-                <label asp-for="QuizId" class="form-label">
-                    <i class="fas fa-book"></i> Select Quiz <span class="text-danger">*</span>
+            <!-- Quiz Selection -->
+            <div class="mb-4">
+                <label asp-for="QuizId" class="form-label fw-semibold fs-5">
+                    <i class="fas fa-book"></i> Assign to Quiz <span class="text-danger">*</span>
                 </label>
                 <select asp-for="QuizId" asp-items="Model.AvailableQuizzes"
-                        class="form-select" required>
-                    <option value="">-- Select --</option>
+                        class="form-select form-select-lg" required>
+                    <option value="">-- Select a Quiz --</option>
                 </select>
                 <span asp-validation-for="QuizId" class="text-danger"></span>
+                <small class="text-muted">Choose which quiz this question belongs to</small>
             </div>
-            <div class="mb-3">
-                <label class="form-label"><i class="fas fa-music"></i> Upload Audio (MP3)</label>
-                <input type="file" asp-for="AudioFile" accept="audio/mp3" class="form-control" />
-                @if (!string.IsNullOrEmpty(Model.AudioUrl))
-                {
-                    <div class="mt-2 animate__animated animate__fadeIn">
-                        <audio controls src="@Model.AudioUrl" class="audio-thumbnail"></audio>
-                        <small class="text-muted d-block">Current Audio</small>
+
+            <!-- Media Section -->
+            <div class="media-section mb-4">
+                <h5 class="mb-3"><i class="fas fa-photo-video"></i> Media Attachments <small class="text-muted">(Optional)</small></h5>
+                <p class="text-muted small mb-3">Add images, audio, or video to enhance your question. All media is optional.</p>
+                
+                <div class="row g-3">
+                    <!-- Image Upload -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold"><i class="fas fa-image"></i> Image</label>
+                        <input type="file" asp-for="ImageFile" accept="image/*" class="form-control" id="imageUpload" />
+                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                        {
+                            <div class="mt-2">
+                                <img src="@Model.ImageUrl" class="img-thumbnail" />
+                                <small class="text-muted d-block">Current Image</small>
+                            </div>
+                        }
+                        <div id="imagePreview" class="mt-2"></div>
                     </div>
-                }
-            </div>
-            <div class="mb-3">
-                <label class="form-label"><i class="fas fa-image"></i> Upload Image</label>
-                <input type="file" asp-for="ImageFile" accept="image/*" class="form-control" />
-                @if (!string.IsNullOrEmpty(Model.ImageUrl))
-                {
-                    <div class="mt-2 animate__animated animate__fadeIn">
-                        <img src="@Model.ImageUrl" class="img-thumbnail" />
-                        <small class="text-muted d-block">Current Image</small>
+
+                    <!-- Audio Upload -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold"><i class="fas fa-music"></i> Audio</label>
+                        <input type="file" asp-for="AudioFile" accept="audio/*" class="form-control" id="audioUpload" />
+                        @if (!string.IsNullOrEmpty(Model.AudioUrl))
+                        {
+                            <div class="mt-2">
+                                <audio controls src="@Model.AudioUrl" class="w-100"></audio>
+                                <small class="text-muted d-block">Current Audio</small>
+                            </div>
+                        }
+                        <div id="audioPreview" class="mt-2"></div>
                     </div>
-                }
-            </div>
-            <div class="mb-3">
-                <label asp-for="VideoUrl" class="form-label"><i class="fab fa-youtube"></i> YouTube or Video URL</label>
-                <input asp-for="VideoUrl" class="form-control" placeholder="https://youtube.com/..." />
-                @if (!string.IsNullOrEmpty(Model.VideoUrl))
-                {
-                    <div class="mt-2 animate__animated animate__fadeIn">
-                        <video width="240" height="140" controls style="max-width:100%;">
-                            <source src="@Model.VideoUrl" />
-                        </video>
-                        <small class="text-muted d-block">Current Video</small>
+
+                    <!-- Video URL -->
+                    <div class="col-md-4">
+                        <label asp-for="VideoUrl" class="form-label fw-semibold"><i class="fab fa-youtube"></i> Video URL</label>
+                        <input asp-for="VideoUrl" class="form-control" placeholder="YouTube URL..." />
+                        <span asp-validation-for="VideoUrl" class="text-danger"></span>
+                        @if (!string.IsNullOrEmpty(Model.VideoUrl))
+                        {
+                            <div class="mt-2">
+                                <iframe width="100%" height="120" src="@Model.VideoUrl" frameborder="0" allowfullscreen></iframe>
+                                <small class="text-muted d-block">Current Video</small>
+                            </div>
+                        }
                     </div>
-                }
-                <span asp-validation-for="VideoUrl" class="text-danger"></span>
+                </div>
             </div>
         </div>
+        
+        <!-- Answers Section -->
         <div class="col-lg-5">
-            <div class="bg-light border rounded p-3 shadow">
-                <label class="fw-bold mb-2"><i class="fas fa-list-ol"></i> Answers</label>
-                <div id="answers-list">
-                    @for (int i = 0; i < Model.Answers.Count; i++)
-                    {
-                        <div class="answer-row mb-2 animate__animated animate__fadeIn" data-index="@i">
-                            <div class="input-group">
-                                <input asp-for="@Model.Answers[i].AnswerText" name="Answers[@i].AnswerText"
-                                       class="form-control" placeholder="Answer" required maxlength="120" />
-                                <button type="button" class="btn btn-danger btn-remove-answer"
-                                        title="Remove" onclick="removeAnswer(this)">
-                                    <i class="fas fa-minus-circle"></i>
-                                </button>
-                                <span class="input-group-text">
-                                    <input type="checkbox" asp-for="@Model.Answers[i].IsCorrect"
-                                           name="Answers[@i].IsCorrect" class="form-check-input mt-0" />
-                                    <span class="ms-1">Correct</span>
-                                </span>
-                                <input type="hidden" asp-for="@Model.Answers[i].AnswerId" name="Answers[@i].AnswerId" />
-                            </div>
-                        </div>
-                    }
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-list-ol"></i> Answer Options</h5>
                 </div>
-                <button type="button" id="add-answer" class="btn btn-success mt-2 w-100">
-                    <i class="fas fa-plus"></i> Add Answer
-                </button>
-                <div class="form-text mt-2">Mark the correct answer(s).</div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle"></i> <strong>Note:</strong> At least one answer must be marked as correct. You can have multiple correct answers.
+                    </div>
+                    
+                    <div id="answers-list">
+                        @for (int i = 0; i < Model.Answers.Count; i++)
+                        {
+                            <div class="answer-item mb-3 p-3" data-index="@i">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span class="badge bg-secondary">Answer @(i + 1)</span>
+                                    <div class="form-check form-switch ms-auto">
+                                        <input type="checkbox" asp-for="@Model.Answers[i].IsCorrect"
+                                               name="Answers[@i].IsCorrect" class="form-check-input correct-checkbox" 
+                                               role="switch" id="correct_@i" />
+                                        <label class="form-check-label" for="correct_@i">
+                                            <i class="fas fa-check-circle text-success"></i> Correct Answer
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <input asp-for="@Model.Answers[i].AnswerText" name="Answers[@i].AnswerText"
+                                           class="form-control answer-text" placeholder="Enter answer text..." required maxlength="200" />
+                                    <button type="button" class="btn btn-outline-danger btn-remove-answer"
+                                            title="Remove Answer" onclick="removeAnswer(this)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <input type="hidden" asp-for="@Model.Answers[i].AnswerId" name="Answers[@i].AnswerId" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    
+                    <button type="button" id="add-answer" class="btn btn-success w-100">
+                        <i class="fas fa-plus-circle"></i> Add New Answer
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-    <div class="d-flex justify-content-end mt-4">
-        <button type="submit" class="btn btn-primary btn-lg px-4 shadow">
-            <i class="fas fa-save"></i> @(isEdit ? "Update" : "Create")
+    
+    <hr class="my-4">
+    
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <a asp-controller="Admin" asp-route-scrollTo="QuestionsManagement" asp-action="Index" 
+           class="btn btn-outline-secondary btn-lg px-4">
+            <i class="fas fa-times"></i> Cancel
+        </a>
+        <button type="submit" class="btn btn-primary btn-lg px-5 shadow" id="submitBtn">
+            <i class="fas fa-save"></i> @(isEdit ? "Update Question" : "Create Question")
         </button>
-        <a asp-controller="Admin" asp-route-scrollTo="QuestionsManagement" asp-action="Index" class="btn btn-outline-secondary ms-3 btn-lg">Cancel</a>
     </div>
 </form>
+
+            </div>
+        </div>
+    </div>
+</div>
 </section>
 @section Scripts {
+    <script src="https://cdn.ckeditor.com/ckeditor5/43.3.1/ckeditor5.umd.js"></script>
     <script>
+        let questionEditor;
+        const {
+            ClassicEditor,
+            Essentials,
+            Bold,
+            Italic,
+            Underline,
+            Strikethrough,
+            Paragraph,
+            Heading,
+            List,
+            Link,
+            BlockQuote,
+            Alignment,
+            Font,
+            Highlight,
+            CodeBlock,
+            Code
+        } = CKEDITOR;
+
+        // Initialize CKEditor for Question Text
+        ClassicEditor
+            .create(document.querySelector('#QuestionTextEditor'), {
+                plugins: [
+                    Essentials, Bold, Italic, Underline, Strikethrough,
+                    Paragraph, Heading, List, Link, BlockQuote,
+                    Alignment, Font, Highlight, CodeBlock, Code
+                ],
+                toolbar: {
+                    items: [
+                        'heading', '|',
+                        'bold', 'italic', 'underline', 'strikethrough', '|',
+                        'link', 'bulletedList', 'numberedList', '|',
+                        'alignment', 'highlight', '|',
+                        'code', 'codeBlock', 'blockQuote', '|',
+                        'undo', 'redo'
+                    ]
+                },
+                heading: {
+                    options: [
+                        { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+                        { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+                        { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' }
+                    ]
+                }
+            })
+            .then(editor => {
+                questionEditor = editor;
+                console.log('CKEditor initialized successfully');
+            })
+            .catch(error => {
+                console.error('Error initializing CKEditor:', error);
+            });
+
         // Dynamic Add/Remove for Answers
         function removeAnswer(btn) {
-            $(btn).closest('.answer-row').remove();
-            reindexAnswers();
+            const answerCount = $('#answers-list .answer-item').length;
+            if (answerCount <= 1) {
+                alert('You must have at least one answer!');
+                return;
+            }
+            $(btn).closest('.answer-item').fadeOut(300, function() {
+                $(this).remove();
+                reindexAnswers();
+                updateAnswerBadges();
+            });
         }
+
         function reindexAnswers() {
-            $('#answers-list .answer-row').each(function (idx) {
+            $('#answers-list .answer-item').each(function (idx) {
                 $(this).attr('data-index', idx);
                 $(this).find('input, select, textarea').each(function () {
                     let name = $(this).attr('name');
+                    let id = $(this).attr('id');
                     if (name) {
                         let newName = name.replace(/\[\d+\]/, '[' + idx + ']');
                         $(this).attr('name', newName);
                     }
+                    if (id) {
+                        let newId = id.replace(/_\d+/, '_' + idx);
+                        $(this).attr('id', newId);
+                        // Update label for attribute
+                        $(this).closest('.answer-item').find('label[for="' + id + '"]').attr('for', newId);
+                    }
                 });
             });
         }
+
+        function updateAnswerBadges() {
+            $('#answers-list .answer-item').each(function(idx) {
+                $(this).find('.badge').text('Answer ' + (idx + 1));
+            });
+        }
+
         $('#add-answer').click(function () {
-            var idx = $('#answers-list .answer-row').length;
+            var idx = $('#answers-list .answer-item').length;
             var answerHtml = `
-            <div class="answer-row mb-2 animate__animated animate__fadeIn" data-index="${idx}">
+            <div class="answer-item mb-3 p-3 animate__animated animate__fadeIn" data-index="${idx}">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-secondary">Answer ${idx + 1}</span>
+                    <div class="form-check form-switch ms-auto">
+                        <input type="checkbox" name="Answers[${idx}].IsCorrect" class="form-check-input correct-checkbox" 
+                               role="switch" id="correct_${idx}" />
+                        <label class="form-check-label" for="correct_${idx}">
+                            <i class="fas fa-check-circle text-success"></i> Correct Answer
+                        </label>
+                    </div>
+                </div>
                 <div class="input-group">
-                    <input name="Answers[${idx}].AnswerText" class="form-control" placeholder="Answer" required maxlength="120" />
-                    <button type="button" class="btn btn-danger btn-remove-answer" title="Remove" onclick="removeAnswer(this)">
-                        <i class="fas fa-minus-circle"></i>
+                    <input name="Answers[${idx}].AnswerText" class="form-control answer-text" 
+                           placeholder="Enter answer text..." required maxlength="200" />
+                    <button type="button" class="btn btn-outline-danger btn-remove-answer" 
+                            title="Remove Answer" onclick="removeAnswer(this)">
+                        <i class="fas fa-trash"></i>
                     </button>
-                    <span class="input-group-text">
-                        <input type="checkbox" name="Answers[${idx}].IsCorrect" class="form-check-input mt-0" />
-                        <span class="ms-1">Correct</span>
-                    </span>
                     <input type="hidden" name="Answers[${idx}].AnswerId" value="0" />
                 </div>
             </div>`;
             $('#answers-list').append(answerHtml);
         });
+
+        // Highlight correct answers
+        $(document).on('change', '.correct-checkbox', function() {
+            const answerItem = $(this).closest('.answer-item');
+            if ($(this).is(':checked')) {
+                answerItem.addClass('correct-answer');
+            } else {
+                answerItem.removeClass('correct-answer');
+            }
+        });
+
+        // Form validation before submit
+        $('#questionForm').on('submit', function(e) {
+            // Sync CKEditor content to textarea
+            if (questionEditor) {
+                $('#QuestionTextEditor').val(questionEditor.getData());
+            }
+
+            // Check if at least one answer is marked as correct
+            const hasCorrectAnswer = $('.correct-checkbox:checked').length > 0;
+            if (!hasCorrectAnswer) {
+                e.preventDefault();
+                alert('⚠️ Please mark at least one answer as correct!');
+                return false;
+            }
+
+            // Check if all answers have text
+            let hasEmptyAnswer = false;
+            $('.answer-text').each(function() {
+                if ($(this).val().trim() === '') {
+                    hasEmptyAnswer = true;
+                }
+            });
+            if (hasEmptyAnswer) {
+                e.preventDefault();
+                alert('⚠️ Please fill in all answer fields or remove empty answers!');
+                return false;
+            }
+
+            // Disable submit button to prevent double submission
+            $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+        });
+
+        // Image preview
+        $('#imageUpload').change(function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#imagePreview').html(`<img src="${e.target.result}" class="img-thumbnail mt-2" style="max-width: 150px;">`);
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Audio preview
+        $('#audioUpload').change(function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                $('#audioPreview').html(`<audio controls class="w-100 mt-2"><source src="${url}" type="${file.type}"></audio>`);
+            }
+        });
+
         $(document).ready(function () {
+            // Initialize correct answer highlighting
+            $('.correct-checkbox:checked').each(function() {
+                $(this).closest('.answer-item').addClass('correct-answer');
+            });
+            
             $('form').addClass('animate__animated animate__fadeIn');
         });
     </script>

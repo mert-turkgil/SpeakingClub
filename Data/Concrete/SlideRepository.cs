@@ -33,15 +33,16 @@ namespace SpeakingClub.Data.Concrete
             if (slideShow == null) throw new ArgumentNullException(nameof(slideShow));
 
             await _context.Slide.AddAsync(slideShow);
-            await _context.SaveChangesAsync();
+            // Note: SaveChangesAsync is called by UnitOfWork.SaveAsync()
         }
 
-        public async Task UpdateAsync(SlideShow carousel)
+        public Task UpdateAsync(SlideShow carousel)
         {
             if (carousel == null) throw new ArgumentNullException(nameof(carousel));
 
             _context.Slide.Update(carousel);
-            await _context.SaveChangesAsync();
+            // Note: SaveChangesAsync is called by UnitOfWork.SaveAsync()
+            return Task.CompletedTask;
         }
 
         public async Task DeleteAsync(int id)
@@ -52,7 +53,7 @@ namespace SpeakingClub.Data.Concrete
             if (carousel != null)
             {
                 _context.Slide.Remove(carousel);
-                await _context.SaveChangesAsync();
+                // Note: SaveChangesAsync is called by UnitOfWork.SaveAsync()
             }
             else
             {
@@ -65,6 +66,7 @@ namespace SpeakingClub.Data.Concrete
             if (carousel == null) throw new ArgumentNullException(nameof(carousel));
 
             await _context.Slide.AddAsync(carousel);
+            // SaveChangesAsync is needed here to generate the SlideId before returning
             await _context.SaveChangesAsync();
             return carousel;
         }

@@ -2478,20 +2478,27 @@ namespace SpeakingClub.Controllers
 
         #region Slides
         #region Caraousel
-        [HttpGet("Admin/CarouselCreate")]
+        [HttpGet("CarouselCreate")]
         public IActionResult CarouselCreate()
         {
             return View(new CarouselViewModel());
         }
 
 
-        [HttpPost("Admin/CarouselCreate")]
+        [HttpPost("CarouselCreate")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CarouselCreate(CarouselViewModel model, [FromServices] IManageResourceService resourceService)
+        public async Task<IActionResult> CarouselCreate(CarouselViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                Console.WriteLine("[WARN] Model validation failed.");
+                TempData["ErrorMessage"] = "Please fix the validation errors.";
+                return View(model);
+            }
+
+            // Validate that at least one image is provided
+            if (model.CarouselImage == null)
+            {
+                ModelState.AddModelError("CarouselImage", "Primary image is required.");
                 return View(model);
             }
 
@@ -2506,34 +2513,40 @@ namespace SpeakingClub.Controllers
 
             try
             {
-                // Handle image uploads
-                carousel.CarouselImage = model.CarouselImage != null ? await SaveFile(model.CarouselImage) : string.Empty;
-                carousel.CarouselImage600w = model.CarouselImage600w != null ? await SaveFile(model.CarouselImage600w) : string.Empty;
-                carousel.CarouselImage1200w = model.CarouselImage1200w != null ? await SaveFile(model.CarouselImage1200w) : string.Empty;
+                // Validate and upload images
+                carousel.CarouselImage = await ValidateAndUploadCarouselImage(model.CarouselImage, "Primary");
+                if (carousel.CarouselImage == null)
+                    return View(model);
+
+                carousel.CarouselImage600w = model.CarouselImage600w != null 
+                    ? await ValidateAndUploadCarouselImage(model.CarouselImage600w, "600w") ?? string.Empty
+                    : string.Empty;
+                    
+                carousel.CarouselImage1200w = model.CarouselImage1200w != null 
+                    ? await ValidateAndUploadCarouselImage(model.CarouselImage1200w, "1200w") ?? string.Empty
+                    : string.Empty;
 
                 // Save to database and retrieve entity with assigned ID
                 carousel = await _unitOfWork.Slides.CreateAndReturn(carousel);
+                await _unitOfWork.SaveAsync();
+                
+                int carouselId = carousel.SlideId;
 
-                // Ensure the ID is valid
-                int carouselId = carousel.SlideId; // Correct ID from DB
                 if (carouselId <= 0)
                 {
-                    Console.WriteLine("[ERROR] Failed to generate a valid ID for carousel.");
                     TempData["ErrorMessage"] = "An error occurred while creating the carousel.";
                     return View(model);
                 }
-
-                Console.WriteLine($"[INFO] Carousel created successfully with ID: {carouselId}");
 
                 // Save translations using the valid ID
                 SaveAllTranslations(_manageResourceService, carouselId, model);
 
                 TempData["SuccessMessage"] = "Carousel created successfully!";
-                return RedirectToAction("Carousels");
+                return RedirectToAction("Index", new { scrollTo = "SlideListManagement" });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] Failed to create carousel. Exception: {ex.Message}");
+                _logger.LogError($"Failed to create carousel. Exception: {ex.Message}");
                 TempData["ErrorMessage"] = "An error occurred while creating the carousel.";
                 return View(model);
             }
@@ -2541,7 +2554,7 @@ namespace SpeakingClub.Controllers
 
 
 
-        [HttpGet("Admin/CarouselEdit/{id}")]
+        [HttpGet("CarouselEdit/{id}")]
         public async Task<IActionResult> CarouselEdit(int id)
         {
             Console.WriteLine($"[INFO] Loading edit view for Carousel ID: {id}");
@@ -2596,113 +2609,467 @@ namespace SpeakingClub.Controllers
 
 
 
-        [HttpPost("Admin/CarouselEdit")]
+        [HttpPost("CarouselEdit/{id}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CarouselEdit(CarouselEditModel model)
+        public async Task<IActionResult> CarouselEdit(int id, CarouselEditModel model)
         {
-            Console.WriteLine($"[INFO] Processing update for Carousel ID: {model.CarouselId}");
+            if (id != model.CarouselId)
+                return BadRequest();
 
             if (!ModelState.IsValid)
             {
-                Console.WriteLine("[WARN] Model validation failed.");
+                // Reload existing paths for the view
+                var existingCarousel = await _unitOfWork.Slides.GetByIdAsync(model.CarouselId);
+                if (existingCarousel != null)
+                {
+                    model.CarouselImagePath = existingCarousel.CarouselImage;
+                    model.CarouselImage600wPath = existingCarousel.CarouselImage600w;
+                    model.CarouselImage1200wPath = existingCarousel.CarouselImage1200w;
+                }
                 return View(model);
             }
 
             var carousel = await _unitOfWork.Slides.GetByIdAsync(model.CarouselId);
             if (carousel == null)
             {
-                Console.WriteLine($"[WARN] Carousel with ID {model.CarouselId} not found.");
-                return NotFound();
+                TempData["ErrorMessage"] = "Carousel not found.";
+                return RedirectToAction("Index", new { scrollTo = "SlideListManagement" });
             }
 
-            // Update carousel properties
-            carousel.CarouselTitle = model.CarouselTitle;
-            carousel.CarouselDescription = model.CarouselDescription;
-            carousel.CarouselLink = model.CarouselLink;
-            carousel.CarouselLinkText = model.CarouselLinkText;
+            try
+            {
+                // Log the incoming model data
+                _logger.LogInformation($"[CarouselEdit] Updating carousel ID: {carousel.SlideId}");
+                _logger.LogInformation($"[CarouselEdit] Model.CarouselLink: '{model.CarouselLink}'");
+                _logger.LogInformation($"[CarouselEdit] Model.CarouselTitle: '{model.CarouselTitle}'");
+                
+                // Update carousel properties
+                carousel.CarouselTitle = model.CarouselTitle;
+                carousel.CarouselDescription = model.CarouselDescription;
+                carousel.CarouselLink = model.CarouselLink;
+                carousel.CarouselLinkText = model.CarouselLinkText;
+                
+                // Log after assignment
+                _logger.LogInformation($"[CarouselEdit] After assignment - carousel.CarouselLink: '{carousel.CarouselLink}'");
 
-            // Image validation and update
-            carousel.CarouselImage = await ValidateAndSaveImage(model.CarouselImage, carousel.CarouselImage, "CarouselImage");
-            carousel.CarouselImage1200w = await ValidateAndSaveImage(model.CarouselImage1200w, carousel.CarouselImage1200w, "CarouselImage1200w");
-            carousel.CarouselImage600w = await ValidateAndSaveImage(model.CarouselImage600w, carousel.CarouselImage600w, "CarouselImage600w");
+                // Update images only if new ones are uploaded
+                if (model.CarouselImage != null)
+                {
+                    var newImage = await ValidateAndUploadCarouselImage(model.CarouselImage, "Primary");
+                    if (newImage != null)
+                    {
+                        // Delete old image
+                        DeleteFile(carousel.CarouselImage, "CarouselImage");
+                        carousel.CarouselImage = newImage;
+                    }
+                }
 
-            // Update translations
-            UpdateTranslations(carousel.SlideId, model);
+                if (model.CarouselImage600w != null)
+                {
+                    var newImage = await ValidateAndUploadCarouselImage(model.CarouselImage600w, "600w");
+                    if (newImage != null)
+                    {
+                        DeleteFile(carousel.CarouselImage600w, "CarouselImage600w");
+                        carousel.CarouselImage600w = newImage;
+                    }
+                }
 
-            // Save carousel
-            await _unitOfWork.Slides.UpdateAsync(carousel);
-            Console.WriteLine($"[INFO] Carousel with ID {model.CarouselId} updated successfully!");
-            TempData["SuccessMessage"] = "Carousel updated successfully!";
-            return RedirectToAction("Carousels");
+                if (model.CarouselImage1200w != null)
+                {
+                    var newImage = await ValidateAndUploadCarouselImage(model.CarouselImage1200w, "1200w");
+                    if (newImage != null)
+                    {
+                        DeleteFile(carousel.CarouselImage1200w, "CarouselImage1200w");
+                        carousel.CarouselImage1200w = newImage;
+                    }
+                }
+
+                // Update translations
+                UpdateCarouselTranslations(carousel.SlideId, model);
+
+                // Log before save
+                _logger.LogInformation($"[CarouselEdit] Before UpdateAsync - carousel.CarouselLink: '{carousel.CarouselLink}'");
+                
+                // Save carousel
+                await _unitOfWork.Slides.UpdateAsync(carousel);
+                
+                _logger.LogInformation($"[CarouselEdit] After UpdateAsync - carousel.CarouselLink: '{carousel.CarouselLink}'");
+                
+                await _unitOfWork.SaveAsync();
+                
+                _logger.LogInformation($"[CarouselEdit] After SaveAsync - Changes committed to database");
+                
+                TempData["SuccessMessage"] = "Carousel updated successfully!";
+                return RedirectToAction("Index", new { scrollTo = "SlideListManagement" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to update carousel. Exception: {ex.Message}");
+                TempData["ErrorMessage"] = "An error occurred while updating the carousel.";
+                return View(model);
+            }
         }
 
 
         [HttpPost("CarouselDelete/{id}")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CarouselDelete(int id)
         {
-            Console.WriteLine($"[INFO] Starting deletion process for Carousel ID: {id}");
-
-            // Step 1: Retrieve the carousel
             var carousel = await _unitOfWork.Slides.GetByIdAsync(id);
             if (carousel == null)
             {
-                Console.WriteLine($"[WARN] Carousel with ID {id} not found.");
                 TempData["ErrorMessage"] = "Carousel not found.";
-                return RedirectToAction("Carousels");
+                return RedirectToAction("Index", new { scrollTo = "SlideListManagement" });
             }
-
-            Console.WriteLine($"[INFO] Found Carousel - Title: {carousel.CarouselTitle}");
 
             try
             {
-                // Step 2: Delete associated files
+                // Delete associated image files
                 DeleteFile(carousel.CarouselImage, "CarouselImage");
                 DeleteFile(carousel.CarouselImage600w, "CarouselImage600w");
                 DeleteFile(carousel.CarouselImage1200w, "CarouselImage1200w");
 
-                // Step 3: Delete translations using IManageResourceService
-                var baseKey = $"Carousel_{carousel.SlideId}";
+                // Delete translations
+                DeleteCarouselTranslations(carousel.SlideId);
 
-                // Languages
-                string[] cultures = { "en-US", "tr-TR", "de-DE", "fr-FR", "ar-SA" };
-                string[] keys = { "Title", "Description", "LinkText" };
-
-                foreach (var culture in cultures)
-                {
-                    foreach (var key in keys)
-                    {
-                        string resourceKey = $"{baseKey}_{key}";
-                        var success = _manageResourceService.Delete(resourceKey, culture); // Using IManageResourceService for deletion
-                        if (success)
-                        {
-                            Console.WriteLine($"[INFO] Successfully deleted translation: {resourceKey} in {culture}");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"[WARN] Failed to delete translation: {resourceKey} in {culture}");
-                        }
-                    }
-                }
-
-                // Step 4: Delete the carousel from the database
+                // Delete the carousel from the database
                 await _unitOfWork.Slides.DeleteAsync(id);
-                Console.WriteLine($"[INFO] Carousel with ID {id} deleted successfully!");
+                await _unitOfWork.SaveAsync();
 
                 TempData["SuccessMessage"] = "Carousel deleted successfully!";
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] Failed to delete carousel with ID {id}. Exception: {ex.Message}");
+                _logger.LogError($"Failed to delete carousel with ID {id}. Exception: {ex.Message}");
                 TempData["ErrorMessage"] = "An error occurred while deleting the carousel.";
             }
 
-            // Step 5: Redirect to the carousels page
-            Console.WriteLine("[INFO] Redirecting to Carousels page...");
-            return RedirectToAction("Carousels");
+            return RedirectToAction("Index", new { scrollTo = "SlideListManagement" });
+        }
+
+        #region Carousel Helper Methods
+        
+        private async Task<string?> ValidateAndUploadCarouselImage(IFormFile file, string imageName)
+        {
+            if (file == null || file.Length == 0)
+                return null;
+
+            // Validate file extension
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                ModelState.AddModelError("", $"{imageName} image must be a valid image format (jpg, jpeg, png, gif, webp).");
+                return null;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.Length > 5 * 1024 * 1024)
+            {
+                ModelState.AddModelError("", $"{imageName} image must be less than 5MB.");
+                return null;
+            }
+
+            return await SaveFile(file);
+        }
+
+        private void UpdateCarouselTranslations(int carouselId, CarouselEditModel model)
+        {
+            var baseKey = $"Carousel_{carouselId}";
+
+            // Turkish translations
+            if (!string.IsNullOrWhiteSpace(model.CarouselTitleTR))
+                _manageResourceService.AddOrUpdate($"{baseKey}_Title", model.CarouselTitleTR, "tr-TR");
+            if (!string.IsNullOrWhiteSpace(model.CarouselDescriptionTR))
+                _manageResourceService.AddOrUpdate($"{baseKey}_Description", model.CarouselDescriptionTR, "tr-TR");
+            if (!string.IsNullOrWhiteSpace(model.CarouselLinkTextTR))
+                _manageResourceService.AddOrUpdate($"{baseKey}_LinkText", model.CarouselLinkTextTR, "tr-TR");
+
+            // German translations
+            if (!string.IsNullOrWhiteSpace(model.CarouselTitleDE))
+                _manageResourceService.AddOrUpdate($"{baseKey}_Title", model.CarouselTitleDE, "de-DE");
+            if (!string.IsNullOrWhiteSpace(model.CarouselDescriptionDE))
+                _manageResourceService.AddOrUpdate($"{baseKey}_Description", model.CarouselDescriptionDE, "de-DE");
+            if (!string.IsNullOrWhiteSpace(model.CarouselLinkTextDE))
+                _manageResourceService.AddOrUpdate($"{baseKey}_LinkText", model.CarouselLinkTextDE, "de-DE");
+        }
+
+        private void DeleteCarouselTranslations(int carouselId)
+        {
+            var baseKey = $"Carousel_{carouselId}";
+            string[] cultures = { "tr-TR", "de-DE" };
+            string[] keys = { "Title", "Description", "LinkText" };
+
+            foreach (var culture in cultures)
+            {
+                foreach (var key in keys)
+                {
+                    string resourceKey = $"{baseKey}_{key}";
+                    _manageResourceService.Delete(resourceKey, culture);
+                }
+            }
         }
 
         #endregion
+
         #endregion
+        #endregion
+
+        #region Question Management
+        // GET: Question Create
+        [HttpGet("QuestionCreate")]
+        public async Task<IActionResult> QuestionCreate()
+        {
+            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+            var model = new QuestionEditViewModel
+            {
+                QuestionId = 0,
+                AvailableQuizzes = quizzes.Select(q => new SelectListItem
+                {
+                    Value = q.Id.ToString(),
+                    Text = q.Title
+                }),
+                Answers = new List<AnswerEditViewModel>
+                {
+                    new AnswerEditViewModel { AnswerId = 0, AnswerText = "", IsCorrect = "false" }
+                }
+            };
+            return View("QuestionCreateEdit", model);
+        }
+
+        // POST: Question Create
+        [HttpPost("QuestionCreate")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> QuestionCreate(QuestionEditViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+                model.AvailableQuizzes = quizzes.Select(q => new SelectListItem
+                {
+                    Value = q.Id.ToString(),
+                    Text = q.Title
+                });
+                return View("QuestionCreateEdit", model);
+            }
+
+            // Check if at least one answer is correct
+            if (!model.Answers.Any(a => a.IsCorrect == "true"))
+            {
+                ModelState.AddModelError("", "At least one answer must be marked as correct.");
+                var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+                model.AvailableQuizzes = quizzes.Select(q => new SelectListItem
+                {
+                    Value = q.Id.ToString(),
+                    Text = q.Title
+                });
+                return View("QuestionCreateEdit", model);
+            }
+
+            // Upload media files if provided
+            string? imageUrl = null;
+            string? audioUrl = null;
+
+            if (model.ImageFile != null)
+            {
+                imageUrl = await ProcessQuizImageUpload(model.ImageFile);
+            }
+
+            if (model.AudioFile != null)
+            {
+                audioUrl = await ProcessQuizAudioUpload(model.AudioFile);
+            }
+
+            // Create the question entity
+            var question = new Entity.Question
+            {
+                QuestionText = model.QuestionText ?? string.Empty,
+                ImageUrl = imageUrl,
+                AudioUrl = audioUrl,
+                VideoUrl = model.VideoUrl,
+                QuizId = model.QuizId,
+                Answers = model.Answers.Select(a => new Entity.QuizAnswer
+                {
+                    AnswerText = a.AnswerText,
+                    IsCorrect = a.IsCorrect == "true"
+                }).ToList()
+            };
+
+            await _unitOfWork.Questions.AddAsync(question);
+            TempData["SuccessMessage"] = "Question created successfully!";
+            return RedirectToAction("Index", new { scrollTo = "QuestionsManagement" });
+        }
+
+        // GET: Question Edit
+        [HttpGet("QuestionEdit/{id}")]
+        public async Task<IActionResult> QuestionEdit(int id)
+        {
+            var question = await _unitOfWork.Questions.GetByIdAsync(id);
+            if (question == null)
+            {
+                return NotFound();
+            }
+
+            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+            var model = new QuestionEditViewModel
+            {
+                QuestionId = question.Id,
+                QuestionText = question.QuestionText,
+                ImageUrl = question.ImageUrl,
+                AudioUrl = question.AudioUrl,
+                VideoUrl = question.VideoUrl,
+                QuizId = question.QuizId,
+                AvailableQuizzes = quizzes.Select(q => new SelectListItem
+                {
+                    Value = q.Id.ToString(),
+                    Text = q.Title,
+                    Selected = q.Id == question.QuizId
+                }),
+                Answers = question.Answers.Select(a => new AnswerEditViewModel
+                {
+                    AnswerId = a.Id,
+                    AnswerText = a.AnswerText,
+                    IsCorrect = a.IsCorrect ? "true" : "false"
+                }).ToList()
+            };
+
+            return View("QuestionCreateEdit", model);
+        }
+
+        // POST: Question Edit
+        [HttpPost("QuestionEdit/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> QuestionEdit(int id, QuestionEditViewModel model)
+        {
+            if (id != model.QuestionId)
+            {
+                return BadRequest();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+                model.AvailableQuizzes = quizzes.Select(q => new SelectListItem
+                {
+                    Value = q.Id.ToString(),
+                    Text = q.Title
+                });
+                return View("QuestionCreateEdit", model);
+            }
+
+            // Check if at least one answer is correct
+            if (!model.Answers.Any(a => a.IsCorrect == "true"))
+            {
+                ModelState.AddModelError("", "At least one answer must be marked as correct.");
+                var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+                model.AvailableQuizzes = quizzes.Select(q => new SelectListItem
+                {
+                    Value = q.Id.ToString(),
+                    Text = q.Title
+                });
+                return View("QuestionCreateEdit", model);
+            }
+
+            var question = await _unitOfWork.Questions.GetByIdAsync(id);
+            if (question == null)
+            {
+                return NotFound();
+            }
+
+            // Upload new media files if provided
+            if (model.ImageFile != null)
+            {
+                // Delete old image if exists
+                if (!string.IsNullOrEmpty(question.ImageUrl))
+                {
+                    DeleteQuizMediaFile(question.ImageUrl);
+                }
+                question.ImageUrl = await ProcessQuizImageUpload(model.ImageFile);
+            }
+
+            if (model.AudioFile != null)
+            {
+                // Delete old audio if exists
+                if (!string.IsNullOrEmpty(question.AudioUrl))
+                {
+                    DeleteQuizMediaFile(question.AudioUrl);
+                }
+                question.AudioUrl = await ProcessQuizAudioUpload(model.AudioFile);
+            }
+
+            // Update question properties
+            question.QuestionText = model.QuestionText ?? string.Empty;
+            question.VideoUrl = model.VideoUrl;
+            question.QuizId = model.QuizId;
+
+            // Update answers
+            // Remove old answers that are not in the model
+            var answersToRemove = question.Answers
+                .Where(a => !model.Answers.Any(ma => ma.AnswerId == a.Id))
+                .ToList();
+
+            foreach (var answer in answersToRemove)
+            {
+                question.Answers.Remove(answer);
+            }
+
+            // Update or add answers
+            foreach (var answerModel in model.Answers)
+            {
+                var existingAnswer = question.Answers.FirstOrDefault(a => a.Id == answerModel.AnswerId);
+                if (existingAnswer != null)
+                {
+                    // Update existing answer
+                    existingAnswer.AnswerText = answerModel.AnswerText;
+                    existingAnswer.IsCorrect = answerModel.IsCorrect == "true";
+                }
+                else
+                {
+                    // Add new answer
+                    question.Answers.Add(new Entity.QuizAnswer
+                    {
+                        AnswerText = answerModel.AnswerText,
+                        IsCorrect = answerModel.IsCorrect == "true",
+                        QuestionId = question.Id
+                    });
+                }
+            }
+
+            _unitOfWork.Questions.Update(question);
+            TempData["SuccessMessage"] = "Question updated successfully!";
+            return RedirectToAction("Index", new { scrollTo = "QuestionsManagement" });
+        }
+
+        // POST: Question Delete
+        [HttpPost("QuestionDelete/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> QuestionDelete(int id)
+        {
+            var question = await _unitOfWork.Questions.GetByIdAsync(id);
+            if (question == null)
+            {
+                TempData["ErrorMessage"] = "Question not found.";
+                return RedirectToAction("Index", new { scrollTo = "QuestionsManagement" });
+            }
+
+            // Delete associated media files
+            if (!string.IsNullOrEmpty(question.ImageUrl))
+            {
+                DeleteQuizMediaFile(question.ImageUrl);
+            }
+            if (!string.IsNullOrEmpty(question.AudioUrl))
+            {
+                DeleteQuizMediaFile(question.AudioUrl);
+            }
+
+            // Delete the question (answers will be cascade deleted if configured)
+            _unitOfWork.Questions.Remove(question);
+            TempData["SuccessMessage"] = "Question deleted successfully!";
+            return RedirectToAction("Index", new { scrollTo = "QuestionsManagement" });
+        }
+        #endregion
+
         #region File Management
         // Helper method for image validation and saving
         private async Task<string> ValidateAndSaveImage(IFormFile image, string existingImagePath, string imageType)
@@ -2780,27 +3147,6 @@ namespace SpeakingClub.Controllers
             }
 
             return $"{fileName}";
-        }
-        private void UpdateTranslations(int id, CarouselEditModel model)
-        {
-            var baseKey = $"Carousel_{id}";
-            var translations = new Dictionary<string, (string Title, string Desc, string LinkText)> {
-                { "tr-TR", (model.CarouselTitleTR, model.CarouselDescriptionTR, model.CarouselLinkTextTR) },
-                { "de-DE", (model.CarouselTitleDE, model.CarouselDescriptionDE, model.CarouselLinkTextDE) }
-            };
-
-            foreach (var kvp in translations)
-            {
-                var culture = kvp.Key;
-                var (title, desc, linkText) = kvp.Value;
-
-                if (!string.IsNullOrWhiteSpace(title))
-                    _manageResourceService.AddOrUpdate($"{baseKey}_Title", title, culture);
-                if (!string.IsNullOrWhiteSpace(desc))
-                    _manageResourceService.AddOrUpdate($"{baseKey}_Description", desc, culture);
-                if (!string.IsNullOrWhiteSpace(linkText))
-                    _manageResourceService.AddOrUpdate($"{baseKey}_LinkText", linkText, culture);
-            }
         }
         private void SaveAllTranslations(IManageResourceService resourceService, int baseKey, CarouselViewModel model)
         {

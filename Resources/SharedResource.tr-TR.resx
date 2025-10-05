@@ -206,7 +206,7 @@
   </data>
   <data name="Carousel_1_LinkText" xml:space="preserve">
     <value>Daha Fazla Öğren</value>
-  </data>
+  <comment></comment></data>
   <data name="AttemptsLabel" xml:space="preserve">
     <value>Denemeler</value>
   </data>
@@ -318,7 +318,7 @@
   <comment>N/A</comment></data>
   <data name="Carousel_1_Title" xml:space="preserve">
     <value>Hakkında</value>
-  </data>
+  <comment></comment></data>
   <data name="ExamCanceledInactivity" xml:space="preserve">
     <value>Hareketsizlik nedeniyle sınavınız iptal edildi.</value>
   </data>
@@ -411,7 +411,7 @@
   </data>
   <data name="Carousel_1_Description" xml:space="preserve">
     <value>Kulüplerde farklı konular işlenir, seviyeye göre sunum ve tartışma teknikleri uygulanırken, öğrencinin verdiği cümleye alternatif cümleler verilir, gerekiyorsa gramer konularına değinir.</value>
-  </data>
+  <comment></comment></data>
   <data name="SplashMessage" xml:space="preserve">
     <value>Merakınızı uyandırın... Macera şimdi başlıyor!</value>
   </data>

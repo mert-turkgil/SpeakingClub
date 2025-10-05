@@ -155,13 +155,13 @@
   </data>
   <data name="Carousel_1_Title" xml:space="preserve">
     <value>Über Uns</value>
-  </data>
+  <comment></comment></data>
   <data name="Carousel_2_Title" xml:space="preserve">
     <value>Blog </value>
   </data>
   <data name="Carousel_1_Description" xml:space="preserve">
     <value>In diesen Klubs werden unterschiedliche Themen behandelt; je nach Sprachniveau kommen Präsentations- und Diskussionstechniken zum Einsatz, und zu den von den Teilnehmenden geäußerten Sätzen werden alternative Formulierungen angeboten. Wenn nötig, wird auch auf Grammatik eingegangen.</value>
-  </data>
+  <comment></comment></data>
   <data name="Carousel_2_Description" xml:space="preserve">
     <value>In diesem Blog teile ich meine Erfahrungen beim Deutschlernen, gebe Tipps für das Sprechen und stelle hilfreiche Ressourcen vor, damit Sie neue Ideen und Motivation gewinnen können.</value>
   </data>
@@ -170,7 +170,7 @@
   </data>
   <data name="Carousel_1_LinkText" xml:space="preserve">
     <value>Weitere Informationen</value>
-  </data>
+  <comment></comment></data>
   <data name="PageTitle" xml:space="preserve">
     <value>Über mich</value>
   </data>
