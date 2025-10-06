@@ -23,6 +23,9 @@ namespace SpeakingClub.Entity
         [MaxLength(200)]
         public string Title { get; set; } = string.Empty;
 
+        [MaxLength(250)]
+        public string Description { get; set; } = string.Empty;
+
         public string Content { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
         public string Image { get; set; } = string.Empty;

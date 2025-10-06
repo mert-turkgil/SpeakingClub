@@ -112,7 +112,12 @@ function typeAnimation(element, text, speed = 100) {
 function initThreeJS() {
   // Create scene and renderer
   const scene = new THREE.Scene();
-  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  const renderer = new THREE.WebGLRenderer({ 
+    alpha: true, 
+    antialias: window.innerWidth > 768, // Disable antialiasing on mobile for performance
+    powerPreference: 'high-performance'
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for performance
   renderer.setSize(threeContainer.clientWidth, threeContainer.clientHeight);
   threeContainer.appendChild(renderer.domElement);
 
@@ -122,8 +127,10 @@ function initThreeJS() {
   scene.environment = pmremGenerator.fromScene(environment).texture;
   scene.background = new THREE.Color(0xbbbbbb);
 
-  // Create camera
-  const camera = new THREE.PerspectiveCamera(50, threeContainer.clientWidth / threeContainer.clientHeight, 0.1, 1000);
+  // Create camera with responsive FOV
+  const isMobile = window.innerWidth <= 768;
+  const fov = isMobile ? 60 : 50; // Wider FOV on mobile for better view
+  const camera = new THREE.PerspectiveCamera(fov, threeContainer.clientWidth / threeContainer.clientHeight, 0.1, 1000);
 
   // Optional: OrbitControls for debugging
   const controls = new OrbitControls(camera, renderer.domElement);
@@ -159,12 +166,13 @@ function initThreeJS() {
       const model = gltf.scene;
       scene.add(model);
 
-      // Center and scale the model
+      // Center and scale the model (responsive for mobile)
       const box = new THREE.Box3().setFromObject(model);
       const center = box.getCenter(new THREE.Vector3());
       const size = box.getSize(new THREE.Vector3());
       const maxDim = Math.max(size.x, size.y, size.z);
-      const desiredSize = 90;
+      const isMobile = window.innerWidth <= 768;
+      const desiredSize = isMobile ? 70 : 90; // Smaller on mobile
       const scaleFactor = desiredSize / maxDim;
       model.scale.multiplyScalar(scaleFactor);
       box.setFromObject(model);
@@ -213,8 +221,9 @@ function initThreeJS() {
 // Animation loop for Three.js scene
 function animate(camera, center, renderer, scene) {
   let angle = 0;
-  const radius = 250; // Distance from model center
-  const cameraHeight = -20; // Vertical offset
+  const isMobile = window.innerWidth <= 768;
+  const radius = isMobile ? 200 : 250; // Closer on mobile
+  const cameraHeight = isMobile ? -10 : -20; // Less vertical offset on mobile
   function loop() {
     requestAnimationFrame(loop);
     angle += 0.005; // Adjust rotation speed as desired

@@ -46,6 +46,27 @@
         .word-meta {
             font-size: 1.2rem;
             margin-top: 10px;
+            line-height: 1.6;
+        }
+        .word-meta strong {
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .word-meta span {
+            display: inline;
+        }
+        .word-meta span p {
+            display: inline;
+            margin: 0;
+        }
+        .word-meta span ul,
+        .word-meta span ol {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            padding-left: 25px;
+        }
+        .word-meta span li {
+            margin: 3px 0;
         }
         .warning-card {
             background-color: #ffcdd2;
@@ -79,73 +100,39 @@
                 <div class="word-card" data-aos="fade-up">
                     <div class="word-term">@Model.Word.Term</div>
                     <div class="word-meta">
-                        <strong>@Localizer.GetKey("DefinitionLabel").Value</strong>@Model.Word.Definition
+                        <strong>@Localizer.GetKey("DefinitionLabel").Value: </strong>
+                        <span>@Html.Raw(Model.Word.Definition)</span>
                     </div>
-                    @functions{
-                        public bool ContainsHtml(string input)
-                        {
-                            return !string.IsNullOrEmpty(input) &&
-                                (input.Contains("<") && input.Contains(">"));
-                        }
-                    }
 
                     @if (!string.IsNullOrEmpty(Model.Word.Pronunciation))
                     {
                         <div class="word-meta">
-                            <strong>@Localizer.GetKey("PronunciationLabel").Value</strong>
-                            @if (ContainsHtml(Model.Word.Pronunciation))
-                            {
-                                @Html.Raw(Model.Word.Pronunciation)
-                            }
-                            else
-                            {
-                                @Model.Word.Pronunciation
-                            }
+                            <strong>@Localizer.GetKey("PronunciationLabel").Value: </strong>
+                            <span>@Html.Raw(Model.Word.Pronunciation)</span>
                         </div>
                     }
 
                     @if (!string.IsNullOrEmpty(Model.Word.Example))
                     {
                         <div class="word-meta">
-                            <strong>@Localizer.GetKey("ExampleLabel").Value</strong>
-                            @if (ContainsHtml(Model.Word.Example))
-                            {
-                                @Html.Raw(Model.Word.Example)
-                            }
-                            else
-                            {
-                                @Model.Word.Example
-                            }
+                            <strong>@Localizer.GetKey("ExampleLabel").Value: </strong>
+                            <span>@Html.Raw(Model.Word.Example)</span>
                         </div>
                     }
 
                     @if (!string.IsNullOrEmpty(Model.Word.Origin))
                     {
                         <div class="word-meta">
-                            <strong>@Localizer.GetKey("OriginLabel").Value</strong>
-                            @if (ContainsHtml(Model.Word.Origin))
-                            {
-                                @Html.Raw(Model.Word.Origin)
-                            }
-                            else
-                            {
-                                @Model.Word.Origin
-                            }
+                            <strong>@Localizer.GetKey("OriginLabel").Value: </strong>
+                            <span>@Html.Raw(Model.Word.Origin)</span>
                         </div>
                     }
 
                     @if (!string.IsNullOrEmpty(Model.Word.Synonyms))
                     {
                         <div class="word-meta">
-                            <strong>@Localizer.GetKey("SynonymsLabel").Value</strong>
-                            @if (ContainsHtml(Model.Word.Synonyms))
-                            {
-                                @Html.Raw(Model.Word.Synonyms)
-                            }
-                            else
-                            {
-                                @Model.Word.Synonyms
-                            }
+                            <strong>@Localizer.GetKey("SynonymsLabel").Value: </strong>
+                            <span>@Html.Raw(Model.Word.Synonyms)</span>
                         </div>
                     }
 

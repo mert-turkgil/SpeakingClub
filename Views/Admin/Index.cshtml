@@ -169,7 +169,7 @@
                     data: $(this).serialize(),
                     success: function (res) {
                         if (res.success) {
-                            alert(res.message);
+                            alert(res.message + "\n\nNote: Changes are now live! Resource cache has been cleared automatically.");
                             location.reload(); // reload table to see updates
                         } else {
                             alert("Error: " + res.message);

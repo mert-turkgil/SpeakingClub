@@ -515,6 +515,10 @@ namespace SpeakingClub.Controllers
                 }
 
                 resxFile.Save(resxPath);
+                
+                // Clear the resource cache so changes take effect immediately
+                _dynamicResourceService.ReloadResources();
+                
                 return Json(new { success = true, message = "Translation updated successfully." });
             }
 

@@ -489,22 +489,55 @@ namespace SpeakingClub.Controllers
                 ModelState.AddModelError(string.Empty, "You must confirm your email before logging in.");
                 return View(model);
             }
-            var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, false);
+            
+            // Sign in without persistent cookie first to check if credentials are valid
+            var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, false);
+            
             if (result.Succeeded)
             {
-                _logger.LogInformation("User logged in.");
-                return RedirectToLocal(returnUrl);
-            }
-            if (result.IsLockedOut)
-            {
-                _logger.LogWarning("User account locked out.");
-                return View("Lockout");
-            }
-
-
-            if (result.Succeeded)
-            {
-                _logger.LogInformation("User logged in.");
+                // Sign out the temporary session
+                await _signInManager.SignOutAsync();
+                
+                // If RememberMe is checked, set cookie expiration based on role
+                if (model.RememberMe)
+                {
+                    var roles = await _userManager.GetRolesAsync(user);
+                    TimeSpan cookieExpiration;
+                    
+                    if (roles.Contains("Teacher") || roles.Contains("Admin") || roles.Contains("Root"))
+                    {
+                        // Teachers, Admins, and Root users get 30 days
+                        cookieExpiration = TimeSpan.FromDays(30);
+                    }
+                    else if (roles.Contains("Student"))
+                    {
+                        // Students get 7 days
+                        cookieExpiration = TimeSpan.FromDays(7);
+                    }
+                    else
+                    {
+                        // Default users get 1 day
+                        cookieExpiration = TimeSpan.FromDays(1);
+                    }
+                    
+                    // Create authentication properties with custom expiration
+                    var authProperties = new Microsoft.AspNetCore.Authentication.AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                        ExpiresUtc = DateTimeOffset.UtcNow.Add(cookieExpiration)
+                    };
+                    
+                    // Sign in with custom properties
+                    await _signInManager.SignInAsync(user, authProperties);
+                    _logger.LogInformation($"User logged in with RememberMe for {cookieExpiration.TotalDays} days.");
+                }
+                else
+                {
+                    // Regular sign in with default session timeout (60 minutes)
+                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    _logger.LogInformation("User logged in with session timeout.");
+                }
+                
                 return RedirectToLocal(returnUrl);
             }
             if (result.IsLockedOut)

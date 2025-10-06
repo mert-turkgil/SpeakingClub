@@ -6,25 +6,85 @@
 @inject IConfiguration Configuration
 @inject LanguageService Localizer
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName">
 <head>
+    <!-- Basic Meta Tags -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="ck-license-key" content="@Configuration["License:CKEditor"]" />
-    <title>@ViewData["Title"] - SpeakingClub</title>
-    <meta name="description" content="@ViewData["Description"]" />
-    <meta name="keywords" content="@ViewData["Keywords"]" />
+    
+    <!-- SEO Meta Tags -->
+    <title>@(ViewData["Title"] ?? "SpeakingClub - Learn German Online")</title>
+    <meta name="description" content="@(ViewData["Description"] ?? "SpeakingClub - Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
+    <meta name="keywords" content="@(ViewData["Keywords"] ?? "German learning, Almanca öğren, German language, quiz, dictionary, speaking club")" />
     <meta name="author" content="Suna Türkgil" />
-    <!-- Open Graph (Facebook, Instagram, LinkedIn vs.) -->
-    <meta property="og:type" content="website" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="@System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName" />
+    <link rel="canonical" href="@(ViewData["Canonical"] ?? "https://almanca-konus.com" + Context.Request.Path)" />
+    
+    <!-- Open Graph Meta Tags (Facebook, LinkedIn, WhatsApp) -->
+    <meta property="og:type" content="@(ViewData["OgType"] ?? "website")" />
     <meta property="og:site_name" content="SpeakingClub" />
-    <meta property="og:title" content="@ViewData["Title"] - SpeakingClub" />
-    <meta property="og:description" content="@ViewData["Description"]" />
-    <meta property="og:url" content="https://almanca-konus.com/" />
-    <meta property="og:image" content="https://almanca-konus.com/img/header_logo.png" />
+    <meta property="og:title" content="@(ViewData["Title"] ?? "SpeakingClub - Learn German Online")" />
+    <meta property="og:description" content="@(ViewData["Description"] ?? "Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
+    <meta property="og:url" content="@(ViewData["Canonical"] ?? "https://almanca-konus.com" + Context.Request.Path)" />
+    <meta property="og:image" content="@(ViewData["OgImage"] ?? "https://almanca-konus.com/img/header_logo.png")" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="@System.Globalization.CultureInfo.CurrentCulture.Name.Replace("-", "_")" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@(ViewData["Title"] ?? "SpeakingClub - Learn German Online")" />
+    <meta name="twitter:description" content="@(ViewData["Description"] ?? "Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
+    <meta name="twitter:image" content="@(ViewData["OgImage"] ?? "https://almanca-konus.com/img/header_logo.png")" />
+    <!-- <meta name="twitter:site" content="@@yourtwitterhandle" /> -->
+    <!-- <meta name="twitter:creator" content="@@yourtwitterhandle" /> -->
+    
+    <!-- Social Media Links -->
     <link rel="me" href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" />
     <link rel="me" href="https://www.instagram.com/almanca_konusma_kulubu_" />
     <link rel="me" href="https://www.youtube.com/@@almanca_konusma_kulubu_" />
+    
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+    <!-- <link rel="apple-touch-icon" sizes="180x180" href="~/apple-touch-icon.png" /> -->
+    <!-- <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png" /> -->
+    <!-- <link rel="icon" type="image/png" sizes="16x16" href="~/favicon-16x16.png" /> -->
+    
+    <!-- Schema.org Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "EducationalOrganization",
+        "name": "SpeakingClub",
+        "description": "Interactive German language learning platform",
+        "url": "https://almanca-konus.com",
+        "logo": "https://almanca-konus.com/img/header_logo.png",
+        "sameAs": [
+            "https://www.facebook.com/AlmancaKonusmaKulubu.Suna/",
+            "https://www.instagram.com/almanca_konusma_kulubu_",
+            "https://www.youtube.com/@@almanca_konusma_kulubu_"
+        ],
+        "contactPoint": {
+            "@@type": "ContactPoint",
+            "contactType": "Customer Service",
+            "availableLanguage": ["German", "Turkish"]
+        }
+    }
+    </script>
+    
+    <!-- Blog Article Schema (Uncomment when blog is ready) -->
+    @if (ViewData["ArticleSchema"] != null)
+    {
+        @Html.Raw(ViewData["ArticleSchema"])
+    }
+    
+    <!-- Preconnect to external resources for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
     <!-- Site-specific CSS -->
     <link rel="stylesheet" href="~/css/custom.css">
     <!-- Animate.css -->
@@ -83,9 +143,9 @@
           <img src="~/img/logo.svg" alt="Logo" width="45" height="45" class="img-thumbnail"> @Logo
         </a>
         <!-- Offcanvas Toggler (visible on mobile) -->
-        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="offcanvas"
-                data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
+        <button class="navbar-toggler shadow-sm" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+          <span class="fa-solid fa-sliders fa-xl py-4"></span>
         </button>
         <!-- Standard Navbar (visible on large screens) -->
         <div class="collapse navbar-collapse" id="navbarSupportedContent">

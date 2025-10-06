@@ -10,10 +10,18 @@
             min-height: 120px;
             resize: vertical;
         }
+        .ck-editor__editable {
+            min-height: 150px;
+        }
+        .editor-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
     </style>
 }
 
-<div style="height: 80vh;" class="container-xxl animate__animated animate__fadeIn">
+<div class="container-xxl animate__animated animate__fadeIn mb-5">
     <div style="margin-top: 5vh;" class="card shadow-lg">
         <div class="card-header bg-primary text-white">
             <h3 class="card-title mb-0">
@@ -26,47 +34,56 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="WordId" />
                 <div class="row g-4">
-                    <!-- Left Column -->
-                    <div class="col-md-6">
+                    <!-- Term Field -->
+                    <div class="col-12">
                         <div class="form-floating mb-3">
                             <input asp-for="Term" class="form-control" placeholder="Enter term" />
                             <label asp-for="Term"></label>
                             <span asp-validation-for="Term" class="text-danger"></span>
                         </div>
+                    </div>
 
-                        <div class="form-floating mb-3">
-                            <textarea asp-for="Definition" class="form-control" 
-                                      placeholder="Enter definition" style="height: 120px"></textarea>
-                            <label asp-for="Definition"></label>
+                    <!-- Definition Field with CKEditor -->
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label class="editor-label">Definition *</label>
+                            <textarea asp-for="Definition" id="definitionEditor"></textarea>
                             <span asp-validation-for="Definition" class="text-danger"></span>
                         </div>
+                    </div>
 
-                        <div class="form-floating mb-3">
-                            <input asp-for="Pronunciation" class="form-control" placeholder="Pronunciation guide" />
-                            <label asp-for="Pronunciation"></label>
+                    <!-- Pronunciation Field with CKEditor -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="editor-label">Pronunciation</label>
+                            <textarea asp-for="Pronunciation" id="pronunciationEditor"></textarea>
                             <span asp-validation-for="Pronunciation" class="text-danger"></span>
                         </div>
                     </div>
 
-                    <!-- Right Column -->
+                    <!-- Example Field with CKEditor -->
                     <div class="col-md-6">
-                        <div class="form-floating mb-3">
-                            <textarea asp-for="Example" class="form-control" 
-                                      placeholder="Example sentence" style="height: 120px"></textarea>
-                            <label asp-for="Example"></label>
+                        <div class="mb-3">
+                            <label class="editor-label">Example</label>
+                            <textarea asp-for="Example" id="exampleEditor"></textarea>
                             <span asp-validation-for="Example" class="text-danger"></span>
                         </div>
+                    </div>
 
-                        <div class="form-floating mb-3">
-                            <input asp-for="Synonyms" class="form-control" 
-                                   placeholder="Comma separated synonyms" />
-                            <label asp-for="Synonyms"></label>
+                    <!-- Synonyms Field with CKEditor -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="editor-label">Synonyms</label>
+                            <textarea asp-for="Synonyms" id="synonymsEditor"></textarea>
                             <span asp-validation-for="Synonyms" class="text-danger"></span>
                         </div>
+                    </div>
 
-                        <div class="form-floating mb-3">
-                            <input asp-for="Origin" class="form-control" placeholder="Word origin" />
-                            <label asp-for="Origin"></label>
+                    <!-- Origin Field with CKEditor -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="editor-label">Origin</label>
+                            <textarea asp-for="Origin" id="originEditor"></textarea>
                             <span asp-validation-for="Origin" class="text-danger"></span>
                         </div>
                     </div>
@@ -122,14 +139,106 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
     <script>
+        let definitionEditor, pronunciationEditor, exampleEditor, synonymsEditor, originEditor;
+
         $(document).ready(function() {
+            // Initialize CKEditor for Definition
+            ClassicEditor
+                .create(document.querySelector('#definitionEditor'), {
+                    toolbar: ['bold', 'italic', 'underline', '|', 'bulletedList', 'numberedList', '|', 'link', '|', 'undo', 'redo'],
+                    placeholder: 'Enter definition...'
+                })
+                .then(editor => {
+                    definitionEditor = editor;
+                    editor.setData(@Html.Raw(Json.Serialize(Model.Definition ?? "")));
+                })
+                .catch(error => {
+                    console.error('Definition editor error:', error);
+                });
+
+            // Initialize CKEditor for Pronunciation
+            ClassicEditor
+                .create(document.querySelector('#pronunciationEditor'), {
+                    toolbar: ['bold', 'italic', '|', 'undo', 'redo'],
+                    placeholder: 'Enter pronunciation guide...'
+                })
+                .then(editor => {
+                    pronunciationEditor = editor;
+                    editor.setData(@Html.Raw(Json.Serialize(Model.Pronunciation ?? "")));
+                })
+                .catch(error => {
+                    console.error('Pronunciation editor error:', error);
+                });
+
+            // Initialize CKEditor for Example
+            ClassicEditor
+                .create(document.querySelector('#exampleEditor'), {
+                    toolbar: ['bold', 'italic', 'underline', '|', 'link', '|', 'undo', 'redo'],
+                    placeholder: 'Enter example sentence...'
+                })
+                .then(editor => {
+                    exampleEditor = editor;
+                    editor.setData(@Html.Raw(Json.Serialize(Model.Example ?? "")));
+                })
+                .catch(error => {
+                    console.error('Example editor error:', error);
+                });
+
+            // Initialize CKEditor for Synonyms
+            ClassicEditor
+                .create(document.querySelector('#synonymsEditor'), {
+                    toolbar: ['bold', 'italic', '|', 'bulletedList', '|', 'undo', 'redo'],
+                    placeholder: 'Enter synonyms...'
+                })
+                .then(editor => {
+                    synonymsEditor = editor;
+                    editor.setData(@Html.Raw(Json.Serialize(Model.Synonyms ?? "")));
+                })
+                .catch(error => {
+                    console.error('Synonyms editor error:', error);
+                });
+
+            // Initialize CKEditor for Origin
+            ClassicEditor
+                .create(document.querySelector('#originEditor'), {
+                    toolbar: ['bold', 'italic', '|', 'link', '|', 'undo', 'redo'],
+                    placeholder: 'Enter word origin...'
+                })
+                .then(editor => {
+                    originEditor = editor;
+                    editor.setData(@Html.Raw(Json.Serialize(Model.Origin ?? "")));
+                })
+                .catch(error => {
+                    console.error('Origin editor error:', error);
+                });
+
             // Initialize Select2 with preselected values
             $('.select2-multiple').select2({
                 width: '100%',
                 theme: 'bootstrap-5',
                 closeOnSelect: false
             }).val(@Json.Serialize(Model.SelectedQuizIds)).trigger('change');
+
+            // Form submission - sync CKEditor data
+            $('#editForm').on('submit', function(e) {
+                if (definitionEditor) {
+                    $('#Definition').val(definitionEditor.getData());
+                }
+                if (pronunciationEditor) {
+                    $('#Pronunciation').val(pronunciationEditor.getData());
+                }
+                if (exampleEditor) {
+                    $('#Example').val(exampleEditor.getData());
+                }
+                if (synonymsEditor) {
+                    $('#Synonyms').val(synonymsEditor.getData());
+                }
+                if (originEditor) {
+                    $('#Origin').val(originEditor.getData());
+                }
+            });
 
             // Form validation
             $('#editForm').validate({
@@ -139,7 +248,11 @@
                 },
                 errorPlacement: function(error, element) {
                     error.addClass('small text-danger mt-1');
-                    error.insertAfter(element.closest('.form-floating'));
+                    if (element.hasClass('ck-editor__editable')) {
+                        error.insertAfter(element.closest('.mb-3'));
+                    } else {
+                        error.insertAfter(element.closest('.form-floating, .mb-3'));
+                    }
                 }
             });
 
@@ -149,18 +262,6 @@
                 y: 50,
                 opacity: 0,
                 ease: "power2.out"
-            });
-
-            // Synonyms tagging
-            $('#Synonyms').on('keypress', function(e) {
-                if (e.which === 13 || e.which === 44) {
-                    e.preventDefault();
-                    const value = $(this).val().trim();
-                    if (value) {
-                        const values = value.split(',').map(v => v.trim());
-                        $(this).val(values.join(', '));
-                    }
-                }
             });
         });
     </script>

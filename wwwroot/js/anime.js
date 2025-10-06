@@ -10,20 +10,30 @@ import { GUI } from 'https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.mo
 const canvas = document.getElementById('three-canvas');
 const overlayText = document.getElementById('overlayText');
 
-const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+const renderer = new THREE.WebGLRenderer({ 
+  canvas, 
+  alpha: true, 
+  antialias: window.innerWidth > 768, // Disable antialiasing on mobile for performance
+  powerPreference: 'high-performance'
+});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit for performance
 renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = window.innerWidth > 768; // Disable shadows on mobile
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0xFFF5E4, 20, 2000);
 
+const isMobile = window.innerWidth <= 768;
+const fov = isMobile ? 60 : 50; // Wider FOV on mobile
 const camera = new THREE.PerspectiveCamera(
-  50,
+  fov,
   canvas.clientWidth / canvas.clientHeight,
   0.1,
   2000
 );
-camera.position.set(0, 50, 200);
+// Adjust camera position for mobile
+const cameraZ = isMobile ? 250 : 200;
+camera.position.set(0, 50, cameraZ);
 camera.lookAt(new THREE.Vector3(0, 0, 0));
 
 /* ===============================

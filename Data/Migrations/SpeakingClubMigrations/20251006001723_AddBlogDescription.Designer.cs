@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SpeakingClub.Data;
 
@@ -11,9 +12,11 @@ using SpeakingClub.Data;
 namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 {
     [DbContext(typeof(SpeakingClubContext))]
-    partial class SpeakingClubContextModelSnapshot : ModelSnapshot
+    [Migration("20251006001723_AddBlogDescription")]
+    partial class AddBlogDescription
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -5,28 +5,37 @@
     <div class="swiper-wrapper">
         @foreach (var slide in Model.SlideItems)
         {
-                var imageDefault = Url.Content($"/img/{slide.CarouselImage}");
-                var image600w    = Url.Content($"/img/{slide.CarouselImage600w}");
-                var image1200w   = Url.Content($"/img/{slide.CarouselImage1200w}");
+            var imageDefault = Url.Content($"/img/{slide.CarouselImage}");
+            var image600w    = Url.Content($"/img/{slide.CarouselImage600w}");
+            var image1200w   = Url.Content($"/img/{slide.CarouselImage1200w}");
+            var image1920w   = Url.Content($"/img/{slide.CarouselImage}"); // Full size for large screens
+            
             <div class="swiper-slide">
-                <img 
-                    src="@imageDefault"
-                    srcset="@image600w 600w, @image1200w 1200w"
-                    sizes="(max-width: 600px) 600px, 1200px"
-                    class="slide-image"
-                    alt="@slide.CarouselTitle" />
+                <picture>
+                    <source media="(max-width: 600px)" srcset="@image600w" />
+                    <source media="(max-width: 1200px)" srcset="@image1200w" />
+                    <source media="(min-width: 1201px)" srcset="@image1920w" />
+                    <img 
+                        src="@imageDefault"
+                        srcset="@image600w 600w, @image1200w 1200w, @image1920w 1920w"
+                        sizes="(max-width: 600px) 100vw, (max-width: 1200px) 100vw, 1920px"
+                        class="slide-image"
+                        alt="@slide.CarouselTitle"
+                        loading="eager"
+                        decoding="async" />
+                </picture>
                 <div class="slide-overlay">
                     <h2 class="slide-title">@slide.CarouselTitle</h2>
                     <p class="slide-description">@slide.CarouselDescription</p>
-                    <a href="@slide.CarouselLink" class="slide-button">@slide.CarouselLinkText</a>
+                    <a href="@slide.CarouselLink" class="slide-button" aria-label="@slide.CarouselLinkText for @slide.CarouselTitle">@slide.CarouselLinkText</a>
                 </div>
             </div>
         }
     </div>
 
-    <div class="swiper-pagination"></div>
-    <div class="swiper-button-prev"></div>
-    <div class="swiper-button-next"></div>
+    <div class="swiper-pagination" role="group" aria-label="Slide pagination"></div>
+    <button class="swiper-button-prev" aria-label="Previous slide"></button>
+    <button class="swiper-button-next" aria-label="Next slide"></button>
 </div>
 
 @{

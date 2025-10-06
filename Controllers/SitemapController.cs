@@ -25,62 +25,109 @@ namespace SpeakingClub.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        [Route("")]
+        [Route("sitemap.xml")]
+        [ResponseCache(Duration = 3600)] // Cache for 1 hour
+        public IActionResult Index()
         {
-            var siteUrl = "https://almanca-konus.com"; // kendi domainini yaz
+            // TODO: Replace with your actual domain
+            var siteUrl = "https://almanca-konus.com"; 
+            
+            var urls = new List<XElement>();
 
-            var urls = new List<XElement>
-            {
-                // Sabit sayfalar
-                CreateUrl(siteUrl + "/"),
-                CreateUrl(siteUrl + "/about"),
-                CreateUrl(siteUrl + "/blog"),
-                CreateUrl(siteUrl + "/words")
-            };
+            // Static pages with priority and change frequency
+            urls.Add(CreateUrl(siteUrl + "/", priority: "1.0", changefreq: "daily"));
+            urls.Add(CreateUrl(siteUrl + "/Home/About", priority: "0.8", changefreq: "monthly"));
+            urls.Add(CreateUrl(siteUrl + "/Home/Privacy", priority: "0.3", changefreq: "yearly"));
+            urls.Add(CreateUrl(siteUrl + "/Home/Words", priority: "0.9", changefreq: "weekly"));
+            
+            // Public quiz listing page
+            urls.Add(CreateUrl(siteUrl + "/Account/Quizzes", priority: "0.7", changefreq: "weekly"));
 
-            // Dinamik: Bloglar
+            // ========================================
+            // BLOG SECTION - UNCOMMENT WHEN READY
+            // ========================================
+            /*
+            // Blog listing page
+            urls.Add(CreateUrl(siteUrl + "/Home/Blog", priority: "0.9", changefreq: "daily"));
+            
+            // Dynamic: Blog posts
             var blogs = await _context.Blogs
+                .Where(b => b.IsPublished) // Only published blogs
+                .OrderByDescending(b => b.Date)
                 .ToListAsync();
 
             foreach (var blog in blogs)
             {
-                urls.Add(CreateUrl($"{siteUrl}/blog/{blog.Url}", blog.Date));
+                urls.Add(CreateUrl(
+                    $"{siteUrl}/Home/BlogDetail/{blog.Url}", 
+                    lastmod: blog.Date, 
+                    priority: "0.8", 
+                    changefreq: "monthly"
+                ));
             }
+            */
+            // ========================================
 
-            // Dinamik: Sözlük (Words)
-            var words = await _context.Words.ToListAsync();
-            foreach (var word in words)
+            // Dynamic: Categories (uncomment when you have category detail pages)
+            /*
+            var categories = await _context.Categories.ToListAsync();
+            foreach (var category in categories)
             {
-                urls.Add(CreateUrl($"{siteUrl}/words"));
+                urls.Add(CreateUrl(
+                    $"{siteUrl}/Home/Category/{category.Url}", 
+                    priority: "0.6", 
+                    changefreq: "weekly"
+                ));
             }
+            */
 
-            // Dinamik: Quizler
-            var quizzes = await _context.Quizzes.ToListAsync();
-            foreach (var quiz in quizzes)
+            // Dynamic: Tags (uncomment when you have tag detail pages)
+            /*
+            var tags = await _context.Tags.ToListAsync();
+            foreach (var tag in tags)
             {
-                urls.Add(CreateUrl($"{siteUrl}/Quiz/Detail/{quiz.Id}"));
+                urls.Add(CreateUrl(
+                    $"{siteUrl}/Home/Tag/{tag.Url}", 
+                    priority: "0.5", 
+                    changefreq: "weekly"
+                ));
             }
+            */
 
-            // XML oluştur
-            XNamespace ns = "https://www.sitemaps.org/schemas/sitemap/0.9";
+            // Create XML sitemap
+            XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
             var sitemap = new XDocument(
                 new XDeclaration("1.0", "utf-8", "yes"),
                 new XElement(ns + "urlset", urls)
             );
 
-            // Response ayarla
             var xml = sitemap.ToString();
             return Content(xml, "application/xml", Encoding.UTF8);
         }
 
-        private XElement CreateUrl(string loc, DateTime? lastmod = null)
+        /// <summary>
+        /// Creates a URL element for the sitemap with all SEO attributes
+        /// </summary>
+        /// <param name="loc">The URL location</param>
+        /// <param name="lastmod">Last modification date</param>
+        /// <param name="priority">Priority (0.0 to 1.0)</param>
+        /// <param name="changefreq">Change frequency: always, hourly, daily, weekly, monthly, yearly, never</param>
+        private XElement CreateUrl(string loc, DateTime? lastmod = null, string priority = "0.5", string changefreq = "monthly")
         {
-            XNamespace ns = "https://www.sitemaps.org/schemas/sitemap/0.9";
+            XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
+            
             var url = new XElement(ns + "url",
-                new XElement(ns + "loc", loc)
+                new XElement(ns + "loc", loc),
+                new XElement(ns + "changefreq", changefreq),
+                new XElement(ns + "priority", priority)
             );
+            
             if (lastmod.HasValue)
-                url.Add(new XElement(ns + "lastmod", lastmod.Value.ToString("yyyy-MM-dd")));
+            {
+                url.Add(new XElement(ns + "lastmod", lastmod.Value.ToString("yyyy-MM-ddTHH:mm:ss+00:00")));
+            }
+            
             return url;
         }
 

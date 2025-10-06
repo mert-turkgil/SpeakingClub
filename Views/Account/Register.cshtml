@@ -66,7 +66,7 @@
     </div>
 }
 @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
-<div class="container-xxl">
+<div style="height: 100vh;" class="container-xxl">
     <div class="row py-5">
         <div class="col">
     <form method="post" class="animated-form">
@@ -115,12 +115,8 @@
             <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="••••••">
             <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
         </div>
-        <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-12 col-sm-8 col-md-6 d-flex justify-content-center">
+        <div class="d-flex justify-content-center my-3">
             <div class="g-recaptcha" data-sitekey="@ViewBag.RecaptchaSiteKey"></div>
-            </div>
-        </div>
         </div>
         <button type="submit" class="btn btn-primary w-100 mt-2">@Localizer.GetKey("Button_CreateAccount")</button>
 
@@ -134,4 +130,21 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script>
+        // Reset reCAPTCHA if there are validation errors (keeps it visible)
+        document.addEventListener("DOMContentLoaded", function() {
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <text>
+                // Wait for reCAPTCHA to load, then reset it
+                var resetInterval = setInterval(function() {
+                    if (typeof grecaptcha !== 'undefined' && grecaptcha.reset) {
+                        grecaptcha.reset();
+                        clearInterval(resetInterval);
+                    }
+                }, 100);
+                </text>
+            }
+        });
+    </script>
 }

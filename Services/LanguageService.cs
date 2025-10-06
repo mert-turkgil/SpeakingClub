@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Localization;
 
 namespace SpeakingClub.Services
@@ -13,9 +15,15 @@ namespace SpeakingClub.Services
     public class LanguageService
     {
         private readonly IStringLocalizer _localizer;
+        private readonly AliveResourceService _aliveResourceService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private static DateTime _lastCacheInvalidation = DateTime.MinValue;
 
-        public LanguageService(IStringLocalizerFactory factory)
+        public LanguageService(IStringLocalizerFactory factory, AliveResourceService aliveResourceService, IHttpContextAccessor httpContextAccessor)
         {
+            _aliveResourceService = aliveResourceService;
+            _httpContextAccessor = httpContextAccessor;
+            
             var type = typeof(SharedResource);
 
             // Ensure Assembly.FullName is not null
@@ -33,7 +41,28 @@ namespace SpeakingClub.Services
 
         public LocalizedString GetKey(string key)
         {
+            // Get current culture
+            var currentCulture = _httpContextAccessor.HttpContext?.Request.HttpContext.Features
+                .Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>()?.RequestCulture.Culture.Name 
+                ?? CultureInfo.CurrentCulture.Name;
+
+            // Try to get from AliveResourceService first (this checks file modification times)
+            var aliveValue = _aliveResourceService.GetResource(key, currentCulture);
+            
+            // If AliveResourceService returns the key in brackets, it means not found
+            // Fall back to IStringLocalizer
+            if (!aliveValue.StartsWith("[") || !aliveValue.EndsWith("]"))
+            {
+                return new LocalizedString(key, aliveValue, false);
+            }
+
+            // Fall back to standard localizer
             return _localizer[key];
+        }
+        
+        public void InvalidateCache()
+        {
+            _lastCacheInvalidation = DateTime.UtcNow;
         }
     }
 }

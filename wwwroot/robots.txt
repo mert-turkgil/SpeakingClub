@@ -1,0 +1,45 @@
+# robots.txt for SpeakingClub
+# This file tells search engines which pages they can and cannot crawl
+
+User-agent: *
+
+# Allow all pages
+Allow: /
+
+# Disallow admin and account management pages
+Disallow: /Admin/
+Disallow: /Account/Login
+Disallow: /Account/Register
+Disallow: /Account/ChangePassword
+Disallow: /Account/Account
+
+# Disallow quiz taking (to prevent bots from submitting quizzes)
+Disallow: /Account/StartQuiz
+Disallow: /Account/SubmitQuiz
+
+# Allow public pages
+Allow: /Home/
+Allow: /Home/Index
+Allow: /Home/About
+Allow: /Home/Privacy
+Allow: /Home/Words
+
+# Allow blog pages (uncomment when blog is ready)
+# Allow: /Home/Blog
+# Allow: /Home/BlogDetail
+
+# Allow quizzes listing (public view)
+Allow: /Account/Quizzes
+
+# Disallow API endpoints if any
+Disallow: /api/
+
+# Disallow temp and upload folders
+Disallow: /temp/
+Disallow: /uploads/temp/
+
+# Sitemap location
+Sitemap: https://www.almanca-konus.com/sitemap.xml
+
+# Crawl-delay for polite crawling (optional)
+# Crawl-delay: 10

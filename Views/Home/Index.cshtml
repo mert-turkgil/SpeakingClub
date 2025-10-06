@@ -12,14 +12,156 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
     <style>
         .icon-square {
-        width: 3rem;
-        height: 3rem;
-        border-radius: 0.75rem;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.75rem;
         }
 
         .profile-img {
-        border-radius: 50%;
-        height: 15.625rem;
+            border-radius: 50%;
+            height: 15.625rem;
+            max-width: 100%;
+        }
+
+        /* Hero Section Responsive Styles */
+        #Isik {
+            position: relative;
+            min-height: 800px;
+            padding: 60px 0;
+        }
+
+        #overlayText {
+            position: relative;
+            z-index: 2;
+        }
+
+        #three-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.7; /* Reduce canvas opacity to improve text visibility */
+        }
+
+        .hero-feature-col {
+            margin-bottom: 2rem;
+        }
+
+        .hero-feature-col h3 {
+            font-size: clamp(1.25rem, 3vw, 2rem);
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 0, 0, 0.6);
+        }
+
+        .hero-feature-col p {
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            line-height: 1.6;
+            text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .hero-feature-col hr {
+            border-color: rgba(255, 255, 255, 0.8);
+            opacity: 1;
+        }
+
+        /* Responsive adjustments */
+        @@media (max-width: 991px) {
+            #Isik {
+                min-height: 600px;
+                padding: 40px 0;
+            }
+
+            .icon-square {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+
+            .icon-square svg {
+                height: 24px;
+            }
+        }
+
+        @@media (max-width: 767px) {
+            #Isik {
+                min-height: auto;
+                padding: 30px 0 20px 0;
+            }
+
+            .hero-feature-col {
+                text-align: center;
+                margin-bottom: 2rem;
+            }
+
+            .hero-feature-col .d-flex {
+                flex-direction: column;
+                align-items: center !important;
+            }
+
+            .icon-square {
+                width: 2rem;
+                height: 2rem;
+                margin-right: 0 !important;
+                margin-bottom: 0.5rem;
+            }
+
+            .icon-square svg {
+                height: 20px;
+                width: 20px;
+            }
+
+            .hero-feature-col h3 {
+                font-size: 1.1rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .hero-feature-col p {
+                font-size: 0.85rem;
+                padding: 0 0.5rem;
+                line-height: 1.4;
+            }
+
+            .hero-feature-col hr {
+                width: 50%;
+                margin: 0.5rem auto;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            #Isik {
+                min-height: auto;
+                padding: 25px 0 15px 0;
+            }
+
+            .hero-feature-col {
+                margin-bottom: 1.5rem;
+            }
+
+            .icon-square {
+                width: 1.8rem;
+                height: 1.8rem;
+            }
+
+            .icon-square svg {
+                height: 18px;
+                width: 18px;
+            }
+
+            .hero-feature-col h3 {
+                font-size: 1rem;
+                margin-bottom: 0.4rem;
+            }
+
+            .hero-feature-col p {
+                font-size: 0.8rem;
+                line-height: 1.3;
+            }
+
+            .hero-feature-col hr {
+                width: 40%;
+                margin: 0.4rem auto;
+            }
         }
     </style>
     <style>
@@ -204,51 +346,63 @@
     </div>
 </section>
 <!-- Hero Section: Introduction -->
-<section class="hero pb-5">
-    <div id="Isik" class="container-fluid">
-        <div id="overlayText" class="container">
-        <div class="row g-4 py-5 row-cols-1 row-cols-lg-3">
-        <div class="col d-flex align-items-start">
-            <div class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
-            <svg xmlns="https://www.w3.org/2000/svg" height="30" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
-            <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
-            </svg>
-            </div>
-            <div>
-            <h3 style="font-family: 'Open Sans', sans-serif;font-weight: 700;color: #fff;" class="fs-2">@Localizer.GetKey("ftheader1").Value</h3>
-            <hr/>
-            <p style="color: #fff;">@Localizer.GetKey("ftbody1").Value</p>
-            </div>
+<section class="hero py-5 container-xxl">
+<canvas class="w-100" id="three-canvas"></canvas>
+    <div id="Isik">
+        <div class="px-5" id="overlayText">
+            <div class="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-3">
+                <!-- Feature 1 -->
+                <div class="col hero-feature-col">
+                    <div class="d-flex align-items-start">
+                        <div class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
+                            <svg xmlns="https://www.w3.org/2000/svg" height="30" width="30" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="hero-heading" style="font-family: 'Open Sans', sans-serif; font-weight: 700; color: #fff;">@Localizer.GetKey("ftheader1").Value</h3>
+                            <hr/>
+                            <p style="color: #fff;">@Localizer.GetKey("ftbody1").Value</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="col hero-feature-col">
+                    <div class="d-flex align-items-start">
+                        <div class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
+                            <svg xmlns="https://www.w3.org/2000/svg" height="30" width="30" fill="currentColor" class="bi bi-award" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M9.669.864 8 0 6.331.864l-1.858.282-.842 1.68-1.337 1.32L2.6 6l-.306 1.854 1.337 1.32.842 1.68 1.858.282L8 12l1.669-.864 1.858-.282.842-1.68 1.337-1.32L13.4 6l.306-1.854-1.337-1.32-.842-1.68zm1.196 1.193.684 1.365 1.086 1.072L12.387 6l.248 1.506-1.086 1.072-.684 1.365-1.51.229L8 10.874l-1.355-.702-1.51-.229-.684-1.365-1.086-1.072L3.614 6l-.25-1.506 1.087-1.072.684-1.365 1.51-.229L8 1.126l1.356.702z"/>
+                                <path d="M4 11.794V16l4-1 4 1v-4.206l-2.018.306L8 13.126 6.018 12.1z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="hero-heading" style="font-family: 'Open Sans', sans-serif; font-weight: 700; color: #fff;">@Localizer.GetKey("ftheader2").Value</h3>
+                            <hr/>
+                            <p style="color: #fff;">@Localizer.GetKey("ftbody2").Value</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="col hero-feature-col">
+                    <div class="d-flex align-items-start">
+                        <div class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
+                            <svg xmlns="https://www.w3.org/2000/svg" height="30" width="30" fill="currentColor" class="bi bi-search-heart-fill" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M6.5 13a6.47 6.47 0 0 0 3.845-1.258h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1A6.47 6.47 0 0 0 13 6.5 6.5 6.5 0 0 0 6.5 0a6.5 6.5 0 1 0 0 13m0-8.518c1.664-1.673 5.825 1.254 0 5.018-5.825-3.764-1.664-6.69 0-5.018"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="hero-heading" style="font-family: 'Open Sans', sans-serif; font-weight: 700; color: #fff;">@Localizer.GetKey("ftheader3").Value</h3>
+                            <hr/>
+                            <p style="color: #fff;">@Localizer.GetKey("ftbody3").Value</p>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>  
         </div>
-        <div class="col d-flex align-items-start">
-            <div class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
-            <svg xmlns="https://www.w3.org/2000/svg" height="30" fill="currentColor" class="bi bi-award" viewBox="0 0 16 16">
-            <path d="M9.669.864 8 0 6.331.864l-1.858.282-.842 1.68-1.337 1.32L2.6 6l-.306 1.854 1.337 1.32.842 1.68 1.858.282L8 12l1.669-.864 1.858-.282.842-1.68 1.337-1.32L13.4 6l.306-1.854-1.337-1.32-.842-1.68zm1.196 1.193.684 1.365 1.086 1.072L12.387 6l.248 1.506-1.086 1.072-.684 1.365-1.51.229L8 10.874l-1.355-.702-1.51-.229-.684-1.365-1.086-1.072L3.614 6l-.25-1.506 1.087-1.072.684-1.365 1.51-.229L8 1.126l1.356.702z"/>
-            <path d="M4 11.794V16l4-1 4 1v-4.206l-2.018.306L8 13.126 6.018 12.1z"/>
-            </svg>
-            </div>
-            <div>
-            <h3 style="font-family: 'Open Sans', sans-serif;font-weight: 700; color: #fff;" class="fs-2">@Localizer.GetKey("ftheader2").Value</h3>
-            <hr/>
-            <p style="color: #fff;">@Localizer.GetKey("ftbody2").Value</p>
-            </div>
-        </div>
-        <div class="col d-flex align-items-start">
-            <div class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
-            <svg xmlns="https://www.w3.org/2000/svg" height="30" fill="currentColor" class="bi bi-search-heart-fill" viewBox="0 0 16 16">
-            <path d="M6.5 13a6.47 6.47 0 0 0 3.845-1.258h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1A6.47 6.47 0 0 0 13 6.5 6.5 6.5 0 0 0 6.5 0a6.5 6.5 0 1 0 0 13m0-8.518c1.664-1.673 5.825 1.254 0 5.018-5.825-3.764-1.664-6.69 0-5.018"/>
-            </svg>
-            </div>
-            <div>
-            <h3 style="font-family: 'Open Sans', sans-serif;font-weight: 700;color: #fff;" class="fs-2">@Localizer.GetKey("ftheader3").Value</h3>
-            <hr/>
-            <p style="color: #fff;">@Localizer.GetKey("ftbody3").Value</p>
-            </div>
-        </div>
-     </div>  
     </div>
-    <canvas id="three-canvas"></canvas>
-  </div>
 </section>
 <!-- Head Grid Section -->
   <section id="testimonial">

@@ -90,10 +90,10 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LogoutPath = "/Account/Logout"; // Çıkış sayfası
     options.AccessDeniedPath = "/Account/AccessDenied"; // Yetkisiz erişim
     options.SlidingExpiration = true;
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // Oturum süresi
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // Default session timeout
     options.Cookie = new CookieBuilder
         {
-            Name = ".SpeakingClub.Security.Cookie",
+            Name = "SpeakingClubAuth",
             HttpOnly = true,
             SameSite = SameSiteMode.Lax,
             SecurePolicy = CookieSecurePolicy.Always
@@ -106,7 +106,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddAntiforgery(options =>
 {
     options.HeaderName = "X-CSRF-TOKEN";
-    options.Cookie.Name = ".SpeakingClub.AntiForgery";
+    options.Cookie.Name = "SpeakingClubCSRF";
 });
 
 #endregion
@@ -319,6 +319,12 @@ app.MapControllerRoute(
     name: "words",
     pattern: "words",
     defaults: new { controller = "Home", action = "Words" });
+
+// SEO Routes
+app.MapControllerRoute(
+    name: "sitemap",
+    pattern: "sitemap.xml",
+    defaults: new { controller = "Sitemap", action = "Index" });
 
 #endregion
 
