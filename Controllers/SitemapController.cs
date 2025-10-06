@@ -28,7 +28,7 @@ namespace SpeakingClub.Controllers
         [Route("")]
         [Route("sitemap.xml")]
         [ResponseCache(Duration = 3600)] // Cache for 1 hour
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             // TODO: Replace with your actual domain
             var siteUrl = "https://almanca-konus.com"; 
@@ -37,30 +37,29 @@ namespace SpeakingClub.Controllers
 
             // Static pages with priority and change frequency
             urls.Add(CreateUrl(siteUrl + "/", priority: "1.0", changefreq: "daily"));
-            urls.Add(CreateUrl(siteUrl + "/Home/About", priority: "0.8", changefreq: "monthly"));
-            urls.Add(CreateUrl(siteUrl + "/Home/Privacy", priority: "0.3", changefreq: "yearly"));
-            urls.Add(CreateUrl(siteUrl + "/Home/Words", priority: "0.9", changefreq: "weekly"));
-            
-            // Public quiz listing page
-            urls.Add(CreateUrl(siteUrl + "/Account/Quizzes", priority: "0.7", changefreq: "weekly"));
+            urls.Add(CreateUrl(siteUrl + "/about", priority: "0.8", changefreq: "monthly"));
+            urls.Add(CreateUrl(siteUrl + "/privacy", priority: "0.3", changefreq: "yearly"));
+            urls.Add(CreateUrl(siteUrl + "/words", priority: "0.9", changefreq: "weekly"));
 
             // ========================================
             // BLOG SECTION - UNCOMMENT WHEN READY
             // ========================================
             /*
             // Blog listing page
-            urls.Add(CreateUrl(siteUrl + "/Home/Blog", priority: "0.9", changefreq: "daily"));
+            urls.Add(CreateUrl(siteUrl + "/blog", priority: "0.9", changefreq: "daily"));
             
             // Dynamic: Blog posts
             var blogs = await _context.Blogs
-                .Where(b => b.IsPublished) // Only published blogs
+                .Include(b => b.Tags)
+                .Include(b => b.Category)
+                .Where(b => b.isHome == true) // Only published/home blogs
                 .OrderByDescending(b => b.Date)
                 .ToListAsync();
 
             foreach (var blog in blogs)
             {
                 urls.Add(CreateUrl(
-                    $"{siteUrl}/Home/BlogDetail/{blog.Url}", 
+                    $"{siteUrl}/blog/{blog.Url}", 
                     lastmod: blog.Date, 
                     priority: "0.8", 
                     changefreq: "monthly"
@@ -68,32 +67,6 @@ namespace SpeakingClub.Controllers
             }
             */
             // ========================================
-
-            // Dynamic: Categories (uncomment when you have category detail pages)
-            /*
-            var categories = await _context.Categories.ToListAsync();
-            foreach (var category in categories)
-            {
-                urls.Add(CreateUrl(
-                    $"{siteUrl}/Home/Category/{category.Url}", 
-                    priority: "0.6", 
-                    changefreq: "weekly"
-                ));
-            }
-            */
-
-            // Dynamic: Tags (uncomment when you have tag detail pages)
-            /*
-            var tags = await _context.Tags.ToListAsync();
-            foreach (var tag in tags)
-            {
-                urls.Add(CreateUrl(
-                    $"{siteUrl}/Home/Tag/{tag.Url}", 
-                    priority: "0.5", 
-                    changefreq: "weekly"
-                ));
-            }
-            */
 
             // Create XML sitemap
             XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
