@@ -67,6 +67,10 @@
                 @(Model.Content ?? " ")
             </textarea>
             <span asp-validation-for="Content" class="text-danger"></span>
+            <div class="mt-3">
+                <h6>Live Preview:</h6>
+                <div id="contentPreview" class="border p-3 rounded bg-light" style="min-height: 200px;"></div>
+            </div>
         </div>
 
         <!-- Cover Image -->
@@ -104,7 +108,7 @@
         <h5>Categories</h5>
         <div class="mb-4 swiper categorySwiper">
             <div class="swiper-wrapper">
-                @foreach (var category in (List<SelectListItem>)ViewBag.Categories)
+                @foreach (var category in (IEnumerable<SelectListItem>)ViewBag.Categories)
                 {
                     <div class="swiper-slide card p-2">
                         <input type="checkbox" name="SelectedCategoryIds" value="@category.Value" />
@@ -117,7 +121,7 @@
         <!-- Tags -->
         <h5>Tags</h5>
         <div class="mb-4">
-            @foreach (var tag in (List<SelectListItem>)ViewBag.Tags)
+            @foreach (var tag in (IEnumerable<SelectListItem>)ViewBag.Tags)
             {
                 <div class="form-check form-check-inline">
                     <input type="checkbox" name="SelectedTagIds" value="@tag.Value" class="form-check-input" />
@@ -137,7 +141,7 @@
             <label class="form-label">Select a Quiz</label>
             <select id="quizDropdown" class="form-select">
                 <option value="">-- Select a Quiz --</option>
-                @foreach (var quiz in (List<SelectListItem>)ViewBag.Quizzes)
+                @foreach (var quiz in (IEnumerable<SelectListItem>)ViewBag.Quizzes)
                 {
                     <option value="@quiz.Value">@quiz.Text</option>
                 }
@@ -156,9 +160,6 @@
         <h5>Translations</h5>
         <ul class="nav nav-tabs mb-3">
             <li class="nav-item">
-                <button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#en">EN</button>
-            </li>
-            <li class="nav-item">
                 <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tr">TR</button>
             </li>
             <li class="nav-item">
@@ -170,10 +171,18 @@
             <div class="tab-pane fade" id="tr">
                 <input asp-for="TitleTR" placeholder="Turkish Title" class="form-control mb-2" />
                 <textarea asp-for="ContentTR" id="ContentTR" class="form-control"></textarea>
+                <div class="mt-3">
+                    <h6>Live Preview (TR):</h6>
+                    <div id="contentPreviewTR" class="border p-3 rounded bg-light" style="min-height: 200px;"></div>
+                </div>
             </div>
             <div class="tab-pane fade" id="de">
                 <input asp-for="TitleDE" placeholder="German Title" class="form-control mb-2" />
                 <textarea asp-for="ContentDE" id="ContentDE" class="form-control"></textarea>
+                <div class="mt-3">
+                    <h6>Live Preview (DE):</h6>
+                    <div id="contentPreviewDE" class="border p-3 rounded bg-light" style="min-height: 200px;"></div>
+                </div>
             </div>
         </div>
 
@@ -191,9 +200,78 @@
     <script src="~/lib/gsap/gsap.min.js"></script>
     <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.umd.js"></script>
     <script src="https://cdn.ckbox.io/ckbox/2.6.1/ckbox.js"></script>
-    <script src="~/js/ckeditor.js"></script>
 
     <script>
+        // Wait for CKEditor to load
+        window.addEventListener('load', function () {
+            const { ClassicEditor, SimpleUploadAdapter, Alignment, Autoformat, AutoImage, AutoLink, BlockQuote, Bold, 
+                    Code, CodeBlock, Essentials, FontBackgroundColor, FontColor, FontFamily, FontSize, Heading, 
+                    Highlight, HorizontalLine, ImageBlock, ImageCaption, ImageInline, ImageInsertViaUrl, ImageResize, 
+                    ImageStyle, ImageTextAlternative, ImageToolbar, ImageUpload, Indent, Italic, Link, LinkImage, 
+                    List, MediaEmbed, Paragraph, RemoveFormat, SourceEditing, Strikethrough, Subscript, Superscript, 
+                    Table, TableToolbar, Underline } = window.CKEDITOR;
+
+            if (!sessionStorage.getItem('tempBlogId')) {
+                sessionStorage.setItem('tempBlogId', 'temp_' + Date.now());
+            }
+            const tempBlogId = sessionStorage.getItem('tempBlogId');
+            const LICENSE_KEY = document.querySelector('meta[name="ck-license-key"]').getAttribute('content');
+            const editorConfig = {
+                simpleUpload: {
+                    uploadUrl: '/Admin/UploadFile?type=Images&blogId=' + encodeURIComponent(tempBlogId)
+                },
+                toolbar: {
+                    items: ['sourceEditing', '|', 'heading', '|', 'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', 
+                            '|', 'bold', 'italic', 'underline', 'strikethrough', 'subscript', 'superscript', 'code', 'removeFormat', 
+                            '|', 'link', 'insertImageViaUrl', 'mediaEmbed', 'insertTable', 'highlight', 'blockQuote', 'codeBlock', 
+                            '|', 'alignment', '|', 'bulletedList', 'numberedList', 'outdent', 'indent'],
+                    shouldNotGroupWhenFull: false
+                },
+                plugins: [Alignment, Autoformat, AutoImage, AutoLink, BlockQuote, Bold, Code, CodeBlock, Essentials, 
+                          FontBackgroundColor, FontColor, FontFamily, FontSize, Heading, Highlight, HorizontalLine, 
+                          ImageBlock, ImageCaption, ImageInline, ImageInsertViaUrl, ImageResize, ImageStyle, 
+                          ImageTextAlternative, ImageToolbar, ImageUpload, SimpleUploadAdapter, Indent, Italic, Link, 
+                          LinkImage, List, MediaEmbed, Paragraph, RemoveFormat, SourceEditing, Strikethrough, 
+                          Subscript, Superscript, Table, TableToolbar, Underline],
+                image: {
+                    toolbar: ['toggleImageCaption', 'imageTextAlternative', '|', 'imageStyle:inline', 'imageStyle:wrapText', 
+                              'imageStyle:breakText', '|', 'resizeImage']
+                },
+                placeholder: 'Type or paste your content here!'
+            };
+
+            // Initialize main content editor
+            ClassicEditor.create(document.querySelector('#Content'), editorConfig)
+                .then(editor => { 
+                    window.editorContent = editor;
+                    // Live preview update
+                    editor.model.document.on('change:data', () => {
+                        document.getElementById('contentPreview').innerHTML = editor.getData();
+                    });
+                })
+                .catch(error => console.error('Error initializing Content editor:', error));
+
+            // Initialize Turkish editor
+            ClassicEditor.create(document.querySelector('#ContentTR'), editorConfig)
+                .then(editor => { 
+                    window.editorContentTR = editor;
+                    editor.model.document.on('change:data', () => {
+                        document.getElementById('contentPreviewTR').innerHTML = editor.getData();
+                    });
+                })
+                .catch(error => console.error('Error initializing ContentTR editor:', error));
+
+            // Initialize German editor
+            ClassicEditor.create(document.querySelector('#ContentDE'), editorConfig)
+                .then(editor => { 
+                    window.editorContentDE = editor;
+                    editor.model.document.on('change:data', () => {
+                        document.getElementById('contentPreviewDE').innerHTML = editor.getData();
+                    });
+                })
+                .catch(error => console.error('Error initializing ContentDE editor:', error));
+        });
+
         // COVER IMAGE PREVIEW FUNCTION
         function previewImage(event) {
             const reader = new FileReader();
@@ -202,38 +280,33 @@
         }
         window.previewImage = previewImage;
 
-        // When the quiz dropdown changes, perform an AJAX call to fetch the corresponding quiz questions.
-        $('#quizDropdown').on('change', function () {
-            var selectedQuizId = $(this).val();
-            console.log("Selected Quiz ID:", selectedQuizId);
-            var dropdown = $('#quizQuestionsDropdown');
-            dropdown.empty();
-            dropdown.append($('<option>').val("").text("-- Select a Question --"));
-            
-            if (selectedQuizId) {
-                $.ajax({
-                    url: '@Url.Action("GetQuizQuestions", "Admin")',
-                    type: 'GET',
-                    data: { quizId: selectedQuizId },
-                    success: function (data) {
-                        console.log("Fetched Questions:", data);
-                        $.each(data, function (index, question) {
-                            dropdown.append(
-                                $('<option>').val(question.questionId).text(question.questionText)
-                            );
-                        });
-                    },
-                    error: function (xhr, status, error) {
-                        console.error("Error fetching quiz questions: " + error);
-                    }
-                });
-            }
-        });
+        // Quiz dropdown change handler
+        $(document).ready(function() {
+            $('#quizDropdown').on('change', function () {
+                var selectedQuizId = $(this).val();
+                var dropdown = $('#quizQuestionsDropdown');
+                dropdown.empty();
+                dropdown.append($('<option>').val("").text("-- Select a Question --"));
+                
+                if (selectedQuizId) {
+                    $.ajax({
+                        url: '@Url.Action("GetQuizQuestions", "Admin")',
+                        type: 'GET',
+                        data: { quizId: selectedQuizId },
+                        success: function (data) {
+                            $.each(data, function (index, question) {
+                                dropdown.append($('<option>').val(question.questionId).text(question.questionText));
+                            });
+                        },
+                        error: function (xhr, status, error) {
+                            console.error("Error fetching quiz questions: " + error);
+                        }
+                    });
+                }
+            });
 
-        // Initialize Swiper sliders.
-        $(document).ready(function () {
+            // Initialize Swiper sliders
             new Swiper(".categorySwiper", { slidesPerView: 3, spaceBetween: 15 });
-            new Swiper(".quizSwiper", { slidesPerView: 3, spaceBetween: 15 });
         });
     </script>
 }

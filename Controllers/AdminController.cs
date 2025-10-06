@@ -1292,6 +1292,469 @@ namespace SpeakingClub.Controllers
             return Json(questions);
         }
 
+        // GET: Blog Create
+        [HttpGet("BlogCreate")]
+        public async Task<IActionResult> BlogCreate()
+        {
+            var model = new BlogCreateModel();
+            
+            ViewBag.Categories = (await _unitOfWork.Categories.GetAllAsync())
+                .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
+            ViewBag.Tags = (await _unitOfWork.Tags.GetAllAsync())
+                .Select(t => new SelectListItem(t.Name, t.TagId.ToString()));
+            ViewBag.Quizzes = (await _unitOfWork.Quizzes.GetAllAsync())
+                .Select(q => new SelectListItem(q.Title, q.Id.ToString()));
+            return View(model);
+        }
+
+        // POST: Blog Create
+        [HttpPost("BlogCreate")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BlogCreate(BlogCreateModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Categories = (await _unitOfWork.Categories.GetAllAsync())
+                    .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
+                ViewBag.Tags = (await _unitOfWork.Tags.GetAllAsync())
+                    .Select(t => new SelectListItem(t.Name, t.TagId.ToString()));
+                ViewBag.Quizzes = (await _unitOfWork.Quizzes.GetAllAsync())
+                    .Select(q => new SelectListItem(q.Title, q.Id.ToString()));
+                return View(model);
+            }
+
+            try
+            {
+                // Create blog entity
+                var blog = new Blog
+                {
+                    Title = model.Title,
+                    Content = model.Content ?? "",
+                    Url = model.Url,
+                    Author = model.Author,
+                    Date = DateTime.UtcNow,
+                    isHome = model.IsHome,
+                    RawYT = model.RawYT,
+                    RawMaps = model.RawMaps,
+                    SelectedQuestionId = model.SelectedQuestionId
+                };
+
+                // Handle cover image with hash-based deduplication
+                if (model.ImageFile != null && model.ImageFile.Length > 0)
+                {
+                    blog.Image = await SaveBlogCoverImage(model.ImageFile);
+                }
+
+                // Save blog to get ID
+                await _unitOfWork.Blogs.AddAsync(blog);
+                await _unitOfWork.SaveAsync();
+
+                // Move temp images to permanent locations and update URLs
+                blog.Content = MoveTempImagesToBlog(blog.Content);
+                var contentTR = MoveTempImagesToBlog(model.ContentTR ?? "");
+                var contentDE = MoveTempImagesToBlog(model.ContentDE ?? "");
+
+                // Save translations to resource files
+                SaveBlogTranslations(blog.BlogId, blog.Url, model.Title, blog.Content, 
+                    model.TitleTR, contentTR, model.TitleDE, contentDE);
+
+                // Handle category (Blog has single Category, not collection)
+                if (model.SelectedCategoryIds != null && model.SelectedCategoryIds.Any())
+                {
+                    blog.CategoryId = model.SelectedCategoryIds.First();
+                }
+
+                // Handle tags
+                if (model.SelectedTagIds != null && model.SelectedTagIds.Any())
+                {
+                    var tags = await _unitOfWork.Tags.GetAllAsync();
+                    blog.Tags = tags.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList();
+                }
+
+                _unitOfWork.Blogs.Update(blog);
+                await _unitOfWork.SaveAsync();
+
+                // Clean up temp directory
+                CleanupTempFiles();
+
+                TempData["SuccessMessage"] = "Blog created successfully!";
+                return RedirectToAction("Index", new { scrollTo = "BlogManagement" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating blog");
+                TempData["ErrorMessage"] = $"Error creating blog: {ex.Message}";
+                
+                ViewBag.Categories = (await _unitOfWork.Categories.GetAllAsync())
+                    .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
+                ViewBag.Tags = (await _unitOfWork.Tags.GetAllAsync())
+                    .Select(t => new SelectListItem(t.Name, t.TagId.ToString()));
+                ViewBag.Quizzes = (await _unitOfWork.Quizzes.GetAllAsync())
+                    .Select(q => new SelectListItem(q.Title, q.Id.ToString()));
+                return View(model);
+            }
+        }
+
+        // GET: Blog Edit
+        [HttpGet("BlogEdit/{id}")]
+        public async Task<IActionResult> BlogEdit(int id)
+        {
+            var blog = await _unitOfWork.Blogs.GetAsync(id);
+            if (blog == null)
+            {
+                TempData["ErrorMessage"] = "Blog not found.";
+                return RedirectToAction("Index");
+            }
+
+            // Load translations from resource files
+            var titleTR = _dynamicResourceService.GetResource($"Title_{blog.BlogId}_{blog.Url}_tr", "tr-TR");
+            var contentTR = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_tr", "tr-TR");
+            var titleDE = _dynamicResourceService.GetResource($"Title_{blog.BlogId}_{blog.Url}_de", "de-DE");
+            var contentDE = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_de", "de-DE");
+
+            var model = new BlogEditModel
+            {
+                BlogId = blog.BlogId,
+                Title = blog.Title,
+                Content = blog.Content,
+                Url = blog.Url,
+                Author = blog.Author,
+                IsHome = blog.isHome,
+                RawYT = blog.RawYT,
+                RawMaps = blog.RawMaps,
+                CoverImageUrl = blog.Image,
+                SelectedQuestionId = blog.SelectedQuestionId,
+                TitleTR = titleTR,
+                ContentTR = contentTR,
+                TitleDE = titleDE,
+                ContentDE = contentDE,
+                SelectedCategoryIds = blog.CategoryId.HasValue ? new List<int> { blog.CategoryId.Value } : new List<int>(),
+                SelectedTagIds = blog.Tags?.Select(t => t.TagId).ToList() ?? new List<int>()
+            };
+
+            ViewBag.Categories = (await _unitOfWork.Categories.GetAllAsync())
+                .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
+            ViewBag.Tags = (await _unitOfWork.Tags.GetAllAsync())
+                .Select(t => new SelectListItem(t.Name, t.TagId.ToString()));
+            ViewBag.Quizzes = (await _unitOfWork.Quizzes.GetAllAsync())
+                .Select(q => new SelectListItem(q.Title, q.Id.ToString()));
+
+            return View(model);
+        }
+
+        // POST: Blog Edit
+        [HttpPost("BlogEdit/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BlogEdit(BlogEditModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Categories = (await _unitOfWork.Categories.GetAllAsync())
+                    .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
+                ViewBag.Tags = (await _unitOfWork.Tags.GetAllAsync())
+                    .Select(t => new SelectListItem(t.Name, t.TagId.ToString()));
+                ViewBag.Quizzes = (await _unitOfWork.Quizzes.GetAllAsync())
+                    .Select(q => new SelectListItem(q.Title, q.Id.ToString()));
+                return View(model);
+            }
+
+            try
+            {
+                var blog = await _unitOfWork.Blogs.GetAsync(model.BlogId);
+                if (blog == null)
+                {
+                    TempData["ErrorMessage"] = "Blog not found.";
+                    return RedirectToAction("Index");
+                }
+
+                // Track old images
+                var oldCoverImage = blog.Image;
+                var oldContentImages = ExtractImagePathsFromContent(blog.Content);
+                var oldContentTR = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_tr", "tr-TR");
+                var oldContentDE = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_de", "de-DE");
+                var oldImagesTR = ExtractImagePathsFromContent(oldContentTR);
+                var oldImagesDE = ExtractImagePathsFromContent(oldContentDE);
+                var allOldImages = oldContentImages.Concat(oldImagesTR).Concat(oldImagesDE).Distinct().ToList();
+
+                // Update basic properties
+                blog.Title = model.Title;
+                blog.Url = model.Url;
+                blog.Author = model.Author;
+                blog.isHome = model.IsHome;
+                blog.RawYT = model.RawYT;
+                blog.RawMaps = model.RawMaps;
+                blog.SelectedQuestionId = model.SelectedQuestionId;
+
+                // Handle new cover image
+                if (model.ImageFile != null && model.ImageFile.Length > 0)
+                {
+                    if (!string.IsNullOrEmpty(oldCoverImage))
+                    {
+                        DeleteBlogFile(oldCoverImage);
+                    }
+                    blog.Image = await SaveBlogCoverImage(model.ImageFile);
+                }
+
+                // Move temp images and update content
+                blog.Content = MoveTempImagesToBlog(model.Content ?? "");
+                var contentTR = MoveTempImagesToBlog(model.ContentTR ?? "");
+                var contentDE = MoveTempImagesToBlog(model.ContentDE ?? "");
+
+                // Get new images
+                var newContentImages = ExtractImagePathsFromContent(blog.Content);
+                var newImagesTR = ExtractImagePathsFromContent(contentTR);
+                var newImagesDE = ExtractImagePathsFromContent(contentDE);
+                var allNewImages = newContentImages.Concat(newImagesTR).Concat(newImagesDE).Distinct().ToList();
+
+                // Delete unused images
+                var unusedImages = allOldImages.Except(allNewImages).ToList();
+                foreach (var img in unusedImages)
+                {
+                    DeleteBlogFile("/" + img);
+                }
+
+                // Update translations
+                SaveBlogTranslations(blog.BlogId, blog.Url, model.Title, blog.Content, 
+                    model.TitleTR, contentTR, model.TitleDE, contentDE);
+
+                // Update category (single, not collection)
+                if (model.SelectedCategoryIds != null && model.SelectedCategoryIds.Any())
+                {
+                    blog.CategoryId = model.SelectedCategoryIds.First();
+                }
+                else
+                {
+                    blog.CategoryId = null;
+                }
+
+                // Update tags
+                blog.Tags?.Clear();
+                if (model.SelectedTagIds != null && model.SelectedTagIds.Any())
+                {
+                    var tags = await _unitOfWork.Tags.GetAllAsync();
+                    blog.Tags = tags.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList();
+                }
+
+                _unitOfWork.Blogs.Update(blog);
+                await _unitOfWork.SaveAsync();
+
+                CleanupTempFiles();
+
+                TempData["SuccessMessage"] = "Blog updated successfully!";
+                return RedirectToAction("Index", new { scrollTo = "BlogManagement" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating blog {BlogId}", model.BlogId);
+                TempData["ErrorMessage"] = $"Error updating blog: {ex.Message}";
+                
+                ViewBag.Categories = (await _unitOfWork.Categories.GetAllAsync())
+                    .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
+                ViewBag.Tags = (await _unitOfWork.Tags.GetAllAsync())
+                    .Select(t => new SelectListItem(t.Name, t.TagId.ToString()));
+                ViewBag.Quizzes = (await _unitOfWork.Quizzes.GetAllAsync())
+                    .Select(q => new SelectListItem(q.Title, q.Id.ToString()));
+                return View(model);
+            }
+        }
+
+        // POST: Blog Delete
+        [HttpPost("BlogDelete/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BlogDelete(int id)
+        {
+            try
+            {
+                var blog = await _unitOfWork.Blogs.GetAsync(id);
+                if (blog == null)
+                {
+                    TempData["ErrorMessage"] = "Blog not found.";
+                    return RedirectToAction("Index");
+                }
+
+                // Delete cover image
+                if (!string.IsNullOrEmpty(blog.Image))
+                {
+                    DeleteBlogFile(blog.Image);
+                }
+
+                // Delete all content images from all languages
+                var contentImages = ExtractImagePathsFromContent(blog.Content);
+                var contentTR = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_tr", "tr-TR");
+                var contentDE = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_de", "de-DE");
+                var imagesTR = ExtractImagePathsFromContent(contentTR);
+                var imagesDE = ExtractImagePathsFromContent(contentDE);
+                
+                var allImages = contentImages.Concat(imagesTR).Concat(imagesDE).Distinct();
+                foreach (var img in allImages)
+                {
+                    DeleteBlogFile("/" + img);
+                }
+
+                // Delete translations
+                DeleteTranslations(blog.BlogId, blog.Url);
+
+                // Remove blog
+                _unitOfWork.Blogs.Remove(blog);
+                await _unitOfWork.SaveAsync();
+
+                TempData["SuccessMessage"] = "Blog and all associated files deleted successfully!";
+                return RedirectToAction("Index", new { scrollTo = "BlogManagement" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting blog {BlogId}", id);
+                TempData["ErrorMessage"] = $"Error deleting blog: {ex.Message}";
+                return RedirectToAction("Index");
+            }
+        }
+
+        // Helper: Save cover image with hash-based deduplication
+        private async Task<string?> SaveBlogCoverImage(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return null;
+
+            // Calculate file hash
+            string fileHash;
+            using (var md5 = System.Security.Cryptography.MD5.Create())
+            {
+                using (var stream = file.OpenReadStream())
+                {
+                    fileHash = BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "").ToLower();
+                }
+            }
+
+            string extension = Path.GetExtension(file.FileName).ToLower();
+            string fileName = $"{fileHash}{extension}";
+            string subDir = extension == ".gif" ? "gif" : "img";
+            string dirPath = Path.Combine(_env.WebRootPath, "blog", subDir);
+            Directory.CreateDirectory(dirPath);
+
+            string filePath = Path.Combine(dirPath, fileName);
+            string relativePath = $"/blog/{subDir}/{fileName}";
+
+            if (!System.IO.File.Exists(filePath))
+            {
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+                _logger.LogInformation("Saved blog image: {Path}", relativePath);
+            }
+
+            return relativePath;
+        }
+
+        // Helper: Move temp images to blog directory
+        private string MoveTempImagesToBlog(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+                return content;
+
+            var matches = Regex.Matches(content, @"src=[""'](?<url>/temp/[^""']+)[""']");
+            
+            foreach (Match match in matches)
+            {
+                string tempUrl = match.Groups["url"].Value;
+                string tempFilePath = Path.Combine(_env.WebRootPath, tempUrl.TrimStart('/').Replace("/", "\\"));
+
+                if (System.IO.File.Exists(tempFilePath))
+                {
+                    string fileName = Path.GetFileName(tempFilePath);
+                    string extension = Path.GetExtension(fileName).ToLower();
+                    string subDir = extension == ".gif" ? "gif" : "img";
+                    
+                    string targetDir = Path.Combine(_env.WebRootPath, "blog", subDir);
+                    Directory.CreateDirectory(targetDir);
+                    
+                    string targetPath = Path.Combine(targetDir, fileName);
+                    string newUrl = $"/blog/{subDir}/{fileName}";
+
+                    if (!System.IO.File.Exists(targetPath))
+                    {
+                        System.IO.File.Move(tempFilePath, targetPath);
+                    }
+                    else
+                    {
+                        System.IO.File.Delete(tempFilePath);
+                    }
+
+                    content = content.Replace(tempUrl, newUrl);
+                }
+            }
+
+            return content;
+        }
+
+        // Helper: Delete blog file
+        private void DeleteBlogFile(string relativePath)
+        {
+            if (string.IsNullOrEmpty(relativePath))
+                return;
+
+            try
+            {
+                string fullPath = Path.Combine(_env.WebRootPath, relativePath.TrimStart('/').Replace("/", "\\"));
+                
+                if (System.IO.File.Exists(fullPath))
+                {
+                    System.IO.File.Delete(fullPath);
+                    _logger.LogInformation("Deleted blog file: {Path}", fullPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting file: {Path}", relativePath);
+            }
+        }
+
+        // Helper: Save translations
+        private void SaveBlogTranslations(int blogId, string url, string titleEN, string contentEN, 
+            string titleTR, string contentTR, string titleDE, string contentDE)
+        {
+            _manageResourceService.AddOrUpdateResource($"Title_{blogId}_{url}_en", titleEN, "en-US");
+            _manageResourceService.AddOrUpdateResource($"Content_{blogId}_{url}_en", contentEN, "en-US");
+
+            if (!string.IsNullOrEmpty(titleTR))
+                _manageResourceService.AddOrUpdateResource($"Title_{blogId}_{url}_tr", titleTR, "tr-TR");
+            if (!string.IsNullOrEmpty(contentTR))
+                _manageResourceService.AddOrUpdateResource($"Content_{blogId}_{url}_tr", contentTR, "tr-TR");
+
+            if (!string.IsNullOrEmpty(titleDE))
+                _manageResourceService.AddOrUpdateResource($"Title_{blogId}_{url}_de", titleDE, "de-DE");
+            if (!string.IsNullOrEmpty(contentDE))
+                _manageResourceService.AddOrUpdateResource($"Content_{blogId}_{url}_de", contentDE, "de-DE");
+        }
+
+        // Helper: Clean up temp files older than 24 hours
+        private void CleanupTempFiles()
+        {
+            try
+            {
+                string tempPath = Path.Combine(_env.WebRootPath, "temp");
+                
+                if (!Directory.Exists(tempPath))
+                    return;
+
+                var files = Directory.GetFiles(tempPath);
+                var cutoffTime = DateTime.Now.AddHours(-24);
+
+                foreach (var file in files)
+                {
+                    var fileInfo = new FileInfo(file);
+                    if (fileInfo.LastWriteTime < cutoffTime)
+                    {
+                        System.IO.File.Delete(file);
+                        _logger.LogInformation("Cleaned up old temp file: {File}", file);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error cleaning up temp files");
+            }
+        }
 
         #endregion
 
