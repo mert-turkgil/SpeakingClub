@@ -203,7 +203,7 @@ namespace SpeakingClub.Controllers
             var message = contact.Message;
 
             // Administrator's email address.
-            string adminEmail = "suna.almancakonusmakulubu@gmail.com";
+            string adminEmail = "almancakonus.info@gmail.com";
 
             // Define file paths for your templates.
             // Adjust the paths if your EmailTemplates folder is in a different location.
