@@ -1,0 +1,163 @@
+name: Deploy to Plesk
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  publish-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Publish
+      run: dotnet publish -c Release -o ./publish
+
+    # STEP 1: Create styled app_offline.htm to show maintenance message
+    - name: Create styled app_offline.htm
+      run: |
+        cat <<'EOF' > app_offline.htm
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Updating...</title>
+            <style>
+                body {
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    margin: 0;
+                    background: linear-gradient(135deg, #FFF5E4 0%, #FFE3E1 100%);
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    color: #495057;
+                    text-align: center;
+                }
+                .message-container {
+                    margin-top: 60px;
+                }
+                h2 {
+                    font-size: 1.2rem;
+                    margin: 10px 0;
+                    font-weight: 400;
+                    opacity: 0.9;
+                }
+                .loader {
+                    border: 8px solid #FFE3E1;
+                    border-radius: 50%;
+                    border-top: 8px solid #FF9494;
+                    width: 60px;
+                    height: 60px;
+                    animation: spin 1s linear infinite;
+                    margin: 0 auto 30px;
+                }
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="loader"></div>
+            <div class="message-container">
+                <h2>🔄 The system is updating...</h2>
+                <h2>Please try again in a few minutes.</h2>
+                <h2></h2>
+                <h2>🔄 Das System wird aktualisiert...</h2>
+                <h2>Bitte versuchen Sie es in wenigen Minuten erneut.</h2>
+                <h2></h2>
+                <h2>🔄 Sistem güncelleniyor...</h2>
+                <h2>Lütfen birkaç dakika sonra tekrar deneyin.</h2>
+            </div>
+        </body>
+        </html>
+        EOF
+
+    # STEP 2: Upload app_offline.htm to put site in maintenance mode
+    - name: FTP Upload app_offline (Start Maintenance)
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./
+        server-dir: /httpdocs/
+        exclude: |
+          **/*
+          !app_offline.htm
+        protocol: ftp
+
+    # STEP 3: Wait to ensure all file locks are released
+    - name: Wait 60 seconds for locks to release
+      run: sleep 60
+
+    # STEP 4: Deploy all published files
+    - name: FTP Deploy (Full Application)
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./publish/
+        server-dir: /httpdocs/
+        protocol: ftp
+
+    # STEP 5: Remove app_offline.htm to bring site back online
+    - name: Remove app_offline.htm (End Maintenance)
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./
+        server-dir: /httpdocs/
+        exclude: |
+          **/*
+          !app_offline.htm
+        protocol: ftp
+        dangerous-clean-slate: false
+
+    # STEP 6: Verify deployment
+    - name: Verify Deployment
+      run: echo "✅ Deployment to Plesk completed successfully!"
+      
+    # STEP 7: Slack Notification (Optional)
+    - name: Notify Slack on Success
+      if: success()
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+          {
+            "text": "✅ SpeakingClub deployed successfully to almanca-konus.com"
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      continue-on-error: true
+
+    - name: Notify Slack on Failure
+      if: failure()
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+          {
+            "text": "❌ SpeakingClub deployment failed! Check the logs."
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      continue-on-error: true
