@@ -90,14 +90,33 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LogoutPath = "/Account/Logout"; // Çıkış sayfası
     options.AccessDeniedPath = "/Account/AccessDenied"; // Yetkisiz erişim
     options.SlidingExpiration = true;
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // Default session timeout
+    options.ExpireTimeSpan = TimeSpan.FromDays(7); // Increased default session timeout
     options.Cookie = new CookieBuilder
+    {
+        Name = "SpeakingClubAuth",
+        HttpOnly = true,
+        SameSite = SameSiteMode.Lax,
+        SecurePolicy = CookieSecurePolicy.SameAsRequest, // Changed for Plesk compatibility
+        IsEssential = true, // Required for GDPR compliance and Plesk
+        Path = "/"
+    };
+    // Regenerate cookie to prevent 403 errors
+    options.Events.OnValidatePrincipal = async context =>
+    {
+        // Check if the cookie is about to expire (within 30% of its lifetime)
+        var timeElapsed = DateTimeOffset.UtcNow - context.Properties.IssuedUtc;
+        var timeRemaining = context.Properties.ExpiresUtc - DateTimeOffset.UtcNow;
+        
+        if (timeElapsed.HasValue && timeRemaining.HasValue)
         {
-            Name = "SpeakingClubAuth",
-            HttpOnly = true,
-            SameSite = SameSiteMode.Lax,
-            SecurePolicy = CookieSecurePolicy.Always
-        };
+            var totalTime = timeElapsed.Value + timeRemaining.Value;
+            if (timeRemaining.Value < TimeSpan.FromTicks(totalTime.Ticks / 3))
+            {
+                // Refresh the cookie
+                context.ShouldRenew = true;
+            }
+        }
+    };
 });
 
 #endregion
@@ -107,6 +126,10 @@ builder.Services.AddAntiforgery(options =>
 {
     options.HeaderName = "X-CSRF-TOKEN";
     options.Cookie.Name = "SpeakingClubCSRF";
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // For Plesk compatibility
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
 });
 
 #endregion

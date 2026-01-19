@@ -82,12 +82,30 @@ namespace SpeakingClub.Data.Configuration
                 new Blog
                 {
                     BlogId = 1,
-                    Title = "Blog Post 1",
-                    Content = "Content of blog post 1.",
-                    Url = "blog1",
-                    Image = "blog1.jpg",
-                    Date = new DateTime(2025, 2, 1),
-                    Author = "Author1",
+                    Title = "Almanca Konuşma Pratiği İçin 5 Etkili Yöntem",
+                    Content = @"<h2>Almanca Konuşma Becerilerinizi Geliştirin</h2>
+<p>Almanca öğrenirken en zorlu kısımlardan biri konuşma pratiği yapmaktır. Bu yazıda, Almanca konuşma becerilerinizi geliştirebileceğiniz 5 etkili yöntemi paylaşıyorum.</p>
+
+<h3>1. Günlük Konuşma Pratiği</h3>
+<p>Her gün en az 15-20 dakika Almanca konuşma pratiği yapın. Kendinizle konuşabilir, günlük olayları Almanca anlatabilirsiniz.</p>
+
+<h3>2. Dizi ve Film İzleyin</h3>
+<p>Almanca altyazılı Alman dizileri ve filmleri izleyerek hem dinleme hem de konuşma becerilerinizi geliştirebilirsiniz.</p>
+
+<h3>3. Tandem Partneri Bulun</h3>
+<p>Almanca öğrenen veya anadili Almanca olan biriyle tandem yaparak karşılıklı pratik yapabilirsiniz.</p>
+
+<h3>4. Konuşma Kulüplerine Katılın</h3>
+<p>Online veya yüz yüze konuşma kulüplerine katılarak gerçek ortamda pratik yapma şansı yakalarsınız.</p>
+
+<h3>5. Sesli Kitap Dinleyin ve Tekrar Edin</h3>
+<p>Almanca sesli kitapları dinleyerek telaffuzunuzu geliştirebilir, duyduklarınızı tekrar ederek pratik yapabilirsiniz.</p>
+
+<p><strong>Unutmayın:</strong> Düzenli pratik, başarının anahtarıdır!</p>",
+                    Url = "almanca-konusma-pratigi-5-yontem",
+                    Image = "blog-speaking-practice.jpg",
+                    Date = new DateTime(2025, 12, 15),
+                    Author = "Suna Türkgil",
                     RawYT = "",
                     RawMaps = "",
                     isHome = true,
@@ -96,16 +114,34 @@ namespace SpeakingClub.Data.Configuration
                 new Blog
                 {
                     BlogId = 2,
-                    Title = "Blog Post 2",
-                    Content = "Content of blog post 2.",
-                    Url = "blog2",
-                    Image = "blog2.jpg",
-                    Date = new DateTime(2025, 3, 1),
-                    Author = "Author2",
+                    Title = "Almanca Gramer: En Sık Yapılan 10 Hata",
+                    Content = @"<h2>Almanca Öğrenirken Dikkat Edilmesi Gereken Noktalar</h2>
+<p>Almanca öğrenirken herkesin yaptığı bazı yaygın hatalar vardır. Bu yazıda en sık karşılaşılan 10 grameri hatasını ve bunlardan nasıl kaçınılacağını ele alıyoruz.</p>
+
+<h3>1. Artikel Hataları</h3>
+<p>Der, die, das artikellerini karıştırmak en yaygın hatadır. Her kelimeyi artikeliyle birlikte ezberleyin.</p>
+
+<h3>2. Fiil Çekimleri</h3>
+<p>Almancada fiiller özneye göre çekimlenir. ""ich gehe"", ""du gehst"", ""er/sie/es geht"" şeklinde değişir.</p>
+
+<h3>3. Sözcük Dizilimi</h3>
+<p>Almancada fiil genellikle ikinci sırada gelir. Yan cümlelerde ise fiil en sona gider.</p>
+
+<h3>4. Dativ ve Akkusativ</h3>
+<p>Hangi fiilin hangi hali istediğini öğrenmek çok önemlidir. ""helfen"" dativ isterken, ""sehen"" akkusativ ister.</p>
+
+<h3>5. Präpositionen (Edatlar)</h3>
+<p>Her edatın belirli bir hali gerektirdiğini unutmayın. ""mit"" her zaman dativ, ""für"" her zaman akkusativ ister.</p>
+
+<p><strong>İpucu:</strong> Hata yapmaktan korkmayın! Hatalar öğrenmenin doğal bir parçasıdır.</p>",
+                    Url = "almanca-gramer-10-yaygin-hata",
+                    Image = "blog-grammar-mistakes.jpg",
+                    Date = new DateTime(2026, 1, 5),
+                    Author = "Suna Türkgil",
                     RawYT = "",
                     RawMaps = "",
                     isHome = true,
-                    CategoryId = 2
+                    CategoryId = 1
                 }
             );
 

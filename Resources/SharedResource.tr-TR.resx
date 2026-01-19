@@ -151,7 +151,7 @@
     <value>Almanca Konuş</value>
   </data>
   <data name="FooterDescription" xml:space="preserve">
-    <value>Almanca konuşma topluluğumuz ile bağlantı kurun, öğrenin ve kendinizden emin bir şekilde konuşun.</value>
+    <value>Almanca konuşma derslerim ve kulüplerimle kendinizi geliştirin, özgüvenle konuşun.</value>
   </data>
   <data name="Home" xml:space="preserve">
     <value>Anasayfa</value>
@@ -256,7 +256,16 @@
     <value>E-posta Adresi</value>
   </data>
   <data name="AboutParagraph2" xml:space="preserve">
-    <value>Emekliliğe ayrıldıktan sonra sosyal medyaya ağırlık verip özel ders ve konuşma kulüplerine yoğunlaştım. Farklı Almanca seviyelerine yönelik konuşma kulüplerini hizmetinize sunuyorum. Kulüplerde farklı konular işlenir, seviyeye göre sunum ve tartışma teknikleri uygulanır, alternatif cümle önerileri ve gerektiğinde gramer desteği sağlanır.</value>
+    <value>Almanca ana dilim olduğu için ve eğitim sistemimizde konuşma pratiği maalesef yeterince yer almadığından, öğrencilerin bu alanda yaşadığı zorlukları yakından biliyorum. Zaten en çok keyif aldığım konu öğrencilerimi motive etmek ve konuşturmak olduğu için, zamanla çalışma alanım bu yönde şekillendi.</value>
+  </data>
+  <data name="AboutParagraph3" xml:space="preserve">
+    <value>Eğer Almancayı anlıyor ama konuşurken zorlanıyorsanız, yalnız değilsiniz. İşte tam bu noktada, edindiğim deneyimi sizinle paylaşmak için özel konuşma dersleri ve konuşma kulüpleri düzenliyorum. Bu ortamda kaybettiğiniz özgüveninizi yeniden kazanacaksınız.</value>
+  </data>
+  <data name="AboutParagraph4" xml:space="preserve">
+    <value>Konuşma kulüplerimde ve birebir derslerimizde, hata yapmaktan korkmadan rahat bir ortamda Almanca konuşabileceksiniz. Ders içeriklerimiz hem günlük, hem de mesleki konuşma konulardan oluşuyor. Daha doğal ifade edebilmeniz için alternatif cümleler önerir, ihtiyaç duyduğunuzda gramer için tavsiyelerde bulunurum.</value>
+  </data>
+  <data name="AboutParagraph5" xml:space="preserve">
+    <value>Amacım; Almancayı bir ders gibi değil, hayatın bir parçası olarak kullanabilmenizi sağlamak. Siz de kendinize güvenerek Almanca konuşmak istiyorsanız, bu yolculukta size eşlik etmekten memnuniyet duyarım.</value>
   </data>
   <data name="Step2_Description" xml:space="preserve">
     <value>En iyi öğrenme deneyimi için partner eşleşmeleri.</value>
@@ -419,7 +428,7 @@
     <value>Merhaba, &lt;span class="color-animation-2"&gt;Ben&lt;/span&gt; &lt;span class="color-animation"&gt;Suna&lt;/span&gt;!</value>
   </data>
   <data name="AboutParagraph1" xml:space="preserve">
-    <value>Merhaba, ben &lt;strong&gt;Suna!&lt;/strong&gt; 1965 yılında Bremen, Almanya’da doğdum, orada büyüdüm ve okudum. Birkaç yıl çalıştıktan sonra eşimle tanışıp Türkiye’ye kesin dönüş yaptım. Kısa bir süreliğine devlet okulunda çalıştıktan sonra yolculuğuma özel eğitim kurumlarında devam ettim.</value>
+    <value>Merhaba, ben &lt;strong&gt;Suna.&lt;/strong&gt; Almanya'nın Bremen şehrinde doğup büyüdüm; eğitimimi ve çalışma hayatımın ilk yıllarını burada geçirdim. Daha sonra Türkiye'ye yerleşerek hem devlet okulunda hem de özel eğitim kurumlarında çalıştım.</value>
   </data>
   <data name="Contact_MessageLabel" xml:space="preserve">
     <value>Mesajınız</value>

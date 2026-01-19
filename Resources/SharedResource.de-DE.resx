@@ -142,7 +142,7 @@
     <value>Deutscher Gesprächsclub</value>
   </data>
   <data name="FooterDescription" xml:space="preserve">
-    <value>Verbinden Sie sich, lernen Sie und sprechen Sie selbstbewusst mit unserer deutschen Gesprächsgemeinschaft.</value>
+    <value>Entwickeln Sie sich mit meinen Deutsch-Konversationsstunden und Gesprächskreisen weiter und sprechen Sie selbstbewusst.</value>
   </data>
   <data name="ContactUs" xml:space="preserve">
     <value>Kontakt</value>
@@ -187,10 +187,19 @@
     <value>Über mich</value>
   </data>
   <data name="AboutParagraph1" xml:space="preserve">
-    <value>Hallo, ich bin &lt;strong&gt;Suna!&lt;/strong&gt; Ich wurde 1965 in Bremen, Deutschland geboren, wuchs dort auf und studierte. Nach einigen Jahren der Arbeit traf ich meinen Ehepartner und zog endgültig in die Türkei. Nach einer kurzen Zeit an einer staatlichen Schule setzte ich meinen Weg in privaten Bildungseinrichtungen fort.</value>
+    <value>Hallo, ich bin &lt;strong&gt;Suna.&lt;/strong&gt; Ich bin in Bremen aufgewachsen und habe dort meine Ausbildung und die ersten Jahre meines Berufslebens verbracht. Später zog ich in die Türkei und arbeitete sowohl an staatlichen Schulen als auch in privaten Bildungseinrichtungen.</value>
   </data>
   <data name="AboutParagraph2" xml:space="preserve">
-    <value>Nach meiner Pensionierung habe ich mich auf soziale Medien, Privatunterricht und Gesprächskreise konzentriert. Ich biete Gesprächskreise an, die auf verschiedene Niveaus der Deutschkenntnisse zugeschnitten sind. In diesen Gruppen werden verschiedene Themen behandelt, mit niveauangepassten Präsentations- und Diskussionstechniken, alternativen Satzvorschlägen und bei Bedarf grammatikalischer Unterstützung.</value>
+    <value>Da Deutsch meine Muttersprache ist und Sprechpraxis in unserem Bildungssystem leider nicht ausreichend vorhanden ist, kenne ich die Schwierigkeiten, die Schüler in diesem Bereich haben, sehr gut. Da es mir am meisten Freude bereitet, meine Schüler zu motivieren und zum Sprechen zu bringen, hat sich mein Arbeitsbereich im Laufe der Zeit in diese Richtung entwickelt.</value>
+  </data>
+  <data name="AboutParagraph3" xml:space="preserve">
+    <value>Wenn Sie Deutsch verstehen, aber Schwierigkeiten beim Sprechen haben, sind Sie nicht allein. Genau an diesem Punkt biete ich private Sprechstunden und Gesprächskreise an, um meine Erfahrungen mit Ihnen zu teilen. In dieser Umgebung werden Sie Ihr verlorenes Selbstvertrauen wiedererlangen.</value>
+  </data>
+  <data name="AboutParagraph4" xml:space="preserve">
+    <value>In meinen Gesprächskreisen und Einzelunterrichtsstunden können Sie Deutsch sprechen, ohne Angst vor Fehlern zu haben, in einer entspannten Atmosphäre. Unsere Unterrichtsinhalte umfassen sowohl alltägliche als auch berufliche Gesprächsthemen. Ich schlage alternative Sätze vor, damit Sie sich natürlicher ausdrücken können, und gebe bei Bedarf Grammatiktipps.</value>
+  </data>
+  <data name="AboutParagraph5" xml:space="preserve">
+    <value>Mein Ziel ist es, Ihnen zu ermöglichen, Deutsch nicht als Unterricht, sondern als Teil des Lebens zu nutzen. Wenn auch Sie selbstbewusst Deutsch sprechen möchten, begleite ich Sie gerne auf dieser Reise.</value>
   </data>
   <data name="AboutImageAlt" xml:space="preserve">
     <value>Suna, die Lehrerin</value>

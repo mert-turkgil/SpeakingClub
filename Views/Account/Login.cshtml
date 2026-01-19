@@ -97,9 +97,13 @@
 <div style="height: 100vh;" class="container-xxl">
 <div class="row py-5">
     <div class="col">
-    <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl" method="post" class="animated-login-form">
-        <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
+    <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl" method="post" class="animated-login-form" id="loginForm">
         @Html.AntiForgeryToken()
+        <!-- Bot Detection Fields -->
+        <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
+        <input type="text" name="phone" style="display:none" autocomplete="off" tabindex="-1" />
+        <input type="text" name="website" style="display:none" autocomplete="off" tabindex="-1" />
+        <input type="hidden" name="_ts" id="loginTs" />
         <h2 class="animated-login-title">@Localizer.GetKey("Login_Header")</h2>
         <p class="text-muted">@Localizer.GetKey("Login_Subtitle")</p>
 
@@ -138,8 +142,30 @@
     <partial name="_ValidationScriptsPartial" />
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script>
-        // Reset reCAPTCHA if there are validation errors (keeps it visible)
+        // Bot detection - timestamp field
         document.addEventListener("DOMContentLoaded", function() {
+            var tsField = document.getElementById('loginTs');
+            if(tsField) {
+                tsField.value = Date.now();
+            }
+            
+            // Prevent form submission if honeypot is filled
+            var form = document.getElementById('loginForm');
+            if(form) {
+                form.addEventListener('submit', function(e) {
+                    var honeypot = document.querySelector('input[name="honeypot"]');
+                    var phone = document.querySelector('input[name="phone"]');
+                    var website = document.querySelector('input[name="website"]');
+                    
+                    if((honeypot && honeypot.value) || (phone && phone.value) || (website && website.value)) {
+                        e.preventDefault();
+                        console.warn('Bot detected - honeypot filled');
+                        alert('Form submission failed. Please try again.');
+                        return false;
+                    }
+                });
+            }
+            
             @if (!ViewData.ModelState.IsValid)
             {
                 <text>

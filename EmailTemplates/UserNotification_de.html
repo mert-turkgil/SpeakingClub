@@ -5,15 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Vielen Dank für Ihre Nachricht</title>
   <style type="text/css">
-    body { margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f7f7f7; }
-    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; }
-    .header { text-align: center; padding: 10px 0; }
-    .logo { max-width: 150px; }
-    .content { padding: 20px; }
-    .content h2 { color: #FF9494; }
-    .footer { text-align: center; padding: 10px 0; font-size: 12px; color: #888888; }
+    * { margin: 0; padding: 0; }
+    body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7f7f7; line-height: 1.6; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 0; }
+    .header { 
+      text-align: center; 
+      padding: 30px 20px; 
+      background: linear-gradient(135deg, #FF9494 0%, #FFD1D1 100%);
+      border-bottom: 4px solid #FF9494;
+    }
+    .logo { max-width: 150px; height: auto; }
+    .content { 
+      padding: 30px 20px; 
+      background-color: #ffffff;
+    }
+    .content h2 { 
+      color: #FF9494; 
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .content p { 
+      color: #333333;
+      margin-bottom: 15px;
+      line-height: 1.8;
+    }
+    .highlight-box {
+      background-color: #fff5e4;
+      border-left: 4px solid #FF9494;
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .footer { 
+      text-align: center; 
+      padding: 20px; 
+      font-size: 12px; 
+      color: #888888;
+      border-top: 1px solid #e0e0e0;
+      background-color: #f9f9f9;
+    }
+    .footer a {
+      color: #FF9494;
+      text-decoration: none;
+    }
     @media only screen and (max-width: 600px) {
       .container { width: 100% !important; }
+      .header { padding: 20px 15px; }
+      .content { padding: 20px 15px; }
+      .highlight-box { padding: 12px 15px; margin: 15px 0; }
     }
   </style>
 </head>
@@ -23,16 +62,34 @@
     <div class="header">
       <img src="https://www.almanca-konus.com/img/header_logo.png" alt="Speaking Club Logo" class="logo">
     </div>
+    
     <!-- Content -->
     <div class="content">
-      <h2>Vielen Dank für Ihre Nachricht</h2>
-      <p>Wir haben Ihre Nachricht weitergeleitet. Bitte beachten Sie, dass es aufgrund des Anfrageaufkommens etwas dauern kann, bis wir antworten.</p>
-      <p>Wenn Sie nicht bald eine Antwort erhalten, haben Sie bitte etwas Geduld oder versuchen Sie es mit anderen Kommunikationsmitteln (soziale Medien usw.). Bitte denken Sie daran, Ihren Spam-Ordner zu überprüfen.</p>
+      <h2>✅ Vielen Dank für Ihre Nachricht</h2>
+      <p>Hallo,</p>
+      <p>Wir haben Ihre Nachricht erfolgreich erhalten. Ihre Nachricht wird überprüft und wir werden uns baldmöglichst bei Ihnen melden.</p>
+      
+      <div class="highlight-box">
+        <p><strong>❔ Informationen:</strong></p>
+        <p style="margin: 10px 0 0 0; font-size: 14px;">
+          • Je nach Anfrageaufkommen kann es etwas dauern, bis wir antworten.<br>
+          • Bitte überprüfen Sie Ihren Spam-Ordner.<br>
+          • Für schnellere Antworten können Sie uns auch über unsere Social-Media-Konten kontaktieren.
+        </p>
+      </div>
+      
+      <p>Als Speaking Club Familie schätzen wir Ihre Meinungen und Vorschläge sehr.</p>
+      <p style="margin-top: 20px;"><strong>Mit freundlichen Grüßen,</strong><br>Das Speaking Club Team</p>
     </div>
+    
     <!-- Footer -->
     <div class="footer">
       <p>&copy; 2025 Speaking Club. Alle Rechte vorbehalten.</p>
+      <p><a href="https://www.almanca-konus.com">Besuchen Sie unsere Website</a></p>
     </div>
+  </div>
+</body>
+</html>
   </div>
 </body>
 </html>

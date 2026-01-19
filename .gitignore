@@ -4,6 +4,9 @@
 *.suo
 
 # ASP.NET
+Resource/
+Resource/SharedResource.de-DE.resx
+Resource/SharedResource.tr-TR.resx
 wwwroot/uploads/
 wwwroot/blog/img/
 wwwroot/blog/gif/

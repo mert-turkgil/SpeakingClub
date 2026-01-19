@@ -5,15 +5,72 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>New Contact Message Received</title>
   <style type="text/css">
-    body { margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f7f7f7; }
-    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; }
-    .header { text-align: center; padding: 10px 0; }
-    .logo { max-width: 150px; }
-    .content { padding: 20px; }
-    .content h2 { color: #FF9494; }
-    .footer { text-align: center; padding: 10px 0; font-size: 12px; color: #888888; }
+    * { margin: 0; padding: 0; }
+    body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7f7f7; line-height: 1.6; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 0; }
+    .header { 
+      text-align: center; 
+      padding: 30px 20px; 
+      background: linear-gradient(135deg, #FF9494 0%, #FFD1D1 100%);
+      border-bottom: 4px solid #FF9494;
+    }
+    .logo { max-width: 150px; height: auto; }
+    .content { 
+      padding: 30px 20px; 
+      background-color: #ffffff;
+    }
+    .content h2 { 
+      color: #FF9494; 
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .content p { 
+      color: #333333;
+      margin-bottom: 15px;
+      line-height: 1.8;
+    }
+    .info-block {
+      background-color: #f5f5f5;
+      border-left: 4px solid #FF9494;
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .info-block strong {
+      color: #FF9494;
+      display: inline-block;
+      min-width: 80px;
+    }
+    .message-content {
+      background-color: #fafafa;
+      border: 1px solid #e0e0e0;
+      padding: 15px 20px;
+      border-radius: 4px;
+      margin: 15px 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      color: #444444;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    .footer { 
+      text-align: center; 
+      padding: 20px; 
+      font-size: 12px; 
+      color: #888888;
+      border-top: 1px solid #e0e0e0;
+      background-color: #f9f9f9;
+    }
+    .footer a {
+      color: #FF9494;
+      text-decoration: none;
+    }
     @media only screen and (max-width: 600px) {
       .container { width: 100% !important; }
+      .header { padding: 20px 15px; }
+      .content { padding: 20px 15px; }
+      .info-block { padding: 12px 15px; margin: 15px 0; }
+      .message-content { padding: 12px 15px; font-size: 13px; }
     }
   </style>
 </head>
@@ -23,17 +80,31 @@
     <div class="header">
       <img src="https://www.almanca-konus.com/img/header_logo.png" alt="Speaking Club Logo" class="logo">
     </div>
+    
     <!-- Content -->
     <div class="content">
-      <h2>New Contact Message Received</h2>
-      <p>You have received a new message from <strong>{UserName}</strong>.</p>
-      <p><strong>Email:</strong>{UserEmail}</p>
-      <p><strong>Message:</strong></p>
-      <p>{UserMessage}</p>
+      <h2>📩 New Contact Message Received</h2>
+      <p>You have received a new message from a visitor through the contact form.</p>
+      
+      <!-- Sender Information -->
+      <div class="info-block">
+        <p><strong>Name:</strong> {UserName}</p>
+        <p><strong>Email:</strong> {UserEmail}</p>
+      </div>
+      
+      <!-- Message -->
+      <p><strong>Message Content:</strong></p>
+      <div class="message-content">{UserMessage}</div>
+      
+      <p style="margin-top: 20px; color: #666666; font-size: 13px;">
+        This is an automated notification. You can reply directly to <strong>{UserEmail}</strong> to contact this person.
+      </p>
     </div>
+    
     <!-- Footer -->
     <div class="footer">
       <p>&copy; 2025 Speaking Club. All rights reserved.</p>
+      <p><a href="https://www.almanca-konus.com">Visit our website</a></p>
     </div>
   </div>
 </body>

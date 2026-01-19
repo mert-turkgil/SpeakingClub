@@ -30,6 +30,9 @@ namespace SpeakingClub.Models
         public string Title { get; set; }           // Örn: "Hakkımda" / "About Me" / "Über mich"
         public string Paragraph1 { get; set; }
         public string Paragraph2 { get; set; }
+        public string Paragraph3 { get; set; }
+        public string Paragraph4 { get; set; }
+        public string Paragraph5 { get; set; }
         public string ImageAlt { get; set; }        // Örn: "Suna Hoca" / "Suna, the Instructor" / "Suna, die Lehrerin"
     }
 

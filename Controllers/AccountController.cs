@@ -48,8 +48,8 @@ namespace SpeakingClub.Controllers
             _logger = logger;
         }
         #region Quiz
-        [Authorize]
-        public async Task<IActionResult> Quizzes()
+        [AllowAnonymous]
+        public async Task<IActionResult> Quizzes(string? level)
         {
             if (Request.Query.TryGetValue("warning", out var warningValue))
             {
@@ -70,12 +70,29 @@ namespace SpeakingClub.Controllers
             // Retrieve all quizzes from your repository
             var allQuizzes = await _unitOfWork.Quizzes.GetAllAsync();
 
-            // Get the current user.
-            var user = await _userManager.GetUserAsync(User);
+            // Filter by level if provided
+            if (!string.IsNullOrEmpty(level))
+            {
+                var filteredQuizzes = allQuizzes.Where(q => q.Tags != null && q.Tags.Any(t => t.Name.Equals(level, StringComparison.OrdinalIgnoreCase))).ToList();
+                // Only apply filter if it returns results, otherwise show all
+                if (filteredQuizzes.Any())
+                {
+                    allQuizzes = filteredQuizzes;
+                }
+                // Store the requested level for the view
+                ViewBag.SelectedLevel = level;
+            }
 
-            // Retrieve all quiz submissions
-            var submissions = await _unitOfWork.QuizSubmissions.GetAllAsync();
-            var userSubmissions = submissions.Where(s => s.UserId == user!.Id).ToList();
+            // Get the current user if logged in
+            var user = await _userManager.GetUserAsync(User);
+            var userSubmissions = new List<QuizSubmission>();
+
+            // Only fetch user submissions if logged in
+            if (user != null)
+            {
+                var submissions = await _unitOfWork.QuizSubmissions.GetAllAsync();
+                userSubmissions = submissions.Where(s => s.UserId == user.Id).ToList();
+            }
 
             // Map each quiz to a QuizSummaryViewModel.
             Func<SpeakingClub.Entity.Quiz, QuizSummaryViewModel> mapQuiz = q =>
@@ -417,9 +434,13 @@ namespace SpeakingClub.Controllers
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
-            if (!string.IsNullOrEmpty(Request.Form["honeypot"]))
+            // Bot detection - check honeypot and other fields
+            if (!string.IsNullOrEmpty(Request.Form["honeypot"]) || 
+                !string.IsNullOrEmpty(Request.Form["phone"]) ||
+                !string.IsNullOrEmpty(Request.Form["website"]))
             {
-                // Honeypot doluysa --> Bot!
+                // Honeypot filled --> Bot!
+                _logger.LogWarning("Bot attempt on Login from {IP}", HttpContext.Connection.RemoteIpAddress?.ToString());
                 ModelState.AddModelError("", "Invalid request.");
                 return View(model);
             }
@@ -565,9 +586,13 @@ namespace SpeakingClub.Controllers
         public async Task<IActionResult> Register(RegisterViewModel model, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
-            if (!string.IsNullOrEmpty(Request.Form["honeypot"]))
+            // Bot detection - check honeypot and other fields
+            if (!string.IsNullOrEmpty(Request.Form["honeypot"]) || 
+                !string.IsNullOrEmpty(Request.Form["phone"]) ||
+                !string.IsNullOrEmpty(Request.Form["website"]))
             {
-                // Honeypot doluysa --> Bot!
+                // Honeypot filled --> Bot!
+                _logger.LogWarning("Bot attempt on Register from {IP}", HttpContext.Connection.RemoteIpAddress?.ToString());
                 ModelState.AddModelError("", "Invalid request.");
                 return View(model);
             }

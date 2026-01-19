@@ -1,3 +1,5 @@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<SpeakingClub.Identity.User> SignInManager
 @model CombinedQuizzesViewModel
 @{
     ViewData["Title"] = "Quizler";
@@ -5,63 +7,315 @@
 }
 @section Css{
 <style>
-    .main-bg { background: #fcf3e8 !important; }
-    body{background-color: #ffd1d1;}
-    .card.quiz-card {
-        background: #fff; border: none; border-radius: 20px;
-        box-shadow: 0 2px 10px rgba(60,72,88,.06);
-        transition: box-shadow .2s, transform .2s;
-        min-height: 480px; display: flex; flex-direction: column;
+    :root {
+        --quiz-lightest: #FFF5E4;
+        --quiz-light: #FFE3E1;
+        --quiz-medium: #FFD1D1;
+        --quiz-accent: #FF9494;
     }
-    .card.quiz-card:hover { box-shadow: 0 6px 24px rgba(60,72,88,.16); transform: translateY(-4px) scale(1.03);}
-    .quiz-card .card-body { flex: 1 1 auto; display: flex; flex-direction: column; }
-    .quiz-badges .badge {
-        background: #edf2fa; color: #0058a3; font-weight: 600;
-        border-radius: 8px; margin-right: 3px; font-size: 0.95em;
+    
+    .main-bg { 
+        background: linear-gradient(180deg, var(--quiz-light) 0%, var(--quiz-lightest) 100%) !important;
+        min-height: 100vh;
     }
-    .quiz-category { color: #40b691; font-size: 0.99em; font-weight: 600; margin-bottom: .3rem; }
-    .quiz-meta { font-size: .95em; color: #858585; margin-bottom: .35rem; }
-    .quiz-result { color: #27ad56; font-size: 0.98em; font-weight: 600;}
-    aside { background: #fff; border-radius: 18px; box-shadow: 0 2px 12px rgba(60,72,88,.07);}
-    .aside-inner { padding: 1.7rem 1.3rem 1.4rem 1.3rem; }
+    
+    /* Header Section */
+    .quiz-hero {
+        background: linear-gradient(135deg, var(--quiz-medium) 0%, var(--quiz-light) 100%);
+        padding: 3rem 0 2rem;
+        margin-bottom: 2rem;
+        border-radius: 0 0 30px 30px;
+    }
+    .quiz-hero h1 {
+        color: var(--quiz-accent);
+        font-weight: 800;
+    }
+    
+    /* Sidebar Styling */
+    aside { 
+        background: white; 
+        border-radius: 20px; 
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    }
+    .aside-inner { 
+        padding: 2rem; 
+    }
+    .aside-inner .form-control,
+    .aside-inner .form-select {
+        border-radius: 12px;
+        border: 2px solid var(--quiz-light);
+        padding: 12px 15px;
+    }
+    .aside-inner .form-control:focus,
+    .aside-inner .form-select:focus {
+        border-color: var(--quiz-accent);
+        box-shadow: 0 0 0 3px rgba(255,148,148,0.2);
+    }
+    .search-btn { 
+        background: linear-gradient(135deg, var(--quiz-accent) 0%, var(--quiz-medium) 100%);
+        color: #fff; 
+        font-weight: 600; 
+        border-radius: 12px;
+        border: none;
+        padding: 12px 20px;
+    }
+    .search-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255,148,148,0.4);
+        color: white;
+    }
+    .section-label {
+        color: var(--quiz-accent);
+        font-weight: 700;
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
     .tag-filter {
-        cursor:pointer; background: #d1d5db; color: #555; margin:2px 6px 2px 0;
-        border-radius:8px; font-weight: 600; font-size: 0.97em; padding: 5px 12px; display: inline-block;
+        cursor: pointer; 
+        background: var(--quiz-light); 
+        color: #666; 
+        margin: 3px;
+        border-radius: 20px; 
+        font-weight: 600; 
+        font-size: 0.9em; 
+        padding: 8px 16px; 
+        display: inline-block;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
     }
-    .tag-filter.active { background: #0058a3!important; color:#fff; }
-    .search-btn { background: #1164b4; color: #fff; font-weight:600; border-radius:8px; }
-    .quiz-media { background:#f7f6f6; border-radius: 14px 14px 0 0; margin-bottom:1rem; }
-    .swiper { width: 100%; height: 180px; }
-    .swiper-slide { display: flex; align-items: center; justify-content: center; background: #f7f6f6;}
-    .swiper-slide img, .swiper-slide iframe, .swiper-slide audio { max-width:100%; max-height:180px; object-fit:cover; border-radius:14px 14px 0 0;}
-    .swiper-slide audio { width: 90%; margin: auto;}
+    .tag-filter:hover {
+        background: var(--quiz-medium);
+        color: #444;
+    }
+    .tag-filter.active { 
+        background: var(--quiz-accent) !important; 
+        color: #fff;
+        border-color: var(--quiz-accent);
+    }
+    
+    /* Quiz Cards */
+    .card.quiz-card {
+        background: white; 
+        border: none; 
+        border-radius: 20px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        min-height: 480px; 
+        display: flex; 
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .card.quiz-card:hover { 
+        box-shadow: 0 15px 40px rgba(255,148,148,0.25); 
+        transform: translateY(-8px);
+    }
+    .quiz-card .card-body { 
+        flex: 1 1 auto; 
+        display: flex; 
+        flex-direction: column;
+        padding: 1.5rem;
+    }
+    .quiz-badges .badge {
+        background: var(--quiz-light); 
+        color: var(--quiz-accent); 
+        font-weight: 600;
+        border-radius: 20px; 
+        margin-right: 5px; 
+        font-size: 0.85em;
+        padding: 5px 12px;
+    }
+    .quiz-category { 
+        color: var(--quiz-accent); 
+        font-size: 0.9em; 
+        font-weight: 700; 
+        margin-bottom: .5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .quiz-meta { 
+        font-size: .9em; 
+        color: #888; 
+        margin-bottom: .5rem;
+    }
+    .quiz-meta i {
+        color: var(--quiz-accent);
+    }
+    .quiz-result { 
+        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        padding: 10px 15px;
+        border-radius: 12px;
+        color: #2e7d32; 
+        font-size: 0.9em; 
+        font-weight: 600;
+    }
+    .quiz-media { 
+        background: var(--quiz-lightest); 
+        border-radius: 20px 20px 0 0; 
+    }
+    .swiper { 
+        width: 100%; 
+        height: 200px; 
+    }
+    .swiper-slide { 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        background: var(--quiz-lightest);
+    }
+    .swiper-slide img, 
+    .swiper-slide iframe, 
+    .swiper-slide audio { 
+        max-width: 100%; 
+        max-height: 200px; 
+        object-fit: cover; 
+        border-radius: 20px 20px 0 0;
+    }
+    .swiper-slide audio { 
+        width: 90%; 
+        margin: auto;
+    }
+    .swiper-button-next, .swiper-button-prev {
+        color: var(--quiz-accent);
+        background: white;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .swiper-button-next::after, .swiper-button-prev::after {
+        font-size: 14px;
+        font-weight: bold;
+    }
+    .swiper-pagination-bullet-active {
+        background: var(--quiz-accent);
+    }
+    
+    /* Buttons */
+    .btn-quiz-start {
+        background: linear-gradient(135deg, var(--quiz-accent) 0%, var(--quiz-medium) 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 12px 20px;
+        transition: all 0.3s ease;
+    }
+    .btn-quiz-start:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255,148,148,0.4);
+        color: white;
+    }
+    .btn-quiz-login {
+        background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+        color: #333;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 12px 20px;
+    }
+    .btn-quiz-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255,193,7,0.4);
+        color: #333;
+    }
+    .btn-quiz-review {
+        background: transparent;
+        border: 2px solid var(--quiz-accent);
+        color: var(--quiz-accent);
+        border-radius: 12px;
+        font-weight: 600;
+    }
+    .btn-quiz-review:hover {
+        background: var(--quiz-accent);
+        color: white;
+    }
+    
+    /* Pagination */
+    .pagination .page-link {
+        border: none;
+        border-radius: 10px;
+        margin: 0 3px;
+        color: var(--quiz-accent);
+        font-weight: 600;
+        padding: 10px 15px;
+    }
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, var(--quiz-accent) 0%, var(--quiz-medium) 100%);
+        border: none;
+    }
+    .pagination .page-link:hover {
+        background-color: var(--quiz-light);
+    }
+    
+    /* Login Alert */
+    .login-alert {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border: none;
+        border-radius: 15px;
+        padding: 1.25rem 1.5rem;
+    }
+    .login-alert a {
+        color: var(--quiz-accent);
+        font-weight: 600;
+    }
+    
+    /* Modal */
+    .modal-content {
+        border-radius: 20px;
+        border: none;
+    }
+    .modal-header {
+        background: linear-gradient(135deg, var(--quiz-light) 0%, var(--quiz-lightest) 100%);
+        border-radius: 20px 20px 0 0;
+        border: none;
+    }
+    .modal-title {
+        color: var(--quiz-accent);
+        font-weight: 700;
+    }
+    
     @@media (max-width:991px) {
-        .swiper, .swiper-slide img, .swiper-slide iframe { height: 140px;}
-        aside { margin-bottom:1.5rem;}
+        .swiper, .swiper-slide img, .swiper-slide iframe { height: 160px;}
+        aside { margin-bottom: 1.5rem;}
     }
     @@media (max-width:767px) {
-        .swiper, .swiper-slide img, .swiper-slide iframe { height: 100px;}
-        .aside-inner { padding: 1.1rem;}
+        .swiper, .swiper-slide img, .swiper-slide iframe { height: 120px;}
+        .aside-inner { padding: 1.25rem;}
         .card.quiz-card { min-height: 420px;}
+        .quiz-hero { padding: 2rem 0 1.5rem; }
     }
 </style>
 }
 
 <div class="main-bg pb-5">
-    <div class="container pt-4">
+    <!-- Hero Section -->
+    <div class="quiz-hero text-center">
+        <div class="container">
+            <h1 class="display-5 mb-2"><i class="bi bi-patch-question me-2"></i>Quizler</h1>
+            <p class="text-muted mb-0">Almanca seviyenizi test edin ve kendinizi geliştirin!</p>
+        </div>
+    </div>
+    
+    <div class="container">
         <div class="row gy-4">
             <!-- Sol Panel -->
             <aside class="col-lg-3 col-md-4">
                 <div class="aside-inner">
-                    <form id="quizSearchForm" class="mb-3" onsubmit="event.preventDefault();filterAndPaginate(1);">
-                        <div class="input-group input-group-sm">
+                    <form id="quizSearchForm" class="mb-4 text-black" onsubmit="event.preventDefault();doFilter(1);">
+                        <div class="input-group">
                             <input id="quizSearch" type="text" class="form-control" placeholder="Quiz ara...">
-                            <button class="btn search-btn" type="submit"><i class="fa fa-search"></i> Ara</button>
+                            <button class="btn search-btn" type="submit"><i style="color: black;" class="fas fa-search"></i></button>
                         </div>
                     </form>
-                    <div class="mb-3">
-                        <div class="fw-bold mb-1" style="color: #d6785e;">Etiketler</div>
-                        <div id="tagFilters" class="mb-2">
+                    <button type="button" id="clearFiltersBtn" class="btn btn-outline-secondary w-100 mb-4" style="border-radius: 12px; font-weight: 600;">
+                        <i class="bi bi-arrow-counterclockwise me-2"></i> Filtreleri Temizle
+                    </button>
+                    <div class="mb-4">
+                        <div class="section-label"><i class="bi bi-tags"></i> Etiketler</div>
+                        <div id="tagFilters">
                             <span class="tag-filter active" data-tag="">Tümü</span>
                             @{
                                 var allTags = (Model.AvailableQuizzes ?? Enumerable.Empty<QuizSummaryViewModel>())
@@ -77,9 +331,9 @@
                         </div>
                     </div>
                     <div class="mb-2">
-                        <div class="fw-bold mb-1" style="color: #d6785e;">Kategori</div>
-                        <select id="categoryFilter" class="form-select form-select-sm">
-                            <option value="">Tümü</option>
+                        <div class="section-label"><i class="bi bi-folder"></i> Kategori</div>
+                        <select id="categoryFilter" class="form-select">
+                            <option value="">Tüm Kategoriler</option>
                             @{
                                 var allCats = (Model.AvailableQuizzes ?? Enumerable.Empty<QuizSummaryViewModel>()).Select(q => q.CategoryName).Distinct();
                                 foreach (var cat in allCats)
@@ -97,10 +351,25 @@
 
             <!-- Quiz Kartları -->
             <main class="col-lg-9 col-md-8">
+                @if (!SignInManager.IsSignedIn(User))
+                {
+                    <div class="login-alert mb-4" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-info-circle-fill me-3 fs-4" style="color: var(--quiz-accent);"></i>
+                            <div>
+                                <strong>Quiz çözmek için giriş yapmanız gerekmektedir.</strong><br>
+                                <span class="text-muted">Sonuçlarınızı kaydetmek ve ilerlemenizi takip etmek için 
+                                <a asp-action="Login" asp-controller="Account">giriş yapın</a> veya 
+                                <a asp-action="Register" asp-controller="Account">kayıt olun</a>.</span>
+                            </div>
+                        </div>
+                    </div>
+                }
                 <div class="row g-4" id="quizList">
                     @foreach (var quiz in Model.AvailableQuizzes ?? Enumerable.Empty<QuizSummaryViewModel>())
                     {
-                        <div class="col-md-6 col-lg-4 d-flex">
+                        var tagNames = string.Join(",", quiz.Tags?.Select(t => t.Name) ?? Enumerable.Empty<string>());
+                        <div class="col-md-6 col-lg-4 d-flex quiz-item" data-tags="@tagNames" data-category="@quiz.CategoryName">
                             <div class="card quiz-card w-100">
                                 <!-- Quiz Medya Swiper: Resim, Video, Ses-->
                                 <div class="quiz-media swiper mySwiper">
@@ -138,43 +407,54 @@
                                 <!-- Swiper sonu -->
 
                                 <div class="card-body">
-                                    <div class="quiz-category mb-1">@quiz.CategoryName</div>
-                                    <div class="quiz-badges mb-1">
+                                    <div class="quiz-category"><i class="bi bi-folder2 me-1"></i>@quiz.CategoryName</div>
+                                    <div class="quiz-badges mb-2">
                                         @foreach (var tag in quiz.Tags ?? new List<SpeakingClub.Entity.Tag>())
                                         {
                                             <span class="badge">@tag.Name</span>
                                         }
                                     </div>
-                                    <h5 class="card-title mb-1">@quiz.QuizTitle</h5>
-                                    <div class="quiz-meta mb-1"><i class="fa fa-user"></i> @quiz.TeacherName</div>
-                                    <div class="mb-2" style="font-size:.97em; color:#313131;">
+                                    <h5 class="card-title fw-bold mb-2">@quiz.QuizTitle</h5>
+                                    <div class="quiz-meta mb-2"><i class="bi bi-person-circle me-1"></i> @quiz.TeacherName</div>
+                                    <div class="mb-3" style="font-size:.95em; color:#555; line-height: 1.5;">
                                         @(quiz.QuizDescription != null && quiz.QuizDescription.Length > 100
                                             ? quiz.QuizDescription.Substring(0, 100) + "..."
                                             : quiz.QuizDescription)
                                     </div>
-                                    @if (quiz.LastAttemptDate.HasValue)
+                                    @if (quiz.LastAttemptDate.HasValue && SignInManager.IsSignedIn(User))
                                     {
-                                        <div class="quiz-result mb-2">
-                                            <i class="fa fa-check-circle"></i>
+                                        <div class="quiz-result mb-3">
+                                            <i class="bi bi-check-circle-fill me-1"></i>
                                             Son Çözüm: @quiz.LastAttemptDate.Value.ToShortDateString()
-                                            <br />Skor: @(quiz.LastScore?.ToString() ?? "0")
+                                            <span class="ms-2"><i class="bi bi-trophy-fill me-1"></i>Skor: @(quiz.LastScore?.ToString() ?? "0")</span>
                                         </div>
                                     }
-                                    <button type="button"
-                                            class="btn btn-primary w-100 mt-1 start-quiz-btn"
-                                            data-quiz-id="@quiz.QuizId"
-                                            data-quiz-title="@quiz.QuizTitle">
-                                        Quiz'e Başla
-                                    </button>
-                                    @if (quiz.LastAttemptDate.HasValue)
-                                    {
-                                        <a asp-action="ReviewQuiz"
-                                        asp-controller="Account"
-                                        asp-route-id="@quiz.QuizId"
-                                        class="btn btn-outline-info btn-sm w-100 mt-1 mb-1">
-                                            <i class="fa fa-eye"></i> Gözden Geçir
-                                        </a>
-                                    }
+                                    <div class="mt-auto">
+                                        @if (SignInManager.IsSignedIn(User))
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-quiz-start w-100 mb-2 start-quiz-btn"
+                                                    data-quiz-id="@quiz.QuizId"
+                                                    data-quiz-title="@quiz.QuizTitle">
+                                                <i class="bi bi-play-fill me-1"></i> Quiz'e Başla
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <a asp-action="Login" asp-controller="Account" asp-route-returnUrl="@Url.Action("Quizzes", "Account")" class="btn btn-quiz-login w-100 mb-2">
+                                                <i class="bi bi-lock-fill me-1"></i> Quiz için Giriş Yapın
+                                            </a>
+                                        }
+                                        @if (quiz.LastAttemptDate.HasValue && SignInManager.IsSignedIn(User))
+                                        {
+                                            <a asp-action="ReviewQuiz"
+                                            asp-controller="Account"
+                                            asp-route-id="@quiz.QuizId"
+                                            class="btn btn-quiz-review w-100">
+                                                <i class="bi bi-eye me-1"></i> Gözden Geçir
+                                            </a>
+                                        }
+                                    </div>
 
                                 </div>
                             </div>
@@ -182,7 +462,7 @@
                     }
                 </div>
                 <!-- Pagination -->
-                <nav class="mt-4">
+                <nav class="mt-5">
                     <ul class="pagination justify-content-center" id="quizPagination"></ul>
                 </nav>
             </main>
@@ -217,71 +497,110 @@
 
 
 @section Scripts {
-<script src="~/lib/swiper/swiper-bundle.min.js"></script>
 <script>
-$(document).on('click', '.start-quiz-btn', function () {
-    var quizId = $(this).data('quiz-id');
-    var quizTitle = $(this).data('quiz-title');
-    $('#modalQuizId').val(quizId);
-    $('#modalQuizTitle').text(quizTitle);
-    var modal = new bootstrap.Modal(document.getElementById('startQuizModal'));
-    modal.show();
-});
-</script>
-<script>
-function filterAndPaginate(page=1){
-    let search = $('#quizSearch').val().toLowerCase();
-    let selectedTag = $('#tagFilters .tag-filter.active').data('tag') || '';
-    let selectedCat = $('#categoryFilter').val();
-    let cards = $('.quiz-card').closest('.col-md-6, .col-lg-4').hide().filter(function(){
-        let $card = $(this).find('.quiz-card');
-        let matchesSearch = $card.find('.card-title').text().toLowerCase().includes(search);
-        let matchesTag = !selectedTag || $card.data('tags').includes(selectedTag);
-        let matchesCat = !selectedCat || $card.data('category') === selectedCat;
-        return matchesSearch && matchesTag && matchesCat;
+window.doFilter = function(page){
+    page = page || 1;
+    var search = $('#quizSearch').val().toLowerCase().trim();
+    var tag = $('#tagFilters .tag-filter.active').data('tag') || '';
+    var cat = $('#categoryFilter').val() || '';
+    
+    var cards = $('.quiz-item');
+    var matched = [];
+    
+    cards.each(function(){
+        var $c = $(this);
+        var title = $c.find('.card-title').text().toLowerCase();
+        var cardTags = ($c.data('tags') || '').toString().toLowerCase();
+        var category = ($c.data('category') || '').toString().trim();
+        
+        var matchSearch = !search || title.indexOf(search) >= 0;
+        var matchTag = !tag || tag === '' || cardTags.indexOf(tag.toLowerCase()) >= 0;
+        var matchCat = !cat || cat === '' || category === cat.trim();
+        
+        if(matchSearch && matchTag && matchCat) {
+            matched.push(this);
+        }
     });
-    let total = cards.length;
-    let pageSize = 6;
-    let pageCount = Math.ceil(total / pageSize);
-    if (page > pageCount) page = 1;
-    cards.slice((page-1)*pageSize, page*pageSize).show();
+    
+    // Pagination
+    var size = 6, total = matched.length;
+    var pages = Math.ceil(total/size) || 1;
+    if(page > pages) page = 1;
+    var start = (page-1)*size;
+    
+    // Hide all, show matched for current page
+    cards.hide();
+    for(var j = 0; j < matched.length; j++){
+        if(j >= start && j < start + size){
+            $(matched[j]).show();
+        }
+    }
+    
+    // Pagination links
+    var h = '';
+    if(pages > 1){
+        for(var i=1; i<=pages; i++){
+            h += '<li class="page-item '+(i==page?'active':'')+'"><a class="page-link" href="#" data-p="'+i+'">'+i+'</a></li>';
+        }
+    }
+    $('#quizPagination').html(h);
+};
+};
 
-    let pagHtml = '';
-    for(let i=1; i<=pageCount; i++)
-        pagHtml += `<li class="page-item ${i==page?'active':''}">
-                        <a class="page-link" href="#" data-page="${i}">${i}</a>
-                    </li>`;
-    $('#quizPagination').html(pagHtml);
-}
-$(function () {
-    $('.mySwiper').each(function(idx, el){
-        new Swiper(el, {
-            loop: false,
-            navigation: {
-                nextEl: $(el).find('.swiper-button-next')[0],
-                prevEl: $(el).find('.swiper-button-prev')[0]
-            },
-            pagination: {
-                el: $(el).find('.swiper-pagination')[0],
-                clickable: true,
-            },
-        });
+$(function(){
+    console.log('Script ready, quiz items:', $('.quiz-item').length);
+    
+    // Events
+    $('#quizSearch').on('input keyup', function(){ 
+        console.log('Search changed to:', $(this).val());
+        doFilter(1); 
     });
-
-    $('#quizSearch').on('input', ()=>filterAndPaginate(1));
-    $('#quizSearchForm').on('submit', ()=>filterAndPaginate(1));
+    $('#quizSearchForm').on('submit', function(e){ e.preventDefault(); doFilter(1); });
+    $('#categoryFilter').on('change', function(){ 
+        console.log('Category changed to:', $(this).val());
+        doFilter(1); 
+    });
+    
     $('#tagFilters').on('click', '.tag-filter', function(){
+        console.log('Tag clicked:', $(this).data('tag'));
         $('#tagFilters .tag-filter').removeClass('active');
         $(this).addClass('active');
-        filterAndPaginate(1);
+        doFilter(1);
     });
-    $('#categoryFilter').on('change', ()=>filterAndPaginate(1));
+    
+    $('#clearFiltersBtn').on('click', function(){
+        console.log('Clear clicked');
+        $('#quizSearch').val('');
+        $('#categoryFilter').val('');
+        $('#tagFilters .tag-filter').removeClass('active');
+        $('#tagFilters .tag-filter[data-tag=""]').addClass('active');
+        doFilter(1);
+    });
+    
     $('#quizPagination').on('click', 'a', function(e){
         e.preventDefault();
-        let page = $(this).data('page');
-        filterAndPaginate(page);
+        doFilter($(this).data('p'));
     });
-    filterAndPaginate(1);
+    
+    // Quiz modal
+    $(document).on('click', '.start-quiz-btn', function(){
+        $('#modalQuizId').val($(this).data('quiz-id'));
+        $('#modalQuizTitle').text($(this).data('quiz-title'));
+        new bootstrap.Modal($('#startQuizModal')[0]).show();
+    });
+    
+    // Init Swiper
+    $('.mySwiper').each(function(){
+        new Swiper(this, {
+            loop: false,
+            navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+            pagination: { el: '.swiper-pagination', clickable: true }
+        });
+    });
+    
+    // Initial load
+    console.log('Running initial doFilter');
+    doFilter(1);
 });
 </script>
 }

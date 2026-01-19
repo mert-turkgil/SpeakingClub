@@ -13,13 +13,51 @@
             --third:  #FFD1D1;
             --fourth: #FF9494;
         }
+        
+        /* Hero Section Styling */
+        .hero-section {
+            background: linear-gradient(135deg, var(--first) 0%, var(--second) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, var(--fourth) 0%, transparent 70%);
+            opacity: 0.1;
+        }
+        
+        /* About Section */
+        .about-section {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            padding: 3rem;
+            margin-top: -60px;
+            position: relative;
+            z-index: 10;
+        }
+        .about-section p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #444;
+        }
+        .about-section .lead {
+            font-size: 1.25rem;
+            color: #333;
+        }
+        
         .process-card {
             background-color: var(--second);
             padding: 30px;
-            border-radius: 10px;
+            border-radius: 15px;
             height: 100%;
             transition: all .3s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.377);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -29,7 +67,7 @@
             background-color: var(--fourth);
             color: white;
             transform: translateY(-10px);
-            box-shadow: 0 10px 20px rgba(255,148,148,.5);
+            box-shadow: 0 15px 30px rgba(255,148,148,.4);
         }
         .step-icon {
             font-size: 3rem;
@@ -52,11 +90,43 @@
             display: flex;
             height: auto;
         }
-    </style>
-    <style>
-        .accordion-item{
-            background-color: #FFD1D1;
+        
+        /* FAQ Styling */
+        .accordion-item {
+            background-color: var(--third);
+            border: none;
+            border-radius: 10px !important;
+            margin-bottom: 10px;
+            overflow: hidden;
         }
+        .accordion-button {
+            background-color: var(--third);
+            font-weight: 600;
+        }
+        .accordion-button:not(.collapsed) {
+            background-color: var(--fourth);
+            color: white;
+        }
+        .accordion-button:focus {
+            box-shadow: none;
+        }
+        
+        /* Contact Form */
+        .contact-section {
+            background: linear-gradient(135deg, var(--second) 0%, var(--first) 100%);
+            border-radius: 20px;
+            padding: 3rem;
+        }
+        .contact-section .form-control {
+            border-radius: 10px;
+            border: 2px solid var(--third);
+            padding: 12px 15px;
+        }
+        .contact-section .form-control:focus {
+            border-color: var(--fourth);
+            box-shadow: 0 0 0 3px rgba(255,148,148,0.2);
+        }
+        
         @@keyframes colorChange {
             from { color: rgb(0, 60, 255); }
             to { color: #FF9494; }
@@ -71,34 +141,36 @@
         .color-animation-2 {
             animation: colorChange2 2s infinite alternate;
         }
+
     </style>
 }
 
 <!-- Hero Section -->
-<section class="py-5 bg-first">
+<section class="py-5 hero-section">
     <div class="container text-center">
-        <!-- HTML içeriğinde span etiketlerini korumak için Html.Raw kullanıyoruz -->
-        <h1 class="display-4 fw-bold animate__animated animate__fadeInDown text-fourth fw-bold">
+        <h1 class="display-4 fw-bold animate__animated animate__fadeInDown text-fourth">
             @Html.Raw(Model.HeroSection.Greeting)
         </h1>
-        <h2 class="lead animate__animated animate__fadeInUp">
+        <h2 class="lead animate__animated animate__fadeInUp text-muted mb-4">
             @Model.HeroSection.Subtitle
         </h2>
-        <img src="~/img/about-group317216.png" alt="@Model.HeroSection.ImageAlt" class="img-fluid rounded my-1 profile-pic" style="max-height: 400px;" data-aos="zoom-in">
+        <img src="~/img/about-group317216.png" alt="@Model.HeroSection.ImageAlt" class="img-fluid me-5" style="max-height: 350px;" data-aos="zoom-in">
     </div>
 </section>
 
 <!-- Hakkımda Section -->
-<section class="py-5">
+<section class="mt-5 py-5 bg-first">
     <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-5" data-aos="fade-right">
-                <img src="~/img/left-pic444015.png" class="img-fluid rounded" alt="@Model.AboutSection.ImageAlt">
-            </div>
-            <div class="col-md-7" data-aos="fade-left">
-                <h2 class="fw-bold mb-4" style="color: #FF9494;">@Model.AboutSection.Title</h2>
-                <p>@Html.Raw(Model.AboutSection.Paragraph1)</p>
-                <p>@Model.AboutSection.Paragraph2</p>
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="about-section" data-aos="fade-up">
+                    <h2 class="fw-bold mb-4 text-center" style="color: #FF9494;">@Model.AboutSection.Title</h2>
+                    <p class="lead">@Html.Raw(Model.AboutSection.Paragraph1)</p>
+                    <p>@Html.Raw(Model.AboutSection.Paragraph2)</p>
+                    <p>@Html.Raw(Model.AboutSection.Paragraph3)</p>
+                    <p>@Html.Raw(Model.AboutSection.Paragraph4)</p>
+                    <p>@Html.Raw(Model.AboutSection.Paragraph5)</p>
+                </div>
             </div>
         </div>
     </div>
@@ -173,46 +245,53 @@
     </div>
 </section>
 <!-- Contact Form -->
-<section id="contact-form" class="py-5">
+<section id="contact-form" class="py-5 bg-first">
     <div class="container">
         <h2 class="fw-bold mb-5 text-center" style="color: #FF9494;" data-aos="fade-up">
             @Model.ContactSection.Title
         </h2>
         <div class="row justify-content-center">
-            <div class="col-md-8">
-                <form method="post" asp-controller="Home" asp-action="Contact" data-aos="fade-up">
-                    @Html.AntiForgeryToken()
-                    <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
-                    <div asp-validation-summary="All" class="text-danger"></div>
-                    <div class="mb-3">
-                        <label asp-for="ContactForm.Name" class="form-label">
-                            @Model.ContactSection.NameLabel
-                        </label>
-                        <input asp-for="ContactForm.Name" class="form-control" required />
-                        <span asp-validation-for="ContactForm.Name" class="text-danger"></span>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="ContactForm.Email" class="form-label">
-                            @Model.ContactSection.EmailLabel
-                        </label>
-                        <input asp-for="ContactForm.Email" class="form-control" required />
-                        <span asp-validation-for="ContactForm.Email" class="text-danger"></span>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="ContactForm.Message" class="form-label">
-                            @Model.ContactSection.MessageLabel
-                        </label>
-                        <textarea asp-for="ContactForm.Message" class="form-control" rows="5" required></textarea>
-                        <span asp-validation-for="ContactForm.Message" class="text-danger"></span>
-                    </div>
-                    <div class="g-recaptcha" data-sitekey="@ViewBag.RecaptchaSiteKey"></div>
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-lg text-white" style="background-color: #FF9494;">
-                            @Model.ContactSection.ButtonText
-                        </button>
-                    </div>
-                </form>
-
+            <div class="col-lg-8">
+                <div class="contact-section" data-aos="fade-up">
+                    <form method="post" asp-controller="Home" asp-action="Contact" id="contactForm">
+                        @Html.AntiForgeryToken()
+                        <!-- Bot Detection Fields -->
+                        <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
+                        <input type="text" name="phone" style="display:none" autocomplete="off" tabindex="-1" />
+                        <input type="text" name="website" style="display:none" autocomplete="off" tabindex="-1" />
+                        <input type="hidden" name="_ts" id="contactTs" />
+                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ContactForm.Name" class="form-label fw-semibold">
+                                    @Model.ContactSection.NameLabel
+                                </label>
+                                <input asp-for="ContactForm.Name" class="form-control" required />
+                                <span asp-validation-for="ContactForm.Name" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ContactForm.Email" class="form-label fw-semibold">
+                                    @Model.ContactSection.EmailLabel
+                                </label>
+                                <input asp-for="ContactForm.Email" class="form-control" required />
+                                <span asp-validation-for="ContactForm.Email" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label asp-for="ContactForm.Message" class="form-label fw-semibold">
+                                @Model.ContactSection.MessageLabel
+                            </label>
+                            <textarea asp-for="ContactForm.Message" class="form-control" rows="5" required></textarea>
+                            <span asp-validation-for="ContactForm.Message" class="text-danger"></span>
+                        </div>
+                        <div class="g-recaptcha mb-4" data-sitekey="@ViewBag.RecaptchaSiteKey"></div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-lg text-white px-5 py-3" style="background-color: #FF9494; border-radius: 10px; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#ff7b7b'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 25px rgba(255,148,148,0.4)'" onmouseout="this.style.backgroundColor='#FF9494'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                <i class="bi bi-send me-2"></i>@Model.ContactSection.ButtonText
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -252,6 +331,30 @@
                 e.preventDefault();
                 document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
             });
+        });
+        
+        // Bot detection for contact form
+        document.addEventListener("DOMContentLoaded", function() {
+            var tsField = document.getElementById('contactTs');
+            if(tsField) {
+                tsField.value = Date.now();
+            }
+            
+            var form = document.getElementById('contactForm');
+            if(form) {
+                form.addEventListener('submit', function(e) {
+                    var honeypot = document.querySelector('input[name="honeypot"]');
+                    var phone = document.querySelector('input[name="phone"]');
+                    var website = document.querySelector('input[name="website"]');
+                    
+                    if((honeypot && honeypot.value) || (phone && phone.value) || (website && website.value)) {
+                        e.preventDefault();
+                        console.warn('Bot detected in contact form - honeypot filled');
+                        alert('Form submission failed. Please try again.');
+                        return false;
+                    }
+                });
+            }
         });
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />

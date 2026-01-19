@@ -8,11 +8,11 @@
     }
 <!-- Fullscreen Quiz Container -->
 <div id="quizContainer" class="fullscreen-container">
-    <h2 class="text-center">@Model.Title</h2>
-
-    <!-- Timer -->
-    <div id="overallTimer" class="text-end mb-3">
-        @_localization.GetKey("TotalTimeLabel") <span id="totalTime">00:00</span>
+    <div class="quiz-header">
+        <h2>@Model.Title</h2>
+        <div id="overallTimer">
+            <i class="bi bi-clock-fill"></i> @_localization.GetKey("TotalTimeLabel") <span id="totalTime">00:00</span>
+        </div>
     </div>
 
     <form id="quizForm" method="post" asp-controller="Account" asp-action="SubmitQuiz">
@@ -26,58 +26,70 @@
                 var shuffledAnswers = question.Answers.OrderBy(_ => Guid.NewGuid()).ToList(); // Shuffle answers
 
                 <div class="question-panel" data-index="@i" style="display:@(i == 0 ? "block" : "none")">
-                    <div class="card mb-3 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">@question.QuestionText</h5>
+                    <div class="question-card">
+                        <div class="question-header">
+                            <span class="question-number">Soru @(i + 1) / @Model.Questions.Count</span>
+                            <h3 class="question-title">@question.QuestionText</h3>
+                        </div>
 
+                        <div class="question-media-content">
                             @* Display media if provided *@
                             @if (!string.IsNullOrEmpty(question.ImageUrl))
                             {
-                                <img src="@Url.Content(question.ImageUrl)" class="img-fluid mb-3" alt="Question Image" />
-                            }
-                            @if (!string.IsNullOrEmpty(question.AudioUrl))
-                            {
-                                var audioSrc = Url.Content("~/mp3/" + question.AudioUrl);
-                                <audio controls class="w-100 mb-3">
-                                    <source src="@audioSrc" type="audio/mpeg" />
-                                    @_localization.GetKey("AudioNotSupported")
-                                </audio>
+                                <div class="media-item">
+                                    <img src="@Url.Content(question.ImageUrl)" class="question-image" alt="Question Image" />
+                                </div>
                             }
                             @if (!string.IsNullOrEmpty(question.VideoUrl))
                             {
-                                <div class="mb-3">
-                                    <iframe width="100%" height="315" src="@question.VideoUrl" frameborder="0" allowfullscreen></iframe>
+                                <div class="media-item">
+                                    <div class="video-wrapper">
+                                        <iframe width="100%" height="315" src="@question.VideoUrl" frameborder="0" allowfullscreen></iframe>
+                                    </div>
                                 </div>
                             }
+                            @if (!string.IsNullOrEmpty(question.AudioUrl))
+                            {
+                                <div class="media-item audio-item">
+                                    <div class="audio-label"><i class="bi bi-music-note-beamed"></i> Dinle:</div>
+                                    <audio controls class="question-audio">
+                                        <source src="@Url.Content("~/mp3/" + question.AudioUrl)" type="audio/mpeg" />
+                                        @_localization.GetKey("AudioNotSupported")
+                                    </audio>
+                                </div>
+                            }
+                        </div>
 
-                            @* Render answer choices as radio buttons (shuffled) *@
+                        <div class="question-answers">
                             @foreach (var answer in shuffledAnswers)
                             {
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" 
+                                <label class="answer-option">
+                                    <input class="answer-check" type="radio" 
                                         name="responses[@question.Id]" 
                                         value="@answer.Id" required />
-                                    <label class="form-check-label">@answer.AnswerText</label>
-                                </div>
+                                    <span class="answer-text">@answer.AnswerText</span>
+                                </label>
                             }
-
-                            @* Hidden field to capture time spent on this question (in seconds) *@
-                            <input type="hidden" name="QuestionTimes[@question.Id]" class="question-time" value="0" />
                         </div>
+                        
+                        <input type="hidden" name="QuestionTimes[@question.Id]" class="question-time" value="0" />
                     </div>
 
-                    <div class="d-flex justify-content-between">
-                        @if (i > 0)
-                        {
-                            <button type="button" class="btn btn-secondary prevBtn">@_localization.GetKey("PreviousButton")</button>
-                        }
+                    <div class="question-controls">
+                        <button type="button" class="btn-nav btn-nav-prev prevBtn" @(i == 0 ? "disabled" : "")>
+                            <i class="bi bi-chevron-left"></i> @_localization.GetKey("PreviousButton")
+                        </button>
                         @if (i < Model.Questions.Count - 1)
                         {
-                            <button type="button" class="btn btn-primary nextBtn">@_localization.GetKey("NextButton")</button>
+                            <button type="button" class="btn-nav btn-nav-next nextBtn">
+                                @_localization.GetKey("NextButton") <i class="bi bi-chevron-right"></i>
+                            </button>
                         }
                         else
                         {
-                            <button form="quizForm" type="submit" class="btn btn-success">@_localization.GetKey("SubmitExamButton")</button>
+                            <button form="quizForm" type="submit" class="btn-submit">
+                                <i class="bi bi-check-circle-fill"></i> @_localization.GetKey("SubmitExamButton")
+                            </button>
                         }
                     </div>
                 </div>
@@ -111,12 +123,19 @@
 
 @section Css {
     <style>
+        :root {
+            --quiz-lightest: #FFF5E4;
+            --quiz-light: #FFE3E1;
+            --quiz-medium: #FFD1D1;
+            --quiz-accent: #FF9494;
+        }
+        
         #loadingOverlay {
             display: none;
             position: fixed; z-index: 99999;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.5);
-            color: white; font-size: 2rem;
+            background: linear-gradient(135deg, rgba(255,148,148,0.95) 0%, rgba(255,209,209,0.95) 100%);
+            color: white; font-size: 1.5rem;
             justify-content: center; align-items: center;
             text-align: center;
         }
@@ -125,8 +144,9 @@
         body, html {
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Prevent scrolling */
+            overflow: hidden;
         }
+        
         .fullscreen-container {
             display: none;
             position: fixed;
@@ -134,22 +154,352 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: white;
+            background: linear-gradient(180deg, var(--quiz-lightest) 0%, #fff 100%);
             overflow-y: auto;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .quiz-header {
+            background: linear-gradient(135deg, var(--quiz-accent) 0%, var(--quiz-medium) 100%);
+            color: white;
+            padding: 25px 30px;
+            box-shadow: 0 5px 20px rgba(255,148,148,0.3);
+            flex-shrink: 0;
+        }
+        
+        .quiz-header h2 {
+            margin: 0 0 15px 0;
+            font-weight: 800;
+            font-size: 1.75rem;
+        }
+        
+        #overallTimer {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        #overallTimer i {
+            font-size: 1.3rem;
+        }
+        
+        #questionsContainer {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+        
+        .question-panel {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .question-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            padding: 30px;
+        }
+        
+        .question-header {
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--quiz-light);
+            padding-bottom: 15px;
+        }
+        
+        .question-number {
+            display: inline-block;
+            background: var(--quiz-light);
+            color: var(--quiz-accent);
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .question-title {
+            color: #333;
+            font-weight: 700;
+            font-size: 1.35rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+        
+        .question-media-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .media-item {
+            background: var(--quiz-lightest);
+            border-radius: 15px;
+            padding: 15px;
+            overflow: hidden;
+        }
+        
+        .question-image {
+            width: 100%;
+            border-radius: 12px;
+            display: block;
+            max-height: 350px;
+            object-fit: cover;
+        }
+        
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+        
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 12px;
+        }
+        
+        .audio-item {
+            background: linear-gradient(135deg, var(--quiz-light) 0%, var(--quiz-lightest) 100%);
+            border-left: 4px solid var(--quiz-accent);
             padding: 20px;
         }
-        .modal {
-            background: black;
-            opacity: 1;
+        
+        .audio-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--quiz-accent);
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
         }
+        
+        .audio-label i {
+            font-size: 1.2rem;
+        }
+        
+        .question-audio {
+            width: 100%;
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+        
+        .question-answers {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 25px 0;
+        }
+        
+        .answer-option {
+            display: flex;
+            align-items: center;
+            background: var(--quiz-lightest);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .answer-option:hover {
+            background: var(--quiz-light);
+            transform: translateX(8px);
+        }
+        
+        .answer-option input:checked + .answer-text {
+            color: var(--quiz-accent);
+            font-weight: 700;
+        }
+        
+        .answer-check {
+            width: 22px;
+            height: 22px;
+            margin-right: 15px;
+            cursor: pointer;
+            accent-color: var(--quiz-accent);
+        }
+        
+        .answer-text {
+            flex: 1;
+            color: #444;
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+        
+        .question-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: space-between;
+            padding-top: 20px;
+            border-top: 2px solid var(--quiz-light);
+        }
+        
+        .btn-nav, .btn-submit {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        
+        .btn-nav-prev {
+            background: #e9ecef;
+            color: #666;
+        }
+        
+        .btn-nav-prev:hover:not(:disabled) {
+            background: #dee2e6;
+            transform: translateX(-3px);
+        }
+        
+        .btn-nav-prev:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-nav-next {
+            background: linear-gradient(135deg, var(--quiz-accent) 0%, var(--quiz-medium) 100%);
+            color: white;
+            margin-left: auto;
+        }
+        
+        .btn-nav-next:hover {
+            transform: translateX(3px);
+            box-shadow: 0 8px 20px rgba(255,148,148,0.4);
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            margin-left: auto;
+            min-width: 180px;
+            justify-content: center;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(40,167,69,0.4);
+        }
+        
+        .modal {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+        }
+        
         .modal-content {
             background: white;
-            border-radius: 10px;
+            border-radius: 25px;
+            border: none;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.2);
         }
+        
+        .modal-content h5 {
+            color: var(--quiz-accent);
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+        
+        .modal-content p {
+            color: #666;
+            font-size: 1.05rem;
+        }
+        
         .fullscreen-mode .navbar, 
         .fullscreen-mode .footer, 
         .fullscreen-mode .header {
             display: none !important;
+        }
+        
+        /* Scrollbar styling */
+        #questionsContainer::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #questionsContainer::-webkit-scrollbar-track {
+            background: var(--quiz-light);
+            border-radius: 10px;
+        }
+        
+        #questionsContainer::-webkit-scrollbar-thumb {
+            background: var(--quiz-accent);
+            border-radius: 10px;
+        }
+        
+        #questionsContainer::-webkit-scrollbar-thumb:hover {
+            background: #ff7b7b;
+        }
+        
+        @@media (max-width: 768px) {
+            .quiz-header {
+                padding: 15px 20px;
+            }
+            
+            .quiz-header h2 {
+                font-size: 1.3rem;
+                margin-bottom: 10px;
+            }
+            
+            #questionsContainer {
+                padding: 20px;
+            }
+            
+            .question-card {
+                padding: 20px;
+            }
+            
+            .question-title {
+                font-size: 1.1rem;
+            }
+            
+            .answer-option {
+                padding: 12px 15px;
+            }
+            
+            .question-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn-nav, .btn-submit {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .btn-nav-next {
+                margin-left: 0;
+            }
+            
+            .btn-submit {
+                margin-left: 0;
+                min-width: auto;
+            }
         }
     </style>
 }
