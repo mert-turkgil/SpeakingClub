@@ -281,7 +281,7 @@
                             <label asp-for="ContactForm.Message" class="form-label fw-semibold">
                                 @Model.ContactSection.MessageLabel
                             </label>
-                            <textarea asp-for="ContactForm.Message" class="form-control" rows="5" required></textarea>
+                            <textarea asp-for="ContactForm.Message" class="form-control" id="messageEditor" rows="5" required></textarea>
                             <span asp-validation-for="ContactForm.Message" class="text-danger"></span>
                         </div>
                         <div class="g-recaptcha mb-4" data-sitekey="@ViewBag.RecaptchaSiteKey"></div>
@@ -302,6 +302,9 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+    
+    <!-- CKEditor 5 CDN -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
@@ -363,4 +366,51 @@
     <script>
         AOS.init({ duration: 1000, once: true });
     </script>
+    
+    <!-- CKEditor Initialization -->
+    <script>
+        let editorInstance;
+        ClassicEditor
+            .create(document.querySelector('#messageEditor'), {
+                toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+                placeholder: '@(Model.ContactSection.MessageLabel ?? "Your message...")',
+                language: '@(ViewBag.CurrentCulture ?? "en")'
+            })
+            .then(editor => {
+                editorInstance = editor;
+                
+                // Sync CKEditor content with textarea before form submission
+                const form = document.getElementById('contactForm');
+                if (form) {
+                    form.addEventListener('submit', function() {
+                        const messageTextarea = document.querySelector('#messageEditor');
+                        if (messageTextarea && editorInstance) {
+                            messageTextarea.value = editorInstance.getData();
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('CKEditor initialization error:', error);
+            });
+    </script>
+    
+    <style>
+        /* CKEditor custom styling to match contact form */
+        .ck-editor__editable {
+            min-height: 150px;
+            border-radius: 10px !important;
+        }
+        .ck.ck-editor__main > .ck-editor__editable:not(.ck-focused) {
+            border-color: var(--third) !important;
+        }
+        .ck.ck-editor__main > .ck-editor__editable.ck-focused {
+            border-color: var(--fourth) !important;
+            box-shadow: 0 0 0 3px rgba(255,148,148,0.2) !important;
+        }
+        .ck.ck-toolbar {
+            border-radius: 10px 10px 0 0 !important;
+            background-color: var(--first) !important;
+        }
+    </style>
 }

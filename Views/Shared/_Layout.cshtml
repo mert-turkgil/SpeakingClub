@@ -299,9 +299,10 @@
                       {
                           var levelTitle = Localizer.GetKey($"Level_{code}_Title").Value;
                           <li>
-                              <a class="dropdown-item px-2"
+                              <a class="dropdown-item px-2 quiz-level-link"
                                 style="border-radius: 10px;"
-                                href="@Url.Action("Quizzes", "Account", new { level = code })">
+                                href="@Url.Action("Quizzes", "Account")"
+                                data-level="@code">
                                   <span>@levelTitle</span>
                                   <span class="badge bg-fourth">@code</span>
                               </a>
@@ -429,9 +430,10 @@
                       {
                           var levelTitle = Localizer.GetKey($"Level_{code}_Title").Value;
                           <li>
-                              <a class="dropdown-item px-2"
+                              <a class="dropdown-item px-2 quiz-level-link"
                                 style="border-radius: 10px;"
-                                href="@Url.Action("Quizzes", "Account", new { level = code })">
+                                href="@Url.Action("Quizzes", "Account")"
+                                data-level="@code">
                                   <span>@levelTitle</span>
                                   <span class="badge bg-fourth">@code</span>
                               </a>
@@ -602,6 +604,21 @@
 
     <!-- Site-specific JS -->
     <script src="~/js/site.js"></script>
+    
+    <!-- Quiz Level Navigation Handler -->
+    <script>
+    $(document).ready(function() {
+        // Handle quiz level links - store level and navigate
+        $(document).on('click', '.quiz-level-link', function(e) {
+            e.preventDefault();
+            var level = $(this).data('level');
+            if (level) {
+                sessionStorage.setItem('quizFilterLevel', level);
+            }
+            window.location.href = $(this).attr('href');
+        });
+    });
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

@@ -2,6 +2,33 @@
 @inject LanguageService Localizer
 @{
     Layout = "_Layout"; // Your shared layout that loads Bootstrap, FontAwesome, animate.css, GSAP, jQuery, etc.
+    
+    // SEO Settings
+    var description = !string.IsNullOrEmpty(Model.Content) 
+        ? (Model.Content.Length > 160 
+            ? System.Text.RegularExpressions.Regex.Replace(Model.Content.Substring(0, 160), "<.*?>", "") + "..." 
+            : System.Text.RegularExpressions.Regex.Replace(Model.Content, "<.*?>", ""))
+        : "Read this interesting blog post on SpeakingClub";
+    
+    ViewData["Title"] = Model.Title + " | SpeakingClub";
+    ViewData["Description"] = description;
+    ViewData["Keywords"] = string.Join(", ", Model.Tags?.Select(t => t.Name) ?? new List<string>()) + ", German learning, Almanca";
+    ViewData["OgType"] = "article";
+    ViewData["OgImage"] = !string.IsNullOrEmpty(Model.Image) 
+        ? $"https://almanca-konus.com/img/{Model.Image}" 
+        : "https://almanca-konus.com/img/header_logo.png";
+    
+    // Canonical URL
+    var canonicalUrl = $"https://almanca-konus.com{Context.Request.Path}";
+    ViewData["Canonical"] = canonicalUrl;
+    
+    // Share URLs
+    var encodedUrl = System.Net.WebUtility.UrlEncode(canonicalUrl);
+    var encodedTitle = System.Net.WebUtility.UrlEncode(Model.Title ?? "Check this out!");
+    var facebookShareUrl = $"https://www.facebook.com/sharer/sharer.php?u={encodedUrl}";
+    var twitterShareUrl = $"https://twitter.com/intent/tweet?url={encodedUrl}&text={encodedTitle}";
+    var whatsappShareUrl = $"https://wa.me/?text={encodedTitle}%20{encodedUrl}";
+    var linkedinShareUrl = $"https://www.linkedin.com/sharing/share-offsite/?url={encodedUrl}";
 }
 @section Css{
     <style>
@@ -146,6 +173,69 @@
             </p>
         </div>
     </div>
+    
+    <!-- Social Sharing Section -->
+    <div class="row my-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="mb-3"><i class="fas fa-share-alt me-2"></i>@Localizer.GetKey("ShareThisPost").Value</h6>
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        <!-- Facebook Share -->
+                        <a href="@facebookShareUrl" target="_blank" rel="noopener noreferrer" 
+                           class="btn btn-primary btn-lg rounded-circle" 
+                           style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;"
+                           title="Share on Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        
+                        <!-- Twitter/X Share -->
+                        <a href="@twitterShareUrl" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-dark btn-lg rounded-circle"
+                           style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;"
+                           title="Share on X (Twitter)">
+                            <i class="fab fa-x-twitter"></i>
+                        </a>
+                        
+                        <!-- WhatsApp Share -->
+                        <a href="@whatsappShareUrl" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-success btn-lg rounded-circle"
+                           style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;"
+                           title="Share on WhatsApp">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        
+                        <!-- LinkedIn Share -->
+                        <a href="@linkedinShareUrl" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-lg rounded-circle"
+                           style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background-color: #0A66C2; color: white;"
+                           title="Share on LinkedIn">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        
+                        <!-- Instagram Copy Link (Instagram doesn't support direct sharing) -->
+                        <button type="button" 
+                                class="btn btn-lg rounded-circle copy-link-btn"
+                                style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%); color: white; border: none;"
+                                title="Copy link for Instagram"
+                                data-url="@canonicalUrl">
+                            <i class="fab fa-instagram"></i>
+                        </button>
+                        
+                        <!-- Copy Link Button -->
+                        <button type="button" 
+                                class="btn btn-secondary btn-lg rounded-circle copy-link-btn"
+                                style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;"
+                                title="Copy Link"
+                                data-url="@canonicalUrl">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted mt-2 d-block" id="copyFeedback" style="display: none !important;"></small>
+                </div>
+            </div>
+        </div>
+    </div>
     @if (!string.IsNullOrEmpty(Model.RawYT) || !string.IsNullOrEmpty(Model.RawMaps))
     {
         <div class="row my-5">
@@ -187,6 +277,26 @@
 @section Scripts {
     <script src="~/lib/gsap/gsap.min.js"></script>
     <script>
+        // Copy link functionality for Instagram and general copy
+        document.querySelectorAll('.copy-link-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var url = this.getAttribute('data-url');
+                navigator.clipboard.writeText(url).then(function() {
+                    var feedback = document.getElementById('copyFeedback');
+                    feedback.textContent = '@Localizer.GetKey("LinkCopied").Value';
+                    feedback.style.display = 'block !important';
+                    feedback.classList.remove('d-none');
+                    feedback.style.cssText = 'display: block !important;';
+                    setTimeout(function() {
+                        feedback.style.cssText = 'display: none !important;';
+                    }, 2000);
+                }).catch(function(err) {
+                    console.error('Failed to copy: ', err);
+                    alert('Failed to copy link. Please copy manually: ' + url);
+                });
+            });
+        });
+        
         // When the advanced quiz form is submitted.
         document.getElementById("advancedQuizForm")?.addEventListener("submit", function (e) {
             e.preventDefault();

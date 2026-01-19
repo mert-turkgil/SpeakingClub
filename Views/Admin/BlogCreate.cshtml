@@ -217,6 +217,7 @@
             const tempBlogId = sessionStorage.getItem('tempBlogId');
             const LICENSE_KEY = document.querySelector('meta[name="ck-license-key"]').getAttribute('content');
             const editorConfig = {
+                licenseKey: LICENSE_KEY,
                 simpleUpload: {
                     uploadUrl: '/Admin/UploadFile?type=Images&blogId=' + encodeURIComponent(tempBlogId)
                 },

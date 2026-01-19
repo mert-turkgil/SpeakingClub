@@ -151,10 +151,7 @@
         <h5>Translations</h5>
         <ul class="nav nav-tabs mb-3">
             <li class="nav-item">
-                <button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#en">EN</button>
-            </li>
-            <li class="nav-item">
-                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tr">TR</button>
+                <button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#tr">TR</button>
             </li>
             <li class="nav-item">
                 <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#de">DE</button>
@@ -211,6 +208,7 @@
             const tempBlogId = sessionStorage.getItem('tempBlogId');
 	        const LICENSE_KEY = document.querySelector('meta[name="ck-license-key"]').getAttribute('content');
             const editorConfig = {
+                licenseKey: LICENSE_KEY,
                 simpleUpload: {
                     uploadUrl: '/Admin/UploadFile?type=Images&blogId=' + encodeURIComponent(tempBlogId)
                 },

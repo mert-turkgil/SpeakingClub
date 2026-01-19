@@ -153,6 +153,9 @@ builder.Services.AddHttpClient<IDeeplService, DeeplService>()
 builder.Services.AddSingleton<IFileProvider>(new PhysicalFileProvider(resourcesPath));
 builder.Services.AddSignalR();
 builder.Services.AddMemoryCache();
+
+// Register background service for temp file cleanup
+builder.Services.AddHostedService<TempFileCleanupService>();
 #endregion
 
 #region Localization and MVC Configuration

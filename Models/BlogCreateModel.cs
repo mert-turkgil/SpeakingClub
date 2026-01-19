@@ -36,10 +36,11 @@ namespace SpeakingClub.Models
         [MaxLength(100, ErrorMessage = "Author cannot exceed 100 characters.")]
         public string Author { get; set; }
 
-        // Embed Fields
-        public string RawYT { get; set; } = string.Empty;
-        public string RawMaps { get; set; } = string.Empty;
-
+        // Embed Fields (Optional)
+        #nullable enable
+        public string? RawYT { get; set; }
+        public string? RawMaps { get; set; }
+        #nullable disable
         // Translations
         [Required(ErrorMessage = "Turkish title is required.")]
         public string TitleTR { get; set; }

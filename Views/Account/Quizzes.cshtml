@@ -498,7 +498,7 @@
 
 @section Scripts {
 <script>
-window.doFilter = function(page){
+function doFilter(page) {
     page = page || 1;
     var search = $('#quizSearch').val().toLowerCase().trim();
     var tag = $('#tagFilters .tag-filter.active').data('tag') || '';
@@ -510,10 +510,11 @@ window.doFilter = function(page){
     cards.each(function(){
         var $c = $(this);
         var title = $c.find('.card-title').text().toLowerCase();
+        var desc = $c.find('.card-body').text().toLowerCase();
         var cardTags = ($c.data('tags') || '').toString().toLowerCase();
         var category = ($c.data('category') || '').toString().trim();
         
-        var matchSearch = !search || title.indexOf(search) >= 0;
+        var matchSearch = !search || title.indexOf(search) >= 0 || desc.indexOf(search) >= 0;
         var matchTag = !tag || tag === '' || cardTags.indexOf(tag.toLowerCase()) >= 0;
         var matchCat = !cat || cat === '' || category === cat.trim();
         
@@ -544,11 +545,23 @@ window.doFilter = function(page){
         }
     }
     $('#quizPagination').html(h);
-};
-};
+}
 
 $(function(){
     console.log('Script ready, quiz items:', $('.quiz-item').length);
+    
+    // Check for stored level filter from navbar navigation
+    var storedLevel = sessionStorage.getItem('quizFilterLevel');
+    if (storedLevel) {
+        // Find and click the matching tag filter
+        var tagFilter = $('#tagFilters .tag-filter[data-tag="' + storedLevel + '"]');
+        if (tagFilter.length) {
+            $('#tagFilters .tag-filter').removeClass('active');
+            tagFilter.addClass('active');
+        }
+        // Clear the stored level after applying
+        sessionStorage.removeItem('quizFilterLevel');
+    }
     
     // Events
     $('#quizSearch').on('input keyup', function(){ 
@@ -574,6 +587,7 @@ $(function(){
         $('#categoryFilter').val('');
         $('#tagFilters .tag-filter').removeClass('active');
         $('#tagFilters .tag-filter[data-tag=""]').addClass('active');
+        sessionStorage.removeItem('quizFilterLevel');
         doFilter(1);
     });
     

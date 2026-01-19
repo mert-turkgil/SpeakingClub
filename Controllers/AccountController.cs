@@ -48,6 +48,22 @@ namespace SpeakingClub.Controllers
             _logger = logger;
         }
         #region Quiz
+        // Helper method to get teacher display name
+        private async Task<string> GetTeacherDisplayName(string? userName)
+        {
+            if (string.IsNullOrEmpty(userName))
+                return "Unknown Instructor";
+            
+            var teacher = await _userManager.FindByNameAsync(userName);
+            if (teacher == null)
+                return userName; // Fallback to stored name
+            
+            var fullName = string.Join(" ", new[] { teacher.FirstName, teacher.LastName }
+                .Where(s => !string.IsNullOrWhiteSpace(s)));
+            
+            return !string.IsNullOrWhiteSpace(fullName) ? fullName : (userName ?? "Unknown Instructor");
+        }
+
         [AllowAnonymous]
         public async Task<IActionResult> Quizzes(string? level)
         {
@@ -94,6 +110,17 @@ namespace SpeakingClub.Controllers
                 userSubmissions = submissions.Where(s => s.UserId == user.Id).ToList();
             }
 
+            // Pre-fetch all teacher display names
+            var teacherUserNames = allQuizzes.Select(q => q.TeacherName).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
+            var teacherDisplayNames = new Dictionary<string, string>();
+            foreach (var teacherUserName in teacherUserNames)
+            {
+                if (!string.IsNullOrEmpty(teacherUserName))
+                {
+                    teacherDisplayNames[teacherUserName] = await GetTeacherDisplayName(teacherUserName);
+                }
+            }
+
             // Map each quiz to a QuizSummaryViewModel.
             Func<SpeakingClub.Entity.Quiz, QuizSummaryViewModel> mapQuiz = q =>
             {
@@ -133,7 +160,9 @@ namespace SpeakingClub.Controllers
                     QuizTitle = q.Title,
                     QuizDescription = q.Description,
                     ImageUrl = !string.IsNullOrEmpty(q.ImageUrl) ? q.ImageUrl : Url.Content("~/img/header_logo.png"),
-                    TeacherName = q.TeacherName ?? "Unknown Instructor",
+                    TeacherName = !string.IsNullOrEmpty(q.TeacherName) && teacherDisplayNames.ContainsKey(q.TeacherName) 
+                        ? teacherDisplayNames[q.TeacherName] 
+                        : "Unknown Instructor",
                     CategoryName = q.Category != null ? q.Category.Name : "General",
                     AttemptCount = userSubmissions.Count(s => s.QuizId == q.Id),
                     LastScore = lastSubmission?.Score,

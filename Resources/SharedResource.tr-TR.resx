@@ -696,4 +696,12 @@
     <value>"Düzenli içeriklerimiz sayesinde Almanca pratiğinizi artırın, öğreniminize destek olun."</value>
     <comment>animasyon altındaki yer</comment>
   </data>
+  <data name="ShareThisPost" xml:space="preserve">
+    <value>Bu Gönderiyi Paylaş</value>
+    <comment>Share button section title</comment>
+  </data>
+  <data name="LinkCopied" xml:space="preserve">
+    <value>Link Kopyalandı!</value>
+    <comment>Copy link success message</comment>
+  </data>
 </root>
