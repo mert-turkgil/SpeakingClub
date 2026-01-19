@@ -272,7 +272,7 @@ jobs:
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./
-        server-dir: /httpdocs/
+        server-dir: /httpdocs/publish/
         exclude: |
           **/*
           !app_offline.htm
@@ -290,7 +290,7 @@ jobs:
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./publish/
-        server-dir: /httpdocs/
+        server-dir: /httpdocs/publish/
         protocol: ftp
 
     # STEP 5: Remove app_offline.htm to bring site back online
@@ -301,7 +301,7 @@ jobs:
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./
-        server-dir: /httpdocs/
+        server-dir: /httpdocs/publish/
         exclude: |
           **/*
           !app_offline.htm
