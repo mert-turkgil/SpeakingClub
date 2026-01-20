@@ -19,8 +19,8 @@ using SpeakingClub.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Set environment to Production
-builder.Environment.EnvironmentName = "Production";
+// Set environment to Development (temporarily for debugging)
+builder.Environment.EnvironmentName = "Development";
 
 #region Configuration
 // Load configuration
@@ -34,16 +34,16 @@ Console.WriteLine("ENV: " + builder.Environment.EnvironmentName);
 // Configure EmailSender settings
 var emailSettings = config.GetSection("EmailSender");
 var port = emailSettings.GetValue<int>("Port");
-var host = emailSettings.GetValue<string>("SMTPMail");
+var host = emailSettings.GetValue<string>("SMTPMail") ?? "localhost";
 var enablessl = true;
-var username = emailSettings.GetValue<string>("Username");
-var password = emailSettings.GetValue<string>("Password");
+var username = emailSettings.GetValue<string>("Username") ?? "dummy@example.com";
+var password = emailSettings.GetValue<string>("Password") ?? "dummy-password";
 var provider = new FileExtensionContentTypeProvider();
 // If .glb is not mapped, add it:
 provider.Mappings[".glb"] = "model/gltf-binary";
 
-// Only validate email settings if not in Development mode
-if (!builder.Environment.IsDevelopment())
+// Only validate email settings if not in Development mode and settings are actually configured
+if (!builder.Environment.IsDevelopment() && !string.IsNullOrEmpty(emailSettings.GetValue<string>("SMTPMail")))
 {
     if (string.IsNullOrEmpty(host))
         throw new ArgumentNullException(nameof(host), "SMTP host cannot be null or empty.");
@@ -109,7 +109,7 @@ builder.Services.ConfigureApplicationCookie(options =>
         Path = "/"
     };
     // Regenerate cookie to prevent 403 errors
-    options.Events.OnValidatePrincipal = async context =>
+    options.Events.OnValidatePrincipal = context =>
     {
         // Check if the cookie is about to expire (within 30% of its lifetime)
         var timeElapsed = DateTimeOffset.UtcNow - context.Properties.IssuedUtc;
@@ -124,6 +124,8 @@ builder.Services.ConfigureApplicationCookie(options =>
                 context.ShouldRenew = true;
             }
         }
+        
+        return Task.CompletedTask;
     };
 });
 
@@ -211,26 +213,38 @@ using (var scope = app.Services.CreateScope())
     var speakingClubContext = scope.ServiceProvider.GetRequiredService<SpeakingClubContext>();
     var applicationDbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-    if (app.Environment.IsDevelopment())
+    try
     {
-        // Automatically apply migrations in development mode
-        speakingClubContext.Database.Migrate();
-        applicationDbContext.Database.Migrate();
-    }
-    else
-    {
-        // Only run migration once in production
-        var hasAppliedMigrations = speakingClubContext.Database.GetAppliedMigrations().Any();
-        if (!hasAppliedMigrations)
+        if (app.Environment.IsDevelopment())
         {
+            // Automatically apply migrations in development mode
+            Console.WriteLine("Attempting database migration...");
             speakingClubContext.Database.Migrate();
             applicationDbContext.Database.Migrate();
+            Console.WriteLine("Database migration completed successfully.");
         }
+        else
+        {
+            // Only run migration once in production
+            var hasAppliedMigrations = speakingClubContext.Database.GetAppliedMigrations().Any();
+            if (!hasAppliedMigrations)
+            {
+                speakingClubContext.Database.Migrate();
+                applicationDbContext.Database.Migrate();
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Warning: Database migration failed: {ex.Message}");
+        Console.WriteLine("Continuing startup without database...");
     }
 
     // Identity seeding and role/user checking (safe to run in production)
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    try
+    {
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
     var usersConfig = config.GetSection("Data:Users").GetChildren();
     if (usersConfig == null || !usersConfig.Any())
     {
@@ -267,6 +281,11 @@ using (var scope = app.Services.CreateScope())
             Console.WriteLine("Seeding roles and users...");
             await SeedIdentity.Seed(userManager, roleManager, config);
         }
+    }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Warning: User seeding failed: {ex.Message}");
     }
 }
 #endregion
@@ -380,5 +399,12 @@ app.MapControllerRoute(
 #region SignalR Configuration
 app.MapHub<SpeakingClub.Hubs.QuizMonitorHub>("/quizMonitorHub");
 #endregion
+
+Console.WriteLine("");
+Console.WriteLine("🚀 Application starting up...");
+Console.WriteLine("🌐 Application will be available at:");
+Console.WriteLine("   🔒 HTTPS: https://localhost:5001");
+Console.WriteLine("   🔒 HTTPS: https://localhost:5000");
+Console.WriteLine("");
 
 app.Run();

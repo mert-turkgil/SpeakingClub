@@ -28,7 +28,7 @@ namespace SpeakingClub.Controllers
         [Route("")]
         [Route("sitemap.xml")]
         [ResponseCache(Duration = 3600)] // Cache for 1 hour
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
             // TODO: Replace with your actual domain
             var siteUrl = "https://almanca-konus.com"; 
