@@ -18,6 +18,9 @@ using SpeakingClub.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Set environment to Production
+builder.Environment.EnvironmentName = "Production";
+
 #region Configuration
 // Load configuration
 var config = builder.Configuration;
