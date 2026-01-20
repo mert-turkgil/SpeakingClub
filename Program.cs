@@ -20,7 +20,7 @@ using SpeakingClub.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Set environment to Development (temporarily for debugging)
-builder.Environment.EnvironmentName = "Development";
+builder.Environment.EnvironmentName = "Production";
 
 #region Configuration
 // Load configuration
