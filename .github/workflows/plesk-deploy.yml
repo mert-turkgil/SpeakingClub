@@ -252,13 +252,13 @@ jobs:
 
             <div class="message-container">
                 <h2>🔄 The system is updating...</h2>
-                <h2>Please wait approximately 3 minutes.</h2>
+                <h2>Please wait approximately 10 minutes.</h2>
                 <h2></h2>
                 <h2>🔄 Das System wird aktualisiert...</h2>
-                <h2>Bitte warten Sie etwa 3 Minuten.</h2>
+                <h2>Bitte warten Sie etwa 10 Minuten.</h2>
                 <h2></h2>
                 <h2>🔄 Sistem güncelleniyor...</h2>
-                <h2>Lütfen yaklaşık 3 dakika bekleyin.</h2>
+                <h2>Lütfen yaklaşık 10 dakika bekleyin.</h2>
             </div>
         </body>
         </html>
@@ -284,6 +284,11 @@ jobs:
       run: sleep 300
 
     # STEP 4: Deploy all published files
+    # NOTE: dangerous-clean-slate deletes remote files BUT preserves files in exclude list
+    # The following files on the server are COMPLETELY PROTECTED - never deleted, uploaded, or edited:
+    #   - appsettings.Production.json (must exist on server with real DB credentials)
+    #   - web.config (must exist on server to set ASPNETCORE_ENVIRONMENT=Production)
+    # Upload these files manually ONCE via FTP, then forget about them - deployments won't touch them
     - name: FTP Deploy (Full Application)
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
@@ -300,6 +305,7 @@ jobs:
           **/.git*/**
           **/appsettings.Production.json
           **/appsettings.Development.json
+          **/web.config
 
     # STEP 5: Remove app_offline.htm to bring site back online
     - name: Remove app_offline.htm (End Maintenance)
