@@ -276,19 +276,12 @@ jobs:
         exclude: |
           **/*
           !app_offline.htm
-        protocol: ftp
-        state-name: .app-offline-sync-state.json
 
     # STEP 3: Wait to ensure IIS stops the app and releases file locks
     - name: Wait 5 minutes for IIS to release locks
       run: sleep 300
 
     # STEP 4: Deploy all published files
-    # NOTE: dangerous-clean-slate deletes remote files BUT preserves files in exclude list
-    # The following files on the server are COMPLETELY PROTECTED - never deleted, uploaded, or edited:
-    #   - appsettings.Production.json (must exist on server with real DB credentials)
-    #   - web.config (must exist on server to set ASPNETCORE_ENVIRONMENT=Production)
-    # Upload these files manually ONCE via FTP, then forget about them - deployments won't touch them
     - name: FTP Deploy (Full Application)
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
@@ -298,31 +291,20 @@ jobs:
         local-dir: ./publish/
         server-dir: ./
         protocol: ftp
-        dangerous-clean-slate: true
-        exclude: |
-          **/.git*
-          **/.git*/**
 
-    # STEP 5: Remove app_offline.htm to bring site back online
-    - name: Remove app_offline.htm (End Maintenance)
-      run: |
-        python3 << 'PYTHON_SCRIPT'
-        import ftplib
-        try:
-            ftp = ftplib.FTP('${{ secrets.FTP_SERVER }}')
-            ftp.login('${{ secrets.FTP_USERNAME }}', '${{ secrets.FTP_PASSWORD }}')
-            ftp.delete('app_offline.htm')
-            print('✅ app_offline.htm removed successfully')
-        except ftplib.error_perm as e:
-            print(f'⚠️ Could not delete app_offline.htm (may already be removed): {e}')
-        except Exception as e:
-            print(f'⚠️ Error: {e}')
-        finally:
-            try:
-                ftp.quit()
-            except:
-                pass
-        PYTHON_SCRIPT
+    # 5. ADIM: app_offline.htm dosyasını sil ve siteyi aç
+    - name: Start App (Delete app_offline.htm)
+      run: rm ./publish/app_offline.htm || true
+
+    - name: FTP Cleanup (Remove app_offline from server)
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./publish/
+        server-dir: /wwwroot/
+        dangerous-clean-slate: false
 
     # STEP 6: Verify deployment
     - name: Verify Deployment
