@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Reflection;
 using Castle.Core.Configuration;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.StaticFiles;
@@ -41,14 +42,18 @@ var provider = new FileExtensionContentTypeProvider();
 // If .glb is not mapped, add it:
 provider.Mappings[".glb"] = "model/gltf-binary";
 
-if (string.IsNullOrEmpty(host))
-    throw new ArgumentNullException(nameof(host), "SMTP host cannot be null or empty.");
-if (port <= 0)
-    throw new ArgumentOutOfRangeException(nameof(port), "SMTP port must be a positive number.");
-if (string.IsNullOrEmpty(username))
-    throw new ArgumentNullException(nameof(username), "SMTP username cannot be null or empty.");
-if (string.IsNullOrEmpty(password))
-    throw new ArgumentNullException(nameof(password), "SMTP password cannot be null or empty.");
+// Only validate email settings if not in Development mode
+if (!builder.Environment.IsDevelopment())
+{
+    if (string.IsNullOrEmpty(host))
+        throw new ArgumentNullException(nameof(host), "SMTP host cannot be null or empty.");
+    if (port <= 0)
+        throw new ArgumentOutOfRangeException(nameof(port), "SMTP port must be a positive number.");
+    if (string.IsNullOrEmpty(username))
+        throw new ArgumentNullException(nameof(username), "SMTP username cannot be null or empty.");
+    if (string.IsNullOrEmpty(password))
+        throw new ArgumentNullException(nameof(password), "SMTP password cannot be null or empty.");
+}
 #endregion
 
 #region DbContext Registration
@@ -141,7 +146,7 @@ builder.Services.AddAntiforgery(options =>
 builder.Services.AddUnitOfWork();
 // Configure Email Sender
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>(sp =>
-    new SmtpEmailSender(host, port, enablessl, username, password));
+    new SmtpEmailSender(host!, port, enablessl, username!, password!));
 
 // Register resource services and file provider for localization/resources.
 var resourcesPath = Path.Combine(Directory.GetCurrentDirectory(), "Resources");
@@ -267,6 +272,21 @@ using (var scope = app.Services.CreateScope())
 #endregion
 
 #region HTTP Pipeline Configuration
+
+// Configure ForwardedHeaders for Cloudflare proxy
+var forwardedHeadersOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost,
+    RequireHeaderSymmetry = false,
+    ForwardLimit = 2
+};
+// Add Cloudflare IPs - trust their headers
+forwardedHeadersOptions.KnownNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+// Trust all proxies for Cloudflare (adjust if needed)
+forwardedHeadersOptions.AllowedHosts.Clear();
+
+app.UseForwardedHeaders(forwardedHeadersOptions);
 
 if (!app.Environment.IsDevelopment())
 {
