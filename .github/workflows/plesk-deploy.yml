@@ -295,18 +295,8 @@ jobs:
 
     # STEP 5: Remove app_offline.htm to bring site back online
     - name: Remove app_offline.htm (End Maintenance)
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-      with:
-        server: ${{ secrets.FTP_SERVER }}
-        username: ${{ secrets.FTP_USERNAME }}
-        password: ${{ secrets.FTP_PASSWORD }}
-        local-dir: ./
-        server-dir: ./
-        exclude: |
-          **/*
-          !app_offline.htm
-        protocol: ftp
-        dangerous-clean-slate: false
+      run: |
+        lftp -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} -e "cd /; rm app_offline.htm; quit" ${{ secrets.FTP_SERVER }}
 
     # STEP 6: Verify deployment
     - name: Verify Deployment
