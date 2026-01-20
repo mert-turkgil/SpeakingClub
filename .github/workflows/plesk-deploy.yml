@@ -298,6 +298,8 @@ jobs:
           **/wwwroot/lib/**
           **/.git*
           **/.git*/**
+          **/appsettings.Production.json
+          **/appsettings.Development.json
 
     # STEP 5: Remove app_offline.htm to bring site back online
     - name: Remove app_offline.htm (End Maintenance)
