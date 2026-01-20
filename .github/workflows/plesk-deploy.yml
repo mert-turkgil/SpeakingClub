@@ -294,16 +294,30 @@ jobs:
         server-dir: ./
         protocol: ftp
         dangerous-clean-slate: true
+        exclude: |
+          **/wwwroot/lib/**
+          **/.git*
+          **/.git*/**
 
     # STEP 5: Remove app_offline.htm to bring site back online
     - name: Remove app_offline.htm (End Maintenance)
       run: |
         python3 << 'PYTHON_SCRIPT'
         import ftplib
-        ftp = ftplib.FTP('${{ secrets.FTP_SERVER }}')
-        ftp.login('${{ secrets.FTP_USERNAME }}', '${{ secrets.FTP_PASSWORD }}')
-        ftp.delete('app_offline.htm')
-        ftp.quit()
+        try:
+            ftp = ftplib.FTP('${{ secrets.FTP_SERVER }}')
+            ftp.login('${{ secrets.FTP_USERNAME }}', '${{ secrets.FTP_PASSWORD }}')
+            ftp.delete('app_offline.htm')
+            print('✅ app_offline.htm removed successfully')
+        except ftplib.error_perm as e:
+            print(f'⚠️ Could not delete app_offline.htm (may already be removed): {e}')
+        except Exception as e:
+            print(f'⚠️ Error: {e}')
+        finally:
+            try:
+                ftp.quit()
+            except:
+                pass
         PYTHON_SCRIPT
 
     # STEP 6: Verify deployment
