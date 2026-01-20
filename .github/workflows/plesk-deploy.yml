@@ -277,10 +277,11 @@ jobs:
           **/*
           !app_offline.htm
         protocol: ftp
+        state-name: .app-offline-sync-state.json
 
-    # STEP 3: Wait to ensure all file locks are released
-    - name: Wait 3 minutes for locks to release
-      run: sleep 180
+    # STEP 3: Wait to ensure IIS stops the app and releases file locks
+    - name: Wait 5 minutes for IIS to release locks
+      run: sleep 300
 
     # STEP 4: Deploy all published files
     - name: FTP Deploy (Full Application)
@@ -292,6 +293,7 @@ jobs:
         local-dir: ./publish/
         server-dir: ./
         protocol: ftp
+        dangerous-clean-slate: true
 
     # STEP 5: Remove app_offline.htm to bring site back online
     - name: Remove app_offline.htm (End Maintenance)
