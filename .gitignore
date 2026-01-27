@@ -37,6 +37,9 @@ appsettings.Production.json
 .env
 password.txt
 
+# Resource files
+Resources/*.resx
+
 # DataProtection Keys - IMPORTANT for your project
 DataProtection-Keys/
 DataProtection-Keys/*.xml
