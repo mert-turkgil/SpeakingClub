@@ -785,518 +785,15 @@ namespace SpeakingClub.Controllers
         #endregion
 
         #region Blog Management
-        private void DeleteUnusedImages(Blog blog, List<string> usedImagePaths)
-        {
-            // Paths for images
-            string imgPath = Path.Combine(_env.WebRootPath, "blog", "img");
-            string gifPath = Path.Combine(_env.WebRootPath, "blog", "gif");
 
-            // Check for old images not used anymore
-            string[] imgFiles = Directory.GetFiles(imgPath);
-            string[] gifFiles = Directory.GetFiles(gifPath);
-
-            // Merge files
-            var allFiles = imgFiles.Concat(gifFiles).ToList();
-
-            foreach (var file in allFiles)
-            {
-                string relativePath = file.Replace(_env.WebRootPath, "").Replace("\\", "/").TrimStart('/');
-                if (!usedImagePaths.Contains(relativePath))
-                {
-                    System.IO.File.Delete(file);
-                    Console.WriteLine($"[DEBUG] Deleted unused image: {file}");
-                }
-            }
-        }
-
-
-        private string ProcessContentImagesForEdit(string content)
-        {
-            string imgPath = "/blog/img/";
-            string gifPath = "/blog/gif/";
-
-            // Replace temporary paths with permanent paths
-            content = System.Text.RegularExpressions.Regex.Replace(content, @"/temp/(.*?\.(jpg|jpeg|png))", $"{imgPath}$1");
-            content = System.Text.RegularExpressions.Regex.Replace(content, @"/temp/(.*?\.(gif))", $"{gifPath}$1");
-
-            Console.WriteLine("[DEBUG] Fixed image paths in content for edit.");
-            return content;
-        }
-
-
-        // ProcessContentImages Method
-        private string ProcessContentImages(string content, Dictionary<string, string> fileMappings)
-        {
-            if (string.IsNullOrEmpty(content))
-            {
-                return content; // Return unchanged if content is null or empty
-            }
-
-            string tempPath = Path.Combine(_env.WebRootPath, "temp");
-            string imgPath = Path.Combine(_env.WebRootPath, "blog", "img");
-            string gifPath = Path.Combine(_env.WebRootPath, "blog", "gif");
-
-            // Ensure directories exist
-            Directory.CreateDirectory(imgPath);
-            Directory.CreateDirectory(gifPath);
-
-            // Replace mapped URLs first
-            foreach (var mapping in fileMappings)
-            {
-                // Replace temp URLs in the content with final URLs
-                content = content.Replace(mapping.Key, mapping.Value);
-
-                // Move the file from the temp folder to the final destination
-                string tempFilePath = Path.Combine(_env.WebRootPath, mapping.Key.TrimStart('/'));
-                string finalFilePath = Path.Combine(_env.WebRootPath, mapping.Value.TrimStart('/'));
-                // Ensure the directory exists before moving the file
-                string? directoryPath = Path.GetDirectoryName(finalFilePath);
-                if (directoryPath != null) // Check if it's not null
-                {
-                    Directory.CreateDirectory(directoryPath); // Create the directory
-                }
-                if (System.IO.File.Exists(tempFilePath) && !System.IO.File.Exists(finalFilePath))
-                {
-                    System.IO.File.Move(tempFilePath, finalFilePath); // Move the file
-                    Console.WriteLine($"[DEBUG] Moved file from {tempFilePath} to {finalFilePath}");
-                }
-                else
-                {
-                    Console.WriteLine($"[WARNING] File move failed: {tempFilePath} to {finalFilePath}");
-                }
-            }
-
-            // Find all images in content
-            var matches = Regex.Matches(content, @"src=[""'](?<url>/temp/.*?\.(jpg|jpeg|png|gif))[""']");
-            foreach (Match match in matches)
-            {
-                string tempUrl = match.Groups["url"].Value; // Example: /temp/image.png
-                string tempFilePath = Path.Combine(_env.WebRootPath, tempUrl.TrimStart('/'));
-
-                if (System.IO.File.Exists(tempFilePath))
-                {
-                    string fileName = Path.GetFileName(tempFilePath);
-                    string fileExtension = Path.GetExtension(fileName).ToLower();
-
-                    // Determine destination path
-                    string targetPath = fileExtension == ".gif"
-                        ? Path.Combine(gifPath, fileName)
-                        : Path.Combine(imgPath, fileName);
-
-                    // Move file if it doesn't already exist
-                    if (!System.IO.File.Exists(targetPath))
-                    {
-                        System.IO.File.Move(tempFilePath, targetPath); // Move file to final location
-                        Console.WriteLine($"[DEBUG] Moved image: {tempFilePath} -> {targetPath}");
-                    }
-
-                    // Update content with the final URL
-                    string finalUrl = $"/blog/{(fileExtension == ".gif" ? "gif" : "img")}/{fileName}";
-                    content = content.Replace(tempUrl, finalUrl);
-                }
-                else
-                {
-                    Console.WriteLine($"[WARNING] Temp image not found: {tempFilePath}");
-                }
-            }
-
-            return content; // Return updated content
-        }
-
-
-
-        [HttpPost("UploadFile")]
-        public async Task<IActionResult> UploadFile(IFormFile upload, string blogId)
-        {
-            if (upload == null || upload.Length == 0)
-            {
-                return Json(new { uploaded = false, error = "No file uploaded." });
-            }
-
-            // Define Temp Path
-            string tempPath = Path.Combine(_env.WebRootPath, "temp");
-            Directory.CreateDirectory(tempPath); // Ensure temp folder exists
-
-            // Calculate File Hash
-            string fileHash;
-            using (var md5 = System.Security.Cryptography.MD5.Create())
-            {
-                using (var stream = upload.OpenReadStream())
-                {
-                    fileHash = BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "").ToLower();
-                }
-            }
-
-            // Generate Unique File Name Using Hash
-            string extension = Path.GetExtension(upload.FileName);
-            string fileName = $"{fileHash}{extension}";
-            string tempFilePath = Path.Combine(tempPath, fileName);
-
-            // Check if File Already Exists in Temp
-            if (!System.IO.File.Exists(tempFilePath))
-            {
-                using (var fileStream = new FileStream(tempFilePath, FileMode.Create))
-                {
-                    await upload.CopyToAsync(fileStream);
-                }
-                Console.WriteLine($"[DEBUG] Uploaded new file: {fileName}");
-            }
-            else
-            {
-                Console.WriteLine($"[DEBUG] File already exists in temp: {fileName}");
-            }
-
-            // Return Temporary URL for CKEditor
-            string tempUrl = $"/temp/{fileName}";
-            return Json(new { uploaded = true, url = tempUrl });
-        }
-
-        private string MoveImagesAndFixPaths(string content, int blogId)
-        {
-            string tempPath = Path.Combine(_env.WebRootPath, "temp");
-            string imgPath = Path.Combine(_env.WebRootPath, "blog", "img");
-            string gifPath = Path.Combine(_env.WebRootPath, "blog", "gif");
-
-            // Ensure directories exist
-            Directory.CreateDirectory(imgPath);
-            Directory.CreateDirectory(gifPath);
-
-            // Find all image src attributes in the content
-            var matches = System.Text.RegularExpressions.Regex.Matches(content, @"src=[""'](?<url>/temp/.*?\.(jpg|jpeg|png|gif))[""']");
-            foreach (System.Text.RegularExpressions.Match match in matches)
-            {
-                string tempUrl = match.Groups["url"].Value; // Example: /temp/image123.gif
-                string tempFilePath = Path.Combine(_env.WebRootPath, tempUrl.TrimStart('/'));
-
-                // Move file if it exists
-                if (System.IO.File.Exists(tempFilePath))
-                {
-                    string fileName = Path.GetFileName(tempFilePath);
-                    string fileExtension = Path.GetExtension(fileName).ToLower();
-
-                    // Determine destination folder based on file extension
-                    string targetPath = fileExtension == ".gif"
-                        ? Path.Combine(gifPath, fileName)
-                        : Path.Combine(imgPath, fileName);
-
-                    if (!System.IO.File.Exists(targetPath))
-                    {
-                        System.IO.File.Move(tempFilePath, targetPath);
-                        Console.WriteLine($"[DEBUG] Moved image: {tempFilePath} -> {targetPath}");
-                    }
-
-                    // Replace temp URL with the final URL in the content
-                    string finalUrl = $"/blog/{(fileExtension == ".gif" ? "gif" : "img")}/{fileName}";
-                    content = content.Replace(tempUrl, finalUrl);
-                }
-                else
-                {
-                    Console.WriteLine($"[WARNING] Temp image not found: {tempFilePath}");
-                }
-            }
-
-            return content; // Return processed content with updated paths
-        }
-
-
-
-        private void SaveContentToResx(BlogCreateModel model, int id)
-        {
-            // Supported languages and their codes
-            string[] cultures = { "tr-TR", "de-DE" };
-            string[] titles = { model.TitleTR, model.TitleDE };
-            string[] contents = { model.ContentTR, model.ContentDE };
-
-            // Process each translation
-            for (int i = 0; i < cultures.Length; i++)
-            {
-                string culture = cultures[i];  // Language code
-                string title = titles[i];      // Language-specific title
-                string content = contents[i]; // Already processed content
-
-                // Save translations to .resx
-                _manageResourceService.AddOrUpdateResource($"Title_{id}_{model.Url}_{culture.Substring(0, 2).ToLower()}", title, culture);
-                _manageResourceService.AddOrUpdateResource($"Content_{id}_{model.Url}_{culture.Substring(0, 2).ToLower()}", content, culture);
-
-                Console.WriteLine($"[DEBUG] Translation saved for {culture} with updated image paths.");
-            }
-
-            Console.WriteLine("[DEBUG] All translations updated successfully.");
-        }
-
-
-        private void SaveContentToResxEdit(BlogResultModel model, string updatedContent, int id)
-        {
-            // Supported languages and their codes
-            string[] cultures = { "tr-TR", "de-DE" };
-            string[] langCodes = { "tr", "de" };
-            string[] titles = { model.TitleTR, model.TitleDE };
-            string[] contents = { model.ContentTR, model.ContentDE };
-
-            for (int i = 0; i < cultures.Length; i++)
-            {
-                string culture = cultures[i];
-                string langCode = langCodes[i]; // Language code for key
-                string title = titles[i];
-                string content = contents[i];
-
-                // Process images in translations
-                string processedContent = ProcessContentImagesForEdit(content);
-
-                // Save translations to .resx
-                _manageResourceService.AddOrUpdateResource($"Title_{id}_{model.Url}_{langCode}", title, culture);
-                _manageResourceService.AddOrUpdateResource($"Content_{id}_{model.Url}_{langCode}", processedContent, culture);
-
-                Console.WriteLine($"[DEBUG] Translation saved for {culture} with updated image paths.");
-            }
-
-            Console.WriteLine("[DEBUG] All translations updated successfully.");
-        }
-
-        private List<string> ExtractImagesFromTranslations(int blogId, string url)
-        {
-            List<string> imagePaths = new();
-            var cultures = new Dictionary<string, string>
-            {
-                { "tr-TR", "tr" },
-                { "de-DE", "de" }
-            };
-
-            foreach (var culture in cultures)
-            {
-                string contentKey = $"Content_{blogId}_{url}_{culture.Value}";
-                string translationContent = _manageResourceService.ReadResourceValue(contentKey, culture.Key);
-
-                if (!string.IsNullOrEmpty(translationContent))
-                {
-                    var matches = System.Text.RegularExpressions.Regex.Matches(
-                        translationContent,
-                        @"src=[""'](?<url>/blog/(img|gif)/.*?\.(jpg|jpeg|png|gif))[""']");
-                    foreach (System.Text.RegularExpressions.Match match in matches)
-                    {
-                        imagePaths.Add(match.Groups["url"].Value.TrimStart('/'));
-                    }
-                }
-            }
-
-            return imagePaths; // Return all extracted image paths
-        }
-
-
-        private async Task DeleteOrphanedImages()
-        {
-            string imgFolder = Path.Combine(_env.WebRootPath, "blog", "img");
-            string gifFolder = Path.Combine(_env.WebRootPath, "blog", "gif");
-
-            // Collect all image paths in the folders
-            var allImages = Directory.GetFiles(imgFolder, "*.*", SearchOption.TopDirectoryOnly)
-                                    .Union(Directory.GetFiles(gifFolder, "*.*", SearchOption.TopDirectoryOnly))
-                                    .ToList();
-
-            // Extract used images from translations
-            var usedImages = new HashSet<string>();
-            var blogs = await _unitOfWork.Blogs.GetAllAsync(); // Get all blogs
-            foreach (var blog in blogs)
-            {
-                usedImages.UnionWith(ExtractImagesFromTranslations(blog.BlogId, blog.Url));
-            }
-
-            // Compare and delete unused images
-            foreach (var image in allImages)
-            {
-                string relativePath = image.Replace(_env.WebRootPath, "").Replace("\\", "/").TrimStart('/');
-
-                if (!usedImages.Contains(relativePath))
-                {
-                    try
-                    {
-                        System.IO.File.Delete(image);
-                        Console.WriteLine($"[DEBUG] Deleted orphaned image: {image}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"[ERROR] Failed to delete orphaned image {image}: {ex.Message}");
-                    }
-                }
-            }
-        }
-
-
-        private void DeleteImages(Blog blog)
-        {
-            // Paths for image storage
-            string imgPath = Path.Combine(_env.WebRootPath, "blog", "img");
-            string gifPath = Path.Combine(_env.WebRootPath, "blog", "gif");
-            string coverPath = Path.Combine(_env.WebRootPath, "img");
-
-            // 1. Delete Cover Image
-            if (!string.IsNullOrEmpty(blog.Image))
-            {
-                string coverImagePath = Path.Combine(coverPath, blog.Image);
-                if (System.IO.File.Exists(coverImagePath))
-                {
-                    System.IO.File.Delete(coverImagePath);
-                    Console.WriteLine($"[DEBUG] Deleted cover image: {coverImagePath}");
-                }
-                else
-                {
-                    Console.WriteLine($"[WARNING] Cover image not found: {coverImagePath}");
-                }
-            }
-
-            // 2. Delete Embedded Images in Content and Translations
-            // Supported cultures and keys
-            var cultures = new Dictionary<string, string>
-            {
-                { "tr-TR", "tr" },
-                { "de-DE", "de" }
-            };
-
-            // Track deleted images to avoid multiple deletions
-            HashSet<string> deletedImages = new HashSet<string>();
-
-            // Iterate through each translation and process its images
-            foreach (var culture in cultures)
-            {
-                // Generate translation content key
-                string contentKey = $"Content_{blog.BlogId}_{blog.Url}_{culture.Value}";
-
-                // Read the content from .resx
-                string translationContent = _manageResourceService.ReadResourceValue(contentKey, culture.Key);
-
-                if (string.IsNullOrEmpty(translationContent))
-                {
-                    Console.WriteLine($"[WARNING] No content found for key {contentKey} in culture {culture.Key}");
-                    continue;
-                }
-
-                // Extract all image URLs using Regex
-                var matches = System.Text.RegularExpressions.Regex.Matches(
-                    translationContent,
-                    @"src=[""'](?<url>/blog/(img|gif)/.*?\.(jpg|jpeg|png|gif))[""']");
-
-                // Process each image
-                foreach (System.Text.RegularExpressions.Match match in matches)
-                {
-                    string imageUrl = match.Groups["url"].Value; // e.g., /blog/img/example1.jpg
-                    string imagePath = Path.Combine(_env.WebRootPath, imageUrl.TrimStart('/')); // Get full path
-
-                    // Skip if already deleted
-                    if (deletedImages.Contains(imagePath))
-                    {
-                        continue; // Avoid duplicate deletions
-                    }
-
-                    if (System.IO.File.Exists(imagePath))
-                    {
-                        try
-                        {
-                            System.IO.File.Delete(imagePath); // Delete file
-                            deletedImages.Add(imagePath);    // Track deleted image
-                            Console.WriteLine($"[DEBUG] Deleted embedded image: {imagePath}");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"[ERROR] Failed to delete image {imagePath}: {ex.Message}");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine($"[WARNING] Embedded image not found: {imagePath}");
-                    }
-                }
-            }
-
-            Console.WriteLine("[DEBUG] All images related to the blog and translations deleted.");
-        }
-
-
-
-        private List<string> ExtractImagePathsFromContent(string content)
-        {
-            var imagePaths = new List<string>();
-
-            if (!string.IsNullOrEmpty(content))
-            {
-                var matches = System.Text.RegularExpressions.Regex.Matches(content, @"src=[""'](?<url>/blog/(img|gif)/.*?\.(jpg|jpeg|png|gif))[""']");
-                foreach (System.Text.RegularExpressions.Match match in matches)
-                {
-                    imagePaths.Add(match.Groups["url"].Value.TrimStart('/')); // Add relative path
-                }
-            }
-
-            return imagePaths;
-        }
-
-
-        private void DeleteTranslations(int id, string url)
-        {
-            // Supported languages and their culture codes
-            var cultures = new Dictionary<string, string>
-            {
-                { "tr-TR", "tr" },
-                { "de-DE", "de" }
-            };
-
-            // Loop through each culture and delete its translations
-            foreach (var culture in cultures)
-            {
-                string cultureCode = culture.Value; // 'en', 'tr', etc.
-                string lang = culture.Key;         // 'en-US', 'tr-TR', etc.
-
-                // Construct keys with culture suffix
-                string titleKey = $"Title_{id}_{url}_{cultureCode}";
-                string contentKey = $"Content_{id}_{url}_{cultureCode}";
-
-                // Delete resources for the current language
-                _manageResourceService.DeleteResource(titleKey, lang);
-                _manageResourceService.DeleteResource(contentKey, lang);
-
-                Console.WriteLine($"[DEBUG] Deleted translations for Blog ID {id} in culture {lang}");
-            }
-        }
-
-        private void DeleteUnusedImages(List<string> unusedImages)
-        {
-            foreach (var imgPath in unusedImages)
-            {
-                string fullPath = Path.Combine(_env.WebRootPath, imgPath.TrimStart('/'));
-                if (System.IO.File.Exists(fullPath))
-                {
-                    System.IO.File.Delete(fullPath);
-                    Console.WriteLine($"[DEBUG] Deleted unused image: {fullPath}");
-                }
-                else
-                {
-                    Console.WriteLine($"[WARNING] File not found: {fullPath}");
-                }
-            }
-        }
-
-        [HttpGet("GetQuizQuestions")]
-        public async Task<IActionResult> GetQuizQuestions(int quizId)
-        {
-            // Use a repository method that loads the quiz including its questions.
-            var quiz = await _unitOfWork.Quizzes.GetByIdWithQuestions(quizId);
-            if (quiz == null)
-            {
-                return NotFound();
-            }
-
-            var questions = quiz.Questions.Select(q => new
-            {
-                QuestionId = q.Id,
-                QuestionText = q.QuestionText
-            }).ToList();
-
-            return Json(questions);
-        }
-
-        // GET: Blog Create
         [HttpGet("BlogCreate")]
         public async Task<IActionResult> BlogCreate()
         {
-            var model = new BlogCreateModel();
+            var model = new BlogCreateModel
+            {
+                // Initialize with empty GUID for tracking temp uploads
+                TempBlogId = Guid.NewGuid().ToString()
+            };
             
             ViewBag.Categories = (await _unitOfWork.Categories.GetAllAsync())
                 .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
@@ -1304,10 +801,10 @@ namespace SpeakingClub.Controllers
                 .Select(t => new SelectListItem(t.Name, t.TagId.ToString()));
             ViewBag.Quizzes = (await _unitOfWork.Quizzes.GetAllAsync())
                 .Select(q => new SelectListItem(q.Title, q.Id.ToString()));
+                
             return View(model);
         }
 
-        // POST: Blog Create
         [HttpPost("BlogCreate")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BlogCreate(BlogCreateModel model)
@@ -1323,13 +820,14 @@ namespace SpeakingClub.Controllers
                 return View(model);
             }
 
+            using var transaction = await _unitOfWork.BeginTransactionAsync();
             try
             {
                 // Create blog entity
                 var blog = new Blog
                 {
                     Title = model.Title,
-                    Content = model.Content ?? "",
+                    Content = "", // Will be filled after moving images
                     Url = model.Url,
                     Author = model.Author,
                     Date = DateTime.UtcNow,
@@ -1339,26 +837,42 @@ namespace SpeakingClub.Controllers
                     SelectedQuestionId = model.SelectedQuestionId
                 };
 
-                // Handle cover image with hash-based deduplication
+                // Handle cover image
                 if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
-                    blog.Image = await SaveBlogCoverImage(model.ImageFile);
+                    blog.Image = await SaveBlogCoverImageAsync(model.ImageFile);
                 }
 
-                // Save blog to get ID
+                // Save blog to get ID (needed for image tracking)
                 await _unitOfWork.Blogs.AddAsync(blog);
                 await _unitOfWork.SaveAsync();
 
-                // Move temp images to permanent locations and update URLs
-                blog.Content = MoveTempImagesToBlog(blog.Content);
-                var contentTR = MoveTempImagesToBlog(model.ContentTR ?? "");
-                var contentDE = MoveTempImagesToBlog(model.ContentDE ?? "");
+                // Process and move temp images to permanent storage
+                var imageTracker = new BlogImageTracker(blog.BlogId, blog.Url);
+                
+                blog.Content = await ProcessAndMoveImagesAsync(
+                    model.Content ?? "", 
+                    blog.BlogId, 
+                    imageTracker);
+                    
+                var contentTR = await ProcessAndMoveImagesAsync(
+                    model.ContentTR ?? "", 
+                    blog.BlogId, 
+                    imageTracker);
+                    
+                var contentDE = await ProcessAndMoveImagesAsync(
+                    model.ContentDE ?? "", 
+                    blog.BlogId, 
+                    imageTracker);
 
-                // Save translations to resource files
+                // Save image tracking data
+                await SaveImageTrackingAsync(imageTracker);
+
+                // Save translations
                 SaveBlogTranslations(blog.BlogId, blog.Url, model.Title, blog.Content, 
                     model.TitleTR, contentTR, model.TitleDE, contentDE);
 
-                // Handle category (Blog has single Category, not collection)
+                // Handle category
                 if (model.SelectedCategoryIds != null && model.SelectedCategoryIds.Any())
                 {
                     blog.CategoryId = model.SelectedCategoryIds.First();
@@ -1374,14 +888,19 @@ namespace SpeakingClub.Controllers
                 _unitOfWork.Blogs.Update(blog);
                 await _unitOfWork.SaveAsync();
 
-                // Clean up temp directory
-                CleanupTempFiles();
+                await transaction.CommitAsync();
+
+                // Clean up temp directory (run asynchronously)
+                _ = CleanupTempFilesAsync();
 
                 TempData["SuccessMessage"] = "Blog created successfully!";
+                _logger.LogInformation("Blog {BlogId} created successfully by {User}", blog.BlogId, User.Identity?.Name);
+                
                 return RedirectToAction("Index", new { scrollTo = "BlogManagement" });
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error creating blog");
                 TempData["ErrorMessage"] = $"Error creating blog: {ex.Message}";
                 
@@ -1395,7 +914,6 @@ namespace SpeakingClub.Controllers
             }
         }
 
-        // GET: Blog Edit
         [HttpGet("BlogEdit/{id}")]
         public async Task<IActionResult> BlogEdit(int id)
         {
@@ -1406,7 +924,7 @@ namespace SpeakingClub.Controllers
                 return RedirectToAction("Index");
             }
 
-            // Load translations from resource files
+            // Load translations
             var titleTR = _dynamicResourceService.GetResource($"Title_{blog.BlogId}_{blog.Url}_tr", "tr-TR");
             var contentTR = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_tr", "tr-TR");
             var titleDE = _dynamicResourceService.GetResource($"Title_{blog.BlogId}_{blog.Url}_de", "de-DE");
@@ -1442,7 +960,6 @@ namespace SpeakingClub.Controllers
             return View(model);
         }
 
-        // POST: Blog Edit
         [HttpPost("BlogEdit/{id}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BlogEdit(BlogEditModel model)
@@ -1458,6 +975,7 @@ namespace SpeakingClub.Controllers
                 return View(model);
             }
 
+            using var transaction = await _unitOfWork.BeginTransactionAsync();
             try
             {
                 var blog = await _unitOfWork.Blogs.GetAsync(model.BlogId);
@@ -1467,14 +985,9 @@ namespace SpeakingClub.Controllers
                     return RedirectToAction("Index");
                 }
 
-                // Track old images
-                var oldCoverImage = blog.Image;
-                var oldContentImages = ExtractImagePathsFromContent(blog.Content);
-                var oldContentTR = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_tr", "tr-TR");
-                var oldContentDE = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_de", "de-DE");
-                var oldImagesTR = ExtractImagePathsFromContent(oldContentTR);
-                var oldImagesDE = ExtractImagePathsFromContent(oldContentDE);
-                var allOldImages = oldContentImages.Concat(oldImagesTR).Concat(oldImagesDE).Distinct().ToList();
+                // Load existing image tracker
+                var imageTracker = await LoadImageTrackerAsync(blog.BlogId, blog.Url);
+                var oldImages = new HashSet<string>(imageTracker.GetAllImages());
 
                 // Update basic properties
                 blog.Title = model.Title;
@@ -1485,39 +998,60 @@ namespace SpeakingClub.Controllers
                 blog.RawMaps = model.RawMaps;
                 blog.SelectedQuestionId = model.SelectedQuestionId;
 
-                // Handle new cover image
+                // Handle cover image
+                var oldCoverImage = blog.Image;
                 if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
-                    if (!string.IsNullOrEmpty(oldCoverImage))
+                    blog.Image = await SaveBlogCoverImageAsync(model.ImageFile);
+                    
+                    // Delete old cover if it exists and is different
+                    if (!string.IsNullOrEmpty(oldCoverImage) && oldCoverImage != blog.Image)
                     {
-                        DeleteBlogFile(oldCoverImage);
+                        await DeleteBlogFileAsync(oldCoverImage);
                     }
-                    blog.Image = await SaveBlogCoverImage(model.ImageFile);
                 }
 
-                // Move temp images and update content
-                blog.Content = MoveTempImagesToBlog(model.Content ?? "");
-                var contentTR = MoveTempImagesToBlog(model.ContentTR ?? "");
-                var contentDE = MoveTempImagesToBlog(model.ContentDE ?? "");
+                // Process content and track new images
+                var newImageTracker = new BlogImageTracker(blog.BlogId, blog.Url);
+                
+                blog.Content = await ProcessAndMoveImagesAsync(
+                    model.Content ?? "", 
+                    blog.BlogId, 
+                    newImageTracker);
+                    
+                var contentTR = await ProcessAndMoveImagesAsync(
+                    model.ContentTR ?? "", 
+                    blog.BlogId, 
+                    newImageTracker);
+                    
+                var contentDE = await ProcessAndMoveImagesAsync(
+                    model.ContentDE ?? "", 
+                    blog.BlogId, 
+                    newImageTracker);
 
-                // Get new images
-                var newContentImages = ExtractImagePathsFromContent(blog.Content);
-                var newImagesTR = ExtractImagePathsFromContent(contentTR);
-                var newImagesDE = ExtractImagePathsFromContent(contentDE);
-                var allNewImages = newContentImages.Concat(newImagesTR).Concat(newImagesDE).Distinct().ToList();
-
-                // Delete unused images
-                var unusedImages = allOldImages.Except(allNewImages).ToList();
-                foreach (var img in unusedImages)
+                // Find and delete orphaned images
+                var newImages = new HashSet<string>(newImageTracker.GetAllImages());
+                var orphanedImages = oldImages.Except(newImages).ToList();
+                
+                if (orphanedImages.Any())
                 {
-                    DeleteBlogFile("/" + img);
+                    _logger.LogInformation("Found {Count} orphaned images for blog {BlogId}", 
+                        orphanedImages.Count, blog.BlogId);
+                    
+                    foreach (var img in orphanedImages)
+                    {
+                        await DeleteBlogFileAsync(img);
+                    }
                 }
 
-                // Update translations
+                // Update image tracking
+                await SaveImageTrackingAsync(newImageTracker);
+
+                // Save translations
                 SaveBlogTranslations(blog.BlogId, blog.Url, model.Title, blog.Content, 
                     model.TitleTR, contentTR, model.TitleDE, contentDE);
 
-                // Update category (single, not collection)
+                // Update category
                 if (model.SelectedCategoryIds != null && model.SelectedCategoryIds.Any())
                 {
                     blog.CategoryId = model.SelectedCategoryIds.First();
@@ -1538,13 +1072,19 @@ namespace SpeakingClub.Controllers
                 _unitOfWork.Blogs.Update(blog);
                 await _unitOfWork.SaveAsync();
 
-                CleanupTempFiles();
+                await transaction.CommitAsync();
+
+                // Clean up temp files
+                _ = CleanupTempFilesAsync();
 
                 TempData["SuccessMessage"] = "Blog updated successfully!";
+                _logger.LogInformation("Blog {BlogId} updated successfully by {User}", blog.BlogId, User.Identity?.Name);
+                
                 return RedirectToAction("Index", new { scrollTo = "BlogManagement" });
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error updating blog {BlogId}", model.BlogId);
                 TempData["ErrorMessage"] = $"Error updating blog: {ex.Message}";
                 
@@ -1558,11 +1098,11 @@ namespace SpeakingClub.Controllers
             }
         }
 
-        // POST: Blog Delete
-        [HttpPost("BlogDelete/{id}")]
+        [HttpPost("BlogDelete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BlogDelete(int id)
         {
+            using var transaction = await _unitOfWork.BeginTransactionAsync();
             try
             {
                 var blog = await _unitOfWork.Blogs.GetAsync(id);
@@ -1572,188 +1112,1026 @@ namespace SpeakingClub.Controllers
                     return RedirectToAction("Index");
                 }
 
+                _logger.LogInformation("Deleting blog {BlogId} - {Title}", blog.BlogId, blog.Title);
+
+                // Load image tracker and get all images
+                var imageTracker = await LoadImageTrackerAsync(blog.BlogId, blog.Url);
+                var allImages = imageTracker.GetAllImages().ToList();
+
                 // Delete cover image
                 if (!string.IsNullOrEmpty(blog.Image))
                 {
-                    DeleteBlogFile(blog.Image);
+                    await DeleteBlogFileAsync(blog.Image);
                 }
 
-                // Delete all content images from all languages
-                var contentImages = ExtractImagePathsFromContent(blog.Content);
-                var contentTR = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_tr", "tr-TR");
-                var contentDE = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_de", "de-DE");
-                var imagesTR = ExtractImagePathsFromContent(contentTR);
-                var imagesDE = ExtractImagePathsFromContent(contentDE);
-                
-                var allImages = contentImages.Concat(imagesTR).Concat(imagesDE).Distinct();
+                // Delete all content images
                 foreach (var img in allImages)
                 {
-                    DeleteBlogFile("/" + img);
+                    await DeleteBlogFileAsync(img);
                 }
 
+                // Delete image tracking file
+                await DeleteImageTrackingAsync(blog.BlogId, blog.Url);
+
                 // Delete translations
-                DeleteTranslations(blog.BlogId, blog.Url);
+                DeleteBlogTranslations(blog.BlogId, blog.Url);
 
                 // Remove blog
                 _unitOfWork.Blogs.Remove(blog);
                 await _unitOfWork.SaveAsync();
 
-                TempData["SuccessMessage"] = "Blog and all associated files deleted successfully!";
+                await transaction.CommitAsync();
+
+                TempData["SuccessMessage"] = $"Blog '{blog.Title}' deleted successfully!";
+                _logger.LogInformation("Blog {BlogId} deleted successfully", blog.BlogId);
+                
                 return RedirectToAction("Index", new { scrollTo = "BlogManagement" });
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error deleting blog {BlogId}", id);
                 TempData["ErrorMessage"] = $"Error deleting blog: {ex.Message}";
                 return RedirectToAction("Index");
             }
         }
 
-        // Helper: Save cover image with hash-based deduplication
-        private async Task<string?> SaveBlogCoverImage(IFormFile file)
+        #endregion
+
+
+        #region Image Upload & Management
+
+        /// <summary>
+        /// Handles file uploads from CKEditor. Files are temporarily stored with hash-based names
+        /// to prevent duplicates and enable efficient tracking.
+        /// </summary>
+        [HttpPost("UploadFile")]
+        public async Task<IActionResult> UploadFile(IFormFile upload, string blogId)
+        {
+            if (upload == null || upload.Length == 0)
+            {
+                return Json(new { uploaded = false, error = new { message = "No file uploaded." } });
+            }
+
+            try
+            {
+                // Validate file type
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var extension = Path.GetExtension(upload.FileName).ToLower();
+                
+                if (!allowedExtensions.Contains(extension))
+                {
+                    return Json(new { uploaded = false, error = new { message = $"File type {extension} not allowed." } });
+                }
+
+                // Validate file size (5MB limit)
+                const long maxSize = 5 * 1024 * 1024;
+                if (upload.Length > maxSize)
+                {
+                    return Json(new { uploaded = false, error = new { message = "File size exceeds 5MB limit." } });
+                }
+
+                // Calculate file hash for deduplication
+                string fileHash = await CalculateFileHashAsync(upload);
+                string fileName = $"{fileHash}{extension}";
+                
+                // Save to temp directory
+                string tempPath = Path.Combine(_env.WebRootPath, "temp");
+                Directory.CreateDirectory(tempPath);
+                
+                string tempFilePath = Path.Combine(tempPath, fileName);
+
+                // Only save if file doesn't already exist
+                if (!System.IO.File.Exists(tempFilePath))
+                {
+                    using (var fileStream = new FileStream(tempFilePath, FileMode.Create))
+                    {
+                        await upload.CopyToAsync(fileStream);
+                    }
+                    _logger.LogDebug("Uploaded new temp file: {FileName} (Hash: {Hash})", fileName, fileHash);
+                }
+                else
+                {
+                    _logger.LogDebug("File already exists in temp: {FileName}", fileName);
+                }
+
+                // Return URL for CKEditor
+                string tempUrl = $"/temp/{fileName}";
+                return Json(new { uploaded = true, url = tempUrl });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading file");
+                return Json(new { uploaded = false, error = new { message = "Upload failed: " + ex.Message } });
+            }
+        }
+
+        /// <summary>
+        /// Saves a blog cover image with hash-based deduplication
+        /// </summary>
+        private async Task<string?> SaveBlogCoverImageAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
                 return null;
 
-            // Calculate file hash
-            string fileHash;
-            using (var md5 = System.Security.Cryptography.MD5.Create())
+            try
             {
-                using (var stream = file.OpenReadStream())
+                // Validate
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                var extension = Path.GetExtension(file.FileName).ToLower();
+                
+                if (!allowedExtensions.Contains(extension))
                 {
-                    fileHash = BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "").ToLower();
+                    _logger.LogWarning("Invalid cover image extension: {Extension}", extension);
+                    return null;
                 }
+
+                // Calculate hash
+                string fileHash = await CalculateFileHashAsync(file);
+                string fileName = $"{fileHash}{extension}";
+                
+                // Determine directory (gif vs img)
+                string subDir = extension == ".gif" ? "gif" : "img";
+                string dirPath = Path.Combine(_env.WebRootPath, "blog", subDir);
+                Directory.CreateDirectory(dirPath);
+
+                string filePath = Path.Combine(dirPath, fileName);
+                string relativePath = $"/blog/{subDir}/{fileName}";
+
+                // Save only if doesn't exist
+                if (!System.IO.File.Exists(filePath))
+                {
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    using (var input = file.OpenReadStream())
+                    {
+                        if (input.CanSeek)
+                            input.Seek(0, SeekOrigin.Begin);
+                        await input.CopyToAsync(fileStream);
+                    }
+                    _logger.LogInformation("Saved blog cover image: {Path}", relativePath);
+                }
+                else
+                {
+                    _logger.LogDebug("Cover image already exists: {Path}", relativePath);
+                }
+
+                return relativePath;
             }
-
-            string extension = Path.GetExtension(file.FileName).ToLower();
-            string fileName = $"{fileHash}{extension}";
-            string subDir = extension == ".gif" ? "gif" : "img";
-            string dirPath = Path.Combine(_env.WebRootPath, "blog", subDir);
-            Directory.CreateDirectory(dirPath);
-
-            string filePath = Path.Combine(dirPath, fileName);
-            string relativePath = $"/blog/{subDir}/{fileName}";
-
-            if (!System.IO.File.Exists(filePath))
+            catch (Exception ex)
             {
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    await file.CopyToAsync(fileStream);
-                }
-                _logger.LogInformation("Saved blog image: {Path}", relativePath);
+                _logger.LogError(ex, "Error saving blog cover image");
+                return null;
             }
-
-            return relativePath;
         }
 
-        // Helper: Move temp images to blog directory
-        private string MoveTempImagesToBlog(string content)
+        /// <summary>
+        /// Processes HTML content, moves temporary images to permanent storage,
+        /// and tracks all images for future cleanup
+        /// </summary>
+        private async Task<string> ProcessAndMoveImagesAsync(string content, int blogId, BlogImageTracker tracker)
         {
             if (string.IsNullOrEmpty(content))
                 return content;
 
-            var matches = Regex.Matches(content, @"src=[""'](?<url>/temp/[^""']+)[""']");
-            
-            foreach (Match match in matches)
+            try
             {
-                string tempUrl = match.Groups["url"].Value;
-                string tempFilePath = Path.Combine(_env.WebRootPath, tempUrl.TrimStart('/').Replace("/", "\\"));
-
-                if (System.IO.File.Exists(tempFilePath))
+                // Find all temp images in content
+                var matches = Regex.Matches(content, @"src=[""'](?<url>/temp/[^""']+)[""']", RegexOptions.IgnoreCase);
+                
+                foreach (Match match in matches)
                 {
-                    string fileName = Path.GetFileName(tempFilePath);
-                    string extension = Path.GetExtension(fileName).ToLower();
-                    string subDir = extension == ".gif" ? "gif" : "img";
-                    
-                    string targetDir = Path.Combine(_env.WebRootPath, "blog", subDir);
-                    Directory.CreateDirectory(targetDir);
-                    
-                    string targetPath = Path.Combine(targetDir, fileName);
-                    string newUrl = $"/blog/{subDir}/{fileName}";
+                    string tempUrl = match.Groups["url"].Value;
+                    string tempFilePath = Path.Combine(_env.WebRootPath, tempUrl.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
 
-                    if (!System.IO.File.Exists(targetPath))
+                    if (System.IO.File.Exists(tempFilePath))
                     {
-                        System.IO.File.Move(tempFilePath, targetPath);
+                        string fileName = Path.GetFileName(tempFilePath);
+                        string extension = Path.GetExtension(fileName).ToLower();
+                        
+                        // Determine target directory
+                        string subDir = extension == ".gif" ? "gif" : "img";
+                        string targetDir = Path.Combine(_env.WebRootPath, "blog", subDir);
+                        Directory.CreateDirectory(targetDir);
+                        
+                        string targetPath = Path.Combine(targetDir, fileName);
+                        string newUrl = $"/blog/{subDir}/{fileName}";
+
+                        // Move or delete temp file
+                        if (!System.IO.File.Exists(targetPath))
+                        {
+                            System.IO.File.Move(tempFilePath, targetPath);
+                            _logger.LogDebug("Moved temp image {FileName} to permanent storage", fileName);
+                        }
+                        else
+                        {
+                            System.IO.File.Delete(tempFilePath);
+                            _logger.LogDebug("Deleted duplicate temp image {FileName}", fileName);
+                        }
+
+                        // Replace URL in content
+                        content = content.Replace(tempUrl, newUrl);
+                        
+                        // Track the image
+                        tracker.AddImage(newUrl);
                     }
                     else
                     {
-                        System.IO.File.Delete(tempFilePath);
+                        _logger.LogWarning("Temp image not found: {Path}", tempFilePath);
                     }
-
-                    content = content.Replace(tempUrl, newUrl);
                 }
-            }
 
-            return content;
+                // Also track any existing blog images already in content (for edit scenarios)
+                var existingMatches = Regex.Matches(content, @"src=[""'](?<url>/blog/(img|gif)/[^""']+)[""']", RegexOptions.IgnoreCase);
+                foreach (Match match in existingMatches)
+                {
+                    tracker.AddImage(match.Groups["url"].Value);
+                }
+
+                return content;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing images for blog {BlogId}", blogId);
+                return content;
+            }
         }
 
-        // Helper: Delete blog file
-        private void DeleteBlogFile(string relativePath)
+        /// <summary>
+        /// Deletes a blog file (image or other asset)
+        /// </summary>
+        private async Task DeleteBlogFileAsync(string relativePath)
         {
             if (string.IsNullOrEmpty(relativePath))
                 return;
 
+            await Task.Run(() =>
+            {
+                try
+                {
+                    string fullPath = Path.Combine(_env.WebRootPath, relativePath.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
+                    
+                    if (System.IO.File.Exists(fullPath))
+                    {
+                        System.IO.File.Delete(fullPath);
+                        _logger.LogInformation("Deleted blog file: {Path}", relativePath);
+                    }
+                    else
+                    {
+                        _logger.LogDebug("File not found (may have been deleted already): {Path}", relativePath);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error deleting file: {Path}", relativePath);
+                }
+            });
+        }
+
+        /// <summary>
+        /// Calculates MD5 hash of a file for deduplication
+        /// </summary>
+        private async Task<string> CalculateFileHashAsync(IFormFile file)
+        {
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            using var stream = file.OpenReadStream();
+            var hash = await md5.ComputeHashAsync(stream);
+            return BitConverter.ToString(hash).Replace("-", "").ToLower();
+        }
+
+        #endregion
+
+        #region Image Tracking System
+
+        /// <summary>
+        /// Saves image tracking data to JSON file for a blog
+        /// </summary>
+        private async Task SaveImageTrackingAsync(BlogImageTracker tracker)
+        {
             try
             {
-                string fullPath = Path.Combine(_env.WebRootPath, relativePath.TrimStart('/').Replace("/", "\\"));
+                string trackingDir = Path.Combine(_env.WebRootPath, "blog", "tracking");
+                Directory.CreateDirectory(trackingDir);
                 
-                if (System.IO.File.Exists(fullPath))
-                {
-                    System.IO.File.Delete(fullPath);
-                    _logger.LogInformation("Deleted blog file: {Path}", fullPath);
-                }
+                string trackingFile = Path.Combine(trackingDir, $"blog_{tracker.BlogId}_{tracker.UrlSlug}.json");
+                
+                var json = System.Text.Json.JsonSerializer.Serialize(tracker, new System.Text.Json.JsonSerializerOptions 
+                { 
+                    WriteIndented = true 
+                });
+                
+                await System.IO.File.WriteAllTextAsync(trackingFile, json);
+                _logger.LogDebug("Saved image tracking for blog {BlogId}", tracker.BlogId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting file: {Path}", relativePath);
+                _logger.LogError(ex, "Error saving image tracking for blog {BlogId}", tracker.BlogId);
             }
         }
 
-        // Helper: Save translations
-        private void SaveBlogTranslations(int blogId, string url, string titleEN, string contentEN, 
-            string titleTR, string contentTR, string titleDE, string contentDE)
-        {
-            _manageResourceService.AddOrUpdateResource($"Title_{blogId}_{url}_en", titleEN, "en-US");
-            _manageResourceService.AddOrUpdateResource($"Content_{blogId}_{url}_en", contentEN, "en-US");
-
-            if (!string.IsNullOrEmpty(titleTR))
-                _manageResourceService.AddOrUpdateResource($"Title_{blogId}_{url}_tr", titleTR, "tr-TR");
-            if (!string.IsNullOrEmpty(contentTR))
-                _manageResourceService.AddOrUpdateResource($"Content_{blogId}_{url}_tr", contentTR, "tr-TR");
-
-            if (!string.IsNullOrEmpty(titleDE))
-                _manageResourceService.AddOrUpdateResource($"Title_{blogId}_{url}_de", titleDE, "de-DE");
-            if (!string.IsNullOrEmpty(contentDE))
-                _manageResourceService.AddOrUpdateResource($"Content_{blogId}_{url}_de", contentDE, "de-DE");
-        }
-
-        // Helper: Clean up temp files older than 24 hours
-        private void CleanupTempFiles()
+        /// <summary>
+        /// Loads image tracking data from JSON file
+        /// </summary>
+        private async Task<BlogImageTracker> LoadImageTrackerAsync(int blogId, string urlSlug)
         {
             try
             {
-                string tempPath = Path.Combine(_env.WebRootPath, "temp");
+                string trackingDir = Path.Combine(_env.WebRootPath, "blog", "tracking");
+                string trackingFile = Path.Combine(trackingDir, $"blog_{blogId}_{urlSlug}.json");
                 
-                if (!Directory.Exists(tempPath))
-                    return;
-
-                var files = Directory.GetFiles(tempPath);
-                var cutoffTime = DateTime.Now.AddHours(-24);
-
-                foreach (var file in files)
+                if (System.IO.File.Exists(trackingFile))
                 {
-                    var fileInfo = new FileInfo(file);
-                    if (fileInfo.LastWriteTime < cutoffTime)
+                    var json = await System.IO.File.ReadAllTextAsync(trackingFile);
+                    var tracker = System.Text.Json.JsonSerializer.Deserialize<BlogImageTracker>(json);
+                    if (tracker != null)
                     {
-                        System.IO.File.Delete(file);
-                        _logger.LogInformation("Cleaned up old temp file: {File}", file);
+                        _logger.LogDebug("Loaded image tracking for blog {BlogId}", blogId);
+                        return tracker;
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error cleaning up temp files");
+                _logger.LogError(ex, "Error loading image tracking for blog {BlogId}", blogId);
             }
+            
+            // Return empty tracker if loading fails
+            return new BlogImageTracker(blogId, urlSlug);
+        }
+
+        /// <summary>
+        /// Deletes image tracking file
+        /// </summary>
+        private async Task DeleteImageTrackingAsync(int blogId, string urlSlug)
+        {
+            await Task.Run(() =>
+            {
+                try
+                {
+                    string trackingDir = Path.Combine(_env.WebRootPath, "blog", "tracking");
+                    string trackingFile = Path.Combine(trackingDir, $"blog_{blogId}_{urlSlug}.json");
+                    
+                    if (System.IO.File.Exists(trackingFile))
+                    {
+                        System.IO.File.Delete(trackingFile);
+                        _logger.LogInformation("Deleted image tracking for blog {BlogId}", blogId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error deleting image tracking for blog {BlogId}", blogId);
+                }
+            });
+        }
+
+        #endregion
+
+        #region Translation Management
+
+        /// <summary>
+        /// Saves blog translations to resource files
+        /// </summary>
+        private void SaveBlogTranslations(int blogId, string url, string titleEN, string contentEN, 
+            string titleTR, string contentTR, string titleDE, string contentDE)
+        {
+            try
+            {
+                // English (default)
+                _manageResourceService.AddOrUpdateResource($"Title_{blogId}_{url}_en", titleEN, "en-US");
+                _manageResourceService.AddOrUpdateResource($"Content_{blogId}_{url}_en", contentEN, "en-US");
+
+                // Turkish
+                if (!string.IsNullOrEmpty(titleTR))
+                    _manageResourceService.AddOrUpdateResource($"Title_{blogId}_{url}_tr", titleTR, "tr-TR");
+                if (!string.IsNullOrEmpty(contentTR))
+                    _manageResourceService.AddOrUpdateResource($"Content_{blogId}_{url}_tr", contentTR, "tr-TR");
+
+                // German
+                if (!string.IsNullOrEmpty(titleDE))
+                    _manageResourceService.AddOrUpdateResource($"Title_{blogId}_{url}_de", titleDE, "de-DE");
+                if (!string.IsNullOrEmpty(contentDE))
+                    _manageResourceService.AddOrUpdateResource($"Content_{blogId}_{url}_de", contentDE, "de-DE");
+                
+                _logger.LogDebug("Saved translations for blog {BlogId}", blogId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving translations for blog {BlogId}", blogId);
+            }
+        }
+
+        /// <summary>
+        /// Deletes all translations for a blog
+        /// </summary>
+        private void DeleteBlogTranslations(int blogId, string url)
+        {
+            try
+            {
+                var cultures = new Dictionary<string, string>
+                {
+                    { "en-US", "en" },
+                    { "tr-TR", "tr" },
+                    { "de-DE", "de" }
+                };
+
+                foreach (var (culture, code) in cultures)
+                {
+                    string titleKey = $"Title_{blogId}_{url}_{code}";
+                    string contentKey = $"Content_{blogId}_{url}_{code}";
+
+                    _manageResourceService.DeleteResource(titleKey, culture);
+                    _manageResourceService.DeleteResource(contentKey, culture);
+                }
+                
+                _logger.LogDebug("Deleted translations for blog {BlogId}", blogId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting translations for blog {BlogId}", blogId);
+            }
+        }
+
+        #endregion
+
+        #region Cleanup Operations
+
+        /// <summary>
+        /// Cleans up temporary files older than 24 hours
+        /// </summary>
+        private async Task CleanupTempFilesAsync()
+        {
+            await Task.Run(() =>
+            {
+                try
+                {
+                    string tempPath = Path.Combine(_env.WebRootPath, "temp");
+                    
+                    if (!Directory.Exists(tempPath))
+                        return;
+
+                    var files = Directory.GetFiles(tempPath);
+                    var cutoffTime = DateTime.Now.AddHours(-24);
+                    int deletedCount = 0;
+
+                    foreach (var file in files)
+                    {
+                        try
+                        {
+                            var fileInfo = new FileInfo(file);
+                            if (fileInfo.LastWriteTime < cutoffTime)
+                            {
+                                System.IO.File.Delete(file);
+                                deletedCount++;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Could not delete temp file: {File}", file);
+                        }
+                    }
+
+                    if (deletedCount > 0)
+                    {
+                        _logger.LogInformation("Cleaned up {Count} old temp files", deletedCount);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error during temp file cleanup");
+                }
+            });
+        }
+
+        /// <summary>
+        /// Performs a full audit of blog images and deletes orphaned files
+        /// This should be run periodically (e.g., via scheduled job)
+        /// </summary>
+        [HttpPost("CleanupOrphanedBlogImages")]
+        [Authorize(Roles = "Root,Admin")]
+        public async Task<IActionResult> CleanupOrphanedBlogImages()
+        {
+            try
+            {
+                _logger.LogInformation("Starting orphaned image cleanup");
+                
+                string? imgDir = Path.Combine(_env.WebRootPath, "blog", "img");
+                string? gifDir = Path.Combine(_env.WebRootPath, "blog", "gif");
+                
+                // Get all files
+                var allFiles = new HashSet<string>();
+                if (Directory.Exists(imgDir))
+                    allFiles.UnionWith(Directory.GetFiles(imgDir)
+                        .Select(Path.GetFileName)
+                        .Where(fn => fn != null)
+                        .Select(fn => fn!));
+                if (Directory.Exists(gifDir))
+                    allFiles.UnionWith(Directory.GetFiles(gifDir)
+                        .Select(Path.GetFileName)
+                        .Where(fn => fn != null)
+                        .Select(fn => fn!));
+
+                // Get all tracked images
+                var trackedImages = new HashSet<string>();
+                var blogs = await _unitOfWork.Blogs.GetAllAsync();
+                
+                foreach (var blog in blogs)
+                {
+                    var tracker = await LoadImageTrackerAsync(blog.BlogId, blog.Url);
+                    foreach (var img in tracker.GetAllImages())
+                    {
+                        var fileName = Path.GetFileName(img);
+                        trackedImages.Add(fileName);
+                    }
+                }
+
+                // Find orphans
+                var orphans = allFiles.Except(trackedImages).ToList();
+                
+                // Delete orphans
+                int deletedCount = 0;
+                foreach (var orphan in orphans)
+                {
+                    try
+                    {
+                        var imgPath = Path.Combine(imgDir, orphan);
+                        var gifPath = Path.Combine(gifDir, orphan);
+                        
+                        if (System.IO.File.Exists(imgPath))
+                        {
+                            System.IO.File.Delete(imgPath);
+                            deletedCount++;
+                        }
+                        else if (System.IO.File.Exists(gifPath))
+                        {
+                            System.IO.File.Delete(gifPath);
+                            deletedCount++;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Could not delete orphaned file: {File}", orphan);
+                    }
+                }
+
+                TempData["SuccessMessage"] = $"Cleanup complete. Deleted {deletedCount} orphaned images.";
+                _logger.LogInformation("Orphaned image cleanup complete. Deleted {Count} files", deletedCount);
+                
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during orphaned image cleanup");
+                TempData["ErrorMessage"] = "Error during cleanup: " + ex.Message;
+                return RedirectToAction("Index");
+            }
+        }
+
+        #endregion
+
+        #region Migration Tools
+
+        /// <summary>
+        /// ONE-TIME MIGRATION: Generates tracking files for all existing blogs
+        /// This extracts all images from existing blog content and creates tracking files
+        /// </summary>
+        [HttpPost("MigrateExistingBlogs")]
+        [Authorize(Roles = "Root")]
+        public async Task<IActionResult> MigrateExistingBlogs()
+        {
+            try
+            {
+                _logger.LogInformation("Starting blog migration to tracking system");
+                
+                var blogs = await _unitOfWork.Blogs.GetAllAsync();
+                int successCount = 0;
+                int errorCount = 0;
+                var errors = new List<string>();
+
+                foreach (var blog in blogs)
+                {
+                    try
+                    {
+                        _logger.LogInformation("Migrating blog {BlogId} - {Title}", blog.BlogId, blog.Title);
+                        
+                        var tracker = new BlogImageTracker(blog.BlogId, blog.Url);
+                        
+                        // Extract images from main content
+                        ExtractImagesFromContent(blog.Content, tracker);
+                        
+                        // Extract images from translations
+                        var contentTR = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_tr", "tr-TR");
+                        var contentDE = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_de", "de-DE");
+                        
+                        if (!string.IsNullOrEmpty(contentTR))
+                            ExtractImagesFromContent(contentTR, tracker);
+                            
+                        if (!string.IsNullOrEmpty(contentDE))
+                            ExtractImagesFromContent(contentDE, tracker);
+                        
+                        // Save tracking file
+                        await SaveImageTrackingAsync(tracker);
+                        
+                        successCount++;
+                        _logger.LogInformation("✓ Successfully migrated blog {BlogId}", blog.BlogId);
+                    }
+                    catch (Exception ex)
+                    {
+                        errorCount++;
+                        var errorMsg = $"Failed to migrate blog {blog.BlogId}: {ex.Message}";
+                        errors.Add(errorMsg);
+                        _logger.LogError(ex, "Error migrating blog {BlogId}", blog.BlogId);
+                    }
+                }
+
+                var summary = new
+                {
+                    TotalBlogs = blogs.Count(),
+                    Successful = successCount,
+                    Failed = errorCount,
+                    Errors = errors
+                };
+
+                TempData["SuccessMessage"] = $"Migration complete! {successCount} blogs migrated successfully. {errorCount} errors.";
+                
+                if (errors.Any())
+                {
+                    TempData["WarningMessage"] = "Some blogs failed migration. Check logs for details.";
+                }
+                
+                _logger.LogInformation("Migration complete: {Summary}", System.Text.Json.JsonSerializer.Serialize(summary));
+                
+                return Json(summary);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fatal error during blog migration");
+                TempData["ErrorMessage"] = "Migration failed: " + ex.Message;
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Helper method to extract image paths from HTML content
+        /// </summary>
+        private void ExtractImagesFromContent(string content, BlogImageTracker tracker)
+        {
+            if (string.IsNullOrEmpty(content))
+                return;
+
+            // Match all image sources in the content
+            var matches = Regex.Matches(content, @"src=[""'](?<url>/blog/(img|gif)/[^""']+)[""']", RegexOptions.IgnoreCase);
+            
+            foreach (Match match in matches)
+            {
+                var imageUrl = match.Groups["url"].Value;
+                tracker.AddImage(imageUrl);
+                _logger.LogDebug("Found image: {ImageUrl}", imageUrl);
+            }
+        }
+
+        /// <summary>
+        /// Verifies tracking files for all blogs and reports any issues
+        /// </summary>
+        [HttpGet("VerifyBlogTracking")]
+        [Authorize(Roles = "Root,Admin")]
+        public async Task<IActionResult> VerifyBlogTracking()
+        {
+            try
+            {
+                var blogs = await _unitOfWork.Blogs.GetAllAsync();
+                var report = new List<object>();
+                int healthyCount = 0;
+                int missingTrackingCount = 0;
+                int issuesCount = 0;
+
+                foreach (var blog in blogs)
+                {
+                    var status = new
+                    {
+                        BlogId = blog.BlogId,
+                        Title = blog.Title,
+                        Url = blog.Url,
+                        HasTracking = false,
+                        TrackedImageCount = 0,
+                        ActualImageCount = 0,
+                        Status = "Unknown",
+                        Issues = new List<string>()
+                    };
+
+                    try
+                    {
+                        // Try to load tracking file
+                        var tracker = await LoadImageTrackerAsync(blog.BlogId, blog.Url);
+                        
+                        if (tracker.Images.Any() || true) // Tracking file exists
+                        {
+                            var issues = new List<string>();
+                            
+                            // Count tracked images
+                            int trackedCount = tracker.Images.Count;
+                            
+                            // Count actual images in content
+                            int actualCount = 0;
+                            actualCount += CountImagesInContent(blog.Content);
+                            
+                            var contentTR = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_tr", "tr-TR");
+                            var contentDE = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_de", "de-DE");
+                            actualCount += CountImagesInContent(contentTR);
+                            actualCount += CountImagesInContent(contentDE);
+                            
+                            // Check for discrepancies
+                            if (trackedCount != actualCount)
+                            {
+                                issues.Add($"Tracked images ({trackedCount}) doesn't match actual images ({actualCount})");
+                            }
+                            
+                            // Verify each tracked image exists on disk
+                            foreach (var img in tracker.Images)
+                            {
+                                var fullPath = Path.Combine(_env.WebRootPath, img.TrimStart('/').Replace("/", Path.DirectorySeparatorChar.ToString()));
+                                if (!System.IO.File.Exists(fullPath))
+                                {
+                                    issues.Add($"Tracked image missing from disk: {img}");
+                                }
+                            }
+                            
+                            string statusText = issues.Any() ? "⚠️ Issues" : "✓ Healthy";
+                            
+                            report.Add(new
+                            {
+                                status.BlogId,
+                                status.Title,
+                                status.Url,
+                                HasTracking = true,
+                                TrackedImageCount = trackedCount,
+                                ActualImageCount = actualCount,
+                                Status = statusText,
+                                Issues = issues
+                            });
+                            
+                            if (issues.Any())
+                                issuesCount++;
+                            else
+                                healthyCount++;
+                        }
+                        else
+                        {
+                            report.Add(new
+                            {
+                                status.BlogId,
+                                status.Title,
+                                status.Url,
+                                HasTracking = false,
+                                TrackedImageCount = 0,
+                                ActualImageCount = 0,
+                                Status = "❌ No Tracking",
+                                Issues = new[] { "No tracking file found" }
+                            });
+                            missingTrackingCount++;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        report.Add(new
+                        {
+                            status.BlogId,
+                            status.Title,
+                            status.Url,
+                            HasTracking = false,
+                            TrackedImageCount = 0,
+                            ActualImageCount = 0,
+                            Status = "❌ Error",
+                            Issues = new[] { $"Error: {ex.Message}" }
+                        });
+                        issuesCount++;
+                    }
+                }
+
+                var summary = new
+                {
+                    TotalBlogs = blogs.Count(),
+                    Healthy = healthyCount,
+                    MissingTracking = missingTrackingCount,
+                    WithIssues = issuesCount,
+                    Details = report
+                };
+
+                _logger.LogInformation("Tracking verification complete: {Summary}", 
+                    System.Text.Json.JsonSerializer.Serialize(new { summary.TotalBlogs, summary.Healthy, summary.MissingTracking, summary.WithIssues }));
+
+                return Json(summary);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during tracking verification");
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Helper to count images in HTML content
+        /// </summary>
+        private int CountImagesInContent(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+                return 0;
+                
+            var matches = Regex.Matches(content, @"src=[""'](?<url>/blog/(img|gif)/[^""']+)[""']", RegexOptions.IgnoreCase);
+            return matches.Count;
+        }
+
+        /// <summary>
+        /// Repairs tracking files for blogs with issues
+        /// </summary>
+        [HttpPost("RepairBlogTracking/{id}")]
+        [Authorize(Roles = "Root")]
+        public async Task<IActionResult> RepairBlogTracking(int id)
+        {
+            try
+            {
+                var blog = await _unitOfWork.Blogs.GetAsync(id);
+                if (blog == null)
+                {
+                    return NotFound(new { error = "Blog not found" });
+                }
+
+                _logger.LogInformation("Repairing tracking for blog {BlogId} - {Title}", blog.BlogId, blog.Title);
+
+                // Create new tracker
+                var tracker = new BlogImageTracker(blog.BlogId, blog.Url);
+                
+                // Extract images from all content
+                ExtractImagesFromContent(blog.Content, tracker);
+                
+                var contentTR = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_tr", "tr-TR");
+                var contentDE = _dynamicResourceService.GetResource($"Content_{blog.BlogId}_{blog.Url}_de", "de-DE");
+                
+                if (!string.IsNullOrEmpty(contentTR))
+                    ExtractImagesFromContent(contentTR, tracker);
+                    
+                if (!string.IsNullOrEmpty(contentDE))
+                    ExtractImagesFromContent(contentDE, tracker);
+                
+                // Save repaired tracker
+                await SaveImageTrackingAsync(tracker);
+                
+                _logger.LogInformation("✓ Successfully repaired tracking for blog {BlogId}", blog.BlogId);
+                
+                return Ok(new
+                {
+                    BlogId = blog.BlogId,
+                    Title = blog.Title,
+                    TrackedImages = tracker.Images.Count,
+                    Images = tracker.Images
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error repairing tracking for blog {BlogId}", id);
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Generates a comprehensive report of all blog images and their status
+        /// </summary>
+        [HttpGet("BlogImageReport")]
+        [Authorize(Roles = "Root,Admin")]
+        public async Task<IActionResult> BlogImageReport()
+        {
+            try
+            {
+                var report = new
+                {
+                    GeneratedAt = DateTime.UtcNow,
+                    FileSystem = await GetFileSystemStats(),
+                    Blogs = await GetBlogImageStats(),
+                    OrphanedFiles = await FindOrphanedFiles()
+                };
+
+                return Json(report);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating blog image report");
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        private async Task<object> GetFileSystemStats()
+        {
+            return await Task.Run(() =>
+            {
+                var imgDir = Path.Combine(_env.WebRootPath, "blog", "img");
+                var gifDir = Path.Combine(_env.WebRootPath, "blog", "gif");
+                var tempDir = Path.Combine(_env.WebRootPath, "temp");
+
+                long GetDirectorySize(string path)
+                {
+                    if (!Directory.Exists(path)) return 0;
+                    return new DirectoryInfo(path).GetFiles("*", SearchOption.AllDirectories).Sum(f => f.Length);
+                }
+
+                int GetFileCount(string path)
+                {
+                    if (!Directory.Exists(path)) return 0;
+                    return Directory.GetFiles(path).Length;
+                }
+
+                return new
+                {
+                    ImagesDirectory = new
+                    {
+                        Path = "/blog/img",
+                        FileCount = GetFileCount(imgDir),
+                        TotalSize = GetDirectorySize(imgDir),
+                        TotalSizeMB = Math.Round(GetDirectorySize(imgDir) / 1024.0 / 1024.0, 2)
+                    },
+                    GifsDirectory = new
+                    {
+                        Path = "/blog/gif",
+                        FileCount = GetFileCount(gifDir),
+                        TotalSize = GetDirectorySize(gifDir),
+                        TotalSizeMB = Math.Round(GetDirectorySize(gifDir) / 1024.0 / 1024.0, 2)
+                    },
+                    TempDirectory = new
+                    {
+                        Path = "/temp",
+                        FileCount = GetFileCount(tempDir),
+                        TotalSize = GetDirectorySize(tempDir),
+                        TotalSizeMB = Math.Round(GetDirectorySize(tempDir) / 1024.0 / 1024.0, 2),
+                        Warning = GetFileCount(tempDir) > 100 ? "⚠️ Too many temp files - cleanup recommended" : null
+                    }
+                };
+            });
+        }
+
+        private async Task<object> GetBlogImageStats()
+        {
+            var blogs = await _unitOfWork.Blogs.GetAllAsync();
+            var stats = new List<object>();
+
+            foreach (var blog in blogs)
+            {
+                var tracker = await LoadImageTrackerAsync(blog.BlogId, blog.Url);
+                stats.Add(new
+                {
+                    blog.BlogId,
+                    blog.Title,
+                    ImageCount = tracker.Images.Count,
+                    HasCoverImage = !string.IsNullOrEmpty(blog.Image),
+                    LastUpdated = tracker.LastUpdated
+                });
+            }
+
+            return new
+            {
+                TotalBlogs = blogs.Count(),
+                TotalTrackedImages = stats.Cast<dynamic>().Sum(s => s.ImageCount),
+                BlogsWithoutImages = stats.Cast<dynamic>().Count(s => s.ImageCount == 0),
+                Details = stats
+            };
+        }
+
+        private async Task<object> FindOrphanedFiles()
+        {
+            return await Task.Run(async () =>
+            {
+                var imgDir = Path.Combine(_env.WebRootPath, "blog", "img");
+                var gifDir = Path.Combine(_env.WebRootPath, "blog", "gif");
+
+                var allFiles = new HashSet<string>();
+                if (Directory.Exists(imgDir))
+                    allFiles.UnionWith(Directory.GetFiles(imgDir)
+                        .Select(Path.GetFileName)
+                        .Where(fn => fn != null)
+                        .Select(fn => fn!));
+                if (Directory.Exists(gifDir))
+                    allFiles.UnionWith(Directory.GetFiles(gifDir)
+                        .Select(Path.GetFileName)
+                        .Where(fn => fn != null)
+                        .Select(fn => fn!));
+
+                var trackedFiles = new HashSet<string>();
+                var blogs = await _unitOfWork.Blogs.GetAllAsync();
+
+                foreach (var blog in blogs)
+                {
+                    var tracker = await LoadImageTrackerAsync(blog.BlogId, blog.Url);
+                    foreach (var img in tracker.Images)
+                    {
+                        trackedFiles.Add(Path.GetFileName(img));
+                    }
+                }
+
+                var orphans = allFiles.Except(trackedFiles).ToList();
+
+                return new
+                {
+                    Count = orphans.Count,
+                    Files = orphans,
+                    Warning = orphans.Count > 50 ? $"⚠️ {orphans.Count} orphaned files detected - cleanup recommended" : null
+                };
+            });
         }
 
         #endregion

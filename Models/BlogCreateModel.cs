@@ -10,6 +10,7 @@ namespace SpeakingClub.Models
     public class BlogCreateModel
     {
         #nullable disable
+        public string TempBlogId { get; set; }
         // Title and Main Content
         [Required(ErrorMessage = "Title is required.")]
         [MaxLength(200, ErrorMessage = "Title cannot exceed 200 characters.")]

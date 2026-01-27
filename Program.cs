@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Reflection;
 using Castle.Core.Configuration;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
@@ -54,6 +55,22 @@ if (!builder.Environment.IsDevelopment() && !string.IsNullOrEmpty(emailSettings.
 }
 #endregion
 
+#region Data Protection - CRITICAL for Plesk
+// IMPORTANT: Configure DataProtection to persist keys across app restarts
+// Without this, authentication cookies become invalid when Plesk recycles the app pool
+var keysFolder = Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys");
+
+// Ensure the keys directory exists and is writable
+Directory.CreateDirectory(keysFolder);
+
+builder.Services.AddDataProtection()
+    .SetApplicationName("SpeakingClub")
+    .PersistKeysToFileSystem(new DirectoryInfo(keysFolder))
+    .SetDefaultKeyLifetime(TimeSpan.FromDays(90)); // Keys last 90 days
+
+Console.WriteLine($"Data Protection Keys Path: {keysFolder}");
+#endregion
+
 #region DbContext Registration
 // Register SpeakingClubContext (your domain entities)
 builder.Services.AddDbContext<SpeakingClubContext>(options =>
@@ -88,26 +105,32 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 #endregion
-#region Identity Cookie Configuration
 
+#region Identity Cookie Configuration
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Account/Login"; // Giriş sayfası
-    options.LogoutPath = "/Account/Logout"; // Çıkış sayfası
-    options.AccessDeniedPath = "/Account/AccessDenied"; // Yetkisiz erişim
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
     options.SlidingExpiration = true;
-    options.ExpireTimeSpan = TimeSpan.FromDays(7); // Increased default session timeout
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    
+    // Enhanced cookie configuration for Plesk stability
     options.Cookie = new CookieBuilder
     {
         Name = "SpeakingClubAuth",
         HttpOnly = true,
         SameSite = SameSiteMode.Lax,
-        SecurePolicy = CookieSecurePolicy.SameAsRequest, // Changed for Plesk compatibility
-        IsEssential = true, // Required for GDPR compliance and Plesk
-        Path = "/"
+        SecurePolicy = builder.Environment.IsDevelopment() 
+            ? CookieSecurePolicy.SameAsRequest 
+            : CookieSecurePolicy.Always, // Always use Secure in production
+        IsEssential = true,
+        Path = "/",
+        MaxAge = TimeSpan.FromDays(7) // Explicit MaxAge for better browser compatibility
     };
-    // Regenerate cookie to prevent 403 errors
-    options.Events.OnValidatePrincipal = context =>
+    
+    // Enhanced cookie regeneration to prevent 403 errors and auth issues
+    options.Events.OnValidatePrincipal = async context =>
     {
         // Check if the cookie is about to expire (within 30% of its lifetime)
         var timeElapsed = DateTimeOffset.UtcNow - context.Properties.IssuedUtc;
@@ -123,24 +146,58 @@ builder.Services.ConfigureApplicationCookie(options =>
             }
         }
         
-        return Task.CompletedTask;
+        // Additional validation: Ensure user still exists in database
+        if (context.Principal != null)
+        {
+            var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<User>>();
+            var user = await userManager.GetUserAsync(context.Principal);
+            
+            if (user == null)
+            {
+                // User no longer exists, reject the principal
+                context.RejectPrincipal();
+            }
+        }
     };
 });
-
 #endregion
-#region Security
 
+#region Cookie Policy Configuration
+// Add Cookie Policy for better cookie handling
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.CheckConsentNeeded = context => false; // Set to true if you want GDPR consent
+    options.MinimumSameSitePolicy = SameSiteMode.Lax;
+    options.Secure = builder.Environment.IsDevelopment() 
+        ? CookieSecurePolicy.SameAsRequest 
+        : CookieSecurePolicy.Always;
+    
+    // Ensure all cookies have proper settings in production
+    options.OnAppendCookie = cookieContext =>
+    {
+        if (!builder.Environment.IsDevelopment())
+        {
+            cookieContext.CookieOptions.Secure = true;
+        }
+    };
+});
+#endregion
+
+#region Security
 builder.Services.AddAntiforgery(options =>
 {
     options.HeaderName = "X-CSRF-TOKEN";
     options.Cookie.Name = "SpeakingClubCSRF";
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // For Plesk compatibility
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() 
+        ? CookieSecurePolicy.SameAsRequest 
+        : CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.Path = "/";
 });
-
 #endregion
+
 #region Additional Services
 // Register UnitOfWork extension (repositories accessible via IUnitOfWork)
 builder.Services.AddUnitOfWork();
@@ -290,7 +347,7 @@ using (var scope = app.Services.CreateScope())
 
 #region HTTP Pipeline Configuration
 
-// Configure ForwardedHeaders for Cloudflare proxy
+// Configure ForwardedHeaders for Cloudflare proxy and Plesk
 var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost,
@@ -324,7 +381,7 @@ app.Use(async (context, next) =>
         return;
     }
 
-    // 2. Diğer tüm istekler → HTTPS’ye yönlendir
+    // 2. Diğer tüm istekler → HTTPS'ye yönlendir
     if (!context.Request.IsHttps)
     {
         var httpsUrl = $"https://{context.Request.Host}{context.Request.Path}{context.Request.QueryString}";
@@ -351,6 +408,9 @@ app.UseStaticFiles(new StaticFileOptions
     ContentTypeProvider = provider,
     ServeUnknownFileTypes = true
 });
+
+// IMPORTANT: Cookie policy must come before authentication
+app.UseCookiePolicy();
 
 // Localization
 app.UseRequestLocalization(app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value);

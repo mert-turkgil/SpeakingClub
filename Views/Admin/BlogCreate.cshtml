@@ -11,37 +11,139 @@
     <link rel="stylesheet" href="~/css/ck.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
         }
         .form-container {
-            max-width: 1200px;
-            padding: 25px;
+            max-width: 1400px;
+            padding: 35px;
             margin: 30px auto;
-            border-radius: 15px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
             background: #ffffff;
         }
-        .form-section h5 {
-            font-weight: bold;
+        .page-header {
+            text-align: center;
+            margin-bottom: 35px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #0056b3;
+        }
+        .page-header h2 {
             color: #0056b3;
-            animation: fadeInDown 1s;
+            font-weight: 600;
+            font-size: 2rem;
+        }
+        .section-title {
+            font-weight: 600;
+            color: #0056b3;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        .form-control, .form-select {
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            padding: 10px 15px;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #0056b3;
+            box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.15);
         }
         .preview-img {
             max-width: 350px;
             border-radius: 8px;
-            border: 1px solid #ddd;
+            border: 2px solid #dee2e6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .swiper-slide img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
+        .nav-tabs {
+            border-bottom: 2px solid #dee2e6;
+        }
+        .nav-tabs .nav-link {
+            color: #6c757d;
+            font-weight: 500;
+            border: none;
+            border-bottom: 3px solid transparent;
+            padding: 12px 24px;
+        }
+        .nav-tabs .nav-link:hover {
+            border-bottom-color: #0056b3;
+            color: #0056b3;
+        }
+        .nav-tabs .nav-link.active {
+            color: #0056b3;
+            background-color: transparent;
+            border-bottom-color: #0056b3;
+            font-weight: 600;
+        }
+        .preview-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
             border-radius: 8px;
+            padding: 20px;
+            min-height: 200px;
+        }
+        .preview-box h6 {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        .btn {
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-success {
+            background: #10b981;
+            border: none;
+        }
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .btn-danger {
+            background: #ef4444;
+            border: none;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        .form-check-input:checked {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .swiper-slide.card {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .swiper-slide.card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        @@keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @@keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
         }
     </style>
 }
 
 <div class="container animate__animated animate__fadeIn form-container">
-    <h2 class="text-center mb-4"><i class="fa-solid fa-pen"></i> Create Blog Post</h2>
+    <div class="page-header">
+        <h2><i class="fa-solid fa-pen-fancy"></i> Create Blog Post</h2>
+    </div>
 
     @if (!ViewData.ModelState.IsValid)
     {
@@ -54,142 +156,149 @@
         <div asp-validation-summary="ModelOnly" class="alert alert-warning"></div>
 
         <!-- Blog Title -->
-        <div class="mb-3">
-            <label asp-for="Title">Title</label>
-            <input asp-for="Title" class="form-control" />
+        <div class="mb-4">
+            <label asp-for="Title" class="form-label">Blog Title</label>
+            <input asp-for="Title" class="form-control" placeholder="Enter an engaging title..." />
             <span asp-validation-for="Title" class="text-danger"></span>
         </div>
 
         <!-- Main Blog Content -->
-        <div class="mb-3">
-            <label asp-for="Content">Content</label>
-            <textarea asp-for="Content" id="Content" class="form-control">
-                @(Model.Content ?? " ")
-            </textarea>
+        <div class="mb-4">
+            <label asp-for="Content" class="form-label">Main Content</label>
+            <textarea asp-for="Content" id="Content" class="form-control">@(Model.Content ?? "")</textarea>
             <span asp-validation-for="Content" class="text-danger"></span>
-            <div class="mt-3">
-                <h6>Live Preview:</h6>
-                <div id="contentPreview" class="border p-3 rounded bg-light" style="min-height: 200px;"></div>
+            <div class="mt-3 preview-box">
+                <h6>📝 Live Preview</h6>
+                <div id="contentPreview"></div>
             </div>
         </div>
 
         <!-- Cover Image -->
-        <div class="mb-3">
-            <label asp-for="ImageFile">Cover Image</label>
-            <input asp-for="ImageFile" type="file" class="form-control" onchange="previewImage(event)" />
-            <img id="coverPreview" class="preview-img mt-3" />
+        <div class="mb-4">
+            <label asp-for="ImageFile" class="form-label">Cover Image</label>
+            <input asp-for="ImageFile" type="file" class="form-control" accept="image/*" onchange="previewImage(event)" />
+            <img id="coverPreview" class="preview-img mt-3" style="display: none;" />
         </div>
 
         <!-- URL, Author -->
         <div class="row">
-            <div class="col-md-6 mb-3">
-                <label asp-for="Url">SEO URL</label>
-                <input asp-for="Url" class="form-control" />
+            <div class="col-md-6 mb-4">
+                <label asp-for="Url" class="form-label">SEO URL</label>
+                <input asp-for="Url" class="form-control" placeholder="my-blog-post-url" />
             </div>
-            <div class="col-md-6 mb-3">
-                <label asp-for="Author">Author</label>
-                <input asp-for="Author" class="form-control" />
+            <div class="col-md-6 mb-4">
+                <label asp-for="Author" class="form-label">Author</label>
+                <input asp-for="Author" class="form-control" placeholder="Author name" />
             </div>
         </div>
 
         <!-- Embed YouTube & Maps -->
         <div class="row">
-            <div class="col-md-6 mb-3">
-                <label asp-for="RawYT">YouTube Embed</label>
-                <input asp-for="RawYT" class="form-control" />
+            <div class="col-md-6 mb-4">
+                <label asp-for="RawYT" class="form-label">YouTube Embed Code</label>
+                <input asp-for="RawYT" class="form-control" placeholder="<iframe ...>" />
             </div>
-            <div class="col-md-6 mb-3">
-                <label asp-for="RawMaps">Google Maps Embed</label>
-                <input asp-for="RawMaps" class="form-control" />
+            <div class="col-md-6 mb-4">
+                <label asp-for="RawMaps" class="form-label">Google Maps Embed Code</label>
+                <input asp-for="RawMaps" class="form-control" placeholder="<iframe ...>" />
             </div>
         </div>
 
         <!-- Categories -->
-        <h5>Categories</h5>
+        <h5 class="section-title"><i class="fa-solid fa-folder"></i> Categories</h5>
         <div class="mb-4 swiper categorySwiper">
             <div class="swiper-wrapper">
                 @foreach (var category in (IEnumerable<SelectListItem>)ViewBag.Categories)
                 {
-                    <div class="swiper-slide card p-2">
-                        <input type="checkbox" name="SelectedCategoryIds" value="@category.Value" />
-                        <label>@category.Text</label>
+                    <div class="swiper-slide card p-3">
+                        <input type="checkbox" name="SelectedCategoryIds" value="@category.Value" class="form-check-input me-2" />
+                        <label class="form-check-label">@category.Text</label>
                     </div>
                 }
             </div>
         </div>
 
         <!-- Tags -->
-        <h5>Tags</h5>
+        <h5 class="section-title"><i class="fa-solid fa-tags"></i> Tags</h5>
         <div class="mb-4">
             @foreach (var tag in (IEnumerable<SelectListItem>)ViewBag.Tags)
             {
                 <div class="form-check form-check-inline">
-                    <input type="checkbox" name="SelectedTagIds" value="@tag.Value" class="form-check-input" />
-                    <label>@tag.Text</label>
+                    <input type="checkbox" name="SelectedTagIds" value="@tag.Value" class="form-check-input" id="tag-@tag.Value" />
+                    <label class="form-check-label" for="tag-@tag.Value">@tag.Text</label>
                 </div>
             }
         </div>
 
         <!-- Home Page Toggle -->
-        <div class="mb-3">
-            <label asp-for="IsHome" class="form-label">Show on Home Page?</label>
-            <input asp-for="IsHome" class="form-check-input" type="checkbox" />
+        <div class="mb-4 form-check">
+            <input asp-for="IsHome" class="form-check-input" type="checkbox" id="isHomeCheck" />
+            <label asp-for="IsHome" class="form-check-label" for="isHomeCheck">Display on Home Page</label>
         </div>
 
         <!-- Quiz Selection Section -->
-        <div class="mb-3">
-            <label class="form-label">Select a Quiz</label>
-            <select id="quizDropdown" class="form-select">
-                <option value="">-- Select a Quiz --</option>
-                @foreach (var quiz in (IEnumerable<SelectListItem>)ViewBag.Quizzes)
-                {
-                    <option value="@quiz.Value">@quiz.Text</option>
-                }
-            </select>
-        </div>
-
-        <!-- Quiz Question Dropdown (dynamic based on selected quiz) -->
-        <div class="mb-3">
-            <label class="form-label">Select Quiz Question</label>
-            <select asp-for="SelectedQuestionId" class="form-select" id="quizQuestionsDropdown">
-                <option value="">-- Select a Question --</option>
-            </select>
+        <h5 class="section-title"><i class="fa-solid fa-question-circle"></i> Quiz Association</h5>
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <label class="form-label">Select a Quiz</label>
+                <select id="quizDropdown" class="form-select">
+                    <option value="">-- Select a Quiz --</option>
+                    @foreach (var quiz in (IEnumerable<SelectListItem>)ViewBag.Quizzes)
+                    {
+                        <option value="@quiz.Value">@quiz.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Select Quiz Question</label>
+                <select asp-for="SelectedQuestionId" class="form-select" id="quizQuestionsDropdown">
+                    <option value="">-- Select a Question --</option>
+                </select>
+            </div>
         </div>
 
         <!-- Translations -->
-        <h5>Translations</h5>
-        <ul class="nav nav-tabs mb-3">
-            <li class="nav-item">
-                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tr">TR</button>
+        <h5 class="section-title"><i class="fa-solid fa-language"></i> Translations</h5>
+        <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#tr" role="tab" aria-selected="true">
+                    <i class="fa-solid fa-flag"></i> Turkish
+                </button>
             </li>
-            <li class="nav-item">
-                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#de">DE</button>
+            <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#de" role="tab" aria-selected="false">
+                    <i class="fa-solid fa-flag"></i> German
+                </button>
             </li>
         </ul>
 
         <div class="tab-content">
-            <div class="tab-pane fade" id="tr">
-                <input asp-for="TitleTR" placeholder="Turkish Title" class="form-control mb-2" />
+            <div class="tab-pane fade show active" id="tr" role="tabpanel">
+                <input asp-for="TitleTR" placeholder="Turkish Title" class="form-control mb-3" />
                 <textarea asp-for="ContentTR" id="ContentTR" class="form-control"></textarea>
-                <div class="mt-3">
-                    <h6>Live Preview (TR):</h6>
-                    <div id="contentPreviewTR" class="border p-3 rounded bg-light" style="min-height: 200px;"></div>
+                <div class="mt-3 preview-box">
+                    <h6>📝 Live Preview (TR)</h6>
+                    <div id="contentPreviewTR"></div>
                 </div>
             </div>
-            <div class="tab-pane fade" id="de">
-                <input asp-for="TitleDE" placeholder="German Title" class="form-control mb-2" />
+            <div class="tab-pane fade" id="de" role="tabpanel">
+                <input asp-for="TitleDE" placeholder="German Title" class="form-control mb-3" />
                 <textarea asp-for="ContentDE" id="ContentDE" class="form-control"></textarea>
-                <div class="mt-3">
-                    <h6>Live Preview (DE):</h6>
-                    <div id="contentPreviewDE" class="border p-3 rounded bg-light" style="min-height: 200px;"></div>
+                <div class="mt-3 preview-box">
+                    <h6>📝 Live Preview (DE)</h6>
+                    <div id="contentPreviewDE"></div>
                 </div>
             </div>
         </div>
 
         <!-- Submit -->
-        <div class="d-flex justify-content-between mt-5">
-            <button type="submit" class="btn btn-success"><i class="fa-solid fa-check"></i> Publish</button>
-            <a asp-controller="Admin" asp-route-scrollTo="BlogManagement" asp-action="Index" class="btn btn-danger"><i class="fa-solid fa-xmark"></i> Cancel</a>
+        <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+            <button type="submit" class="btn btn-success px-5">
+                <i class="fa-solid fa-check"></i> Publish Blog Post
+            </button>
+            <a asp-controller="Admin" asp-route-scrollTo="BlogManagement" asp-action="Index" class="btn btn-danger px-5">
+                <i class="fa-solid fa-xmark"></i> Cancel
+            </a>
         </div>
     </form>
 </div>
@@ -200,89 +309,13 @@
     <script src="~/lib/gsap/gsap.min.js"></script>
     <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.umd.js"></script>
     <script src="https://cdn.ckbox.io/ckbox/2.6.1/ckbox.js"></script>
+    
+    <!-- Centralized CKEditor Configuration -->
+    <script src="~/js/ckeditor.js"></script>
 
     <script>
-        // Wait for CKEditor to load
-        window.addEventListener('load', function () {
-            const { ClassicEditor, SimpleUploadAdapter, Alignment, Autoformat, AutoImage, AutoLink, BlockQuote, Bold, 
-                    Code, CodeBlock, Essentials, FontBackgroundColor, FontColor, FontFamily, FontSize, Heading, 
-                    Highlight, HorizontalLine, ImageBlock, ImageCaption, ImageInline, ImageInsertViaUrl, ImageResize, 
-                    ImageStyle, ImageTextAlternative, ImageToolbar, ImageUpload, Indent, Italic, Link, LinkImage, 
-                    List, MediaEmbed, Paragraph, RemoveFormat, SourceEditing, Strikethrough, Subscript, Superscript, 
-                    Table, TableToolbar, Underline } = window.CKEDITOR;
-
-            if (!sessionStorage.getItem('tempBlogId')) {
-                sessionStorage.setItem('tempBlogId', 'temp_' + Date.now());
-            }
-            const tempBlogId = sessionStorage.getItem('tempBlogId');
-            const LICENSE_KEY = document.querySelector('meta[name="ck-license-key"]').getAttribute('content');
-            const editorConfig = {
-                licenseKey: LICENSE_KEY,
-                simpleUpload: {
-                    uploadUrl: '/Admin/UploadFile?type=Images&blogId=' + encodeURIComponent(tempBlogId)
-                },
-                toolbar: {
-                    items: ['sourceEditing', '|', 'heading', '|', 'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', 
-                            '|', 'bold', 'italic', 'underline', 'strikethrough', 'subscript', 'superscript', 'code', 'removeFormat', 
-                            '|', 'link', 'insertImageViaUrl', 'mediaEmbed', 'insertTable', 'highlight', 'blockQuote', 'codeBlock', 
-                            '|', 'alignment', '|', 'bulletedList', 'numberedList', 'outdent', 'indent'],
-                    shouldNotGroupWhenFull: false
-                },
-                plugins: [Alignment, Autoformat, AutoImage, AutoLink, BlockQuote, Bold, Code, CodeBlock, Essentials, 
-                          FontBackgroundColor, FontColor, FontFamily, FontSize, Heading, Highlight, HorizontalLine, 
-                          ImageBlock, ImageCaption, ImageInline, ImageInsertViaUrl, ImageResize, ImageStyle, 
-                          ImageTextAlternative, ImageToolbar, ImageUpload, SimpleUploadAdapter, Indent, Italic, Link, 
-                          LinkImage, List, MediaEmbed, Paragraph, RemoveFormat, SourceEditing, Strikethrough, 
-                          Subscript, Superscript, Table, TableToolbar, Underline],
-                image: {
-                    toolbar: ['toggleImageCaption', 'imageTextAlternative', '|', 'imageStyle:inline', 'imageStyle:wrapText', 
-                              'imageStyle:breakText', '|', 'resizeImage']
-                },
-                placeholder: 'Type or paste your content here!'
-            };
-
-            // Initialize main content editor
-            ClassicEditor.create(document.querySelector('#Content'), editorConfig)
-                .then(editor => { 
-                    window.editorContent = editor;
-                    // Live preview update
-                    editor.model.document.on('change:data', () => {
-                        document.getElementById('contentPreview').innerHTML = editor.getData();
-                    });
-                })
-                .catch(error => console.error('Error initializing Content editor:', error));
-
-            // Initialize Turkish editor
-            ClassicEditor.create(document.querySelector('#ContentTR'), editorConfig)
-                .then(editor => { 
-                    window.editorContentTR = editor;
-                    editor.model.document.on('change:data', () => {
-                        document.getElementById('contentPreviewTR').innerHTML = editor.getData();
-                    });
-                })
-                .catch(error => console.error('Error initializing ContentTR editor:', error));
-
-            // Initialize German editor
-            ClassicEditor.create(document.querySelector('#ContentDE'), editorConfig)
-                .then(editor => { 
-                    window.editorContentDE = editor;
-                    editor.model.document.on('change:data', () => {
-                        document.getElementById('contentPreviewDE').innerHTML = editor.getData();
-                    });
-                })
-                .catch(error => console.error('Error initializing ContentDE editor:', error));
-        });
-
-        // COVER IMAGE PREVIEW FUNCTION
-        function previewImage(event) {
-            const reader = new FileReader();
-            reader.onload = () => $('#coverPreview').attr('src', reader.result);
-            reader.readAsDataURL(event.target.files[0]);
-        }
-        window.previewImage = previewImage;
-
-        // Quiz dropdown change handler
         $(document).ready(function() {
+            // Quiz dropdown change handler
             $('#quizDropdown').on('change', function () {
                 var selectedQuizId = $(this).val();
                 var dropdown = $('#quizQuestionsDropdown');
@@ -306,8 +339,15 @@
                 }
             });
 
-            // Initialize Swiper sliders
-            new Swiper(".categorySwiper", { slidesPerView: 3, spaceBetween: 15 });
+            // Cover image preview enhancement
+            $('#ImageFile').on('change', function(e) {
+                const preview = $('#coverPreview');
+                if (e.target.files && e.target.files[0]) {
+                    preview.show();
+                } else {
+                    preview.hide();
+                }
+            });
         });
     </script>
 }
