@@ -1,7 +1,8 @@
 import * as THREE from '/lib/three/build/three.module.js';
 import { GLTFLoader } from '/lib/three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from '/lib/three/examples/jsm/loaders/DRACOLoader.js';
-import { gsap } from 'https://cdn.skypack.dev/gsap';
+// GSAP: use the global `gsap` provided by the UMD script loaded before this module.
+// (Removed Skypack import to avoid CORS errors.)
 import { GUI } from 'https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js';
 
 /* ===============================

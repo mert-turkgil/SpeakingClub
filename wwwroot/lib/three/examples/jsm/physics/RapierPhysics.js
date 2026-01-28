@@ -1,6 +1,7 @@
 import { Clock, Vector3, Quaternion, Matrix4 } from 'three';
 
-const RAPIER_PATH = 'https://cdn.skypack.dev/@dimforge/rapier3d-compat@0.12.0';
+// Use jsDelivr which provides appropriate CORS headers for browser dynamic imports
+const RAPIER_PATH = 'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.12.0';
 
 const frameRate = 60;
 
