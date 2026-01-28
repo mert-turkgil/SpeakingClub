@@ -15,7 +15,7 @@ namespace SpeakingClub.Data.Concrete
         {
             _database = context;
         }
-        public async Task<Category?> GetByIdAsync(int id)
+        public override async Task<Category?> GetByIdAsync(int id)
         {
             return await _database.Categories
                 .Include(c => c.Blogs)

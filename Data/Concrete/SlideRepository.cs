@@ -16,7 +16,7 @@ namespace SpeakingClub.Data.Concrete
             _context = context;
         }
 
-        public async Task<SlideShow?> GetByIdAsync(int id)
+        public override async Task<SlideShow?> GetByIdAsync(int id)
         {
             if (id <= 0) throw new ArgumentException("ID must be greater than 0.", nameof(id));
 

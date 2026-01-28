@@ -23,7 +23,7 @@ namespace SpeakingClub.Data.Concrete
                 .FirstOrDefaultAsync(w => w.Term.ToLower() == term.ToLower());
         }
 
-        public async Task<Word?> GetByIdAsync(int id)
+        public override async Task<Word?> GetByIdAsync(int id)
         {
             return await _appContext.Words
                 .Include(w => w.Quizzes)
@@ -32,7 +32,7 @@ namespace SpeakingClub.Data.Concrete
         
         public async Task<IEnumerable<Word>> SearchWordsByDefinitionKeywordAsync(string keyword)
         {
-            return await _dbSet
+            return await _appContext.Words
                 .Where(w => w.Term.Contains(keyword) || w.Definition.Contains(keyword))
                 .ToListAsync();
         }

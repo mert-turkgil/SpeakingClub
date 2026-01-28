@@ -17,7 +17,7 @@ namespace SpeakingClub.Data.Concrete
             _context = context;
         }
 
-        public async Task<Question?> GetByIdAsync(int questionId)
+        public override async Task<Question?> GetByIdAsync(int questionId)
         {
             return await _context.Questions
                 .Include(q => q.Answers)

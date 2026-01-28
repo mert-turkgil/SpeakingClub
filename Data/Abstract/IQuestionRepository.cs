@@ -8,7 +8,7 @@ namespace SpeakingClub.Data.Abstract
 {
     public interface IQuestionRepository : IGenericRepository<Question>
     {
-        Task<Question?> GetByIdAsync(int questionId);
+        new Task<Question?> GetByIdAsync(int questionId);
         Task<IEnumerable<Question>> GetQuestionsByQuizIdAsync(int quizId);
         Task AddAnswerAsync(int questionId, QuizAnswer answer);
         Task<bool> HasCorrectAnswerAsync(int questionId);

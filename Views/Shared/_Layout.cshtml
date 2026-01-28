@@ -351,12 +351,17 @@
                       @if (User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root"))
                       {
                           <li>
+                              <a class="dropdown-item" asp-controller="Admin" asp-action="Index">
+                                  <i class="fa-solid fa-cog me-2"></i> Admin Panel
+                              </a>
+                          </li>
+                      }
+                            <li>
                               <a class="dropdown-item" asp-controller="Account" asp-action="Account">
                                   <i class="fa-solid fa-cog me-2"></i> Manage Account
                               </a>
                           </li>
-                      }
-                      <li>
+                       <li>
                           <form asp-controller="Account" asp-action="Logout" method="post">
                               <button type="submit" class="dropdown-item">
                                   <i class="fa-solid fa-sign-out-alt me-2"></i> Logout

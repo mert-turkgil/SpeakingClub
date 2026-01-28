@@ -8,6 +8,6 @@ namespace SpeakingClub.Data.Abstract
 {
     public interface ITagRepository : IGenericRepository<Tag>
     {
-        Task<Tag?> GetByIdAsync(int id);
+        new Task<Tag?> GetByIdAsync(int id);
     }
 }

@@ -12,321 +12,873 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: #FFF5E4 !important;
         }
         .form-container {
             max-width: 1400px;
-            padding: 35px;
+            padding: 0;
             margin: 30px auto;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             background: #ffffff;
+            overflow: hidden;
         }
         .page-header {
-            text-align: center;
-            margin-bottom: 35px;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #0056b3;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 40px;
+            margin: 0;
         }
         .page-header h2 {
-            color: #0056b3;
-            font-weight: 600;
+            color: white;
+            font-weight: 700;
             font-size: 2rem;
+            margin: 0;
+        }
+        .page-header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+        
+        /* Tab Navigation */
+        .custom-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 3px solid #e9ecef;
+            padding: 0 40px;
+            margin: 0;
+            flex-wrap: wrap;
+        }
+        .custom-tab {
+            padding: 18px 30px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .custom-tab:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        .custom-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: white;
+        }
+        .custom-tab i {
+            font-size: 1.1rem;
+        }
+        
+        /* Tab Content */
+        .tab-content-wrapper {
+            padding: 40px;
+        }
+        .tab-pane {
+            display: none;
+        }
+        .tab-pane.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Section Styling */
+        .section-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid #e9ecef;
         }
         .section-title {
-            font-weight: 600;
-            color: #0056b3;
-            margin-top: 30px;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e9ecef;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0 0 20px 0;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
+        .section-title i {
+            color: #667eea;
+        }
+        .section-subtitle {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        /* Form Controls */
         .form-label {
             font-weight: 600;
-            color: #495057;
+            color: #2d3748;
             margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
         }
+        .form-label .badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 8px;
+        }
+        .form-label small {
+            font-weight: 400;
+            color: #718096;
+            font-size: 0.85rem;
+        }
+        .help-text {
+            font-size: 0.875rem;
+            color: #718096;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .help-text i {
+            color: #667eea;
+        }
+        
         .form-control, .form-select {
-            border-radius: 6px;
-            border: 1px solid #ced4da;
-            padding: 10px 15px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
         }
         .form-control:focus, .form-select:focus {
-            border-color: #0056b3;
-            box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.15);
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
-        .preview-img {
-            max-width: 350px;
-            border-radius: 8px;
-            border: 2px solid #dee2e6;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        
+        /* Character Counter */
+        .char-counter {
+            font-size: 0.85rem;
+            color: #718096;
+            float: right;
+            margin-top: 5px;
         }
-        .nav-tabs {
-            border-bottom: 2px solid #dee2e6;
-        }
-        .nav-tabs .nav-link {
-            color: #6c757d;
-            font-weight: 500;
-            border: none;
-            border-bottom: 3px solid transparent;
-            padding: 12px 24px;
-        }
-        .nav-tabs .nav-link:hover {
-            border-bottom-color: #0056b3;
-            color: #0056b3;
-        }
-        .nav-tabs .nav-link.active {
-            color: #0056b3;
-            background-color: transparent;
-            border-bottom-color: #0056b3;
+        .char-counter.warning {
+            color: #f59e0b;
             font-weight: 600;
         }
+        .char-counter.danger {
+            color: #ef4444;
+            font-weight: 700;
+        }
+        
+        /* Preview Box */
         .preview-box {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
             padding: 20px;
-            min-height: 200px;
+            margin-top: 15px;
         }
         .preview-box h6 {
-            color: #6c757d;
-            font-size: 0.9rem;
+            color: #667eea;
+            font-weight: 700;
             margin-bottom: 15px;
         }
-        .btn {
-            padding: 12px 30px;
+        .preview-img {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            object-fit: cover;
+        }
+        
+        /* Checkboxes */
+        .form-check-input {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e0;
             border-radius: 6px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .btn-success {
-            background: #10b981;
-            border: none;
-        }
-        .btn-success:hover {
-            background: #059669;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
-        .btn-danger {
-            background: #ef4444;
-            border: none;
-        }
-        .btn-danger:hover {
-            background: #dc2626;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            cursor: pointer;
         }
         .form-check-input:checked {
-            background-color: #0056b3;
-            border-color: #0056b3;
+            background-color: #667eea;
+            border-color: #667eea;
         }
-        .swiper-slide.card {
+        /* Ensure check mark is visible using an inline SVG (white tick) */
+        .form-check-input[type="checkbox"]:checked {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 12px 12px;
+        }
+        .form-check-label {
             cursor: pointer;
-            transition: all 0.2s;
+            margin-left: 8px;
+            font-weight: 500;
         }
-        .swiper-slide.card:hover {
+        
+        /* Category/Tag Selection */
+        .selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .selection-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .selection-card:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        @@keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        .selection-card input:checked + .selection-card,
+        .selection-card:has(input:checked) {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
         }
-        @@keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
+
+        /* Make selection-card internal checkbox show the tick too */
+        .selection-card input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            accent-color: #667eea;
+        }
+        .selection-card input[type="checkbox"]:checked {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 12px 12px;
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 14px 32px;
+            font-weight: 600;
+            border-radius: 10px;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+            border: none;
+            padding: 14px 32px;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: #cbd5e0;
+            color: #1a202c;
+        }
+        
+        /* Collapsible Advanced Options */
+        .collapsible-trigger {
+            cursor: pointer;
+            padding: 15px 20px;
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            color: #2d3748;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+        .collapsible-trigger:hover {
+            background: #edf2f7;
+            border-color: #cbd5e0;
+        }
+        .collapsible-trigger i {
+            transition: transform 0.3s ease;
+        }
+        .collapsible-trigger.active i {
+            transform: rotate(180deg);
+        }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .collapsible-content.active {
+            max-height: 2000px;
+        }
+        
+        /* Sticky Save Bar */
+        .save-bar {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            border-top: 2px solid #e2e8f0;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+        }
+        
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .custom-tabs {
+                padding: 0 20px;
+            }
+            .custom-tab {
+                padding: 12px 16px;
+                font-size: 0.85rem;
+            }
+            .tab-content-wrapper {
+                padding: 20px;
+            }
+            .save-bar {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .selection-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 }
 
-<div class="container animate__animated animate__fadeIn form-container">
-    <div class="page-header">
-        <h2><i class="fa-solid fa-pen-to-square"></i> Edit Blog Post</h2>
-    </div>
-
-    @if (!ViewData.ModelState.IsValid)
-    {
-        <div class="alert alert-danger animate__animated animate__shakeX">
-            <i class="fa-solid fa-triangle-exclamation"></i> Please fix the errors below.
-        </div>
-    }
-
-    <form asp-action="BlogEdit" method="post" enctype="multipart/form-data">
-        <input type="hidden" asp-for="BlogId" />
-        <div asp-validation-summary="ModelOnly" class="alert alert-warning"></div>
-
-        <!-- Blog Title -->
-        <div class="mb-4">
-            <label asp-for="Title" class="form-label">Blog Title</label>
-            <input asp-for="Title" class="form-control" placeholder="Enter an engaging title..." />
-            <span asp-validation-for="Title" class="text-danger"></span>
-        </div>
-
-        <!-- Main Blog Content -->
-        <div class="mb-4">
-            <label asp-for="Content" class="form-label">Main Content</label>
-            <textarea asp-for="Content" id="Content" class="form-control"></textarea>
-            <span asp-validation-for="Content" class="text-danger"></span>
-            <div class="mt-3 preview-box">
-                <h6>📝 Live Preview</h6>
-                <div id="contentPreview"></div>
+<div class="container-fluid p-0 animate__animated animate__fadeIn">
+    <form asp-action="BlogEdit" method="post" enctype="multipart/form-data" id="blogForm">
+        <div class="form-container">
+            <!-- Header -->
+            <div class="page-header">
+                <h2><i class="fa-solid fa-pen-to-square"></i> Edit Blog Post</h2>
+                <p>Update your blog content, SEO settings, and translations</p>
             </div>
-        </div>
 
-        <!-- Cover Image Upload & Preview -->
-        <div class="mb-4">
-            <label asp-for="ImageFile" class="form-label">Cover Image</label>
-            <input asp-for="ImageFile" type="file" class="form-control" accept="image/*" onchange="previewImage(event)" />
-            @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+            @if (!ViewData.ModelState.IsValid)
             {
-                <img id="coverPreview" class="preview-img mt-3" src="@Model.CoverImageUrl" alt="Cover Image" />
+                <div class="alert alert-danger m-4 animate__animated animate__shakeX">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Please fix the errors below.
+                </div>
             }
-            else
-            {
-                <img id="coverPreview" class="preview-img mt-3" style="display: none;" />
-            }
-        </div>
 
-        <!-- URL and Author -->
-        <div class="row">
-            <div class="col-md-6 mb-4">
-                <label asp-for="Url" class="form-label">SEO URL</label>
-                <input asp-for="Url" class="form-control" placeholder="my-blog-post-url" />
-                <span asp-validation-for="Url" class="text-danger"></span>
-            </div>
-            <div class="col-md-6 mb-4">
-                <label asp-for="Author" class="form-label">Author</label>
-                <input asp-for="Author" class="form-control" placeholder="Author name" />
-                <span asp-validation-for="Author" class="text-danger"></span>
-            </div>
-        </div>
+            <input type="hidden" asp-for="BlogId" />
+            <div asp-validation-summary="All" class="alert alert-warning m-4"></div>
 
-        <!-- Embed YouTube & Google Maps -->
-        <div class="row">
-            <div class="col-md-6 mb-4">
-                <label asp-for="RawYT" class="form-label">YouTube Embed Code</label>
-                <input asp-for="RawYT" class="form-control" placeholder="<iframe ...>" />
-                <span asp-validation-for="RawYT" class="text-danger"></span>
+            <!-- Tab Navigation -->
+            <div class="custom-tabs">
+                <button type="button" class="custom-tab active" data-tab="basic">
+                    <i class="fa-solid fa-file-lines"></i> Basic Info
+                </button>
+                <button type="button" class="custom-tab" data-tab="content">
+                    <i class="fa-solid fa-pen-fancy"></i> Content
+                </button>
+                <button type="button" class="custom-tab" data-tab="seo">
+                    <i class="fa-solid fa-chart-line"></i> SEO Settings
+                </button>
+                <button type="button" class="custom-tab" data-tab="social">
+                    <i class="fa-brands fa-facebook"></i> Social Media
+                </button>
+                <button type="button" class="custom-tab" data-tab="translations">
+                    <i class="fa-solid fa-language"></i> Translations
+                </button>
+                <button type="button" class="custom-tab" data-tab="media">
+                    <i class="fa-solid fa-image"></i> Media
+                </button>
             </div>
-            <div class="col-md-6 mb-4">
-                <label asp-for="RawMaps" class="form-label">Google Maps Embed Code</label>
-                <input asp-for="RawMaps" class="form-control" placeholder="<iframe ...>" />
-                <span asp-validation-for="RawMaps" class="text-danger"></span>
-            </div>
-        </div>
 
-        <!-- Categories -->
-        <h5 class="section-title"><i class="fa-solid fa-folder"></i> Categories</h5>
-        <div class="mb-4 swiper categorySwiper">
-            <div class="swiper-wrapper">
-                @foreach (var category in (IEnumerable<SelectListItem>)ViewBag.Categories)
-                {
-                    <div class="swiper-slide card p-3">
-                        <input type="checkbox" name="SelectedCategoryIds" value="@category.Value" 
-                               @(Model.SelectedCategoryIds.Contains(int.Parse(category.Value)) ? "checked" : "") 
-                               class="form-check-input me-2" />
-                        <label class="form-check-label">@category.Text</label>
+            <!-- Tab Content -->
+            <div class="tab-content-wrapper">
+                
+                <!-- BASIC INFO TAB -->
+                <div class="tab-pane active" id="tab-basic">
+                    <div class="section-card">
+                        <h3 class="section-title"><i class="fa-solid fa-info-circle"></i> Basic Information</h3>
+                        <p class="section-subtitle">Essential blog details and metadata</p>
+                        
+                        <div class="mb-4">
+                            <label asp-for="Title" class="form-label">
+                                <i class="fa-solid fa-heading"></i> Blog Title
+                                <span class="badge bg-danger">Required</span>
+                            </label>
+                            <input asp-for="Title" class="form-control" placeholder="Enter an engaging title..." maxlength="200" />
+                            <div class="char-counter" data-for="Title">0/200</div>
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label">
+                                <i class="fa-solid fa-align-left"></i> Short Description
+                            </label>
+                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Brief description of your blog post..." maxlength="250"></textarea>
+                            <div class="char-counter" data-for="Description">0/250</div>
+                            <div class="help-text">
+                                <i class="fa-solid fa-lightbulb"></i>
+                                <span>This appears in blog lists and previews</span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label asp-for="Author" class="form-label">
+                                    <i class="fa-solid fa-user"></i> Author
+                                </label>
+                                <input asp-for="Author" class="form-control" placeholder="Author name" maxlength="100" />
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label asp-for="Date" class="form-label">
+                                    <i class="fa-solid fa-calendar"></i> Publication Date
+                                </label>
+                                <input asp-for="Date" type="date" class="form-control" />
+                            </div>
+                        </div>
+
+
+                        <!-- Categories -->
+                        <div class="mb-4">
+                            <label class="form-label"><i class="fa-solid fa-folder"></i> Category</label>
+                            <div class="swiper categorySwiper">
+                                <div class="swiper-wrapper">
+                                    @foreach (var category in (IEnumerable<SelectListItem>)ViewBag.Categories)
+                                    {
+                                        <div class="swiper-slide card p-3">
+                                            <input type="checkbox" name="SelectedCategoryIds" value="@category.Value" 
+                                                class="form-check-input me-2" id="cat-@category.Value" />
+                                            <label class="form-check-label" for="cat-@category.Value">@category.Text</label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="fa-solid fa-tags"></i> Tags
+                            </label>
+                            <div class="selection-grid">
+                                @foreach (var tag in (IEnumerable<SelectListItem>)ViewBag.Tags)
+                                {
+                                    <label class="selection-card">
+                                        <input type="checkbox" name="SelectedTagIds" value="@tag.Value" 
+                                               @(Model.SelectedTagIds?.Contains(int.Parse(tag.Value)) == true ? "checked" : "") />
+                                        <span>@tag.Text</span>
+                                    </label>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input asp-for="IsPublished" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsPublished" class="form-check-label">
+                                <i class="fa-solid fa-eye"></i> Published (visible to public)
+                            </label>
+                        </div>
+
+                        <div class="form-check">
+                            <input asp-for="IsHome" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsHome" class="form-check-label">
+                                <i class="fa-solid fa-home"></i> Feature on homepage
+                            </label>
+                        </div>
                     </div>
-                }
-            </div>
-        </div>
-
-        <!-- Tags -->
-        <h5 class="section-title"><i class="fa-solid fa-tags"></i> Tags</h5>
-        <div class="mb-4">
-            @foreach (var tag in (IEnumerable<SelectListItem>)ViewBag.Tags)
-            {
-                <div class="form-check form-check-inline">
-                    <input type="checkbox" name="SelectedTagIds" value="@tag.Value" class="form-check-input"
-                           @(Model.SelectedTagIds.Contains(int.Parse(tag.Value)) ? "checked" : "") 
-                           id="tag-@tag.Value" />
-                    <label class="form-check-label" for="tag-@tag.Value">@tag.Text</label>
                 </div>
-            }
-        </div>
 
-        <!-- Home Page Toggle -->
-        <div class="mb-4 form-check">
-            <input asp-for="IsHome" class="form-check-input" type="checkbox" id="isHomeCheck" />
-            <label asp-for="IsHome" class="form-check-label" for="isHomeCheck">Display on Home Page</label>
-        </div>
+                <!-- CONTENT TAB -->
+                <div class="tab-pane" id="tab-content">
+                    <div class="section-card">
+                        <h3 class="section-title"><i class="fa-solid fa-pen-fancy"></i> Main Content</h3>
+                        
+                        <div class="mb-4">
+                            <label asp-for="Content" class="form-label">
+                                <i class="fa-solid fa-file-lines"></i> Blog Content (English)
+                                <span class="badge bg-danger">Required</span>
+                            </label>
+                            <textarea asp-for="Content" id="Content" class="form-control"></textarea>
+                            <span asp-validation-for="Content" class="text-danger"></span>
+                        </div>
+                    </div>
 
-        <!-- Quiz Selection Section -->
-        <h5 class="section-title"><i class="fa-solid fa-question-circle"></i> Quiz Association</h5>
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <label class="form-label">Select a Quiz</label>
-                <select id="quizDropdown" class="form-select">
-                    <option value="">-- Select a Quiz --</option>
-                    @foreach (var quiz in (IEnumerable<SelectListItem>)ViewBag.Quizzes)
-                    {
-                        <option value="@quiz.Value">@quiz.Text</option>
-                    }
-                </select>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Select Quiz Question</label>
-                <select asp-for="SelectedQuestionId" class="form-select" id="quizQuestionsDropdown">
-                    <option value="">-- Select a Question --</option>
-                    @if (Model.SelectedQuestionId.HasValue)
-                    {
-                        <option value="@Model.SelectedQuestionId" selected>Previously Selected Question</option>
-                    }
-                </select>
-                <span asp-validation-for="SelectedQuestionId" class="text-danger"></span>
-            </div>
-        </div>
+                    <div class="section-card">
+                        <h3 class="section-title"><i class="fa-solid fa-film"></i> Embedded Media</h3>
+                        <p class="section-subtitle">Add YouTube videos or Google Maps</p>
+                        
+                        <div class="mb-4">
+                            <label asp-for="RawYT" class="form-label">
+                                <i class="fa-brands fa-youtube"></i> YouTube Embed Code
+                            </label>
+                            <textarea asp-for="RawYT" class="form-control" rows="3" placeholder="<iframe width=..." ></textarea>
+                            <div class="help-text">
+                                <i class="fa-solid fa-info-circle"></i>
+                                <span>Paste the complete iframe embed code from YouTube</span>
+                            </div>
+                        </div>
 
-        <!-- Translations Section -->
-        <h5 class="section-title"><i class="fa-solid fa-language"></i> Translations</h5>
-        <ul class="nav nav-tabs mb-3" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#tr" role="tab" aria-selected="true">
-                    <i class="fa-solid fa-flag"></i> Turkish
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#de" role="tab" aria-selected="false">
-                    <i class="fa-solid fa-flag"></i> German
-                </button>
-            </li>
-        </ul>
+                        <div class="mb-4">
+                            <label asp-for="RawMaps" class="form-label">
+                                <i class="fa-solid fa-map-location-dot"></i> Google Maps Embed Code
+                            </label>
+                            <textarea asp-for="RawMaps" class="form-control" rows="3" placeholder="<iframe src=..." ></textarea>
+                            <div class="help-text">
+                                <i class="fa-solid fa-info-circle"></i>
+                                <span>Paste the complete iframe embed code from Google Maps</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="tab-content">
-            <div class="tab-pane fade show active" id="tr" role="tabpanel">
-                <input asp-for="TitleTR" placeholder="Turkish Title" class="form-control mb-3" />
-                <textarea asp-for="ContentTR" id="ContentTR" class="form-control"></textarea>
-                <div class="mt-3 preview-box">
-                    <h6>📝 Live Preview (TR)</h6>
-                    <div id="contentPreviewTR"></div>
+                <!-- SEO SETTINGS TAB -->
+                <div class="tab-pane" id="tab-seo">
+                    <div class="section-card">
+                        <h3 class="section-title"><i class="fa-solid fa-chart-line"></i> SEO Optimization</h3>
+                        <p class="section-subtitle">Improve your search engine visibility</p>
+                        
+                        <div class="mb-4">
+                            <label asp-for="Slug" class="form-label">
+                                <i class="fa-solid fa-link"></i> URL Slug
+                                <span class="badge bg-warning">SEO Important</span>
+                            </label>
+                            <input asp-for="Slug" class="form-control" placeholder="my-awesome-blog-post" maxlength="200" />
+                            <div class="char-counter" data-for="Slug">0/200</div>
+                            <div class="help-text">
+                                <i class="fa-solid fa-lightbulb"></i>
+                                <span>URL-friendly version: use lowercase, hyphens, no spaces (auto-generated from title if empty)</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="MetaTitle" class="form-label">
+                                <i class="fa-solid fa-text-height"></i> Meta Title
+                            </label>
+                            <input asp-for="MetaTitle" class="form-control" placeholder="SEO optimized title (defaults to blog title if empty)" maxlength="100" />
+                            <div class="char-counter" data-for="MetaTitle">0/100</div>
+                            <div class="help-text">
+                                <i class="fa-solid fa-info-circle"></i>
+                                <span>Title shown in search results (50-60 chars ideal)</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="MetaDescription" class="form-label">
+                                <i class="fa-solid fa-align-left"></i> Meta Description
+                                <span class="badge bg-warning">SEO Important</span>
+                            </label>
+                            <textarea asp-for="MetaDescription" class="form-control" rows="3" placeholder="Compelling description for search engines..." maxlength="160"></textarea>
+                            <div class="char-counter" data-for="MetaDescription">0/160</div>
+                            <div class="help-text">
+                                <i class="fa-solid fa-lightbulb"></i>
+                                <span>Appears in search results (150-160 chars ideal)</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="FocusKeyphrase" class="form-label">
+                                <i class="fa-solid fa-bullseye"></i> Focus Keyphrase
+                            </label>
+                            <input asp-for="FocusKeyphrase" class="form-control" placeholder="main keyword or phrase" maxlength="200" />
+                            <div class="char-counter" data-for="FocusKeyphrase">0/200</div>
+                            <div class="help-text">
+                                <i class="fa-solid fa-key"></i>
+                                <span>Primary keyword you want to rank for</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="MetaKeywords" class="form-label">
+                                <i class="fa-solid fa-tags"></i> Meta Keywords
+                            </label>
+                            <input asp-for="MetaKeywords" class="form-control" placeholder="keyword1, keyword2, keyword3" maxlength="300" />
+                            <div class="char-counter" data-for="MetaKeywords">0/300</div>
+                            <div class="help-text">
+                                <i class="fa-solid fa-info-circle"></i>
+                                <span>Comma-separated keywords (less important for modern SEO)</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="CanonicalUrl" class="form-label">
+                                <i class="fa-solid fa-link"></i> Canonical URL
+                            </label>
+                            <input asp-for="CanonicalUrl" class="form-control" placeholder="https://yoursite.com/blog/slug" maxlength="500" />
+                            <div class="help-text">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span>Prevents duplicate content issues (leave empty for auto-generation)</span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    <input asp-for="NoIndex" class="form-check-input" type="checkbox" />
+                                    <label asp-for="NoIndex" class="form-check-label">
+                                        <i class="fa-solid fa-eye-slash"></i> NoIndex
+                                    </label>
+                                    <div class="help-text ms-4">Prevent search engines from indexing this page</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    <input asp-for="NoFollow" class="form-check-input" type="checkbox" />
+                                    <label asp-for="NoFollow" class="form-check-label">
+                                        <i class="fa-solid fa-link-slash"></i> NoFollow
+                                    </label>
+                                    <div class="help-text ms-4">Prevent search engines from following links</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SOCIAL MEDIA TAB -->
+                <div class="tab-pane" id="tab-social">
+                    <div class="section-card">
+                        <h3 class="section-title"><i class="fa-brands fa-facebook"></i> Open Graph (Facebook, LinkedIn)</h3>
+                        <p class="section-subtitle">Control how your blog appears when shared on social media</p>
+                        
+                        <div class="mb-4">
+                            <label asp-for="OgTitle" class="form-label">
+                                <i class="fa-solid fa-heading"></i> OG Title
+                            </label>
+                            <input asp-for="OgTitle" class="form-control" placeholder="Social media title (defaults to blog title)" maxlength="200" />
+                            <div class="char-counter" data-for="OgTitle">0/200</div>
+                            <div class="help-text">
+                                <i class="fa-solid fa-info-circle"></i>
+                                <span>Title shown when shared on Facebook, LinkedIn, etc.</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="OgDescription" class="form-label">
+                                <i class="fa-solid fa-align-left"></i> OG Description
+                            </label>
+                            <textarea asp-for="OgDescription" class="form-control" rows="3" placeholder="Social media description (defaults to meta description)" maxlength="300"></textarea>
+                            <div class="char-counter" data-for="OgDescription">0/300</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="OgImage" class="form-label">
+                                <i class="fa-solid fa-image"></i> OG Image URL
+                            </label>
+                            <input asp-for="OgImage" class="form-control" placeholder="https://yoursite.com/images/og-image.jpg" maxlength="500" />
+                            <div class="help-text">
+                                <i class="fa-solid fa-info-circle"></i>
+                                <span>Image shown when shared (1200x630px recommended, defaults to cover image)</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.OgImage))
+                            {
+                                <img src="@Model.OgImage" class="preview-img mt-3" style="max-width: 400px;" alt="OG Image Preview" />
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TRANSLATIONS TAB -->
+                <div class="tab-pane" id="tab-translations">
+                    <!-- Turkish Translation -->
+                    <div class="section-card">
+                        <h3 class="section-title"><i class="fa-solid fa-language"></i> Turkish Translation (TR)</h3>
+                        
+                        <div class="mb-4">
+                            <label asp-for="TitleTR" class="form-label">
+                                <i class="fa-solid fa-heading"></i> Turkish Title
+                            </label>
+                            <input asp-for="TitleTR" class="form-control" placeholder="Türkçe başlık..." maxlength="200" />
+                            <div class="char-counter" data-for="TitleTR">0/200</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="DescriptionTR" class="form-label">
+                                <i class="fa-solid fa-align-left"></i> Turkish Description
+                            </label>
+                            <textarea asp-for="DescriptionTR" class="form-control" rows="3" placeholder="Kısa açıklama..." maxlength="250"></textarea>
+                            <div class="char-counter" data-for="DescriptionTR">0/250</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="ContentTR" class="form-label">
+                                <i class="fa-solid fa-file-lines"></i> Turkish Content
+                            </label>
+                            <textarea asp-for="ContentTR" id="ContentTR" class="form-control"></textarea>
+                        </div>
+
+                        <!-- Advanced SEO for TR -->
+                        <div class="collapsible-trigger" data-target="tr-seo">
+                            <span><i class="fa-solid fa-chart-line"></i> Turkish SEO Settings (Optional)</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="collapsible-content" id="tr-seo">
+                            <div class="mb-4">
+                                <label asp-for="SlugTR" class="form-label">Turkish URL Slug</label>
+                                <input asp-for="SlugTR" class="form-control" placeholder="turkce-url-slug" maxlength="200" />
+                            </div>
+                            <div class="mb-4">
+                                <label asp-for="MetaTitleTR" class="form-label">Turkish Meta Title</label>
+                                <input asp-for="MetaTitleTR" class="form-control" maxlength="100" />
+                            </div>
+                            <div class="mb-4">
+                                <label asp-for="MetaDescriptionTR" class="form-label">Turkish Meta Description</label>
+                                <textarea asp-for="MetaDescriptionTR" class="form-control" rows="2" maxlength="160"></textarea>
+                            </div>
+                            <div class="mb-4">
+                                <label asp-for="MetaKeywordsTR" class="form-label">Turkish Meta Keywords</label>
+                                <input asp-for="MetaKeywordsTR" class="form-control" maxlength="300" />
+                            </div>
+                            <div class="mb-4">
+                                <label asp-for="OgTitleTR" class="form-label">Turkish OG Title</label>
+                                <input asp-for="OgTitleTR" class="form-control" maxlength="200" />
+                            </div>
+                            <div class="mb-4">
+                                <label asp-for="OgDescriptionTR" class="form-label">Turkish OG Description</label>
+                                <textarea asp-for="OgDescriptionTR" class="form-control" rows="2" maxlength="300"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- German Translation -->
+                    <div class="section-card">
+                        <h3 class="section-title"><i class="fa-solid fa-language"></i> German Translation (DE)</h3>
+                        
+                        <div class="mb-4">
+                            <label asp-for="TitleDE" class="form-label">
+                                <i class="fa-solid fa-heading"></i> German Title
+                            </label>
+                            <input asp-for="TitleDE" class="form-control" placeholder="Deutsche Titel..." maxlength="200" />
+                            <div class="char-counter" data-for="TitleDE">0/200</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="DescriptionDE" class="form-label">
+                                <i class="fa-solid fa-align-left"></i> German Description
+                            </label>
+                            <textarea asp-for="DescriptionDE" class="form-control" rows="3" placeholder="Kurze Beschreibung..." maxlength="250"></textarea>
+                            <div class="char-counter" data-for="DescriptionDE">0/250</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="ContentDE" class="form-label">
+                                <i class="fa-solid fa-file-lines"></i> German Content
+                            </label>
+                            <textarea asp-for="ContentDE" id="ContentDE" class="form-control"></textarea>
+                        </div>
+
+                        <!-- Advanced SEO for DE -->
+                        <div class="collapsible-trigger" data-target="de-seo">
+                            <span><i class="fa-solid fa-chart-line"></i> German SEO Settings (Optional)</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="collapsible-content" id="de-seo">
+                            <div class="mb-4">
+                                <label asp-for="SlugDE" class="form-label">German URL Slug</label>
+                                <input asp-for="SlugDE" class="form-control" placeholder="deutsche-url-slug" maxlength="200" />
+                            </div>
+                            <div class="mb-4">
+                                <label asp-for="MetaTitleDE" class="form-label">German Meta Title</label>
+                                <input asp-for="MetaTitleDE" class="form-control" maxlength="100" />
+                            </div>
+                            <div class="mb-4">
+                                <label asp-for="MetaDescriptionDE" class="form-label">German Meta Description</label>
+                                <textarea asp-for="MetaDescriptionDE" class="form-control" rows="2" maxlength="160"></textarea>
+                            </div>
+                            <div class="mb-4">
+                                <label asp-for="MetaKeywordsDE" class="form-label">German Meta Keywords</label>
+                                <input asp-for="MetaKeywordsDE" class="form-control" maxlength="300" />
+                            </div>
+                            <div class="mb-4">
+                                <label asp-for="OgTitleDE" class="form-label">German OG Title</label>
+                                <input asp-for="OgTitleDE" class="form-control" maxlength="200" />
+                            </div>
+                            <div class="mb-4">
+                                <label asp-for="OgDescriptionDE" class="form-label">German OG Description</label>
+                                <textarea asp-for="OgDescriptionDE" class="form-control" rows="2" maxlength="300"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MEDIA TAB -->
+                <div class="tab-pane" id="tab-media">
+                    <div class="section-card">
+                        <h3 class="section-title"><i class="fa-solid fa-image"></i> Cover Image</h3>
+                        <p class="section-subtitle">Main image for your blog post</p>
+                        
+                        <div class="mb-4">
+                            <label asp-for="ImageFile" class="form-label">
+                                <i class="fa-solid fa-upload"></i> Upload New Cover Image
+                            </label>
+                            <input asp-for="ImageFile" type="file" class="form-control" accept="image/*" onchange="previewImage(event)" />
+                            <div class="help-text">
+                                <i class="fa-solid fa-info-circle"></i>
+                                <span>Recommended: 1200x630px, JPG/PNG, max 2MB</span>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.CoverImageUrl))
+                        {
+                            <div>
+                                <label class="form-label">Current Cover Image</label>
+                                <img id="coverPreview" class="preview-img" src="@Model.CoverImageUrl" alt="Cover Image" />
+                            </div>
+                        }
+                        else
+                        {
+                            <img id="coverPreview" class="preview-img" style="display: none;" />
+                        }
+                    </div>
                 </div>
             </div>
-            <div class="tab-pane fade" id="de" role="tabpanel">
-                <input asp-for="TitleDE" placeholder="German Title" class="form-control mb-3" />
-                <textarea asp-for="ContentDE" id="ContentDE" class="form-control"></textarea>
-                <div class="mt-3 preview-box">
-                    <h6>📝 Live Preview (DE)</h6>
-                    <div id="contentPreviewDE"></div>
+
+            <!-- Sticky Save Bar -->
+            <div class="save-bar">
+                <div>
+                    <small class="text-muted">
+                        <i class="fa-solid fa-info-circle"></i> 
+                        All changes will be saved when you click Save Changes
+                    </small>
+                </div>
+                <div class="d-flex gap-3">
+                    <a asp-controller="Admin" asp-action="Index" class="btn btn-secondary">
+                        <i class="fa-solid fa-times"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-save"></i> Save Changes
+                    </button>
                 </div>
             </div>
-        </div>
-
-        <!-- Submit and Cancel Buttons -->
-        <div class="d-flex justify-content-between mt-5 pt-4 border-top">
-            <button type="submit" class="btn btn-success px-5">
-                <i class="fa-solid fa-check"></i> Update Blog Post
-            </button>
-            <a asp-controller="Admin" asp-route-scrollTo="BlogManagement" asp-action="Index" class="btn btn-danger px-5">
-                <i class="fa-solid fa-xmark"></i> Cancel
-            </a>
         </div>
     </form>
 </div>
 
 @section Scripts {
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/swiper/swiper-bundle.min.js"></script>
     <script src="~/lib/gsap/gsap.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.umd.js"></script>
     <script src="https://cdn.ckbox.io/ckbox/2.6.1/ckbox.js"></script>
     
@@ -335,6 +887,17 @@
 
     <script>
         $(document).ready(function() {
+            // Tab switching for custom tabs
+            $('.custom-tab').on('click', function() {
+                var tab = $(this).data('tab');
+                $('.custom-tab').removeClass('active');
+                $(this).addClass('active');
+                $('.tab-pane').removeClass('active');
+                $('#tab-' + tab).addClass('active');
+                // scroll to top of form container so user sees tab content
+                document.querySelector('.tab-content-wrapper')?.scrollIntoView({ behavior: 'smooth' });
+            });
+
             // Quiz dropdown change handler
             $('#quizDropdown').on('change', function () {
                 var selectedQuizId = $(this).val();

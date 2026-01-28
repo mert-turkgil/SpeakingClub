@@ -15,6 +15,7 @@ namespace SpeakingClub.Data.Concrete
         private readonly SpeakingClubContext _context;
         private readonly Dictionary<Type, object> _repositories = new Dictionary<Type, object>();
         private IBlogRepository? _blogs;
+        private IBlogTranslationRepository? _blogTranslations;
         private IQuizRepository? _quizzes;
         private IQuizAnswerRepository? _quizAnswers;
         private IQuizSubmissionRepository? _quizSubmissions;
@@ -35,6 +36,7 @@ namespace SpeakingClub.Data.Concrete
         public ITagRepository Tags=>_tags ??=new TagRepository(_context);
         public IQuestionRepository Questions => _questions ??= new QuestionRepository(_context);
         public IBlogRepository Blogs => _blogs ??= new BlogRepository(_context);
+        public IBlogTranslationRepository BlogTranslations => _blogTranslations ??= new BlogTranslationRepository(_context);
         public IQuizRepository Quizzes => _quizzes ??= new QuizRepository(_context);
         public IQuizAnswerRepository QuizAnswers => _quizAnswers ??= new QuizAnswerRepository(_context);
         public IQuizSubmissionRepository QuizSubmissions => _quizSubmissions ??= new QuizSubmissionRepository(_context);

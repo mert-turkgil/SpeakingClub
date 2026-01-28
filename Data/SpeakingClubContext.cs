@@ -15,6 +15,7 @@ namespace SpeakingClub.Data
         // DbSets for core entities
         public DbSet<Blog> Blogs { get; set; }
         public DbSet<BlogQuiz> BlogQuizzes { get; set; }
+        public DbSet<BlogTranslation> BlogTranslations { get; set; }
         public DbSet<Quiz> Quizzes { get; set; }
         public DbSet<Question> Questions {get; set;}
         public DbSet<QuizAnalysis> QuizAnalyses { get; set; }
@@ -43,7 +44,16 @@ namespace SpeakingClub.Data
             // Configure composite key for BlogQuiz join table
             modelBuilder.Entity<BlogQuiz>()
                 .HasKey(bq => new { bq.BlogId, bq.QuizId });
-
+            // Configure unique constraint for BlogTranslation
+            modelBuilder.Entity<BlogTranslation>()
+                .HasIndex(bt => new { bt.BlogId, bt.LanguageCode })
+                .IsUnique();
+            // Configure cascade delete
+            modelBuilder.Entity<BlogTranslation>()
+                .HasOne(bt => bt.Blog)
+                .WithMany(b => b.Translations)
+                .HasForeignKey(bt => bt.BlogId)
+                .OnDelete(DeleteBehavior.Cascade);
             // Configure composite key for UserQuiz join table
             modelBuilder.Entity<UserQuiz>()
                 .HasKey(uq => new { uq.UserId, uq.QuizId });

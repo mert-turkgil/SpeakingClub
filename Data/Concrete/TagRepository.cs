@@ -24,7 +24,7 @@ namespace SpeakingClub.Data.Concrete
                 .Include(t => t.Quizzes)
                 .ToListAsync();
         }
-        public async Task<Tag?> GetByIdAsync(int id)
+        public override async Task<Tag?> GetByIdAsync(int id)
         {
             return await _database.Tags
                 .Include(t => t.Blogs)

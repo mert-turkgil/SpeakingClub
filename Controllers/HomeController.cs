@@ -418,8 +418,12 @@ namespace SpeakingClub.Controllers
             // Update each blog with its translated Title and Content if available.
             foreach (var blog in blogs)
             {
-                blog.Title = _localization.GetKey($"Title_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Title;
-                blog.Content = _localization.GetKey($"Content_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Content;
+                blog.Title = _unitOfWork.BlogTranslations
+                    .GetByBlogAndLanguageAsync(blog.BlogId, langCode)
+                    .Result?.Title ?? blog.Title;
+                blog.Content = _unitOfWork.BlogTranslations
+                    .GetByBlogAndLanguageAsync(blog.BlogId, langCode)
+                    .Result?.Content ?? blog.Content;
             }
             // Get the list of categories.
             var categoriesFromRepo = await _unitOfWork.Categories.GetAllAsync();
@@ -477,8 +481,12 @@ namespace SpeakingClub.Controllers
 
                 var currentCulture = CultureInfo.CurrentCulture.Name;
                 var langCode = currentCulture.Substring(0, 2).ToLower();
-                blog.Title = _localization.GetKey($"Title_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Title;
-                blog.Content = _localization.GetKey($"Content_{blog.BlogId}_{blog.Url}_{langCode}")?.Value ?? blog.Content;
+                blog.Title = _unitOfWork.BlogTranslations
+                    .GetByBlogAndLanguageAsync(blog.BlogId, langCode)
+                    .Result?.Title ?? blog.Title;
+                blog.Content = _unitOfWork.BlogTranslations
+                    .GetByBlogAndLanguageAsync(blog.BlogId, langCode)
+                    .Result?.Content ?? blog.Content;
 
                 // Create the view model.
                 var viewModel = new BlogDetailViewModel
