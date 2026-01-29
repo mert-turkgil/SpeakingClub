@@ -173,7 +173,7 @@ namespace SpeakingClub.Controllers
 
             var viewModel = new CombinedQuizzesViewModel
             {
-                AvailableQuizzes = allQuizzes.Select(mapQuiz)
+                AvailableQuizzes = allQuizzes.Select(mapQuiz).ToList()
             };
 
             return View(viewModel);

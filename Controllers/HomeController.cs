@@ -445,6 +445,7 @@ namespace SpeakingClub.Controllers
                 SearchTerm = searchTerm,
                 CurrentPage = page,
                 TotalPages = totalPages,
+                TotalBlogs = totalBlogs,
                 Blogs = blogs, // Blogs are of type SpeakingClub.Entity.Blog
                 Categories = categoryNames,
                 AvailableTags = availableTags,
@@ -488,6 +489,17 @@ namespace SpeakingClub.Controllers
                     .GetByBlogAndLanguageAsync(blog.BlogId, langCode)
                     .Result?.Content ?? blog.Content;
 
+                // Increment view count and persist
+                try
+                {
+                    blog.ViewCount += 1;
+                    await _unitOfWork.SaveAsync();
+                }
+                catch (Exception saveEx)
+                {
+                    _logger.LogWarning(saveEx, "Failed to increment view count for blog {BlogId}", blog.BlogId);
+                }
+
                 // Create the view model.
                 var viewModel = new BlogDetailViewModel
                 {
@@ -500,7 +512,8 @@ namespace SpeakingClub.Controllers
                     Author = blog.Author,
                     Image = blog.Image,
                     Tags = blog.Tags?.ToList() ?? new List<Tag>(),
-                    Quizzes = blog.Quiz
+                    Quizzes = blog.Quiz,
+                    ViewCount = blog.ViewCount
                 };
 
                 // Adjusting quiz question retrieval:

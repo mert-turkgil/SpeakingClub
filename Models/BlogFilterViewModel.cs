@@ -14,6 +14,8 @@ namespace SpeakingClub.Models
         // Paging
         public int CurrentPage { get; set; }
         public int TotalPages { get; set; }
+        // Total number of matching blogs (for display)
+        public int TotalBlogs { get; set; }
 
         // Data
         public List<SpeakingClub.Entity.Blog> Blogs { get; set; } = new List<SpeakingClub.Entity.Blog>();

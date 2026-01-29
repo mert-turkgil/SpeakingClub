@@ -107,18 +107,27 @@
                 </div>
             </div>
         </div>
+        @if (Model.Category != null)
+        {
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <div class="badge bg-primary">@Model.Category.Name</div>
+                </div>
+            </div>
+        </div>
+        }
     </div>
 
+@if (Model.QuizQuestion != null)
+{
     <!-- Quiz Section (full width) -->
     <div class="advanced-quiz-section card shadow-lg my-4">
     <div class="card-header advanced-quiz-header bg-primary text-white">
         <h5 class="mb-0">Quiz Challenge</h5>
-    </div>
-
+    </div>        
     <div class="card-body">
         <!-- Display the quiz question -->
-        @if (Model.QuizQuestion != null)
-        {
             <h6 class="advanced-quiz-question mb-3">@Model.QuizQuestion.QuestionText</h6>
             <form id="advancedQuizForm">
                 @foreach (var answer in Model.QuizQuestion.Answers)
@@ -135,13 +144,10 @@
                 </button>
             </form>
             <div id="advancedQuizFeedback" class="advanced-quiz-feedback mt-3" style="display: none;"></div>
-        }
-        else
-        {
-            <div class="alert alert-info">There is no quiz available for this blog.</div>
-        }
-    </div>
-    </div>
+            </div>
+</div>
+}
+    
 
 
     <!-- Blog Cover Section (full width) -->
@@ -165,7 +171,10 @@
     <div class="row my-4">
         <div class="col-12 text-center">
             <p class="text-muted">
+                <span><i class="fa-solid fa-eye"></i> @Model.ViewCount </span>
+                 &nbsp; | &nbsp;
                 <i class="far fa-calendar-alt"></i> @Model.Date.ToString("MMMM dd, yyyy")
+                 &nbsp; | &nbsp;
                 @if (!string.IsNullOrEmpty(Model.Author))
                 {
                     <span class="ms-3"><i class="far fa-user"></i> @Model.Author</span>

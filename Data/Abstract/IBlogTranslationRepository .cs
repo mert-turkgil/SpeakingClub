@@ -11,5 +11,6 @@ namespace SpeakingClub.Data.Abstract
         Task<BlogTranslation?> GetByBlogAndLanguageAsync(int blogId, string languageCode);
         Task<IEnumerable<BlogTranslation>> GetTranslationsByBlogIdAsync(int blogId);
         Task<BlogTranslation?> GetBySlugAsync(string slug, string languageCode);
+        
     }
 }

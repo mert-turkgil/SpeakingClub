@@ -784,18 +784,17 @@ namespace SpeakingClub.Controllers
 
         #endregion
 
-        #region Blog CRUD with SEO & Multilingual Support
+
+        #region Blog Management
 
         [HttpGet("BlogCreate")]
         public async Task<IActionResult> BlogCreate()
         {
             var model = new BlogCreateModel
             {
-                // Initialize with empty GUID for tracking temp uploads
                 TempBlogId = Guid.NewGuid().ToString(),
                 Date = DateTime.Now,
                 IsPublished = true,
-                // SEO defaults
                 NoIndex = false,
                 NoFollow = false
             };
@@ -828,20 +827,18 @@ namespace SpeakingClub.Controllers
             using var transaction = await _unitOfWork.BeginTransactionAsync();
             try
             {
-                // Generate slug from title if not provided
+                // Generate slug
                 var slug = !string.IsNullOrEmpty(model.Slug) 
                     ? GenerateSlug(model.Slug) 
                     : GenerateSlug(model.Title);
-
-                // Ensure unique slug
                 slug = await EnsureUniqueSlugAsync(slug, null);
 
-                // Create blog entity with SEO fields
+                // Create blog entity
                 var blog = new Blog
                 {
                     Title = model.Title,
                     Description = model.Description ?? string.Empty,
-                    Content = "", // Will be filled after moving images
+                    Content = model.Content ?? string.Empty,
                     
                     // SEO Fields
                     Slug = slug,
@@ -860,10 +857,10 @@ namespace SpeakingClub.Controllers
                     // Open Graph
                     OgTitle = model.OgTitle ?? model.Title,
                     OgDescription = model.OgDescription ?? model.MetaDescription ?? model.Description ?? string.Empty,
-                    OgImage = string.Empty, // Will be set if cover image is uploaded
+                    OgImage = string.Empty,
                     
-                    // Existing fields
-                    Url = model.Url ?? slug, // Keep for backward compatibility
+                    // Basic fields
+                    Url = model.Url ?? slug,
                     Author = model.Author,
                     Date = model.Date,
                     isHome = model.IsHome,
@@ -879,23 +876,12 @@ namespace SpeakingClub.Controllers
                 if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
                     blog.Image = await SaveBlogCoverImageAsync(model.ImageFile);
-                    blog.OgImage = $"https://almanca-konus.com/img{blog.Image}";
+                    blog.OgImage = $"https://almanca-konus.com/img/{blog.Image}";
                 }
 
-                // Save blog to get ID (needed for image tracking and translations)
+                // Save blog first to get ID
                 await _unitOfWork.Blogs.AddAsync(blog);
                 await _unitOfWork.SaveAsync();
-
-                // Process and move temp images to permanent storage
-                var imageTracker = new BlogImageTracker(blog.BlogId, blog.Slug);
-                
-                blog.Content = await ProcessAndMoveImagesAsync(
-                    model.Content ?? "", 
-                    blog.BlogId, 
-                    imageTracker);
-
-                // Save image tracking data
-                await SaveImageTrackingAsync(imageTracker);
 
                 // Handle category
                 if (model.SelectedCategoryIds != null && model.SelectedCategoryIds.Any())
@@ -906,24 +892,24 @@ namespace SpeakingClub.Controllers
                 // Handle tags
                 if (model.SelectedTagIds != null && model.SelectedTagIds.Any())
                 {
-                    var tags = await _unitOfWork.Tags.GetAllAsync();
-                    blog.Tags = tags.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList();
+                    var allTags = await _unitOfWork.Tags.GetAllAsync();
+                    var selectedTags = allTags.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList();
+                    
+                    foreach (var tag in selectedTags)
+                    {
+                        blog.Tags.Add(tag);
+                    }
                 }
 
-                // Save translations to BlogTranslation table
-                await SaveBlogTranslationsAsync(blog.BlogId, model, imageTracker);
+                // Save translations
+                await SaveBlogTranslationsAsync(blog.BlogId, model);
 
                 _unitOfWork.Blogs.Update(blog);
                 await _unitOfWork.SaveAsync();
-
                 await transaction.CommitAsync();
 
-                // Clean up temp directory (run asynchronously)
-                _ = CleanupTempFilesAsync();
-
-                TempData["SuccessMessage"] = "Blog created successfully with SEO optimization!";
-                _logger.LogInformation("Blog {BlogId} '{Title}' created successfully by {User}", 
-                    blog.BlogId, blog.Title, User.Identity?.Name);
+                TempData["SuccessMessage"] = "Blog created successfully!";
+                _logger.LogInformation("Blog {BlogId} '{Title}' created successfully", blog.BlogId, blog.Title);
                 
                 return RedirectToAction("Index", new { scrollTo = "BlogManagement" });
             }
@@ -953,10 +939,8 @@ namespace SpeakingClub.Controllers
                 return RedirectToAction("Index");
             }
 
-            // Load translations from BlogTranslation table
-            var translations = await _unitOfWork.BlogTranslations
-                .GetAllAsync(bt => bt.BlogId == id);
-            
+            // Load translations
+            var translations = await _unitOfWork.BlogTranslations.GetAllAsync(bt => bt.BlogId == id);
             var trTranslation = translations.FirstOrDefault(t => t.LanguageCode == "tr");
             var deTranslation = translations.FirstOrDefault(t => t.LanguageCode == "de");
 
@@ -982,7 +966,7 @@ namespace SpeakingClub.Controllers
                 OgDescription = blog.OgDescription,
                 OgImage = blog.OgImage,
                 
-                // Existing fields
+                // Basic fields
                 Url = blog.Url,
                 Author = blog.Author,
                 Date = blog.Date,
@@ -1000,6 +984,7 @@ namespace SpeakingClub.Controllers
                 SlugTR = trTranslation?.Slug,
                 MetaDescriptionTR = trTranslation?.MetaDescription,
                 MetaKeywordsTR = trTranslation?.MetaKeywords,
+                MetaTitleTR = trTranslation?.MetaTitle,
                 OgTitleTR = trTranslation?.OgTitle,
                 OgDescriptionTR = trTranslation?.OgDescription,
                 
@@ -1009,19 +994,45 @@ namespace SpeakingClub.Controllers
                 SlugDE = deTranslation?.Slug,
                 MetaDescriptionDE = deTranslation?.MetaDescription,
                 MetaKeywordsDE = deTranslation?.MetaKeywords,
+                MetaTitleDE = deTranslation?.MetaTitle,
                 OgTitleDE = deTranslation?.OgTitle,
                 OgDescriptionDE = deTranslation?.OgDescription,
                 
                 SelectedCategoryIds = blog.CategoryId.HasValue ? new List<int> { blog.CategoryId.Value } : new List<int>(),
                 SelectedTagIds = blog.Tags?.Select(t => t.TagId).ToList() ?? new List<int>()
             };
+            // Determine selected quiz based on stored SelectedQuestionId
+            int? selectedQuizId = null;
+            if (model.SelectedQuestionId.HasValue)
+            {
+                var currentQuestion = await _unitOfWork.Questions.GetAsync(model.SelectedQuestionId.Value);
+                selectedQuizId = currentQuestion?.QuizId;
+            }
 
-            ViewBag.Categories = (await _unitOfWork.Categories.GetAllAsync())
-                .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
-            ViewBag.Tags = (await _unitOfWork.Tags.GetAllAsync())
-                .Select(t => new SelectListItem(t.Name, t.TagId.ToString()));
-            ViewBag.Quizzes = (await _unitOfWork.Quizzes.GetAllAsync())
-                .Select(q => new SelectListItem(q.Title, q.Id.ToString()));
+            // Populate ViewBag for selects
+            var allCategories = await _unitOfWork.Categories.GetAllAsync();
+            ViewBag.Categories = allCategories.Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
+
+            var allTags = await _unitOfWork.Tags.GetAllAsync();
+            ViewBag.Tags = allTags.Select(t => new SelectListItem(t.Name, t.TagId.ToString()));
+
+            var allQuizzes = (await _unitOfWork.Quizzes.GetAllAsync()).ToList();
+            ViewBag.Quizzes = allQuizzes
+                .Select(q => new SelectListItem(q.Title, q.Id.ToString(), selectedQuizId.HasValue && q.Id == selectedQuizId.Value))
+                .ToList();
+
+            // Questions for the selected quiz (prepopulate on edit)
+            if (selectedQuizId.HasValue)
+            {
+                var questions = (await _unitOfWork.Questions.GetQuestionsByQuizIdAsync(selectedQuizId.Value)).ToList();
+                ViewBag.Questions = questions
+                    .Select(q => new SelectListItem(q.QuestionText, q.Id.ToString(), model.SelectedQuestionId.HasValue && q.Id == model.SelectedQuestionId.Value))
+                    .ToList();
+            }
+            else
+            {
+                ViewBag.Questions = new List<SelectListItem>();
+            }
 
             return View(model);
         }
@@ -1032,6 +1043,7 @@ namespace SpeakingClub.Controllers
         {
             if (!ModelState.IsValid)
             {
+                _logger.LogWarning("BlogEdit ModelState invalid");
                 ViewBag.Categories = (await _unitOfWork.Categories.GetAllAsync())
                     .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
                 ViewBag.Tags = (await _unitOfWork.Tags.GetAllAsync())
@@ -1051,21 +1063,16 @@ namespace SpeakingClub.Controllers
                     return RedirectToAction("Index");
                 }
 
-                // Track old images for cleanup
-                var oldTracker = await LoadImageTrackerAsync(blog.BlogId, blog.Slug);
-                var oldImages = new HashSet<string>(oldTracker.GetAllImages());
-
                 // Generate/validate slug
                 var newSlug = !string.IsNullOrEmpty(model.Slug) 
                     ? GenerateSlug(model.Slug) 
                     : GenerateSlug(model.Title);
-
-                // Ensure unique slug (excluding current blog)
                 newSlug = await EnsureUniqueSlugAsync(newSlug, blog.BlogId);
 
                 // Update blog entity
                 blog.Title = model.Title;
                 blog.Description = model.Description ?? string.Empty;
+                blog.Content = model.Content ?? string.Empty;
                 blog.Slug = newSlug;
                 blog.MetaDescription = model.MetaDescription ?? string.Empty;
                 blog.MetaKeywords = model.MetaKeywords ?? string.Empty;
@@ -1092,45 +1099,18 @@ namespace SpeakingClub.Controllers
                 // Handle cover image update
                 if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
-                    // Delete old cover image
                     if (!string.IsNullOrEmpty(blog.Image))
                     {
                         await DeleteBlogFileAsync(blog.Image);
                     }
                     
                     blog.Image = await SaveBlogCoverImageAsync(model.ImageFile);
-                    blog.OgImage = $"https://almanca-konus.com/img{blog.Image}";
+                    blog.OgImage = $"https://almanca-konus.com/img/{blog.Image}";
                 }
                 else if (!string.IsNullOrEmpty(blog.Image))
                 {
-                    blog.OgImage = $"https://almanca-konus.com/img{blog.Image}";
+                    blog.OgImage = $"https://almanca-konus.com/img/{blog.Image}";
                 }
-
-                // Process content images
-                var newImageTracker = new BlogImageTracker(blog.BlogId, newSlug);
-                
-                blog.Content = await ProcessAndMoveImagesAsync(
-                    model.Content ?? "", 
-                    blog.BlogId, 
-                    newImageTracker);
-
-                // Find and delete orphaned images
-                var newImages = new HashSet<string>(newImageTracker.GetAllImages());
-                var orphanedImages = oldImages.Except(newImages).ToList();
-                
-                if (orphanedImages.Any())
-                {
-                    _logger.LogInformation("Found {Count} orphaned images for blog {BlogId}", 
-                        orphanedImages.Count, blog.BlogId);
-                    
-                    foreach (var img in orphanedImages)
-                    {
-                        await DeleteBlogFileAsync(img);
-                    }
-                }
-
-                // Update image tracking
-                await SaveImageTrackingAsync(newImageTracker);
 
                 // Update category
                 if (model.SelectedCategoryIds != null && model.SelectedCategoryIds.Any())
@@ -1142,27 +1122,38 @@ namespace SpeakingClub.Controllers
                     blog.CategoryId = null;
                 }
 
-                // Update tags
-                blog.Tags?.Clear();
-                if (model.SelectedTagIds != null && model.SelectedTagIds.Any())
+                // Update tags - FIXED APPROACH
+                var selectedTagIds = (model.SelectedTagIds ?? new List<int>()).Distinct().ToList();
+                var currentTagIds = blog.Tags?.Select(t => t.TagId).ToList() ?? new List<int>();
+                
+                // Load all tags with tracking
+                var allTags = (await _unitOfWork.Tags.GetAllAsync()).ToList();
+                
+                // Remove tags that are no longer selected
+                var tagsToRemove = blog.Tags?.Where(t => !selectedTagIds.Contains(t.TagId)).ToList() ?? new List<Tag>();
+                foreach (var tag in tagsToRemove)
                 {
-                    var tags = await _unitOfWork.Tags.GetAllAsync();
-                    blog.Tags = tags.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList();
+                    blog.Tags?.Remove(tag);
+                    _logger.LogInformation("Removed tag {TagId} from blog {BlogId}", tag.TagId, blog.BlogId);
+                }
+                
+                // Add newly selected tags
+                var tagsToAdd = allTags.Where(t => selectedTagIds.Contains(t.TagId) && !currentTagIds.Contains(t.TagId)).ToList();
+                foreach (var tag in tagsToAdd)
+                {
+                    blog.Tags?.Add(tag);
+                    _logger.LogInformation("Added tag {TagId} to blog {BlogId}", tag.TagId, blog.BlogId);
                 }
 
                 // Update translations
-                await SaveBlogTranslationsAsync(blog.BlogId, model, newImageTracker);
+                await SaveBlogTranslationsAsync(blog.BlogId, model);
 
                 _unitOfWork.Blogs.Update(blog);
                 await _unitOfWork.SaveAsync();
-
                 await transaction.CommitAsync();
 
-                // Clean up temp files
-                _ = CleanupTempFilesAsync();
-
                 TempData["SuccessMessage"] = "Blog updated successfully!";
-                _logger.LogInformation("Blog {BlogId} updated successfully by {User}", blog.BlogId, User.Identity?.Name);
+                _logger.LogInformation("Blog {BlogId} updated successfully", blog.BlogId);
                 
                 return RedirectToAction("Index", new { scrollTo = "BlogManagement" });
             }
@@ -1198,28 +1189,14 @@ namespace SpeakingClub.Controllers
 
                 _logger.LogInformation("Deleting blog {BlogId} - {Title}", blog.BlogId, blog.Title);
 
-                // Load image tracker and get all images
-                var imageTracker = await LoadImageTrackerAsync(blog.BlogId, blog.Slug);
-                var allImages = imageTracker.GetAllImages().ToList();
-
                 // Delete cover image
                 if (!string.IsNullOrEmpty(blog.Image))
                 {
                     await DeleteBlogFileAsync(blog.Image);
                 }
 
-                // Delete all content images
-                foreach (var img in allImages)
-                {
-                    await DeleteBlogFileAsync(img);
-                }
-
-                // Delete image tracking file
-                await DeleteImageTrackingAsync(blog.BlogId, blog.Slug);
-
                 // Delete translations
-                var translations = await _unitOfWork.BlogTranslations
-                    .GetAllAsync(bt => bt.BlogId == blog.BlogId);
+                var translations = await _unitOfWork.BlogTranslations.GetAllAsync(bt => bt.BlogId == blog.BlogId);
                 foreach (var translation in translations)
                 {
                     _unitOfWork.BlogTranslations.Remove(translation);
@@ -1228,7 +1205,6 @@ namespace SpeakingClub.Controllers
                 // Remove blog
                 _unitOfWork.Blogs.Remove(blog);
                 await _unitOfWork.SaveAsync();
-
                 await transaction.CommitAsync();
 
                 TempData["SuccessMessage"] = $"Blog '{blog.Title}' deleted successfully!";
@@ -1246,6 +1222,7 @@ namespace SpeakingClub.Controllers
         }
 
         #endregion
+
 
         #region Helper Methods for SEO & Translations
         [HttpGet("GetQuizQuestions")]
@@ -1333,7 +1310,7 @@ namespace SpeakingClub.Controllers
         /// <summary>
         /// Saves blog translations to BlogTranslation table with SEO fields
         /// </summary>
-        private async Task SaveBlogTranslationsAsync(int blogId, dynamic model, BlogImageTracker imageTracker)
+        private async Task SaveBlogTranslationsAsync(int blogId, dynamic model)
         {
             // Turkish Translation
             if (!string.IsNullOrEmpty(model.TitleTR) || !string.IsNullOrEmpty(model.ContentTR))
@@ -1343,12 +1320,11 @@ namespace SpeakingClub.Controllers
                     : GenerateSlug(model.TitleTR ?? "");
                 
                 slugTR = await EnsureUniqueTranslationSlugAsync(slugTR, "tr", blogId);
-                
+                var imageTracker = new BlogImageTracker();
                 var contentTR = await ProcessAndMoveImagesAsync(
-                    model.ContentTR ?? "", 
-                    blogId, 
-                    imageTracker);
-                
+                            model.ContentTR ?? "", 
+                            blogId, 
+                            imageTracker);
                 var trTranslation = await _unitOfWork.BlogTranslations
                     .GetAllAsync(bt => bt.BlogId == blogId && bt.LanguageCode == "tr");
                 var existingTR = trTranslation.FirstOrDefault();
@@ -1400,7 +1376,7 @@ namespace SpeakingClub.Controllers
                     : GenerateSlug(model.TitleDE ?? "");
                 
                 slugDE = await EnsureUniqueTranslationSlugAsync(slugDE, "de", blogId);
-                
+                var imageTracker = new BlogImageTracker();
                 var contentDE = await ProcessAndMoveImagesAsync(
                     model.ContentDE ?? "", 
                     blogId, 

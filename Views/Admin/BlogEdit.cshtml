@@ -471,7 +471,8 @@
                                     {
                                         <div class="swiper-slide card p-3">
                                             <input type="checkbox" name="SelectedCategoryIds" value="@category.Value" 
-                                                class="form-check-input me-2" id="cat-@category.Value" />
+                                                class="form-check-input me-2" id="cat-@category.Value"
+                                                @(Model.SelectedCategoryIds?.Contains(int.Parse(category.Value)) == true ? "checked" : "") />
                                             <label class="form-check-label" for="cat-@category.Value">@category.Text</label>
                                         </div>
                                     }
@@ -551,6 +552,34 @@
                                 <span>Paste the complete iframe embed code from Google Maps</span>
                             </div>
                         </div>
+                                            <!-- Quiz Association -->
+                    <div class="section-card">
+                        <h3 class="section-title"><i class="fa-solid fa-question-circle"></i> Quiz Association</h3>
+                        <p class="section-subtitle">Link a quiz question to this blog post</p>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Select a Quiz</label>
+                                <select id="quizDropdown" name="SelectedQuizId" class="form-select">
+                                        <option value="">-- Select a Quiz --</option>
+                                        @foreach (var quiz in (IEnumerable<SelectListItem>)ViewBag.Quizzes)
+                                        {
+                                            <option value="@quiz.Value" selected="@(quiz.Selected ? "selected" : null)">@quiz.Text</option>
+                                        }
+                                    </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SelectedQuestionId" class="form-label">Select Quiz Question</label>
+                                <select asp-for="SelectedQuestionId" class="form-select" id="quizQuestionsDropdown" name="SelectedQuestionId">
+                                    <option value="">-- Select a Question --</option>
+                                    @foreach (var q in (IEnumerable<SelectListItem>)ViewBag.Questions)
+                                    {
+                                        <option value="@q.Value" selected="@(q.Selected ? "selected" : null)">@q.Text</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                     </div>
                 </div>
 
@@ -887,18 +916,73 @@
 
     <script>
         $(document).ready(function() {
-            // Tab switching for custom tabs
+            // ===================================
+            // Tab Switching
+            // ===================================
             $('.custom-tab').on('click', function() {
                 var tab = $(this).data('tab');
                 $('.custom-tab').removeClass('active');
                 $(this).addClass('active');
                 $('.tab-pane').removeClass('active');
                 $('#tab-' + tab).addClass('active');
-                // scroll to top of form container so user sees tab content
                 document.querySelector('.tab-content-wrapper')?.scrollIntoView({ behavior: 'smooth' });
             });
 
-            // Quiz dropdown change handler
+            // ===================================
+            // Character Counters
+            // ===================================
+            function setupCharCounter(selector, maxLength) {
+                const $input = $(selector);
+                const $counter = $('.char-counter[data-for="' + $input.attr('name') + '"]');
+                
+                if ($counter.length > 0) {
+                    function updateCounter() {
+                        const length = $input.val().length;
+                        $counter.text(length + '/' + maxLength);
+                        
+                        $counter.removeClass('warning danger');
+                        if (length > maxLength * 0.9) {
+                            $counter.addClass('danger');
+                        } else if (length > maxLength * 0.75) {
+                            $counter.addClass('warning');
+                        }
+                    }
+                    
+                    $input.on('input', updateCounter);
+                    updateCounter();
+                }
+            }
+            
+            // Initialize all character counters
+            setupCharCounter('input[name="Title"]', 200);
+            setupCharCounter('textarea[name="Description"]', 250);
+            setupCharCounter('input[name="Slug"]', 200);
+            setupCharCounter('input[name="MetaTitle"]', 100);
+            setupCharCounter('textarea[name="MetaDescription"]', 160);
+            setupCharCounter('input[name="FocusKeyphrase"]', 200);
+            setupCharCounter('input[name="MetaKeywords"]', 300);
+            setupCharCounter('input[name="OgTitle"]', 200);
+            setupCharCounter('textarea[name="OgDescription"]', 300);
+            setupCharCounter('input[name="TitleTR"]', 200);
+            setupCharCounter('textarea[name="DescriptionTR"]', 250);
+            setupCharCounter('input[name="TitleDE"]', 200);
+            setupCharCounter('textarea[name="DescriptionDE"]', 250);
+
+            // ===================================
+            // Collapsible Sections
+            // ===================================
+            $('.collapsible-trigger').on('click', function() {
+                const target = $(this).data('target');
+                const content = $('#' + target);
+                const icon = $(this).find('i.fa-chevron-down');
+                
+                $(this).toggleClass('active');
+                content.toggleClass('active');
+            });
+
+            // ===================================
+            // Quiz Dropdown
+            // ===================================
             $('#quizDropdown').on('change', function () {
                 var selectedQuizId = $(this).val();
                 var dropdown = $('#quizQuestionsDropdown');
@@ -922,15 +1006,64 @@
                 }
             });
 
-            // Cover image preview enhancement
-            $('#ImageFile').on('change', function(e) {
+            // ===================================
+            // Cover Image Preview
+            // ===================================
+            window.previewImage = function(event) {
                 const preview = $('#coverPreview');
-                if (e.target.files && e.target.files[0]) {
-                    preview.show();
-                } else {
-                    preview.hide();
+                const file = event.target.files[0];
+                
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.attr('src', e.target.result).show();
+                    };
+                    reader.readAsDataURL(file);
                 }
+            };
+
+            // ===================================
+            // Form Submit Handler
+            // ===================================
+            $('#blogForm').on('submit', function(e) {
+                // Sync CKEditor content
+                if (window.ckEditorInstances) {
+                    Object.keys(window.ckEditorInstances).forEach(function(key) {
+                        const editor = window.ckEditorInstances[key];
+                        if (editor && editor.getData) {
+                            const textarea = document.querySelector('#' + key);
+                            if (textarea) {
+                                textarea.value = editor.getData();
+                            }
+                        }
+                    });
+                }
+                
+                // Show loading state
+                const $submitBtn = $(this).find('button[type="submit"]');
+                $submitBtn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Saving...');
+                
+                // Optional: Re-enable after 5 seconds in case of error
+                setTimeout(function() {
+                    $submitBtn.prop('disabled', false).html('<i class="fa-solid fa-save"></i> Save Changes');
+                }, 5000);
             });
+
+            // ===================================
+            // Initialize Swiper for Categories
+            // ===================================
+            if ($('.categorySwiper').length > 0) {
+                new Swiper('.categorySwiper', {
+                    slidesPerView: 'auto',
+                    spaceBetween: 15,
+                    freeMode: true,
+                    breakpoints: {
+                        640: { slidesPerView: 2 },
+                        768: { slidesPerView: 3 },
+                        1024: { slidesPerView: 4 }
+                    }
+                });
+            }
         });
     </script>
 }

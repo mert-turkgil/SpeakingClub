@@ -369,7 +369,7 @@
                     @foreach (var quiz in Model.AvailableQuizzes ?? Enumerable.Empty<QuizSummaryViewModel>())
                     {
                         var tagNames = string.Join(",", quiz.Tags?.Select(t => t.Name) ?? Enumerable.Empty<string>());
-                        <div class="col-md-6 col-lg-4 d-flex quiz-item" data-tags="@tagNames" data-category="@quiz.CategoryName">
+                        <div class="col-md-6 col-lg-4 d-flex quiz-item" data-tags="@tagNames" data-category="@quiz.CategoryName" data-title="@quiz.QuizTitle" data-desc="@(quiz.QuizDescription ?? String.Empty)">
                             <div class="card quiz-card w-100">
                                 <!-- Quiz Medya Swiper: Resim, Video, Ses-->
                                 <div class="quiz-media swiper mySwiper">
@@ -461,6 +461,11 @@
                         </div>
                     }
                 </div>
+                <div id="noResults" class="empty-state text-center" style="display:none; margin-top:20px;">
+                    <i class="bi bi-journal-x mb-3" style="font-size:48px;color:#ffc9c9;"></i>
+                    <h4 class="text-muted">Hiç quiz bulunamadı.</h4>
+                    <p class="text-muted">Filtrelerinizi temizleyip tekrar deneyin.</p>
+                </div>
                 <!-- Pagination -->
                 <nav class="mt-5">
                     <ul class="pagination justify-content-center" id="quizPagination"></ul>
@@ -500,28 +505,39 @@
 <script>
 function doFilter(page) {
     page = page || 1;
-    var search = $('#quizSearch').val().toLowerCase().trim();
-    var tag = $('#tagFilters .tag-filter.active').data('tag') || '';
-    var cat = $('#categoryFilter').val() || '';
+    var search = ($('#quizSearch').val() || '').toString().toLowerCase().trim();
+    var tag = ($('#tagFilters .tag-filter.active').data('tag') || '').toString();
+    var cat = ($('#categoryFilter').val() || '').toString();
     
     var cards = $('.quiz-item');
     var matched = [];
+
+    console.log('doFilter called', { search: search, tag: tag, category: cat, totalCards: cards.length });
     
     cards.each(function(){
         var $c = $(this);
-        var title = $c.find('.card-title').text().toLowerCase();
-        var desc = $c.find('.card-body').text().toLowerCase();
+        var title = ($c.data('title') || $c.find('.card-title').text() || '').toString().toLowerCase();
+        var desc = ($c.data('desc') || '').toString().toLowerCase();
+        // fallback to body text if no explicit desc provided
+        if(!desc) desc = ($c.find('.card-body').text() || '').toString().toLowerCase();
         var cardTags = ($c.data('tags') || '').toString().toLowerCase();
         var category = ($c.data('category') || '').toString().trim();
-        
-        var matchSearch = !search || title.indexOf(search) >= 0 || desc.indexOf(search) >= 0;
+
+        var matchSearch = !search || title.indexOf(search) >= 0 || desc.indexOf(search) >= 0 || category.indexOf(search) >= 0 || cardTags.indexOf(search) >= 0;
         var matchTag = !tag || tag === '' || cardTags.indexOf(tag.toLowerCase()) >= 0;
         var matchCat = !cat || cat === '' || category === cat.trim();
-        
+
         if(matchSearch && matchTag && matchCat) {
             matched.push(this);
         }
     });
+    console.log('doFilter matched count:', matched.length);
+    // Toggle no-results placeholder
+    if(matched.length === 0) {
+        $('#noResults').show();
+    } else {
+        $('#noResults').hide();
+    }
     
     // Pagination
     var size = 6, total = matched.length;
@@ -529,11 +545,11 @@ function doFilter(page) {
     if(page > pages) page = 1;
     var start = (page-1)*size;
     
-    // Hide all, show matched for current page
-    cards.hide();
+    // Hide all using Bootstrap utility and show matched for current page
+    cards.addClass('d-none');
     for(var j = 0; j < matched.length; j++){
         if(j >= start && j < start + size){
-            $(matched[j]).show();
+            $(matched[j]).removeClass('d-none');
         }
     }
     

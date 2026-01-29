@@ -392,25 +392,6 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// Content-Security-Policy header from configuration (moved from layout meta)
-var contentSecurityPolicy = config.GetValue<string>("ContentSecurityPolicy");
-if (!string.IsNullOrWhiteSpace(contentSecurityPolicy))
-{
-    app.Use(async (context, next) =>
-    {
-        context.Response.OnStarting(() =>
-        {
-            if (!context.Response.Headers.ContainsKey("Content-Security-Policy"))
-            {
-                context.Response.Headers.Add("Content-Security-Policy", contentSecurityPolicy);
-            }
-            return Task.CompletedTask;
-        });
-
-        await next();
-    });
-}
-
 // 3. ACME challenge dosyalarını serve et
 var acmeChallengePath = Path.Combine(Directory.GetCurrentDirectory(), ".well-known", "acme-challenge");
 app.UseStaticFiles(new StaticFileOptions

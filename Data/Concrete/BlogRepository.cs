@@ -52,5 +52,14 @@ namespace SpeakingClub.Data.Concrete
                 .Include(b => b.Quiz)
                 .ToListAsync();
         }
+        public override async Task<Blog?> GetAsync(int id)
+        {
+            return await _dbSet
+                .Include(b => b.Category)
+                .Include(b => b.Tags)
+                .Include(b => b.Quiz)
+                .Include(b => b.Translations)
+                .FirstOrDefaultAsync(b => b.BlogId == id);
+        }
     }
 }

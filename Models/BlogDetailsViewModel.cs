@@ -19,6 +19,7 @@ namespace SpeakingClub.Models
         // Additional properties present in your Blog entity
         public string RawYT { get; set; } = string.Empty;
         public string RawMaps { get; set; } = string.Empty;
+        public int ViewCount { get; set; }
 
         // Category related fields
         public int? CategoryId { get; set; }
