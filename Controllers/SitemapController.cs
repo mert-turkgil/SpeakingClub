@@ -37,13 +37,15 @@ namespace SpeakingClub.Controllers
             try
             {
                 var urls = new List<XElement>();
+                var nsXhtml = XNamespace.Get("http://www.w3.org/1999/xhtml");
 
-                // Static pages with priority and change frequency
-                urls.Add(CreateUrl(SITE_URL + "/", priority: "1.0", changefreq: "daily"));
-                urls.Add(CreateUrl(SITE_URL + "/about", priority: "0.8", changefreq: "monthly"));
-                urls.Add(CreateUrl(SITE_URL + "/privacy", priority: "0.3", changefreq: "yearly"));
-                urls.Add(CreateUrl(SITE_URL + "/words", priority: "0.9", changefreq: "weekly"));
-                urls.Add(CreateUrl(SITE_URL + "/blog", priority: "0.9", changefreq: "daily"));
+                // Static pages with localized alternates
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/", SITE_URL + "/", SITE_URL + "/", "1.0", "daily"));
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/hakkimizda", SITE_URL + "/hakkimizda", SITE_URL + "/ueber-uns", "0.8", "monthly"));
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/gizlilik", SITE_URL + "/gizlilik", SITE_URL + "/datenschutz", "0.3", "yearly"));
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/sozluk", SITE_URL + "/sozluk", SITE_URL + "/woerterbuch", "0.9", "weekly"));
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/yazilar", SITE_URL + "/yazilar", SITE_URL + "/beitraege", "0.9", "daily"));
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/sinavlar", SITE_URL + "/sinavlar", SITE_URL + "/pruefungen", "0.9", "weekly"));
 
                 // Dynamic: Blog posts with multilingual support
                 var blogs = await _context.Blogs
@@ -57,7 +59,7 @@ namespace SpeakingClub.Controllers
                 foreach (var blog in blogs)
                 {
                     // Use Slug instead of Url for SEO-friendly URLs
-                    var blogUrl = $"{SITE_URL}/blog/{blog.Slug}";
+                    var blogUrl = $"{SITE_URL}/yazilar/{blog.Slug}";
                     
                     // Determine change frequency based on view count and recency
                     var changefreq = DetermineChangeFrequency(blog);
@@ -65,45 +67,35 @@ namespace SpeakingClub.Controllers
                     // Determine priority based on isHome, ViewCount, and recency
                     var priority = DeterminePriority(blog);
                     
-                    // Create main URL element with alternate language links
+                    // Get translations for hreflang
+                    var trTranslation = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "tr");
+                    var deTranslation = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "de");
+                    var trSlug = trTranslation?.Slug ?? blog.Slug;
+                    var deSlug = deTranslation?.Slug ?? blog.Slug;
+                    
+                    // Create URL with localized alternates
                     var urlElement = CreateUrlWithAlternates(
                         blogUrl,
                         lastmod: blog.LastModified ?? blog.Date,
                         priority: priority,
                         changefreq: changefreq
                     );
-                    var nsXhtml = XNamespace.Get("http://www.w3.org/1999/xhtml");
                     
-                    // Add English (default)
+                    // Add Turkish version
                     urlElement.Add(new XElement(nsXhtml + "link",
                         new XAttribute("rel", "alternate"),
-                        new XAttribute("hreflang", "en"),
-                        new XAttribute("href", blogUrl)
+                        new XAttribute("hreflang", "tr"),
+                        new XAttribute("href", $"{SITE_URL}/yazilar/{trSlug}")
                     ));
                     
-                    // Add Turkish translation if exists
-                    var trTranslation = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "tr");
-                    if (trTranslation != null && !string.IsNullOrEmpty(trTranslation.Slug))
-                    {
-                        urlElement.Add(new XElement(nsXhtml + "link",
-                            new XAttribute("rel", "alternate"),
-                            new XAttribute("hreflang", "tr"),
-                            new XAttribute("href", $"{SITE_URL}/tr/blog/{trTranslation.Slug}")
-                        ));
-                    }
+                    // Add German version
+                    urlElement.Add(new XElement(nsXhtml + "link",
+                        new XAttribute("rel", "alternate"),
+                        new XAttribute("hreflang", "de"),
+                        new XAttribute("href", $"{SITE_URL}/beitraege/{deSlug}")
+                    ));
                     
-                    // Add German translation if exists
-                    var deTranslation = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "de");
-                    if (deTranslation != null && !string.IsNullOrEmpty(deTranslation.Slug))
-                    {
-                        urlElement.Add(new XElement(nsXhtml + "link",
-                            new XAttribute("rel", "alternate"),
-                            new XAttribute("hreflang", "de"),
-                            new XAttribute("href", $"{SITE_URL}/de/blog/{deTranslation.Slug}")
-                        ));
-                    }
-                    
-                    // Add x-default for unmatched languages (points to English version)
+                    // Add x-default
                     urlElement.Add(new XElement(nsXhtml + "link",
                         new XAttribute("rel", "alternate"),
                         new XAttribute("hreflang", "x-default"),
@@ -113,14 +105,52 @@ namespace SpeakingClub.Controllers
                     urls.Add(urlElement);
                 }
 
+                // Dynamic: Quiz entries with multilingual support
+                var quizzes = await _context.Quizzes
+                    .Include(q => q.Tags)
+                    .Include(q => q.Category)
+                    .Where(q => !string.IsNullOrEmpty(q.Title))
+                    .OrderByDescending(q => q.Id)
+                    .ToListAsync();
+
+                foreach (var quiz in quizzes)
+                {
+                    var quizSlug = !string.IsNullOrEmpty(quiz.Slug) ? quiz.Slug : quiz.Id.ToString();
+                    var quizSlugDe = !string.IsNullOrEmpty(quiz.SlugDe) ? quiz.SlugDe : quizSlug;
+                    
+                    var quizUrl = $"{SITE_URL}/sinavlar";
+                    var urlElement = CreateUrlWithAlternates(
+                        quizUrl,
+                        priority: "0.7",
+                        changefreq: "monthly"
+                    );
+                    
+                    urlElement.Add(new XElement(nsXhtml + "link",
+                        new XAttribute("rel", "alternate"),
+                        new XAttribute("hreflang", "tr"),
+                        new XAttribute("href", $"{SITE_URL}/sinavlar")
+                    ));
+                    urlElement.Add(new XElement(nsXhtml + "link",
+                        new XAttribute("rel", "alternate"),
+                        new XAttribute("hreflang", "de"),
+                        new XAttribute("href", $"{SITE_URL}/pruefungen")
+                    ));
+                    urlElement.Add(new XElement(nsXhtml + "link",
+                        new XAttribute("rel", "alternate"),
+                        new XAttribute("hreflang", "x-default"),
+                        new XAttribute("href", quizUrl)
+                    ));
+                    
+                    urls.Add(urlElement);
+                }
+
                 // Create XML sitemap with namespaces
                 var ns = XNamespace.Get("http://www.sitemaps.org/schemas/sitemap/0.9");
 
-                var nsXhtmll = XNamespace.Get("http://www.w3.org/1999/xhtml");
                 var sitemap = new XDocument(
                     new XDeclaration("1.0", "utf-8", "yes"),
                     new XElement(ns + "urlset",
-                        new XAttribute(XNamespace.Xmlns + "xhtml", nsXhtmll),
+                        new XAttribute(XNamespace.Xmlns + "xhtml", nsXhtml),
                         urls
                     )
                 );
@@ -153,6 +183,39 @@ namespace SpeakingClub.Controllers
                 url.Add(new XElement(ns + "lastmod", lastmod.Value.ToString("yyyy-MM-ddTHH:mm:ss+00:00")));
             }
             
+            return url;
+        }
+
+        /// <summary>
+        /// Creates a URL element with localized hreflang alternates for static pages
+        /// </summary>
+        private XElement CreateLocalizedUrl(string loc, string trHref, string deHref, string priority = "0.5", string changefreq = "monthly")
+        {
+            XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
+            XNamespace nsXhtml = "http://www.w3.org/1999/xhtml";
+
+            var url = new XElement(ns + "url",
+                new XElement(ns + "loc", loc),
+                new XElement(ns + "changefreq", changefreq),
+                new XElement(ns + "priority", priority)
+            );
+            
+            url.Add(new XElement(nsXhtml + "link",
+                new XAttribute("rel", "alternate"),
+                new XAttribute("hreflang", "tr"),
+                new XAttribute("href", trHref)
+            ));
+            url.Add(new XElement(nsXhtml + "link",
+                new XAttribute("rel", "alternate"),
+                new XAttribute("hreflang", "de"),
+                new XAttribute("href", deHref)
+            ));
+            url.Add(new XElement(nsXhtml + "link",
+                new XAttribute("rel", "alternate"),
+                new XAttribute("hreflang", "x-default"),
+                new XAttribute("href", loc)
+            ));
+
             return url;
         }
 

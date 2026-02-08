@@ -452,7 +452,7 @@ namespace SpeakingClub.Controllers
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
-            ViewBag.RecaptchaSiteKey = _configuration["Recaptcha:SiteKey"];
+            ViewBag.TurnstileSiteKey = _configuration["Turnstile:SiteKey"];
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
@@ -604,7 +604,7 @@ namespace SpeakingClub.Controllers
         [HttpGet]
         public IActionResult Register(string? returnUrl = null)
         {
-            ViewBag.RecaptchaSiteKey = _configuration["Recaptcha:SiteKey"];
+            ViewBag.TurnstileSiteKey = _configuration["Turnstile:SiteKey"];
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
@@ -670,10 +670,10 @@ namespace SpeakingClub.Controllers
                 return View(model);
             }
             _memoryCache.Set(cacheKey, count + 1, TimeSpan.FromMinutes(2));
-            string? recaptchaResponse = Request.Form["g-recaptcha-response"];
+            string? recaptchaResponse = Request.Form["cf-turnstile-response"];
             if (!await RecaptchaIsValid(recaptchaResponse ?? ""))
             {
-                ModelState.AddModelError("", "Lütfen robot olmadığınızı doğrulayın (reCAPTCHA).");
+                ModelState.AddModelError("", "Lütfen robot olmadığınızı doğrulayın (Turnstile).");
                 return View(model);
             }
             if (!ModelState.IsValid)
@@ -701,11 +701,11 @@ namespace SpeakingClub.Controllers
                 string userTemplatePath;
                 if (currentCulture.StartsWith("de", StringComparison.OrdinalIgnoreCase))
                 {
-                    userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserNotification_de.html");
+                    userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserConfirm_de.html");
                 }
                 else
                 {
-                    userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserNotification_tr.html");
+                    userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserConfirm_tr.html");
                 }
 
                 // Read HTML content from template file
@@ -749,15 +749,47 @@ namespace SpeakingClub.Controllers
         [HttpGet]
         public async Task<IActionResult> ConfirmEmail(string? userId, string? token)
         {
+            var currentCulture = CultureInfo.CurrentCulture.Name;
+            var isGerman = currentCulture.StartsWith("de", StringComparison.OrdinalIgnoreCase);
+            
             if (userId == null || token == null)
-                return RedirectToAction(nameof(HomeController.Index), "Home");
+            {
+                TempData["Error"] = isGerman 
+                    ? "Ungültiger Bestätigungslink." 
+                    : "Geçersiz onay bağlantısı.";
+                return RedirectToAction(nameof(Login));
+            }
 
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
-                return NotFound($"Unable to load user with ID '{userId}'.");
+            {
+                TempData["Error"] = isGerman 
+                    ? "Benutzer nicht gefunden." 
+                    : "Kullanıcı bulunamadı.";
+                return RedirectToAction(nameof(Login));
+            }
 
             var result = await _userManager.ConfirmEmailAsync(user, token);
-            return View(result.Succeeded ? "ConfirmEmail" : "Error");
+            
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("User confirmed email successfully.");
+                TempData["Success"] = isGerman 
+                    ? "Ihre E-Mail-Adresse wurde erfolgreich bestätigt! Sie können sich jetzt anmelden." 
+                    : "E-posta adresiniz başarıyla onaylandı! Artık giriş yapabilirsiniz.";
+                TempData["ShowSplash"] = true;
+                TempData["SplashMessage"] = isGerman 
+                    ? "E-Mail bestätigt! 🎉" 
+                    : "E-posta onaylandı! 🎉";
+                return RedirectToAction(nameof(Login));
+            }
+            else
+            {
+                TempData["Error"] = isGerman 
+                    ? "E-Mail-Bestätigung fehlgeschlagen. Der Link ist möglicherweise abgelaufen." 
+                    : "E-posta onaylama başarısız oldu. Bağlantının süresi dolmuş olabilir.";
+                return RedirectToAction(nameof(Login));
+            }
         }
 
         // POST: /Account/Logout
@@ -786,18 +818,21 @@ namespace SpeakingClub.Controllers
         }
         private async Task<bool> RecaptchaIsValid(string recaptchaResponse)
         {
-            var secret = _configuration["Recaptcha:SecretKey"];
+            var secret = _configuration["Turnstile:SecretKey"];
+            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            
             using var httpClient = new HttpClient();
             var content = new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string, string>("secret", secret ?? string.Empty),
-                new KeyValuePair<string, string>("response", recaptchaResponse)
+                new KeyValuePair<string, string>("response", recaptchaResponse),
+                new KeyValuePair<string, string>("remoteip", remoteIp ?? string.Empty)
             });
-            var response = await httpClient.PostAsync("https://www.google.com/recaptcha/api/siteverify", content);
+            
+            var response = await httpClient.PostAsync("https://challenges.cloudflare.com/turnstile/v0/siteverify", content);
             var json = await response.Content.ReadAsStringAsync();
-            // Çok temel bir doğrulama, istersen JSON parse ile daha sağlam hale getirebiliriz.
-            var recaptchaResult = JsonSerializer.Deserialize<JsonElement>(json);
-            return recaptchaResult.GetProperty("success").GetBoolean();
+            var turnstileResult = JsonSerializer.Deserialize<JsonElement>(json);
+            return turnstileResult.GetProperty("success").GetBoolean();
         }
 
     }

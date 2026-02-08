@@ -3,9 +3,45 @@
 
 @{
     ViewData["Title"] = Model.BlogList_Title;
+    
+    // Build JSON-LD structured data for blog listing
+    var blogItems = Model.Blogs?.Select(b => new {
+        type = "BlogPosting",
+        headline = b.Title,
+        image = !string.IsNullOrEmpty(b.Image) ? $"https://almanca-konus.com{b.Image}" : "https://almanca-konus.com/img/header_logo.png",
+        datePublished = b.Date.ToString("yyyy-MM-dd"),
+        author = new {
+            type = "Person",
+            name = b.Author ?? "SpeakingClub"
+        },
+        publisher = new {
+            type = "Organization",
+            name = "Almanca Konuşma Kulübü",
+            logo = new {
+                type = "ImageObject",
+                url = "https://almanca-konus.com/img/header_logo.png"
+            }
+        },
+        description = b.Content.Length > 160 ? System.Text.RegularExpressions.Regex.Replace(b.Content.Substring(0, 160), "<.*?>", "") : System.Text.RegularExpressions.Regex.Replace(b.Content, "<.*?>", ""),
+        url = $"https://almanca-konus.com/blog/{b.Url}"
+    }).ToList();
+    
+    var structuredData = new {
+        context = "https://schema.org",
+        type = "Blog",
+        name = Model.BlogList_Title,
+        description = Model.BlogList_Description,
+        url = "https://almanca-konus.com/blog",
+        blogPost = blogItems
+    };
 }
 
 @section Css {
+    <!-- JSON-LD Structured Data for SEO -->
+    <script type="application/ld+json">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(structuredData, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }))
+    </script>
+    
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
     <style>
         :root {
@@ -258,10 +294,10 @@
                             <div class="card blog-card h-100">
                                 <!-- Blog Image -->
                                 <div class="card-img-wrapper">
-                                    <img src="~/img/@(string.IsNullOrEmpty(blog.Image) ? "default-image.jpg" : blog.Image)"
+                                    <img src="@(string.IsNullOrEmpty(blog.Image) ? "/img/footer_logo.png" : blog.Image)"
                                          alt="@blog.Title"
                                          class="card-img-top"
-                                         onerror="this.onerror=null;this.src='https://via.placeholder.com/300x200?text=Image+Unavailable';" />
+                                         onerror="this.onerror=null;this.src='/img/footer_logo.png';" />
                                 </div>
 
                                 <!-- Blog Body -->

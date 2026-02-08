@@ -8,7 +8,7 @@
         @if (!string.IsNullOrEmpty(Model.Image))
         {
             <div class="swiper-slide advanced-blog-card__slide">
-                <img src="~/img/@Model.Image" class="advanced-blog-card__image" alt="@Model.Title" />
+                <img src="@Model.Image" class="advanced-blog-card__image" alt="@Model.Title" />
             </div>
         }
 

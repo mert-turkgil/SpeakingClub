@@ -15,6 +15,38 @@ namespace SpeakingClub.Models
         public required string Title { get; set; }
         
         public string? Description { get; set; }
+
+        // SEO Fields
+        [Display(Name = "Slug (TR)")]
+        [MaxLength(200)]
+        public string? Slug { get; set; }
+
+        [Display(Name = "Slug (DE)")]
+        [MaxLength(200)]
+        public string? SlugDe { get; set; }
+
+        [Display(Name = "Meta Description (TR)")]
+        [MaxLength(160)]
+        public string? MetaDescription { get; set; }
+
+        [Display(Name = "Meta Description (DE)")]
+        [MaxLength(160)]
+        public string? MetaDescriptionDe { get; set; }
+
+        [Display(Name = "Meta Keywords (TR)")]
+        [MaxLength(300)]
+        public string? MetaKeywords { get; set; }
+
+        [Display(Name = "Meta Keywords (DE)")]
+        [MaxLength(300)]
+        public string? MetaKeywordsDe { get; set; }
+
+        [Display(Name = "Title (DE)")]
+        [MaxLength(200)]
+        public string? TitleDe { get; set; }
+
+        [Display(Name = "Description (DE)")]
+        public string? DescriptionDe { get; set; }
         
         // File uploads (not required)
         public IFormFile? AudioFile { get; set; }

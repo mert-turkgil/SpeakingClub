@@ -52,6 +52,56 @@
         0% { transform: scale(1); opacity: 1; }
         100% { transform: scale(2); opacity: 0; }
     }
+    
+    /* Enhanced validation error styling */
+    .validation-summary-errors {
+        background-color: #fee;
+        border-left: 4px solid #dc3545;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    .validation-summary-errors ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+    
+    .validation-summary-errors li {
+        color: #721c24;
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+    
+    .text-danger {
+        color: #dc3545 !important;
+        font-size: 0.875rem;
+        margin-top: 5px;
+        display: block;
+        font-weight: 500;
+    }
+    
+    .form-control.input-validation-error {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Turnstile widget container */
+    #turnstile-widget {
+        min-height: 65px;
+    }
 </style>
 }
 @if (!ViewData.ModelState.IsValid)
@@ -94,6 +144,32 @@
         });
     </script>
 }
+@if (TempData["Success"] != null)
+{
+    <div class="container-xxl">
+        <div class="row py-3">
+            <div class="col">
+                <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
+                    <strong>✅ @TempData["Success"]</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="container-xxl">
+        <div class="row py-3">
+            <div class="col">
+                <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
+                    <strong>❌ @TempData["Error"]</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 <div style="height: 100vh;" class="container-xxl">
 <div class="row py-5">
     <div class="col">
@@ -126,8 +202,8 @@
              <label asp-for="RememberMe" class="form-check-label">@Localizer.GetKey("Label_RememberMe")</label>
         </div>
         
-        <!-- Always display the reCAPTCHA widget -->
-        <div class="g-recaptcha" data-sitekey="@ViewBag.RecaptchaSiteKey"></div> 
+        <!-- Cloudflare Turnstile Widget -->
+        <div id="turnstile-widget" class="d-flex justify-content-center my-3"></div>
 
         <button type="submit" class="btn btn-primary w-100 mt-2">@Localizer.GetKey("Button_Login")</button>
         
@@ -140,7 +216,7 @@
 </div>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <script>
         // Bot detection - timestamp field
         document.addEventListener("DOMContentLoaded", function() {
@@ -148,6 +224,31 @@
             if(tsField) {
                 tsField.value = Date.now();
             }
+            
+            // Render Turnstile widget explicitly
+            function renderTurnstile() {
+                var container = document.getElementById('turnstile-widget');
+                if (container && typeof turnstile !== 'undefined') {
+                    // Clear any existing widget
+                    container.innerHTML = '';
+                    // Render new widget
+                    turnstile.render('#turnstile-widget', {
+                        sitekey: '@ViewBag.TurnstileSiteKey',
+                        theme: 'light',
+                        callback: function(token) {
+                            console.log('Turnstile verification complete');
+                        }
+                    });
+                }
+            }
+            
+            // Wait for Turnstile API to load, then render
+            var renderInterval = setInterval(function() {
+                if (typeof turnstile !== 'undefined') {
+                    renderTurnstile();
+                    clearInterval(renderInterval);
+                }
+            }, 100);
             
             // Prevent form submission if honeypot is filled
             var form = document.getElementById('loginForm');
@@ -164,19 +265,6 @@
                         return false;
                     }
                 });
-            }
-            
-            @if (!ViewData.ModelState.IsValid)
-            {
-                <text>
-                // Wait for reCAPTCHA to load, then reset it
-                var resetInterval = setInterval(function() {
-                    if (typeof grecaptcha !== 'undefined' && grecaptcha.reset) {
-                        grecaptcha.reset();
-                        clearInterval(resetInterval);
-                    }
-                }, 100);
-                </text>
             }
         });
     </script>

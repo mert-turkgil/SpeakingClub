@@ -711,19 +711,9 @@
                             <div class="char-counter" data-for="OgDescription">0/300</div>
                         </div>
 
-                        <div class="mb-4">
-                            <label asp-for="OgImage" class="form-label">
-                                <i class="fa-solid fa-image"></i> OG Image URL
-                            </label>
-                            <input asp-for="OgImage" class="form-control" placeholder="https://yoursite.com/images/og-image.jpg" maxlength="500" />
-                            <div class="help-text">
-                                <i class="fa-solid fa-info-circle"></i>
-                                <span>Image shown when shared (1200x630px recommended, defaults to cover image)</span>
-                            </div>
-                            @if (!string.IsNullOrEmpty(Model.OgImage))
-                            {
-                                <img src="@Model.OgImage" class="preview-img mt-3" style="max-width: 400px;" alt="OG Image Preview" />
-                            }
+                        <div class="alert alert-info">
+                            <i class="fa-solid fa-info-circle"></i>
+                            <strong>OG Image:</strong> Automatically set to your uploaded cover image (1200x630px recommended)
                         </div>
                     </div>
                 </div>

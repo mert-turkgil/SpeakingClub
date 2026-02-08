@@ -15,7 +15,7 @@
     ViewData["Keywords"] = string.Join(", ", Model.Tags?.Select(t => t.Name) ?? new List<string>()) + ", German learning, Almanca";
     ViewData["OgType"] = "article";
     ViewData["OgImage"] = !string.IsNullOrEmpty(Model.Image) 
-        ? $"https://almanca-konus.com/img/{Model.Image}" 
+        ? $"https://almanca-konus.com{Model.Image}" 
         : "https://almanca-konus.com/img/header_logo.png";
     
     // Canonical URL
@@ -29,8 +29,42 @@
     var twitterShareUrl = $"https://twitter.com/intent/tweet?url={encodedUrl}&text={encodedTitle}";
     var whatsappShareUrl = $"https://wa.me/?text={encodedTitle}%20{encodedUrl}";
     var linkedinShareUrl = $"https://www.linkedin.com/sharing/share-offsite/?url={encodedUrl}";
+    
+    // JSON-LD Structured Data for BlogPosting
+    var structuredData = new {
+        context = "https://schema.org",
+        type = "BlogPosting",
+        headline = Model.Title,
+        image = !string.IsNullOrEmpty(Model.Image) ? $"https://almanca-konus.com{Model.Image}" : "https://almanca-konus.com/img/header_logo.png",
+        datePublished = Model.Date.ToString("yyyy-MM-dd"),
+        dateModified = Model.Date.ToString("yyyy-MM-dd"),
+        author = new {
+            type = "Person",
+            name = Model.Author ?? "SpeakingClub"
+        },
+        publisher = new {
+            type = "Organization",
+            name = "Almanca Konuşma Kulübü",
+            logo = new {
+                type = "ImageObject",
+                url = "https://almanca-konus.com/img/header_logo.png"
+            }
+        },
+        description = description,
+        url = canonicalUrl,
+        mainEntityOfPage = new {
+            type = "WebPage",
+            id = canonicalUrl
+        },
+        keywords = Model.Tags?.Select(t => t.Name).ToList()
+    };
 }
 @section Css{
+    <!-- JSON-LD Structured Data for SEO -->
+    <script type="application/ld+json">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(structuredData, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }))
+    </script>
+    
     <style>
         /* Advanced Quiz Section Styling */
         .advanced-quiz-section {
@@ -155,7 +189,7 @@
         <div class="col-12 justify-content-center text-center">
             @if (!string.IsNullOrEmpty(Model.Image))
             {
-                <img src="~/img/@Url.Content(Model.Image)" alt="@Model.Title" class="img-fluid rounded shadow-lg" />
+                <img src="@Model.Image" alt="@Model.Title" class="img-fluid rounded shadow-lg" />
             }
             else
             {

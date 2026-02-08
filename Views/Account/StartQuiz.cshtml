@@ -66,7 +66,7 @@
                                 <label class="answer-option">
                                     <input class="answer-check" type="radio" 
                                         name="responses[@question.Id]" 
-                                        value="@answer.Id" required />
+                                        value="@answer.Id" />
                                     <span class="answer-text">@answer.AnswerText</span>
                                 </label>
                             }
@@ -601,7 +601,7 @@
                 inactivityTimeout = setTimeout(() => {
                     alert("@Html.Raw(@_localization.GetKey("ExamCanceledInactivity"))");
                     autoSubmitQuizAndRedirect('@inactivityUrl');
-                }, 30000);
+                }, 120000);
             }
 
             // Prevent user from leaving fullscreen
@@ -656,7 +656,27 @@
                     event.preventDefault(); // Çift gönderimi tamamen engelle
                     return;
                 }
+                
+                // Check if all questions are answered
+                const panels = document.querySelectorAll('.question-panel');
+                let allAnswered = true;
+                panels.forEach(panel => {
+                    const radios = panel.querySelectorAll('input[type="radio"]');
+                    const answered = Array.from(radios).some(radio => radio.checked);
+                    if (!answered) {
+                        allAnswered = false;
+                    }
+                });
+                
+                if (!allAnswered) {
+                    event.preventDefault();
+                    alert("@Html.Raw(@_localization.GetKey("PleaseAnswerAllQuestions") ?? "Lütfen tüm soruları cevaplayın!")");
+                    return;
+                }
+                
                 isSubmitting = true;
+                showLoadingOverlay();
+                
                 const totalElapsed = Math.floor((Date.now() - examStartTime) / 1000);
                 document.getElementById('elapsedTime').value = totalElapsed;
                 clearInterval(overallTimerInterval);

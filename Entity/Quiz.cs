@@ -24,6 +24,30 @@ namespace SpeakingClub.Entity
         public string Title { get; set; }
         public string Description { get; set; }
 
+        // SEO Fields
+        [MaxLength(200)]
+        public string Slug { get; set; } = string.Empty;
+        
+        [MaxLength(200)]
+        public string SlugDe { get; set; } = string.Empty;
+        
+        [MaxLength(160)]
+        public string MetaDescription { get; set; } = string.Empty;
+        
+        [MaxLength(160)]
+        public string MetaDescriptionDe { get; set; } = string.Empty;
+        
+        [MaxLength(300)]
+        public string MetaKeywords { get; set; } = string.Empty;
+        
+        [MaxLength(300)]
+        public string MetaKeywordsDe { get; set; } = string.Empty;
+        
+        [MaxLength(200)]
+        public string TitleDe { get; set; } = string.Empty;
+        
+        public string DescriptionDe { get; set; } = string.Empty;
+
         // URL or path to an MP3/sound file.
         public string AudioUrl { get; set; }
 

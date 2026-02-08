@@ -24,9 +24,9 @@ Allow: /Home/About
 Allow: /Home/Privacy
 Allow: /Home/Words
 
-# Allow blog pages (uncomment when blog is ready)
-# Allow: /Home/Blog
-# Allow: /Home/BlogDetail
+# Allow blog pages
+Allow: /Home/Blog
+Allow: /Home/BlogDetail
 
 # Allow quizzes listing (public view)
 Allow: /Account/Quizzes
@@ -39,7 +39,7 @@ Disallow: /temp/
 Disallow: /uploads/temp/
 
 # Sitemap location
-Sitemap: https://www.almanca-konus.com/sitemap.xml
+Sitemap: https://almanca-konus.com/sitemap.xml
 
-# Crawl-delay for polite crawling (optional)
-# Crawl-delay: 10
+# Crawl-delay for polite crawling
+Crawl-delay: 10

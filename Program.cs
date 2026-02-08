@@ -37,6 +37,9 @@ var host = emailSettings.GetValue<string>("SMTPMail") ?? "localhost";
 var enablessl = true;
 var username = emailSettings.GetValue<string>("Username") ?? "dummy@example.com";
 var password = emailSettings.GetValue<string>("Password") ?? "dummy-password";
+var fromEmail = emailSettings.GetValue<string>("FromEmail") ?? username;
+var fromName = emailSettings.GetValue<string>("FromName") ?? "Speaking Club";
+var replyToEmail = emailSettings.GetValue<string>("ReplyToEmail");
 var provider = new FileExtensionContentTypeProvider();
 // If .glb is not mapped, add it:
 provider.Mappings[".glb"] = "model/gltf-binary";
@@ -203,7 +206,7 @@ builder.Services.AddAntiforgery(options =>
 builder.Services.AddUnitOfWork();
 // Configure Email Sender
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>(sp =>
-    new SmtpEmailSender(host!, port, enablessl, username!, password!));
+    new SmtpEmailSender(host!, port, enablessl, username!, password!, fromEmail!, fromName!, replyToEmail!));
 
 // Register resource services and file provider for localization/resources.
 var resourcesPath = Path.Combine(Directory.GetCurrentDirectory(), "Resources");
@@ -422,6 +425,84 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 // MVC route'ları
+
+// Localized Quiz Routes (Turkish)
+app.MapControllerRoute(
+    name: "quizzes-tr",
+    pattern: "sinavlar",
+    defaults: new { controller = "Home", action = "Quizzes" });
+
+app.MapControllerRoute(
+    name: "quizzes-tr-level",
+    pattern: "sinavlar/{level}",
+    defaults: new { controller = "Home", action = "Quizzes" });
+
+// Localized Quiz Routes (German)
+app.MapControllerRoute(
+    name: "quizzes-de",
+    pattern: "pruefungen",
+    defaults: new { controller = "Home", action = "Quizzes" });
+
+app.MapControllerRoute(
+    name: "quizzes-de-level",
+    pattern: "pruefungen/{level}",
+    defaults: new { controller = "Home", action = "Quizzes" });
+
+// Localized Blog Routes (Turkish)
+app.MapControllerRoute(
+    name: "blog-tr",
+    pattern: "yazilar",
+    defaults: new { controller = "Home", action = "Blog" });
+
+app.MapControllerRoute(
+    name: "blog-detail-tr",
+    pattern: "yazilar/{url}",
+    defaults: new { controller = "Home", action = "BlogDetail" });
+
+// Localized Blog Routes (German)
+app.MapControllerRoute(
+    name: "blog-de",
+    pattern: "beitraege",
+    defaults: new { controller = "Home", action = "Blog" });
+
+app.MapControllerRoute(
+    name: "blog-detail-de",
+    pattern: "beitraege/{url}",
+    defaults: new { controller = "Home", action = "BlogDetail" });
+
+// Localized About Routes
+app.MapControllerRoute(
+    name: "about-tr",
+    pattern: "hakkimizda",
+    defaults: new { controller = "Home", action = "About" });
+
+app.MapControllerRoute(
+    name: "about-de",
+    pattern: "ueber-uns",
+    defaults: new { controller = "Home", action = "About" });
+
+// Localized Words/Dictionary Routes
+app.MapControllerRoute(
+    name: "words-tr",
+    pattern: "sozluk",
+    defaults: new { controller = "Home", action = "Words" });
+
+app.MapControllerRoute(
+    name: "words-de",
+    pattern: "woerterbuch",
+    defaults: new { controller = "Home", action = "Words" });
+
+// Localized Privacy Routes
+app.MapControllerRoute(
+    name: "privacy-tr",
+    pattern: "gizlilik",
+    defaults: new { controller = "Home", action = "Privacy" });
+
+app.MapControllerRoute(
+    name: "privacy-de",
+    pattern: "datenschutz",
+    defaults: new { controller = "Home", action = "Privacy" });
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
@@ -445,6 +526,17 @@ app.MapControllerRoute(
     name: "words",
     pattern: "words",
     defaults: new { controller = "Home", action = "Words" });
+
+// Quiz canonical routes
+app.MapControllerRoute(
+    name: "quizzes",
+    pattern: "quizzes",
+    defaults: new { controller = "Home", action = "Quizzes" });
+
+app.MapControllerRoute(
+    name: "quizzes-level",
+    pattern: "quizzes/{level}",
+    defaults: new { controller = "Home", action = "Quizzes" });
 
 // SEO Routes
 app.MapControllerRoute(

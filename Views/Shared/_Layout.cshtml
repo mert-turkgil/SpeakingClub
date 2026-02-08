@@ -23,6 +23,20 @@
     <meta name="language" content="@System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName" />
     <link rel="canonical" href="@(ViewData["Canonical"] ?? "https://almanca-konus.com" + Context.Request.Path)" />
     
+    <!-- Hreflang Alternate Language Links -->
+    @if (ViewData["HreflangTr"] != null)
+    {
+        <link rel="alternate" hreflang="tr" href="@ViewData["HreflangTr"]" />
+    }
+    @if (ViewData["HreflangDe"] != null)
+    {
+        <link rel="alternate" hreflang="de" href="@ViewData["HreflangDe"]" />
+    }
+    @if (ViewData["HreflangTr"] != null || ViewData["HreflangDe"] != null)
+    {
+        <link rel="alternate" hreflang="x-default" href="@(ViewData["HreflangTr"] ?? ViewData["Canonical"] ?? "https://almanca-konus.com" + Context.Request.Path)" />
+    }
+    
     <!-- Open Graph Meta Tags (Facebook, LinkedIn, WhatsApp) -->
     <meta property="og:type" content="@(ViewData["OgType"] ?? "website")" />
     <meta property="og:site_name" content="SpeakingClub" />

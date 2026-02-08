@@ -876,12 +876,16 @@ namespace SpeakingClub.Controllers
                 if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
                     blog.Image = await SaveBlogCoverImageAsync(model.ImageFile);
-                    blog.OgImage = $"https://almanca-konus.com/img/{blog.Image}";
+                    blog.OgImage = $"https://almanca-konus.com{blog.Image}";
                 }
 
                 // Save blog first to get ID
                 await _unitOfWork.Blogs.AddAsync(blog);
                 await _unitOfWork.SaveAsync();
+
+                // Process and move inline images from /temp/ to /blog/img/
+                var mainImageTracker = new BlogImageTracker();
+                blog.Content = await ProcessAndMoveImagesAsync(blog.Content, blog.BlogId, mainImageTracker);
 
                 // Handle category
                 if (model.SelectedCategoryIds != null && model.SelectedCategoryIds.Any())
@@ -1096,6 +1100,10 @@ namespace SpeakingClub.Controllers
                 blog.SelectedQuestionId = model.SelectedQuestionId;
                 blog.LastModified = DateTime.UtcNow;
 
+                // Process and move inline images from /temp/ to /blog/img/
+                var mainImageTracker = new BlogImageTracker();
+                blog.Content = await ProcessAndMoveImagesAsync(blog.Content, blog.BlogId, mainImageTracker);
+
                 // Handle cover image update
                 if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
@@ -1105,11 +1113,11 @@ namespace SpeakingClub.Controllers
                     }
                     
                     blog.Image = await SaveBlogCoverImageAsync(model.ImageFile);
-                    blog.OgImage = $"https://almanca-konus.com/img/{blog.Image}";
+                    blog.OgImage = $"https://almanca-konus.com{blog.Image}";
                 }
                 else if (!string.IsNullOrEmpty(blog.Image))
                 {
-                    blog.OgImage = $"https://almanca-konus.com/img/{blog.Image}";
+                    blog.OgImage = $"https://almanca-konus.com{blog.Image}";
                 }
 
                 // Update category
@@ -2858,7 +2866,16 @@ namespace SpeakingClub.Controllers
                         AudioUrl = uploadedAudioUrl,
                         YouTubeVideoUrl = finalYouTubeUrl,
                         Tags = taglist.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList(),
-                        Words = wordlist.Where(w => model.SelectedWordIds.Contains(w.WordId)).ToList()
+                        Words = wordlist.Where(w => model.SelectedWordIds.Contains(w.WordId)).ToList(),
+                        // SEO Fields
+                        Slug = model.Slug ?? string.Empty,
+                        SlugDe = model.SlugDe ?? string.Empty,
+                        MetaDescription = model.MetaDescription ?? string.Empty,
+                        MetaDescriptionDe = model.MetaDescriptionDe ?? string.Empty,
+                        MetaKeywords = model.MetaKeywords ?? string.Empty,
+                        MetaKeywordsDe = model.MetaKeywordsDe ?? string.Empty,
+                        TitleDe = model.TitleDe ?? string.Empty,
+                        DescriptionDe = model.DescriptionDe ?? string.Empty
                     };
 
                     foreach (var questionModel in model.Questions)
@@ -2990,6 +3007,15 @@ namespace SpeakingClub.Controllers
                 Title = quiz.Title,
                 Description = quiz.Description,
                 CategoryId = quiz.CategoryId,
+                // SEO Fields
+                Slug = quiz.Slug,
+                SlugDe = quiz.SlugDe,
+                MetaDescription = quiz.MetaDescription,
+                MetaDescriptionDe = quiz.MetaDescriptionDe,
+                MetaKeywords = quiz.MetaKeywords,
+                MetaKeywordsDe = quiz.MetaKeywordsDe,
+                TitleDe = quiz.TitleDe,
+                DescriptionDe = quiz.DescriptionDe,
                 SelectedTagIds = quiz.Tags.Select(t => t.TagId).ToList(),
                 SelectedWordIds = quiz.Words.Select(w => w.WordId).ToList(),
                 Questions = quiz.Questions.Select(q => new QuestionEditViewModel
@@ -3101,6 +3127,16 @@ namespace SpeakingClub.Controllers
                 quiz.Title = model.Title;
                 quiz.Description = model.Description;
                 quiz.CategoryId = model.CategoryId;
+                
+                // Update SEO fields
+                quiz.Slug = model.Slug ?? string.Empty;
+                quiz.SlugDe = model.SlugDe ?? string.Empty;
+                quiz.MetaDescription = model.MetaDescription ?? string.Empty;
+                quiz.MetaDescriptionDe = model.MetaDescriptionDe ?? string.Empty;
+                quiz.MetaKeywords = model.MetaKeywords ?? string.Empty;
+                quiz.MetaKeywordsDe = model.MetaKeywordsDe ?? string.Empty;
+                quiz.TitleDe = model.TitleDe ?? string.Empty;
+                quiz.DescriptionDe = model.DescriptionDe ?? string.Empty;
 
                 // Handle Image Upload
                 if (model.ImageFile != null && model.ImageFile.Length > 0)

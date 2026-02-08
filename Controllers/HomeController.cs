@@ -3,12 +3,14 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using SpeakingClub.Data.Abstract;
 using SpeakingClub.Entity;
+using SpeakingClub.Identity;
 using SpeakingClub.Models;
 using SpeakingClub.Services;
 
@@ -26,6 +28,7 @@ namespace SpeakingClub.Controllers
         private readonly IEmailSender _emailSender;
         private readonly IDictionaryService _dictionaryService;
         private readonly IDeeplService _deeplService;
+        private readonly UserManager<User> _userManager;
 
         public HomeController(
             IConfiguration configuration,
@@ -35,7 +38,8 @@ namespace SpeakingClub.Controllers
             IMemoryCache memoryCache,
             IEmailSender emailSender,
             IDeeplService deeplService,
-            IDictionaryService dictionaryService)
+            IDictionaryService dictionaryService,
+            UserManager<User> userManager)
         {
             _configuration = configuration;
             _memoryCache = memoryCache;
@@ -45,6 +49,34 @@ namespace SpeakingClub.Controllers
             _emailSender = emailSender;
             _deeplService = deeplService;
             _dictionaryService = dictionaryService;
+            _userManager = userManager;
+        }
+
+        // Helper: get current lang code
+        private string GetLangCode() => CultureInfo.CurrentCulture.TwoLetterISOLanguageName.ToLower();
+        private bool IsGerman() => GetLangCode() == "de";
+        
+        // Helper: get localized URL path based on current culture
+        private string GetLocalizedPath(string trPath, string dePath, string fallbackPath)
+        {
+            var lang = GetLangCode();
+            return lang == "de" ? dePath : lang == "tr" ? trPath : fallbackPath;
+        }
+        
+        // Helper: set SEO ViewData
+        private void SetSeoData(string title, string description, string keywords, string? canonicalPath = null, string? ogImage = null)
+        {
+            ViewData["Title"] = title;
+            ViewData["Description"] = description;
+            ViewData["Keywords"] = keywords;
+            if (canonicalPath != null)
+                ViewData["Canonical"] = "https://almanca-konus.com" + canonicalPath;
+            if (ogImage != null)
+                ViewData["OgImage"] = ogImage;
+            
+            // Set hreflang alternates
+            ViewData["HreflangTr"] = ViewData["HreflangTr"];
+            ViewData["HreflangDe"] = ViewData["HreflangDe"];
         }
 
         #region SetLanguage
@@ -63,9 +95,24 @@ namespace SpeakingClub.Controllers
         [HttpGet("")]
         public async Task<IActionResult> Index()
         {
-            ViewData["Title"] = "Ana Sayfa";
-            ViewData["Description"] = "Almanca Konuşma Kulübü - Almanca pratik ve topluluk.";
-            ViewData["Keywords"] = "almanca, konuşma, kulüp, speaking, deutsch";
+            if (IsGerman())
+            {
+                SetSeoData(
+                    "Almanca Konuşma Kulübü | Deutsch Sprechen Lernen",
+                    "Lernen Sie Deutsch sprechen mit interaktiven Quizzen, Wörterbuch und spannenden Inhalten. Kostenlos üben!",
+                    "Deutsch lernen, Deutsch sprechen, Sprachclub, Quiz, Wörterbuch, Online Deutsch",
+                    "/");
+            }
+            else
+            {
+                SetSeoData(
+                    "Almanca Konuşma Kulübü | Online Almanca Öğren",
+                    "Almanca Konuşma Kulübü - İnteraktif sınavlar, sözlük ve ilgi çekici içeriklerle Almanca öğrenin. Ücretsiz pratik yapın!",
+                    "almanca öğren, almanca konuşma, almanca kulüp, almanca quiz, almanca sözlük, online almanca",
+                    "/");
+            }
+            ViewData["HreflangTr"] = "https://almanca-konus.com/";
+            ViewData["HreflangDe"] = "https://almanca-konus.com/";
 
             var entityBlogs = await _unitOfWork.Blogs.GetAllAsync();
             var selectedBlogs = entityBlogs.Where(b => b.isHome == true).ToList();
@@ -110,6 +157,24 @@ namespace SpeakingClub.Controllers
         [HttpGet("privacy")]
         public IActionResult Privacy()
         {
+            if (IsGerman())
+            {
+                SetSeoData(
+                    "Datenschutzerklärung | Almanca Konuşma Kulübü",
+                    "Datenschutzerklärung der Almanca Konuşma Kulübü Plattform.",
+                    "Datenschutz, Privatsphäre, DSGVO",
+                    "/datenschutz");
+            }
+            else
+            {
+                SetSeoData(
+                    "Gizlilik Politikası | Almanca Konuşma Kulübü",
+                    "Almanca Konuşma Kulübü gizlilik politikası ve kişisel verilerin korunması.",
+                    "gizlilik, kişisel veri, KVKK",
+                    "/gizlilik");
+            }
+            ViewData["HreflangTr"] = "https://almanca-konus.com/gizlilik";
+            ViewData["HreflangDe"] = "https://almanca-konus.com/datenschutz";
             return View();
         }
         #endregion
@@ -118,7 +183,26 @@ namespace SpeakingClub.Controllers
         [HttpGet("about")]
         public IActionResult About()
         {
-            ViewBag.RecaptchaSiteKey = _configuration["Recaptcha:SiteKey"];
+            ViewBag.RecaptchaSiteKey = _configuration["Turnstile:SiteKey"];
+            
+            if (IsGerman())
+            {
+                SetSeoData(
+                    "Über Uns | Almanca Konuşma Kulübü",
+                    "Erfahren Sie mehr über unser Team und unsere Mission, Deutsch-Lernenden zu helfen. Kontaktieren Sie uns!",
+                    "über uns, Kontakt, Deutsch lernen, Sprachschule, Team",
+                    "/ueber-uns");
+            }
+            else
+            {
+                SetSeoData(
+                    "Hakkımızda | Almanca Konuşma Kulübü",
+                    "Ekibimiz ve Almanca öğrenenlere yardımcı olma misyonumuz hakkında bilgi alın. Bizimle iletişime geçin!",
+                    "hakkımızda, iletişim, almanca öğren, dil okulu, ekip",
+                    "/hakkimizda");
+            }
+            ViewData["HreflangTr"] = "https://almanca-konus.com/hakkimizda";
+            ViewData["HreflangDe"] = "https://almanca-konus.com/ueber-uns";
             var model = CreateAboutPageViewModel();
             return View(model);
         }
@@ -379,6 +463,26 @@ namespace SpeakingClub.Controllers
         [HttpGet("blog")]
         public async Task<IActionResult> Blog(string category, string tag, string searchTerm, int page = 1)
         {
+            // SEO metadata for blog listing
+            if (IsGerman())
+            {
+                SetSeoData(
+                    "Blog & Artikel | Almanca Konuşma Kulübü",
+                    "Entdecken Sie unsere Artikel und Beiträge rund ums Deutschlernen. Tipps, Grammatik, Vokabeln und mehr.",
+                    "Blog, Deutsch lernen, Artikel, Grammatik, Vokabeln, Tipps, Deutschkurs",
+                    "/beitraege");
+            }
+            else
+            {
+                SetSeoData(
+                    "Blog & Yazılar | Almanca Konuşma Kulübü",
+                    "Almanca öğrenme ile ilgili yazılarımızı keşfedin. İpuçları, gramer, kelime bilgisi ve daha fazlası.",
+                    "blog, almanca öğren, yazılar, gramer, kelime, ipuçları, almanca kursu",
+                    "/yazilar");
+            }
+            ViewData["HreflangTr"] = "https://almanca-konus.com/yazilar";
+            ViewData["HreflangDe"] = "https://almanca-konus.com/beitraege";
+
             // Retrieve all blogs from the database and convert to IQueryable for filtering.
             var entityBlogs = await _unitOfWork.Blogs.GetAllAsync();
             var blogsQuery = entityBlogs.AsQueryable();
@@ -482,12 +586,57 @@ namespace SpeakingClub.Controllers
 
                 var currentCulture = CultureInfo.CurrentCulture.Name;
                 var langCode = currentCulture.Substring(0, 2).ToLower();
-                blog.Title = _unitOfWork.BlogTranslations
-                    .GetByBlogAndLanguageAsync(blog.BlogId, langCode)
-                    .Result?.Title ?? blog.Title;
-                blog.Content = _unitOfWork.BlogTranslations
-                    .GetByBlogAndLanguageAsync(blog.BlogId, langCode)
-                    .Result?.Content ?? blog.Content;
+                var translation = await _unitOfWork.BlogTranslations
+                    .GetByBlogAndLanguageAsync(blog.BlogId, langCode);
+                blog.Title = translation?.Title ?? blog.Title;
+                blog.Content = translation?.Content ?? blog.Content;
+
+                // SEO metadata from translation or blog defaults
+                var metaTitle = translation?.MetaTitle ?? translation?.Title ?? blog.Title;
+                var metaDesc = translation?.MetaDescription ?? translation?.Description ?? blog.Description ?? "";
+                var metaKeywords = translation?.MetaKeywords ?? "";
+                var ogTitle = translation?.OgTitle ?? metaTitle;
+                var ogDesc = translation?.OgDescription ?? metaDesc;
+                var blogSlug = translation?.Slug ?? blog.Slug ?? url;
+
+                var canonicalPath = IsGerman() ? $"/beitraege/{blogSlug}" : $"/yazilar/{blogSlug}";
+                SetSeoData(metaTitle, metaDesc, metaKeywords, canonicalPath);
+                ViewData["OgType"] = "article";
+                ViewData["OgImage"] = !string.IsNullOrEmpty(blog.Image) ? $"https://almanca-konus.com{blog.Image}" : null;
+
+                // Hreflang for blog detail
+                var trTranslation = await _unitOfWork.BlogTranslations.GetByBlogAndLanguageAsync(blog.BlogId, "tr");
+                var deTranslation = await _unitOfWork.BlogTranslations.GetByBlogAndLanguageAsync(blog.BlogId, "de");
+                var trSlug = trTranslation?.Slug ?? blog.Slug ?? url;
+                var deSlug = deTranslation?.Slug ?? blog.Slug ?? url;
+                ViewData["HreflangTr"] = $"https://almanca-konus.com/yazilar/{trSlug}";
+                ViewData["HreflangDe"] = $"https://almanca-konus.com/beitraege/{deSlug}";
+
+                // Article Schema.org structured data
+                ViewData["ArticleSchema"] = $@"<script type=""application/ld+json"">
+                {{
+                    ""@context"": ""https://schema.org"",
+                    ""@type"": ""Article"",
+                    ""headline"": ""{System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(metaTitle)}"",
+                    ""description"": ""{System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(metaDesc)}"",
+                    ""author"": {{
+                        ""@type"": ""Person"",
+                        ""name"": ""{blog.Author ?? "Suna Türkgil"}""
+                    }},
+                    ""datePublished"": ""{blog.Date:yyyy-MM-ddTHH:mm:ssZ}"",
+                    ""dateModified"": ""{(blog.LastModified ?? blog.Date):yyyy-MM-ddTHH:mm:ssZ}"",
+                    ""image"": ""{(string.IsNullOrEmpty(blog.Image) ? "https://almanca-konus.com/img/header_logo.png" : $"https://almanca-konus.com{blog.Image}")}"",
+                    ""publisher"": {{
+                        ""@type"": ""Organization"",
+                        ""name"": ""Almanca Konuşma Kulübü"",
+                        ""logo"": {{
+                            ""@type"": ""ImageObject"",
+                            ""url"": ""https://almanca-konus.com/img/header_logo.png""
+                        }}
+                    }},
+                    ""mainEntityOfPage"": ""https://almanca-konus.com{canonicalPath}""
+                }}
+                </script>";
 
                 // Increment view count and persist
                 try
@@ -509,7 +658,7 @@ namespace SpeakingClub.Controllers
                     Date = blog.Date,
                     RawMaps = blog.RawMaps,
                     RawYT = blog.RawYT,
-                    Author = blog.Author,
+                    Author = blog.Author??"Unknown",
                     Image = blog.Image,
                     Tags = blog.Tags?.ToList() ?? new List<Tag>(),
                     Quizzes = blog.Quiz,
@@ -550,9 +699,29 @@ namespace SpeakingClub.Controllers
         [HttpGet("words")]
         public async Task<IActionResult> Words(string searchTerm)
         {
-            ViewBag.RecaptchaSiteKey = _configuration["Recaptcha:SiteKey"];
+            ViewBag.TurnstileSiteKey = _configuration["Turnstile:SiteKey"];
             var currentCulture = CultureInfo.CurrentCulture.Name;
             var langCode = currentCulture.Substring(0, 2).ToLower();
+            
+            // SEO metadata for dictionary
+            if (IsGerman())
+            {
+                SetSeoData(
+                    "Wörterbuch | Almanca Konuşma Kulübü",
+                    "Deutsches Wörterbuch mit Definitionen, Aussprache, Synonymen und Beispielen. Suchen Sie jedes deutsche Wort!",
+                    "Wörterbuch, Deutsch, Definition, Aussprache, Synonyme, Übersetzung",
+                    "/woerterbuch");
+            }
+            else
+            {
+                SetSeoData(
+                    "Sözlük | Almanca Konuşma Kulübü",
+                    "Almanca sözlük - tanım, telaffuz, eş anlamlılar ve örneklerle her Almanca kelimeyi arayın!",
+                    "sözlük, almanca, tanım, telaffuz, eş anlamlı, çeviri",
+                    "/sozluk");
+            }
+            ViewData["HreflangTr"] = "https://almanca-konus.com/sozluk";
+            ViewData["HreflangDe"] = "https://almanca-konus.com/woerterbuch";
 
             var model = new WordViewModel
             {
@@ -635,6 +804,136 @@ namespace SpeakingClub.Controllers
 
         #endregion
 
+        #region Quizzes (Public)
+        [HttpGet("quizzes")]
+        public async Task<IActionResult> Quizzes(string? level)
+        {
+            // SEO metadata for quizzes
+            if (IsGerman())
+            {
+                var levelText = !string.IsNullOrEmpty(level) ? $" - {level}" : "";
+                SetSeoData(
+                    $"Deutsch-Prüfungen{levelText} | Almanca Konuşma Kulübü",
+                    "Testen Sie Ihr Deutsch mit unseren interaktiven Quizzen. Verschiedene Schwierigkeitsstufen für Anfänger bis Fortgeschrittene.",
+                    "Deutsch-Quiz, Prüfung, Deutschtest, A1, A2, B1, B2, C1, Grammatik-Quiz, Vokabel-Quiz",
+                    "/pruefungen" + (level != null ? $"/{level.ToLower()}" : ""));
+            }
+            else
+            {
+                var levelText = !string.IsNullOrEmpty(level) ? $" - {level}" : "";
+                SetSeoData(
+                    $"Almanca Sınavlar{levelText} | Almanca Konuşma Kulübü",
+                    "Almanca bilginizi interaktif sınavlarla test edin. Başlangıçtan ileri seviyeye farklı zorluk seviyeleri.",
+                    "almanca quiz, sınav, almanca test, A1, A2, B1, B2, C1, gramer quiz, kelime quiz",
+                    "/sinavlar" + (level != null ? $"/{level.ToLower()}" : ""));
+            }
+            ViewData["HreflangTr"] = "https://almanca-konus.com/sinavlar" + (level != null ? $"/{level.ToLower()}" : "");
+            ViewData["HreflangDe"] = "https://almanca-konus.com/pruefungen" + (level != null ? $"/{level.ToLower()}" : "");
+            
+            // Quiz Schema.org structured data
+            ViewData["ArticleSchema"] = $@"<script type=""application/ld+json"">
+            {{
+                ""@@context"": ""https://schema.org"",
+                ""@@type"": ""ItemList"",
+                ""name"": ""{(IsGerman() ? "Deutsch-Prüfungen" : "Almanca Sınavlar")}"",
+                ""description"": ""{(IsGerman() ? "Interaktive Deutsch-Quizze" : "Almanca interaktif sınavlar")}"",
+                ""url"": ""https://almanca-konus.com{(IsGerman() ? "/pruefungen" : "/sinavlar")}""
+            }}
+            </script>";
+
+            // Retrieve all quizzes
+            var allQuizzes = await _unitOfWork.Quizzes.GetAllAsync();
+
+            // Filter by level if provided
+            if (!string.IsNullOrEmpty(level))
+            {
+                var filteredQuizzes = allQuizzes.Where(q => q.Tags != null && q.Tags.Any(t => t.Name.Equals(level, StringComparison.OrdinalIgnoreCase))).ToList();
+                if (filteredQuizzes.Any())
+                {
+                    allQuizzes = filteredQuizzes;
+                }
+                ViewBag.SelectedLevel = level;
+            }
+
+            // Get the current user if logged in
+            var user = await _userManager.GetUserAsync(User);
+            var userSubmissions = new List<QuizSubmission>();
+
+            if (user != null)
+            {
+                var submissions = await _unitOfWork.QuizSubmissions.GetAllAsync();
+                userSubmissions = submissions.Where(s => s.UserId == user.Id).ToList();
+            }
+
+            // Pre-fetch teacher display names
+            var teacherUserNames = allQuizzes.Select(q => q.TeacherName).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
+            var teacherDisplayNames = new Dictionary<string, string>();
+            foreach (var teacherUserName in teacherUserNames)
+            {
+                if (!string.IsNullOrEmpty(teacherUserName))
+                {
+                    var teacher = await _userManager.FindByNameAsync(teacherUserName);
+                    teacherDisplayNames[teacherUserName] = teacher != null ? $"{teacher.FirstName} {teacher.LastName}" : teacherUserName;
+                }
+            }
+
+            Func<SpeakingClub.Entity.Quiz, QuizSummaryViewModel> mapQuiz = q =>
+            {
+                var lastSubmission = userSubmissions
+                    .Where(s => s.QuizId == q.Id)
+                    .OrderByDescending(s => s.SubmissionDate)
+                    .FirstOrDefault();
+
+                IEnumerable<AttemptDetailViewModel>? details = null;
+                if (lastSubmission != null && lastSubmission.QuizResponses != null)
+                {
+                    details = lastSubmission.QuizResponses.Select(r =>
+                    {
+                        var question = r.QuizAnswer?.Question;
+                        var correctAnswer = question?.Answers.FirstOrDefault(a => a.IsCorrect)?.AnswerText ?? "N/A";
+                        var yourAnswer = r.QuizAnswer?.AnswerText ?? r.AnswerText ?? "No answer";
+                        bool isCorrect = r.QuizAnswer != null && r.QuizAnswer.IsCorrect;
+                        return new AttemptDetailViewModel
+                        {
+                            QuestionId = question?.Id ?? 0,
+                            QuestionText = question?.QuestionText ?? "N/A",
+                            YourAnswer = yourAnswer,
+                            CorrectAnswer = correctAnswer,
+                            TimeTakenSeconds = 0,
+                            IsCorrect = isCorrect
+                        };
+                    });
+                }
+
+                return new QuizSummaryViewModel
+                {
+                    Tags = q.Tags?.ToList() ?? new List<Tag>(),
+                    AudioUrl = q.AudioUrl,
+                    YouTubeVideoUrl = q.YouTubeVideoUrl,
+                    QuizId = q.Id,
+                    QuizTitle = q.Title,
+                    QuizDescription = q.Description,
+                    ImageUrl = !string.IsNullOrEmpty(q.ImageUrl) ? q.ImageUrl : Url.Content("~/img/header_logo.png"),
+                    TeacherName = !string.IsNullOrEmpty(q.TeacherName) && teacherDisplayNames.ContainsKey(q.TeacherName) 
+                        ? teacherDisplayNames[q.TeacherName] 
+                        : "Unknown Instructor",
+                    CategoryName = q.Category != null ? q.Category.Name : "General",
+                    AttemptCount = userSubmissions.Count(s => s.QuizId == q.Id),
+                    LastScore = lastSubmission?.Score,
+                    LastAttemptDate = lastSubmission?.SubmissionDate,
+                    RecentAttemptDetails = details
+                };
+            };
+
+            var viewModel = new CombinedQuizzesViewModel
+            {
+                AvailableQuizzes = allQuizzes.Select(mapQuiz).ToList()
+            };
+
+            return View("~/Views/Account/Quizzes.cshtml", viewModel);
+        }
+        #endregion
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
@@ -643,17 +942,20 @@ namespace SpeakingClub.Controllers
         
         private async Task<bool> RecaptchaIsValid(string recaptchaResponse)
         {
-            var secret = _configuration["Recaptcha:SecretKey"];
+            var secret = _configuration["Turnstile:SecretKey"];
+            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            
             using var httpClient = new HttpClient();
             var content = new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string, string>("secret", secret ?? string.Empty),
-                new KeyValuePair<string, string>("response", recaptchaResponse)
+                new KeyValuePair<string, string>("response", recaptchaResponse),
+                new KeyValuePair<string, string>("remoteip", remoteIp ?? string.Empty)
             });
-            var response = await httpClient.PostAsync("https://www.google.com/recaptcha/api/siteverify", content);
+            var response = await httpClient.PostAsync("https://challenges.cloudflare.com/turnstile/v0/siteverify", content);
             var json = await response.Content.ReadAsStringAsync();
-            // Çok temel bir doğrulama, istersen JSON parse ile daha sağlam hale getirebiliriz.
-            return json.Contains("\"success\": true");
+            var turnstileResult = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(json);
+            return turnstileResult.GetProperty("success").GetBoolean();
         }
 
         private string StripHtmlTags(string input)

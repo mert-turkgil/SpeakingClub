@@ -158,6 +158,58 @@
                     </div>
                 </div>
 
+                <!-- SEO & Localization Section -->
+                <div class="card border-0 shadow-sm mb-5">
+                    <div class="card-header bg-info text-white py-3">
+                        <h5 class="mb-0"><i class="fas fa-search me-2"></i>SEO & Localization (Optional)</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3"><i class="fas fa-flag me-1"></i> Turkish (TR)</h6>
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Slug" class="form-control" placeholder="slug-tr" />
+                                    <label asp-for="Slug">URL Slug (TR)</label>
+                                    <small class="text-muted">e.g. almanca-a1-sinavi</small>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <textarea asp-for="MetaDescription" class="form-control" style="height:80px" placeholder="Meta description TR"></textarea>
+                                    <label asp-for="MetaDescription">Meta Description (TR)</label>
+                                    <small class="text-muted">Max 160 chars for Google snippet</small>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input asp-for="MetaKeywords" class="form-control" placeholder="keyword1, keyword2" />
+                                    <label asp-for="MetaKeywords">Meta Keywords (TR)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-success mb-3"><i class="fas fa-flag me-1"></i> German (DE)</h6>
+                                <div class="form-floating mb-3">
+                                    <input asp-for="TitleDe" class="form-control" placeholder="German title" />
+                                    <label asp-for="TitleDe">Title (DE)</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <textarea asp-for="DescriptionDe" class="form-control" style="height:80px" placeholder="German description"></textarea>
+                                    <label asp-for="DescriptionDe">Description (DE)</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input asp-for="SlugDe" class="form-control" placeholder="slug-de" />
+                                    <label asp-for="SlugDe">URL Slug (DE)</label>
+                                    <small class="text-muted">e.g. deutsch-a1-pruefung</small>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <textarea asp-for="MetaDescriptionDe" class="form-control" style="height:80px" placeholder="Meta description DE"></textarea>
+                                    <label asp-for="MetaDescriptionDe">Meta Description (DE)</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input asp-for="MetaKeywordsDe" class="form-control" placeholder="keyword1, keyword2" />
+                                    <label asp-for="MetaKeywordsDe">Meta Keywords (DE)</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Relationships Section -->
                 <div class="row g-4 mb-5">
                     <div class="col-md-6 card">
