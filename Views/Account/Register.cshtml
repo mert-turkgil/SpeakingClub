@@ -116,7 +116,7 @@
     </div>
 }
 @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
-<div style="height: 100vh;" class="container-xxl">
+<div style="min-height: 100vh;" class="container-xxl">
     <div class="row py-5">
         <div class="col">
     <form method="post" class="animated-form" id="registerForm">
@@ -160,13 +160,13 @@
 
         <div>
             <label asp-for="Password" class="form-label">@Localizer.GetKey("Label_Password")</label>
-            <input asp-for="Password" type="password" class="form-control" placeholder="••••••">
+            <input asp-for="Password" type="password" class="form-control" placeholder="••••••" autocomplete="new-password">
             <span asp-validation-for="Password" class="text-danger"></span>
         </div>
 
         <div>
             <label asp-for="ConfirmPassword" class="form-label">@Localizer.GetKey("Label_ConfirmPassword")</label>
-            <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="••••••">
+            <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="••••••" autocomplete="new-password">
             <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
         </div>
         <!-- Cloudflare Turnstile Widget -->

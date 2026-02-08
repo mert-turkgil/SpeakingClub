@@ -463,6 +463,7 @@ namespace SpeakingClub.Controllers
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
+            ViewBag.TurnstileSiteKey = _configuration["Turnstile:SiteKey"];
             // Bot detection - check honeypot and other fields
             if (!string.IsNullOrEmpty(Request.Form["honeypot"]) || 
                 !string.IsNullOrEmpty(Request.Form["phone"]) ||
@@ -615,6 +616,7 @@ namespace SpeakingClub.Controllers
         public async Task<IActionResult> Register(RegisterViewModel model, string? returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
+            ViewBag.TurnstileSiteKey = _configuration["Turnstile:SiteKey"];
             // Bot detection - check honeypot and other fields
             if (!string.IsNullOrEmpty(Request.Form["honeypot"]) || 
                 !string.IsNullOrEmpty(Request.Form["phone"]) ||
