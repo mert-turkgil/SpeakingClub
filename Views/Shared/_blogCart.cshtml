@@ -1,5 +1,9 @@
 @model SpeakingClub.Entity.Blog
 @inject LanguageService Localizer
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    var blogListPath = isGerman ? "/beitraege" : "/yazilar";
+}
 <div class="advanced-blog-card card shadow advanced-blog-card--container h-100">
     <!-- Media Swiper for Cover Image, YouTube, Google Maps -->
     <div class="advanced-blog-card__media swiper-container">
@@ -35,7 +39,7 @@
     <!-- Card Body -->
     <div class="card-body advanced-blog-card__body">
         <h5 class="card-title advanced-blog-card__title" title="@Model.Title">
-            <a asp-controller="Home" asp-action="BlogDetail" asp-route-url="@Model.Url" class="advanced-blog-card__link">
+            <a href="@blogListPath/@Model.Url" class="advanced-blog-card__link">
                 @Model.Title
             </a>
         </h5>
@@ -61,7 +65,7 @@
                 <i class="fa-solid fa-user advanced-blog-card__icon"></i> @Model.Author
             }
         </small>
-        <a asp-controller="Home" asp-action="BlogDetail" asp-route-url="@Model.Url" class="btn btn-sm btn-primary advanced-blog-card__readmore">
+        <a href="@blogListPath/@Model.Url" class="btn btn-sm btn-primary advanced-blog-card__readmore">
             @_localization.GetKey("ReadMore").Value <i class="fa-solid fa-arrow-right advanced-blog-card__icon"></i>
         </a>
     </div>

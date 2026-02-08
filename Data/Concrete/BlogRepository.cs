@@ -35,20 +35,25 @@ namespace SpeakingClub.Data.Concrete
         }
         public async Task<Blog?> GetByUrlAsync(string url)
         {
-            // Include Category, Tags, and then the quizzes and their questions.
+            // Include Category, Tags, Translations, and quizzes
             return await _dbSet
                 .Include(b => b.Category)
                 .Include(b => b.Tags)
+                .Include(b => b.Translations)
                 .Include(b => b.Quiz)
                     .ThenInclude(q => q.Questions)
                     .ThenInclude(q => q.Answers)
-                .SingleOrDefaultAsync(b => b.Url.ToLower() == url.ToLower());
+                .FirstOrDefaultAsync(b => 
+                    b.Url.ToLower() == url.ToLower() || 
+                    b.Slug.ToLower() == url.ToLower() ||
+                    (b.Translations != null && b.Translations.Any(t => t.Slug != null && t.Slug.ToLower() == url.ToLower())));
         }
         public override async Task<IEnumerable<Blog>> GetAllAsync()
         {
             return await _dbSet
                 .Include(b => b.Category)
                 .Include(b => b.Tags)
+                .Include(b => b.Translations)
                 .Include(b => b.Quiz)
                 .ToListAsync();
         }

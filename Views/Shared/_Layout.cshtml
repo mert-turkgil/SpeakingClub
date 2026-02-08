@@ -274,6 +274,14 @@
     var currentPath = Context.Request.Path;
     var currentController = ViewContext.RouteData.Values["controller"] as string;
     var currentAction = ViewContext.RouteData.Values["action"] as string;
+
+    // Localized URL paths based on current culture
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    var blogListPath = isGerman ? "/beitraege" : "/yazilar";
+    var quizzesPath = isGerman ? "/pruefungen" : "/sinavlar";
+    var aboutPath = isGerman ? "/ueber-uns" : "/hakkimizda";
+    var wordsPath = isGerman ? "/woerterbuch" : "/sozluk";
+    var privacyPath = isGerman ? "/datenschutz" : "/gizlilik";
   }
   <header class="sticky-top">
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
@@ -300,7 +308,7 @@
                   var levelCodes = new[] { "A1", "A2", "B1", "B2", "C1" };
               }
               <li class="nav-item dropdown">
-                  <a class="nav-link @(currentController == "Account" && currentAction == "Quizzes" ? "active" : "")"
+                  <a class="nav-link @(currentAction == "Quizzes" ? "active" : "")"
                     href="#"
                     id="kursDropdown"
                     role="button"
@@ -315,7 +323,7 @@
                           <li>
                               <a class="dropdown-item px-2 quiz-level-link"
                                 style="border-radius: 10px;"
-                                href="@Url.Action("Quizzes", "Account")"
+                                href="@quizzesPath"
                                 data-level="@code">
                                   <span>@levelTitle</span>
                                   <span class="badge bg-fourth">@code</span>
@@ -326,22 +334,22 @@
               </li>
 
             <li class="nav-item">
-              <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")" asp-controller="Home" asp-action="About">
+              <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")" href="@aboutPath">
                 <i class="fa-solid fa-circle-info me-1"></i> @About
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")" asp-controller="Home" asp-action="Blog">
+              <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")" href="@blogListPath">
                 <i class="fa-solid fa-blog me-1"></i> @Blog
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link @(currentController == "Home" && currentAction == "Words" ? "active" : "")" asp-controller="Home" asp-action="Words">
+              <a class="nav-link @(currentController == "Home" && currentAction == "Words" ? "active" : "")" href="@wordsPath">
                 <i class="fa-solid fa-book me-1"></i> @Sözlük
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="@Url.Action("About", "Home")#contact-form">
+              <a class="nav-link" href="@(aboutPath)#contact-form">
                 <i class="fa-solid fa-envelope me-1"></i> @ContactUs
               </a>
             </li>
@@ -436,7 +444,7 @@
             </a>
           </li>
               <li class="nav-item dropdown">
-                  <a class="nav-link @(currentController == "Account" && currentAction == "Quizzes" ? "active" : "")"
+                  <a class="nav-link @(currentAction == "Quizzes" ? "active" : "")"
                     href="#"
                     id="kursDropdown"
                     role="button"
@@ -451,7 +459,7 @@
                           <li>
                               <a class="dropdown-item px-2 quiz-level-link"
                                 style="border-radius: 10px;"
-                                href="@Url.Action("Quizzes", "Account")"
+                                href="@quizzesPath"
                                 data-level="@code">
                                   <span>@levelTitle</span>
                                   <span class="badge bg-fourth">@code</span>
@@ -461,22 +469,22 @@
                   </ul>
               </li>
           <li class="nav-item">
-            <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")" asp-controller="Home" asp-action="About">
+            <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")" href="@aboutPath">
               <i class="fa-solid fa-circle-info me-1"></i> @About
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")" asp-controller="Home" asp-action="Blog">
+            <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")" href="@blogListPath">
               <i class="fa-solid fa-blog me-1"></i> @Blog
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link @(currentController == "Home" && currentAction == "Words" ? "active" : "")" asp-controller="Home" asp-action="Words">
+            <a class="nav-link @(currentController == "Home" && currentAction == "Words" ? "active" : "")" href="@wordsPath">
               <i class="fa-solid fa-book me-1"></i> @Sözlük
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="@Url.Action("About", "Home")#contact-form">
+            <a class="nav-link" href="@(aboutPath)#contact-form">
               <i class="fa-solid fa-envelope me-1"></i> @ContactUs
             </a>
           </li>

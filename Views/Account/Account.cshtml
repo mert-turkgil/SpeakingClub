@@ -214,7 +214,11 @@
                 <h5 class="card-title">@_localization.GetKey("MyQuizzesLevels")</h5>
                 <p class="text-muted">@_localization.GetKey("MyQuizzesLevelsText")</p>
             </div>
-            <a asp-action="Quizzes" class="btn btn-outline-success btn-custom">@_localization.GetKey("GoToQuizzes")</a>
+            @{
+                var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+                var quizzesPath = isGerman ? "/pruefungen" : "/sinavlar";
+            }
+            <a href="@quizzesPath" class="btn btn-outline-success btn-custom">@_localization.GetKey("GoToQuizzes")</a>
         </div>
     </div>
 

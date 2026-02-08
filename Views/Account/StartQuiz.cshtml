@@ -1,9 +1,11 @@
 @model SpeakingClub.Entity.Quiz
 @inject LanguageService _localization
 @{    
-    var fullscreenExitUrl = Url.Action("Quizzes", "Account", new { warning = "FullscreenExit" });
-    var leaveScreenUrl = Url.Action("Quizzes", "Account", new { warning = "LeaveScreen" });
-    var inactivityUrl = Url.Action("Quizzes", "Account", new { warning = "Inactivity" });
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    var quizzesPath = isGerman ? "/pruefungen" : "/sinavlar";
+    var fullscreenExitUrl = quizzesPath + "?warning=FullscreenExit";
+    var leaveScreenUrl = quizzesPath + "?warning=LeaveScreen";
+    var inactivityUrl = quizzesPath + "?warning=Inactivity";
     var submitQuizUrl = Url.Action("SubmitQuiz", "Account");
     }
 <!-- Fullscreen Quiz Container -->

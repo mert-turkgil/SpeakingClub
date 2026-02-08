@@ -4,6 +4,10 @@
 @{
     ViewData["Title"] = Model.BlogList_Title;
     
+    // Localized URL paths based on current culture
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    var blogListPath = isGerman ? "/beitraege" : "/yazilar";
+    
     // Build JSON-LD structured data for blog listing
     var blogItems = Model.Blogs?.Select(b => new {
         type = "BlogPosting",
@@ -23,7 +27,7 @@
             }
         },
         description = b.Content.Length > 160 ? System.Text.RegularExpressions.Regex.Replace(b.Content.Substring(0, 160), "<.*?>", "") : System.Text.RegularExpressions.Regex.Replace(b.Content, "<.*?>", ""),
-        url = $"https://almanca-konus.com/blog/{b.Url}"
+        url = $"https://almanca-konus.com{blogListPath}/{b.Url}"
     }).ToList();
     
     var structuredData = new {
@@ -31,7 +35,7 @@
         type = "Blog",
         name = Model.BlogList_Title,
         description = Model.BlogList_Description,
-        url = "https://almanca-konus.com/blog",
+        url = $"https://almanca-konus.com{blogListPath}",
         blogPost = blogItems
     };
 }
@@ -236,7 +240,7 @@
                 <h4 class="fw-bold mb-4" style="color: var(--color-accent);">
                     <i class="bi bi-funnel me-2"></i>@Model.BlogList_SearchLabel
                 </h4>
-                <form method="get" action="@Url.Action("Blog", "Home")">
+                <form method="get" action="@blogListPath">
                     <!-- Category Filter -->
                     <div class="mb-4">
                         <label for="category" class="form-label">@Model.BlogList_AllCategories</label>
@@ -307,7 +311,7 @@
                                         <span><i class="bi bi-person me-1"></i> @blog.Author</span>
                                     </div>
                                     <h5 class="blog-title">
-                                        <a href="@Url.Action("BlogDetail", "Home", new { url = blog.Url })">
+                                        <a href="@blogListPath/@blog.Url">
                                             @blog.Title
                                         </a>
                                     </h5>
@@ -321,7 +325,7 @@
                                             @Html.Raw(blog.Content)
                                         }
                                     </div>
-                                    <a asp-controller="Home" asp-action="BlogDetail" asp-route-url="@blog.Url" class="btn btn-read-more align-self-start mt-auto">
+                                    <a href="@blogListPath/@blog.Url" class="btn btn-read-more align-self-start mt-auto">
                                         @Model.BlogList_ReadMore <i class="bi bi-arrow-right ms-1"></i>
                                     </a>
                                 </div>
@@ -348,7 +352,7 @@
                             @for (var i = 1; i <= Model.TotalPages; i++)
                             {
                                 <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
-                                    <a class="page-link" href="@Url.Action("Blog", new { page = i, category = Model.Category, tag = Model.Tag, searchTerm = Model.SearchTerm })">@i</a>
+                                    <a class="page-link" href="@(blogListPath)?page=@(i)&category=@(Model.Category)&tag=@(Model.Tag)&searchTerm=@(Model.SearchTerm)">@i</a>
                                 </li>
                             }
                         </ul>

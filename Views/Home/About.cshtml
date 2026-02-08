@@ -190,7 +190,7 @@
                     <div class="swiper-slide">
                         @if (step.Id == 1)
                         {
-                            <a asp-controller="Account" asp-action="Quizzes" class="text-decoration-none">
+                            <a href="@(System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de" ? "/pruefungen" : "/sinavlar")" class="text-decoration-none">
                                 <div class="process-card text-center">
                                     <i class="@step.IconClass step-icon"></i>
                                     <h4 class="fw-bold mt-3">@step.Title</h4>
@@ -284,7 +284,8 @@
                             <textarea asp-for="ContactForm.Message" class="form-control" id="messageEditor" rows="5" required></textarea>
                             <span asp-validation-for="ContactForm.Message" class="text-danger"></span>
                         </div>
-                        <div class="g-recaptcha mb-4" data-sitekey="@ViewBag.RecaptchaSiteKey"></div>
+                        <!-- Cloudflare Turnstile Widget -->
+                        <div id="turnstile-widget" class="d-flex justify-content-center my-4"></div>
                         <div class="text-center">
                             <button type="submit" class="btn btn-lg text-white px-5 py-3" style="background-color: #FF9494; border-radius: 10px; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#ff7b7b'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 25px rgba(255,148,148,0.4)'" onmouseout="this.style.backgroundColor='#FF9494'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
                                 <i class="bi bi-send me-2"></i>@Model.ContactSection.ButtonText
@@ -298,13 +299,14 @@
 </section>
 
 @section Scripts {
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
     
-    <!-- CKEditor 5 CDN -->
-    <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+    <!-- CKEditor 5 CDN (Superbuild with more features) -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.umd.js"></script>
+    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.css" />
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
@@ -367,14 +369,70 @@
         AOS.init({ duration: 1000, once: true });
     </script>
     
-    <!-- CKEditor Initialization -->
+    <!-- Turnstile Widget Initialization -->
     <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Render Turnstile widget
+            function renderTurnstile() {
+                var container = document.getElementById('turnstile-widget');
+                if (container && typeof turnstile !== 'undefined') {
+                    container.innerHTML = '';
+                    turnstile.render('#turnstile-widget', {
+                        sitekey: '@ViewBag.TurnstileSiteKey',
+                        theme: 'light',
+                        callback: function(token) {
+                            console.log('Turnstile verification complete');
+                        }
+                    });
+                }
+            }
+            
+            var renderInterval = setInterval(function() {
+                if (typeof turnstile !== 'undefined') {
+                    renderTurnstile();
+                    clearInterval(renderInterval);
+                }
+            }, 100);
+        });
+    </script>
+    
+    <!-- CKEditor Initialization -->
+    <script type="module">
+        const { ClassicEditor, Essentials, Bold, Italic, Underline, Strikethrough, Font, Paragraph, Heading, Link, List, BlockQuote, Alignment, Indent, IndentBlock, Undo } = window.CKEDITOR;
+        
         let editorInstance;
         ClassicEditor
             .create(document.querySelector('#messageEditor'), {
-                toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+                plugins: [
+                    Essentials, Bold, Italic, Underline, Strikethrough,
+                    Font, Paragraph, Heading, Link, List, BlockQuote,
+                    Alignment, Indent, IndentBlock, Undo
+                ],
+                toolbar: {
+                    items: [
+                        'heading', '|',
+                        'bold', 'italic', 'underline', 'strikethrough', '|',
+                        'fontSize', 'fontColor', 'fontBackgroundColor', '|',
+                        'link', 'bulletedList', 'numberedList', '|',
+                        'alignment', 'outdent', 'indent', '|',
+                        'blockQuote', '|',
+                        'undo', 'redo'
+                    ],
+                    shouldNotGroupWhenFull: true
+                },
+                heading: {
+                    options: [
+                        { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+                        { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
+                        { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+                        { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' }
+                    ]
+                },
+                fontSize: {
+                    options: [10, 12, 14, 'default', 18, 20, 22]
+                },
                 placeholder: '@(Model.ContactSection.MessageLabel ?? "Your message...")',
-                language: '@(ViewBag.CurrentCulture ?? "en")'
+                language: 'en'
             })
             .then(editor => {
                 editorInstance = editor;
@@ -398,8 +456,9 @@
     <style>
         /* CKEditor custom styling to match contact form */
         .ck-editor__editable {
-            min-height: 150px;
+            min-height: 200px;
             border-radius: 10px !important;
+            padding: 15px !important;
         }
         .ck.ck-editor__main > .ck-editor__editable:not(.ck-focused) {
             border-color: var(--third) !important;
@@ -411,6 +470,14 @@
         .ck.ck-toolbar {
             border-radius: 10px 10px 0 0 !important;
             background-color: var(--first) !important;
+            border-color: var(--third) !important;
+        }
+        .ck.ck-toolbar .ck-toolbar__items {
+            flex-wrap: wrap;
+        }
+        /* Turnstile widget container */
+        #turnstile-widget {
+            min-height: 65px;
         }
     </style>
 }

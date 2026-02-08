@@ -84,7 +84,11 @@
         <h1 class="text-center fw-bold">@Localizer.GetKey("PageTitleD").Value</h1>
         <p class="text-center text-muted">@Localizer.GetKey("PageSubtitle").Value</p>
 
-        <form method="get" asp-action="Words" asp-controller="Home" class="search-box mt-4">
+        @{
+            var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+            var wordsPath = isGerman ? "/woerterbuch" : "/sozluk";
+        }
+        <form method="get" action="@wordsPath" class="search-box mt-4">
             @Html.AntiForgeryToken()
             <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
             <div class="input-group">

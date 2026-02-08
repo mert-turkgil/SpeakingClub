@@ -441,7 +441,7 @@
                                         }
                                         else
                                         {
-                                            <a asp-action="Login" asp-controller="Account" asp-route-returnUrl="@Url.Action("Quizzes", "Account")" class="btn btn-quiz-login w-100 mb-2">
+                                            <a asp-action="Login" asp-controller="Account" asp-route-returnUrl="@(System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de" ? "/pruefungen" : "/sinavlar")" class="btn btn-quiz-login w-100 mb-2">
                                                 <i class="bi bi-lock-fill me-1"></i> Quiz için Giriş Yapın
                                             </a>
                                         }

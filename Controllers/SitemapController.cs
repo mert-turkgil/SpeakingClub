@@ -39,13 +39,20 @@ namespace SpeakingClub.Controllers
                 var urls = new List<XElement>();
                 var nsXhtml = XNamespace.Get("http://www.w3.org/1999/xhtml");
 
-                // Static pages with localized alternates
+                // Static pages with localized alternates (Turkish versions)
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/", SITE_URL + "/", SITE_URL + "/", "1.0", "daily"));
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/hakkimizda", SITE_URL + "/hakkimizda", SITE_URL + "/ueber-uns", "0.8", "monthly"));
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/gizlilik", SITE_URL + "/gizlilik", SITE_URL + "/datenschutz", "0.3", "yearly"));
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/sozluk", SITE_URL + "/sozluk", SITE_URL + "/woerterbuch", "0.9", "weekly"));
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/yazilar", SITE_URL + "/yazilar", SITE_URL + "/beitraege", "0.9", "daily"));
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/sinavlar", SITE_URL + "/sinavlar", SITE_URL + "/pruefungen", "0.9", "weekly"));
+
+                // Static pages with localized alternates (German versions - reciprocal hreflang)
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/ueber-uns", SITE_URL + "/hakkimizda", SITE_URL + "/ueber-uns", "0.8", "monthly"));
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/datenschutz", SITE_URL + "/gizlilik", SITE_URL + "/datenschutz", "0.3", "yearly"));
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/woerterbuch", SITE_URL + "/sozluk", SITE_URL + "/woerterbuch", "0.9", "weekly"));
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/beitraege", SITE_URL + "/yazilar", SITE_URL + "/beitraege", "0.9", "daily"));
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/pruefungen", SITE_URL + "/sinavlar", SITE_URL + "/pruefungen", "0.9", "weekly"));
 
                 // Dynamic: Blog posts with multilingual support
                 var blogs = await _context.Blogs
@@ -58,9 +65,6 @@ namespace SpeakingClub.Controllers
 
                 foreach (var blog in blogs)
                 {
-                    // Use Slug instead of Url for SEO-friendly URLs
-                    var blogUrl = $"{SITE_URL}/yazilar/{blog.Slug}";
-                    
                     // Determine change frequency based on view count and recency
                     var changefreq = DetermineChangeFrequency(blog);
                     
@@ -72,6 +76,9 @@ namespace SpeakingClub.Controllers
                     var deTranslation = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "de");
                     var trSlug = trTranslation?.Slug ?? blog.Slug;
                     var deSlug = deTranslation?.Slug ?? blog.Slug;
+                    
+                    // Use Turkish slug as canonical loc (yazilar is the Turkish path)
+                    var blogUrl = $"{SITE_URL}/yazilar/{trSlug}";
                     
                     // Create URL with localized alternates
                     var urlElement = CreateUrlWithAlternates(
@@ -103,46 +110,38 @@ namespace SpeakingClub.Controllers
                     ));
                     
                     urls.Add(urlElement);
-                }
-
-                // Dynamic: Quiz entries with multilingual support
-                var quizzes = await _context.Quizzes
-                    .Include(q => q.Tags)
-                    .Include(q => q.Category)
-                    .Where(q => !string.IsNullOrEmpty(q.Title))
-                    .OrderByDescending(q => q.Id)
-                    .ToListAsync();
-
-                foreach (var quiz in quizzes)
-                {
-                    var quizSlug = !string.IsNullOrEmpty(quiz.Slug) ? quiz.Slug : quiz.Id.ToString();
-                    var quizSlugDe = !string.IsNullOrEmpty(quiz.SlugDe) ? quiz.SlugDe : quizSlug;
                     
-                    var quizUrl = $"{SITE_URL}/sinavlar";
-                    var urlElement = CreateUrlWithAlternates(
-                        quizUrl,
-                        priority: "0.7",
-                        changefreq: "monthly"
+                    // Also add German URL entry with reciprocal hreflang alternates
+                    var blogUrlDe = $"{SITE_URL}/beitraege/{deSlug}";
+                    var urlElementDe = CreateUrlWithAlternates(
+                        blogUrlDe,
+                        lastmod: blog.LastModified ?? blog.Date,
+                        priority: priority,
+                        changefreq: changefreq
                     );
                     
-                    urlElement.Add(new XElement(nsXhtml + "link",
+                    urlElementDe.Add(new XElement(nsXhtml + "link",
                         new XAttribute("rel", "alternate"),
                         new XAttribute("hreflang", "tr"),
-                        new XAttribute("href", $"{SITE_URL}/sinavlar")
+                        new XAttribute("href", $"{SITE_URL}/yazilar/{trSlug}")
                     ));
-                    urlElement.Add(new XElement(nsXhtml + "link",
+                    urlElementDe.Add(new XElement(nsXhtml + "link",
                         new XAttribute("rel", "alternate"),
                         new XAttribute("hreflang", "de"),
-                        new XAttribute("href", $"{SITE_URL}/pruefungen")
+                        new XAttribute("href", blogUrlDe)
                     ));
-                    urlElement.Add(new XElement(nsXhtml + "link",
+                    urlElementDe.Add(new XElement(nsXhtml + "link",
                         new XAttribute("rel", "alternate"),
                         new XAttribute("hreflang", "x-default"),
-                        new XAttribute("href", quizUrl)
+                        new XAttribute("href", blogUrl)
                     ));
                     
-                    urls.Add(urlElement);
+                    urls.Add(urlElementDe);
                 }
+
+                // NOTE: Quiz listing pages (/sinavlar, /pruefungen) are already included 
+                // in the static pages section above. No need for per-quiz entries since 
+                // quizzes don't have individual detail pages.
 
                 // Create XML sitemap with namespaces
                 var ns = XNamespace.Get("http://www.sitemaps.org/schemas/sitemap/0.9");

@@ -54,6 +54,10 @@
         </div>
     </div>
     <div class="mt-3">
-        <a asp-action="Quizzes" class="btn btn-secondary">@_localization.GetKey("BackToQuizzes")</a>
+        @{
+            var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+            var quizzesPath = isGerman ? "/pruefungen" : "/sinavlar";
+        }
+        <a href="@quizzesPath" class="btn btn-secondary">@_localization.GetKey("BackToQuizzes")</a>
     </div>
 </div>

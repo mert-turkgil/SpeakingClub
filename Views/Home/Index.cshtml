@@ -480,7 +480,7 @@
                             <h2>@code</h2>
                             <h4>@title</h4>
                             <p>@desc</p>
-                            <a href="@Url.Action("Quizzes", "Account", new { level = code })" class="level-btn">@Localizer.GetKey("TesteBasla").Value</a>
+                            <a href="@(System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de" ? "/pruefungen" : "/sinavlar")?level=@code" class="level-btn">@Localizer.GetKey("TesteBasla").Value</a>
                         </div>
                     </div>
                     }

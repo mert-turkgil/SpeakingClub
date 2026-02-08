@@ -625,7 +625,7 @@
                             </div>
                             <div class="preview-box">
                                 <h6><i class="fa-solid fa-eye"></i> URL Preview</h6>
-                                <span id="slugPreview">https://almanca-konus.com/blog/your-slug-here</span>
+                                <span id="slugPreview">https://almanca-konus.com/yazilar/your-slug-here</span>
                             </div>
                         </div>
 
@@ -999,13 +999,13 @@
             $('input[name="Title"]').on('input', function() {
                 if ($('input[name="Slug"]').val() === '') {
                     const slug = generateSlug($(this).val());
-                    $('#slugPreview').text('https://almanca-konus.com/blog/' + (slug || 'your-slug-here'));
+                    $('#slugPreview').text('https://almanca-konus.com/yazilar/' + (slug || 'your-slug-here'));
                 }
             });
 
             $('input[name="Slug"]').on('input', function() {
                 const slug = $(this).val() || 'your-slug-here';
-                $('#slugPreview').text('https://almanca-konus.com/blog/' + slug);
+                $('#slugPreview').text('https://almanca-konus.com/yazilar/' + slug);
             });
 
             // ===================================

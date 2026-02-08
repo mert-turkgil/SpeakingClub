@@ -155,6 +155,8 @@ namespace SpeakingClub.Controllers
 
         #region Gizlilik
         [HttpGet("privacy")]
+        [HttpGet("gizlilik")]
+        [HttpGet("datenschutz")]
         public IActionResult Privacy()
         {
             if (IsGerman())
@@ -181,9 +183,11 @@ namespace SpeakingClub.Controllers
 
         #region Hakkında
         [HttpGet("about")]
+        [HttpGet("hakkimizda")]
+        [HttpGet("ueber-uns")]
         public IActionResult About()
         {
-            ViewBag.RecaptchaSiteKey = _configuration["Turnstile:SiteKey"];
+            ViewBag.TurnstileSiteKey = _configuration["Turnstile:SiteKey"];
             
             if (IsGerman())
             {
@@ -461,6 +465,8 @@ namespace SpeakingClub.Controllers
 
         #region Blog
         [HttpGet("blog")]
+        [HttpGet("yazilar")]
+        [HttpGet("beitraege")]
         public async Task<IActionResult> Blog(string category, string tag, string searchTerm, int page = 1)
         {
             // SEO metadata for blog listing
@@ -519,15 +525,24 @@ namespace SpeakingClub.Controllers
             var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
             var langCode = currentCulture.Substring(0, 2).ToLower();
 
-            // Update each blog with its translated Title and Content if available.
+            // Update each blog with its translated Title, Content, and Slug if available.
             foreach (var blog in blogs)
             {
-                blog.Title = _unitOfWork.BlogTranslations
-                    .GetByBlogAndLanguageAsync(blog.BlogId, langCode)
-                    .Result?.Title ?? blog.Title;
-                blog.Content = _unitOfWork.BlogTranslations
-                    .GetByBlogAndLanguageAsync(blog.BlogId, langCode)
-                    .Result?.Content ?? blog.Content;
+                var translation = _unitOfWork.BlogTranslations
+                    .GetByBlogAndLanguageAsync(blog.BlogId, langCode).Result;
+                blog.Title = translation?.Title ?? blog.Title;
+                blog.Content = translation?.Content ?? blog.Content;
+                // Use translated slug for localized URLs
+                var translatedSlug = translation?.Slug;
+                if (!string.IsNullOrEmpty(translatedSlug))
+                {
+                    blog.Url = translatedSlug;
+                    blog.Slug = translatedSlug;
+                }
+                else if (!string.IsNullOrEmpty(blog.Slug))
+                {
+                    blog.Url = blog.Slug;
+                }
             }
             // Get the list of categories.
             var categoriesFromRepo = await _unitOfWork.Categories.GetAllAsync();
@@ -570,14 +585,17 @@ namespace SpeakingClub.Controllers
         }
 
         [HttpGet("blog/{url}")]
+        [HttpGet("yazilar/{url}")]
+        [HttpGet("beitraege/{url}")]
         public async Task<IActionResult> BlogDetail(string url)
         {
             try
             {
                 _logger.LogInformation("Fetching blog detail for url {url}.", url);
 
-                // Retrieve the blog using your slug
+                // Search by base Url, Slug, or translated Slug
                 var blog = await _unitOfWork.Blogs.GetByUrlAsync(url);
+                
                 if (blog == null)
                 {
                     _logger.LogWarning("Blog with slug {url} not found.", url);
@@ -697,6 +715,8 @@ namespace SpeakingClub.Controllers
 
         #region Sözlük
         [HttpGet("words")]
+        [HttpGet("sozluk")]
+        [HttpGet("woerterbuch")]
         public async Task<IActionResult> Words(string searchTerm)
         {
             ViewBag.TurnstileSiteKey = _configuration["Turnstile:SiteKey"];
@@ -806,6 +826,11 @@ namespace SpeakingClub.Controllers
 
         #region Quizzes (Public)
         [HttpGet("quizzes")]
+        [HttpGet("quizzes/{level}")]
+        [HttpGet("sinavlar")]
+        [HttpGet("sinavlar/{level}")]
+        [HttpGet("pruefungen")]
+        [HttpGet("pruefungen/{level}")]
         public async Task<IActionResult> Quizzes(string? level)
         {
             // SEO metadata for quizzes
