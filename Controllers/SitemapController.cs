@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,7 +16,6 @@ using SpeakingClub.Data;
 
 namespace SpeakingClub.Controllers
 {
-    [Route("[controller]")]
     public class SitemapController : Controller
     {
         private readonly SpeakingClubContext _context;
@@ -29,18 +29,22 @@ namespace SpeakingClub.Controllers
         }
 
         [HttpGet]
-        [Route("")]
         [Route("sitemap.xml")]
+        [Route("Sitemap")]
         [ResponseCache(Duration = 3600)] // Cache for 1 hour
         public async Task<IActionResult> Index()
         {
             try
             {
+                _logger.LogInformation("Generating sitemap...");
                 var urls = new List<XElement>();
+                var ns = XNamespace.Get("http://www.sitemaps.org/schemas/sitemap/0.9");
                 var nsXhtml = XNamespace.Get("http://www.w3.org/1999/xhtml");
 
-                // Static pages with localized alternates (Turkish versions)
+                // Homepage with hreflang
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/", SITE_URL + "/", SITE_URL + "/", "1.0", "daily"));
+                
+                // Static pages with localized alternates (Turkish versions)
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/hakkimizda", SITE_URL + "/hakkimizda", SITE_URL + "/ueber-uns", "0.8", "monthly"));
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/gizlilik", SITE_URL + "/gizlilik", SITE_URL + "/datenschutz", "0.3", "yearly"));
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/sozluk", SITE_URL + "/sozluk", SITE_URL + "/woerterbuch", "0.9", "weekly"));
@@ -53,29 +57,50 @@ namespace SpeakingClub.Controllers
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/woerterbuch", SITE_URL + "/sozluk", SITE_URL + "/woerterbuch", "0.9", "weekly"));
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/beitraege", SITE_URL + "/yazilar", SITE_URL + "/beitraege", "0.9", "daily"));
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/pruefungen", SITE_URL + "/sinavlar", SITE_URL + "/pruefungen", "0.9", "weekly"));
+                
+                _logger.LogInformation($"Added {urls.Count} static pages");
 
                 // Dynamic: Blog posts with multilingual support
+                // Only select fields needed for sitemap (avoid loading full Content)
                 var blogs = await _context.Blogs
-                    .Include(b => b.Tags)
-                    .Include(b => b.Category)
-                    .Include(b => b.Translations) // Include translations
-                    .Where(b => b.IsPublished && !b.NoIndex) // Only published and not no-indexed
+                    .Include(b => b.Translations)
+                    .Where(b => b.IsPublished && !b.NoIndex)
                     .OrderByDescending(b => b.LastModified ?? b.Date)
+                    .Select(b => new
+                    {
+                        b.Slug,
+                        b.Date,
+                        b.LastModified,
+                        b.ViewCount,
+                        b.isHome,
+                        Translations = b.Translations.Select(t => new { t.LanguageCode, t.Slug }).ToList()
+                    })
                     .ToListAsync();
+
+                _logger.LogInformation($"Found {blogs.Count} blog posts");
 
                 foreach (var blog in blogs)
                 {
-                    // Determine change frequency based on view count and recency
-                    var changefreq = DetermineChangeFrequency(blog);
-                    
-                    // Determine priority based on isHome, ViewCount, and recency
-                    var priority = DeterminePriority(blog);
+                    // Determine change frequency based on recency
+                    var lastModified = blog.LastModified ?? blog.Date;
+                    var daysSinceModified = (DateTime.UtcNow - lastModified).TotalDays;
+                    var changefreq = daysSinceModified < 7 ? "daily" : daysSinceModified < 90 ? "weekly" : daysSinceModified < 365 ? "monthly" : "yearly";
+
+                    // Determine priority
+                    var score = 0.5;
+                    if (blog.isHome) score += 0.2;
+                    if (blog.ViewCount > 1000) score += 0.15;
+                    else if (blog.ViewCount > 500) score += 0.1;
+                    else if (blog.ViewCount > 100) score += 0.05;
+                    var daysSincePublished = (DateTime.UtcNow - blog.Date).TotalDays;
+                    if (daysSincePublished < 7) score += 0.15;
+                    else if (daysSincePublished < 30) score += 0.1;
+                    else if (daysSincePublished < 90) score += 0.05;
+                    var priority = Math.Min(score, 1.0).ToString("0.0", CultureInfo.InvariantCulture);
                     
                     // Get translations for hreflang
-                    var trTranslation = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "tr");
-                    var deTranslation = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "de");
-                    var trSlug = trTranslation?.Slug ?? blog.Slug;
-                    var deSlug = deTranslation?.Slug ?? blog.Slug;
+                    var trSlug = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "tr")?.Slug ?? blog.Slug;
+                    var deSlug = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "de")?.Slug ?? blog.Slug;
                     
                     // Use Turkish slug as canonical loc (yazilar is the Turkish path)
                     var blogUrl = $"{SITE_URL}/yazilar/{trSlug}";
@@ -139,28 +164,35 @@ namespace SpeakingClub.Controllers
                     urls.Add(urlElementDe);
                 }
 
+                _logger.LogInformation($"Total URLs in sitemap: {urls.Count}");
+
                 // NOTE: Quiz listing pages (/sinavlar, /pruefungen) are already included 
                 // in the static pages section above. No need for per-quiz entries since 
                 // quizzes don't have individual detail pages.
 
-                // Create XML sitemap with namespaces
-                var ns = XNamespace.Get("http://www.sitemaps.org/schemas/sitemap/0.9");
-
+                // Create XML sitemap
                 var sitemap = new XDocument(
-                    new XDeclaration("1.0", "utf-8", "yes"),
+                    new XDeclaration("1.0", "utf-8", null),
+                    new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"/sitemap.xsl\""),
                     new XElement(ns + "urlset",
                         new XAttribute(XNamespace.Xmlns + "xhtml", nsXhtml),
                         urls
                     )
                 );
 
-                var xml = sitemap.ToString();
-                return Content(xml, "application/xml", Encoding.UTF8);
+                // Return as raw bytes with correct content type
+                using var ms = new MemoryStream();
+                using (var writer = new StreamWriter(ms, new UTF8Encoding(false), leaveOpen: true))
+                {
+                    sitemap.Save(writer);
+                }
+                _logger.LogInformation($"Generated sitemap XML ({ms.Length} bytes)");
+                return File(ms.ToArray(), "text/xml");
             }
-            catch (Exception ex)
+            catch (Exception ex) 
             {
                 _logger.LogError(ex, "Error generating sitemap");
-                return StatusCode(500, "Error generating sitemap");
+                return Content($"Error: {ex.Message}\n{ex.StackTrace}", "text/plain");
             }
         }
 
@@ -179,7 +211,7 @@ namespace SpeakingClub.Controllers
             
             if (lastmod.HasValue)
             {
-                url.Add(new XElement(ns + "lastmod", lastmod.Value.ToString("yyyy-MM-ddTHH:mm:ss+00:00")));
+                url.Add(new XElement(ns + "lastmod", lastmod.Value.ToString("yyyy-MM-ddTHH:mm:ss+00:00", CultureInfo.InvariantCulture)));
             }
             
             return url;
@@ -233,7 +265,7 @@ namespace SpeakingClub.Controllers
             
             if (lastmod.HasValue)
             {
-                url.Add(new XElement(ns + "lastmod", lastmod.Value.ToString("yyyy-MM-ddTHH:mm:ss+00:00")));
+                url.Add(new XElement(ns + "lastmod", lastmod.Value.ToString("yyyy-MM-ddTHH:mm:ss+00:00", CultureInfo.InvariantCulture)));
             }
             
             return url;
@@ -298,7 +330,7 @@ namespace SpeakingClub.Controllers
             // Cap at 1.0
             score = Math.Min(score, 1.0);
             
-            return score.ToString("0.0");
+            return score.ToString("0.0", CultureInfo.InvariantCulture);
         }
 
         /// <summary>
