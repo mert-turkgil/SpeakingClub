@@ -337,7 +337,7 @@ namespace SpeakingClub.Controllers
 
             }
             _memoryCache.Set(cacheKey, count + 1, TimeSpan.FromMinutes(2));
-            string? recaptchaResponse = Request.Form["g-recaptcha-response"];
+            string? recaptchaResponse = Request.Form["cf-turnstile-response"];
             if (!await RecaptchaIsValid(recaptchaResponse ?? ""))
             {
                 ModelState.AddModelError("", "Lütfen robot olmadığınızı doğrulayın (reCAPTCHA).");
