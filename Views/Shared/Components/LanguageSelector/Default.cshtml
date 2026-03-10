@@ -7,7 +7,7 @@
 }
 
 <form asp-controller="Home" asp-action="SetLanguage"
-      asp-route-returnUrl="@Context.Request.Path" method="post" style="display:inline;">
+      asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)" method="post" style="display:inline;">
     <label class="switch" aria-label="Dil Değiştir">
         <input type="checkbox"
                name="culture"

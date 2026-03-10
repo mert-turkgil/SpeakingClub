@@ -29,8 +29,8 @@ namespace SpeakingClub.Data.Configuration
                         PasswordHash = "FakeHash",
                         SecurityStamp = "securitystamp1"
                     },
-                new User { Id = user1Id,FirstName = "Mert", LastName = "Yılmaz",Age=22, UserName = "user1@example.com", NormalizedUserName = "USER1@EXAMPLE.COM", Email = "user1@example.com", NormalizedEmail = "USER1@EXAMPLE.COM", EmailConfirmed = true, PasswordHash = "FakeHash", SecurityStamp = Guid.NewGuid().ToString() },
-                new User { Id = user2Id,FirstName = "Zeynep",LastName = "Demir",Age=18, UserName = "user2@example.com", NormalizedUserName = "USER2@EXAMPLE.COM", Email = "user2@example.com", NormalizedEmail = "USER2@EXAMPLE.COM", EmailConfirmed = true, PasswordHash = "FakeHash", SecurityStamp = Guid.NewGuid().ToString() }
+                new User { Id = user1Id,FirstName = "Mert", LastName = "Yılmaz",Age=22, UserName = "user1@example.com", NormalizedUserName = "USER1@EXAMPLE.COM", Email = "user1@example.com", NormalizedEmail = "USER1@EXAMPLE.COM", EmailConfirmed = true, PasswordHash = "FakeHash", SecurityStamp = "b8e7c3d4-5a6f-4e2d-9c1b-8a7f6e5d4c3b" },
+                new User { Id = user2Id,FirstName = "Zeynep",LastName = "Demir",Age=18, UserName = "user2@example.com", NormalizedUserName = "USER2@EXAMPLE.COM", Email = "user2@example.com", NormalizedEmail = "USER2@EXAMPLE.COM", EmailConfirmed = true, PasswordHash = "FakeHash", SecurityStamp = "c9f8d4e5-6b7g-5f3e-ad2c-9b8g7f6e5d4c" }
             );
             // Seed SlideShow
             modelBuilder.Entity<SlideShow>().HasData(
@@ -234,7 +234,7 @@ namespace SpeakingClub.Data.Configuration
                     QuizSubmissionId = 1,
                     QuizId = 1,
                     UserId = user1Id,
-                    SubmissionDate = DateTime.UtcNow.AddDays(-2),
+                    SubmissionDate = new DateTime(2026, 3, 8, 12, 0, 0, DateTimeKind.Utc),
                     Score = 100,
                     AttemptNumber = 1
                 },
@@ -243,7 +243,7 @@ namespace SpeakingClub.Data.Configuration
                     QuizSubmissionId = 2,
                     QuizId = 1,
                     UserId = user1Id,
-                    SubmissionDate = DateTime.UtcNow.AddDays(-1),
+                    SubmissionDate = new DateTime(2026, 3, 9, 12, 0, 0, DateTimeKind.Utc),
                     Score = 50,
                     AttemptNumber = 2
                 },
@@ -252,7 +252,7 @@ namespace SpeakingClub.Data.Configuration
                     QuizSubmissionId = 3,
                     QuizId = 1,
                     UserId = user2Id,
-                    SubmissionDate = DateTime.UtcNow.AddDays(-1),
+                    SubmissionDate = new DateTime(2026, 3, 9, 12, 0, 0, DateTimeKind.Utc),
                     Score = 40,
                     AttemptNumber = 1
                 }

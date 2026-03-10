@@ -535,7 +535,7 @@
                         
                         <div class="mb-4">
                             <label asp-for="Content" class="form-label">
-                                <i class="fa-solid fa-file-lines"></i> Blog Content (English)
+                                <i class="fa-solid fa-file-lines"></i> Blog Content
                             </label>
                             <textarea asp-for="Content" id="Content" class="form-control"></textarea>
                             <span asp-validation-for="Content" class="text-danger"></span>
@@ -898,6 +898,38 @@
                             <img id="coverPreview" class="preview-img" alt="Cover preview" />
                         </div>
                     </div>
+
+                    <div class="section-card mt-4">
+                        <h3 class="section-title"><i class="fa-solid fa-paperclip"></i> File Attachments</h3>
+                        <p class="section-subtitle">Upload PDF, Word, or Excel files that visitors can preview and download</p>
+
+                        <div class="mb-3">
+                            <label asp-for="AttachmentFiles" class="form-label">
+                                <i class="fa-solid fa-file-arrow-up"></i> Upload Files
+                                <span class="badge bg-secondary">PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX</span>
+                            </label>
+                            <input asp-for="AttachmentFiles" type="file" class="form-control" multiple
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" onchange="previewAttachments(event)" />
+                            <div class="help-text">
+                                <i class="fa-solid fa-lightbulb"></i>
+                                <span>Max 50MB per file. Visitors will see a preview and download button.</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="AttachmentDisplayNames" class="form-label">
+                                <i class="fa-solid fa-tag"></i> Display Names <small>(optional, comma-separated)</small>
+                            </label>
+                            <input asp-for="AttachmentDisplayNames" class="form-control"
+                                   placeholder="e.g. Lesson Notes, Exercise Sheet, Vocabulary List" />
+                            <div class="help-text">
+                                <i class="fa-solid fa-lightbulb"></i>
+                                <span>If blank, original file names will be used</span>
+                            </div>
+                        </div>
+
+                        <div id="attachmentPreviewList"></div>
+                    </div>
                 </div>
 
             </div>
@@ -1114,6 +1146,44 @@
                     reader.readAsDataURL(file);
                 } else {
                     $('#imagePreviewContainer').hide();
+                }
+            };
+
+            // ===================================
+            // File Attachment Preview
+            // ===================================
+            window.previewAttachments = function(event) {
+                const container = $('#attachmentPreviewList');
+                container.empty();
+                const files = event.target.files;
+                if (!files.length) return;
+
+                const iconMap = {
+                    'pdf': 'fa-file-pdf text-danger',
+                    'doc': 'fa-file-word text-primary',
+                    'docx': 'fa-file-word text-primary',
+                    'xls': 'fa-file-excel text-success',
+                    'xlsx': 'fa-file-excel text-success',
+                    'ppt': 'fa-file-powerpoint text-warning',
+                    'pptx': 'fa-file-powerpoint text-warning'
+                };
+
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    const icon = iconMap[ext] || 'fa-file text-secondary';
+                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+
+                    container.append(`
+                        <div class="d-flex align-items-center gap-3 p-3 mb-2 bg-white rounded border">
+                            <i class="fa-solid ${icon}" style="font-size: 2rem;"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">${file.name}</div>
+                                <small class="text-muted">${sizeMB} MB &bull; ${ext.toUpperCase()}</small>
+                            </div>
+                            <span class="badge bg-info">Ready to upload</span>
+                        </div>
+                    `);
                 }
             };
 

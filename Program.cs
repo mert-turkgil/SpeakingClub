@@ -303,47 +303,20 @@ using (var scope = app.Services.CreateScope())
     {
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-    var usersConfig = config.GetSection("Data:Users").GetChildren();
-    if (usersConfig == null || !usersConfig.Any())
+    var usersConfig = config.GetSection("Data:Users").GetChildren().ToList();
+    if (!usersConfig.Any())
     {
-        Console.WriteLine("No user configuration found.");
+        Console.WriteLine("No user configuration found. Skipping seeding.");
     }
     else
     {
-        var rootUserSection = usersConfig.FirstOrDefault(user =>
-            user.GetValue<string>("UserName")?.Equals("Root", StringComparison.OrdinalIgnoreCase) == true);
-        var adminUserSection = usersConfig.FirstOrDefault(user =>
-            user.GetValue<string>("UserName")?.Equals("Admin", StringComparison.OrdinalIgnoreCase) == true);
-        bool seedRequired = false;
-
-        if (rootUserSection != null)
-        {
-            var rootEmail = rootUserSection.GetValue<string>("email");
-            if (string.IsNullOrEmpty(rootEmail))
-                throw new ArgumentNullException(nameof(rootEmail), "Root email cannot be null or empty.");
-
-            var rootUser = await userManager.FindByEmailAsync(rootEmail!);
-            if (rootUser == null)
-            {
-                Console.WriteLine("Root user does not exist.");
-                seedRequired = true;
-            }
-        }
-        else
-        {
-            Console.WriteLine("Root user configuration not found.");
-        }
-
-        if (seedRequired)
-        {
-            Console.WriteLine("Seeding roles and users...");
-            await SeedIdentity.Seed(userManager, roleManager, config);
-        }
+        Console.WriteLine("Running identity seeding...");
+        await SeedIdentity.Seed(userManager, roleManager, config);
     }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Warning: User seeding failed: {ex.Message}");
+        Console.WriteLine($"[SEED ERROR] User seeding failed: {ex}");
     }
 }
 #endregion
@@ -358,19 +331,12 @@ var forwardedHeadersOptions = new ForwardedHeadersOptions
     ForwardLimit = 2
 };
 // Add Cloudflare IPs - trust their headers
-forwardedHeadersOptions.KnownNetworks.Clear();
+forwardedHeadersOptions.KnownIPNetworks.Clear();
 forwardedHeadersOptions.KnownProxies.Clear();
 // Trust all proxies for Cloudflare (adjust if needed)
 forwardedHeadersOptions.AllowedHosts.Clear();
 
 app.UseForwardedHeaders(forwardedHeadersOptions);
-
-if (!app.Environment.IsDevelopment())
-{
-    // Hata sayfası ve HSTS
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
-}
 
 // Middleware: ACME challenge ve HTTPS yönlendirme
 app.Use(async (context, next) =>
@@ -395,15 +361,30 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// 3. ACME challenge dosyalarını serve et
-var acmeChallengePath = Path.Combine(Directory.GetCurrentDirectory(), ".well-known", "acme-challenge");
-app.UseStaticFiles(new StaticFileOptions
+// Content Security Policy middleware
+app.Use(async (context, next) =>
 {
-    FileProvider = new PhysicalFileProvider(acmeChallengePath),
-    RequestPath = "/.well-known/acme-challenge",
-    ServeUnknownFileTypes = true,
-    ContentTypeProvider = new FileExtensionContentTypeProvider()
+    // Force all resources to load over HTTPS
+    context.Response.Headers.Append("Content-Security-Policy", "upgrade-insecure-requests");
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "SAMEORIGIN");
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    
+    await next();
 });
+
+if (!app.Environment.IsDevelopment())
+{
+    // Hata sayfası ve HSTS
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+else
+{
+    // Geliştirme modunda da HSTS kullan (daha kısa süre ile)
+    app.UseHsts();
+}
 
 // 4. Normal statik dosyalar
 app.UseStaticFiles(new StaticFileOptions

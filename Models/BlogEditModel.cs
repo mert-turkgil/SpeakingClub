@@ -175,5 +175,26 @@ namespace SpeakingClub.Models
         // Relationships
         public List<int>? SelectedCategoryIds { get; set; }
         public List<int>? SelectedTagIds { get; set; }
+
+        // File Attachments (PDF, Word, Excel)
+        [Display(Name = "Attachments (PDF, Word, Excel)")]
+        public List<IFormFile>? AttachmentFiles { get; set; }
+
+        [Display(Name = "File Display Names (comma-separated, optional)")]
+        public string? AttachmentDisplayNames { get; set; }
+
+        // Existing files for display in edit form
+        public List<BlogFileViewModel>? ExistingFiles { get; set; }
+    }
+
+    public class BlogFileViewModel
+    {
+        public int FileId { get; set; }
+        public string OriginalFileName { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string FileExtension { get; set; } = string.Empty;
+        public long FileSizeBytes { get; set; }
+        public int DownloadCount { get; set; }
+        public DateTime UploadedDate { get; set; }
     }
 }

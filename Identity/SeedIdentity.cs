@@ -72,7 +72,6 @@ namespace SpeakingClub.Identity
                     var result = await userManager.CreateAsync(user, password ?? throw new ArgumentNullException(nameof(password), "Password cannot be null."));
                     if (result.Succeeded)
                     {
-                        // Add each role individually
                         foreach (var userRole in rolesForUser)
                         {
                             var addRoleResult = await userManager.AddToRoleAsync(user, userRole);
@@ -81,6 +80,7 @@ namespace SpeakingClub.Identity
                                 Console.WriteLine($"Failed to add role {userRole} to user {username}: {string.Join(", ", addRoleResult.Errors.Select(e => e.Description))}");
                             }
                         }
+                        Console.WriteLine($"User '{username}' created successfully.");
                     }
                     else
                     {
@@ -89,7 +89,36 @@ namespace SpeakingClub.Identity
                 }
                 else
                 {
-                    Console.WriteLine($"User '{username}' already exists.");
+                    Console.WriteLine($"User '{username}' already exists — resetting password and syncing roles.");
+
+                    // Reset password in case it was set to a fake/invalid hash
+                    var resetToken = await userManager.GeneratePasswordResetTokenAsync(existingUser);
+                    var resetResult = await userManager.ResetPasswordAsync(existingUser, resetToken, password);
+                    if (!resetResult.Succeeded)
+                    {
+                        Console.WriteLine($"Failed to reset password for '{username}': {string.Join(", ", resetResult.Errors.Select(e => e.Description))}");
+                    }
+
+                    // Ensure EmailConfirmed so login is not blocked
+                    if (!existingUser.EmailConfirmed)
+                    {
+                        existingUser.EmailConfirmed = true;
+                        await userManager.UpdateAsync(existingUser);
+                    }
+
+                    // Add any missing roles
+                    var currentRoles = await userManager.GetRolesAsync(existingUser);
+                    foreach (var userRole in rolesForUser)
+                    {
+                        if (!currentRoles.Contains(userRole, StringComparer.OrdinalIgnoreCase))
+                        {
+                            var addRoleResult = await userManager.AddToRoleAsync(existingUser, userRole);
+                            if (!addRoleResult.Succeeded)
+                            {
+                                Console.WriteLine($"Failed to add role {userRole} to user {username}: {string.Join(", ", addRoleResult.Errors.Select(e => e.Description))}");
+                            }
+                        }
+                    }
                 }
             }
         }

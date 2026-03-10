@@ -68,8 +68,8 @@
     <value>Blog</value>
   </data>
   <data name="About" xml:space="preserve">
-    <value>Über</value>
-  </data>
+    <value>Vita</value>
+  <comment>N/A</comment></data>
   <data name="Sözlük" xml:space="preserve">
     <value>Wörterbuch</value>
   </data>
@@ -77,8 +77,8 @@
     <value>Konto</value>
   </data>
   <data name="Logo" xml:space="preserve">
-    <value>Deutschsprachiger Club</value>
-  </data>
+    <value>Sprich Deutsch</value>
+  <comment>N/A</comment></data>
   <data name="FooterBrand" xml:space="preserve">
     <value>Deutscher Gesprächsclub</value>
   </data>
@@ -95,14 +95,14 @@
     <value>© 2025 Deutscher Gesprächsclub. Alle Rechte vorbehalten.</value>
   </data>
   <data name="Carousel_1_Title" xml:space="preserve">
-    <value>Über Uns</value>
-  </data>
+    <value>Über Mich</value>
+  <comment>N/A</comment></data>
   <data name="Carousel_2_Title" xml:space="preserve">
     <value>Blog </value>
   </data>
   <data name="Carousel_1_Description" xml:space="preserve">
-    <value>In diesen Klubs werden unterschiedliche Themen behandelt; je nach Sprachniveau kommen Präsentations- und Diskussionstechniken zum Einsatz, und zu den von den Teilnehmenden geäußerten Sätzen werden alternative Formulierungen angeboten. Wenn nötig, wird auch auf Grammatik eingegangen.</value>
-  </data>
+    <value>Der Unterricht findet im Einzel- oder Gruppensetting statt und ist so gestaltet, dass alle aktiv zum Sprechen kommen. Die Teilnehmenden können sich vorab auf die Themen vorbereiten. Bei Wahl eines passenden Pakets werden kurze Sprechübungen außerhalb des Unterrichts sowie individuelles Feedback angeboten.</value>
+  <comment>N/A</comment></data>
   <data name="Carousel_2_Description" xml:space="preserve">
     <value>In diesem Blog teile ich meine Erfahrungen beim Deutschlernen, gebe Tipps für das Sprechen und stelle hilfreiche Ressourcen vor, damit Sie neue Ideen und Motivation gewinnen können.</value>
   </data>
@@ -113,8 +113,8 @@
     <value>Weitere Informationen</value>
   </data>
   <data name="PageTitle" xml:space="preserve">
-    <value>Über mich</value>
-  </data>
+    <value>Über Mich</value>
+  <comment>N/A</comment></data>
   <data name="HeroGreeting" xml:space="preserve">
     <value>Hallo, &lt;span class="color-animation-2"&gt;ich bin&lt;/span&gt; &lt;span class="color-animation"&gt;Suna&lt;/span&gt;!</value>
   </data>
@@ -125,8 +125,8 @@
     <value>Suna</value>
   </data>
   <data name="AboutSectionTitle" xml:space="preserve">
-    <value>Über mich</value>
-  </data>
+    <value>Über Mich</value>
+  <comment>N/A</comment></data>
   <data name="AboutParagraph1" xml:space="preserve">
     <value>Hallo, ich bin &lt;strong&gt;Suna.&lt;/strong&gt; Ich bin in Bremen aufgewachsen und habe dort meine Ausbildung und die ersten Jahre meines Berufslebens verbracht. Später zog ich in die Türkei und arbeitete sowohl an staatlichen Schulen als auch in privaten Bildungseinrichtungen.</value>
   </data>
@@ -143,8 +143,8 @@
     <value>Mein Ziel ist es, Ihnen zu ermöglichen, Deutsch nicht als Unterricht, sondern als Teil des Lebens zu nutzen. Wenn auch Sie selbstbewusst Deutsch sprechen möchten, begleite ich Sie gerne auf dieser Reise.</value>
   </data>
   <data name="AboutImageAlt" xml:space="preserve">
-    <value>Suna, die Lehrerin</value>
-  </data>
+    <value>Suna, Deutsch-Sprechcoach</value>
+  <comment>N/A</comment></data>
   <data name="ProcessSectionTitle" xml:space="preserve">
     <value>Wie funktioniert der Online-Deutsche Gesprächskreis?</value>
   </data>
@@ -225,6 +225,9 @@
   </data>
   <data name="Contact_MessageLabel" xml:space="preserve">
     <value>Ihre Nachricht</value>
+  </data>
+  <data name="Contact_MessagePlaceholder" xml:space="preserve">
+    <value>Guten Tag! Bitte schildern Sie kurz Ihr Anliegen — Ihr aktuelles Sprachniveau, Ihre Verfügbarkeit und was Sie mit dem Kurs erreichen möchten...</value>
   </data>
   <data name="Contact_ButtonText" xml:space="preserve">
     <value>Senden</value>
@@ -572,8 +575,8 @@
     <value>&lt;h1&gt;Congratulations on setting up CKEditor 5! 🎉&lt;/h1&gt;&lt;p&gt;You've successfully created a CKEditor 5 project. Enjoy editing!&lt;/p&gt;&lt;figure class="image"&gt;&lt;img style="aspect-ratio:400/301;" src="/blog/gif/b089c981796de907176ec48516887acd.gif" width="400" height="301"&gt;&lt;/figure&gt;</value>
   </data>
   <data name="Kurs" xml:space="preserve">
-    <value>Verlauf</value>
-  </data>
+    <value>Einstufungstests</value>
+  <comment>N/A</comment></data>
   <data name="Level_A1_Title" xml:space="preserve">
     <value>Anfänger</value>
   </data>
@@ -608,30 +611,33 @@
     <value>Test beginnen</value>
   </data>
   <data name="ftheader1" xml:space="preserve">
-    <value>Deutschunterricht und Erfahrung</value>
-  </data>
+    <value>Erfahrungen</value>
+  <comment>N/A</comment></data>
   <data name="ftheader2" xml:space="preserve">
-    <value>Fachgebiet &amp; Gesprächsclubs</value>
-  </data>
+    <value>Sprechen im Fokus</value>
+  <comment>N/A</comment></data>
   <data name="ftheader3" xml:space="preserve">
-    <value>Unterstützender Unterrichtsansatz</value>
-  </data>
+    <value>Arbeitsweise</value>
+  <comment>N/A</comment></data>
   <data name="ftbody1" xml:space="preserve">
-    <value>Da er in Deutschland geboren und aufgewachsen ist und viele Jahre im Bildungswesen gearbeitet hat, verfügt er über sehr gute Deutschkenntnisse.</value>
-  </data>
+    <value>In Deutschland aufgewachsen, nutzt sie Deutsch aktiv sowohl im Alltag als auch im beruflichen Kontext. Seit über 20 Jahren arbeitet sie mit Lernenden aus unterschiedlichen Berufsgruppen, deren größtes Problem das Sprechen ist. Seit 10 Jahren liegt ihr Schwerpunkt ausschließlich auf dem Deutsch-Sprechcoaching.</value>
+  <comment>N/A</comment></data>
   <data name="ftbody2" xml:space="preserve">
-    <value>Nach seiner Pensionierung organisiert er Deutsch-Konversationsclubs für verschiedene Niveaustufen und konzentriert sich dabei auf Konversationsübungen, Präsentations- und Diskussionstechniken.</value>
-  </data>
+    <value>Im Unterricht steht das im Vordergrund, was die Lernenden ausdrücken möchten. Natürlichere alternative Formulierungen werden angeboten, ohne den Gesprächsfluss zu unterbrechen; grammatische Schwachstellen werden notiert und später vertieft. Mit niveaugerechten Themen wird individuelles Lernen im eigenen Tempo unterstützt und das Selbstvertrauen gestärkt.</value>
+  <comment>N/A</comment></data>
   <data name="ftbody3" xml:space="preserve">
-    <value>In den Kursen werden alternative Satzvorschläge, bei Bedarf Grammatikunterstützung und dem Niveau entsprechende Themen behandelt, um den Schülern individuelle Entwicklungsmöglichkeiten zu bieten.</value>
-  </data>
+    <value>Der Unterricht findet im Einzel- oder Gruppensetting statt und ist so gestaltet, dass alle aktiv zum Sprechen kommen. Die Teilnehmenden können sich vorab auf die Themen vorbereiten. Bei Wahl eines passenden Pakets werden kurze Sprechübungen außerhalb des Unterrichts sowie individuelles Feedback angeboten.</value>
+  <comment>N/A</comment></data>
   <data name="qt1" xml:space="preserve">
-    <value>„Verbessern Sie Ihre Deutschkenntnisse dank unserer regelmäßigen Inhalte und unterstützen Sie Ihren Lernprozess.“</value>
-  </data>
+    <value>„Darauf zu warten, dass man fehlerfrei spricht ist DER FEHLER."</value>
+  <comment>N/A</comment></data>
   <data name="ShareThisPost" xml:space="preserve">
     <value>Diesen Beitrag teilen</value>
   </data>
   <data name="LinkCopied" xml:space="preserve">
     <value>Link kopiert!</value>
+  </data>
+  <data name="Attachments" xml:space="preserve">
+    <value>Anhänge</value>
   </data>
 </root>

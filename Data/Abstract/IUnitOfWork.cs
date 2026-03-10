@@ -11,6 +11,7 @@ namespace SpeakingClub.Data.Abstract
     {
         IBlogRepository Blogs { get; }
         IBlogTranslationRepository BlogTranslations { get; }
+        IBlogFileRepository BlogFiles { get; }
         IQuizRepository  Quizzes { get; }
         IQuizAnswerRepository QuizAnswers { get; }
         IQuizSubmissionRepository QuizSubmissions { get; }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SpeakingClub.Data;
 
@@ -11,9 +12,11 @@ using SpeakingClub.Data;
 namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 {
     [DbContext(typeof(SpeakingClubContext))]
-    partial class SpeakingClubContextModelSnapshot : ModelSnapshot
+    [Migration("20260310141454_FixStaticSeedValues")]
+    partial class FixStaticSeedValues
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -275,59 +278,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             ViewCount = 0,
                             isHome = true
                         });
-                });
-
-            modelBuilder.Entity("SpeakingClub.Entity.BlogFile", b =>
-                {
-                    b.Property<int>("FileId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("FileId"));
-
-                    b.Property<int>("BlogId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ContentType")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("DisplayName")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("DownloadCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("FileExtension")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
-
-                    b.Property<long>("FileSizeBytes")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("OriginalFileName")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int");
-
-                    b.Property<string>("StoredFilePath")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("UploadedDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("FileId");
-
-                    b.HasIndex("BlogId");
-
-                    b.ToTable("BlogFiles");
                 });
 
             modelBuilder.Entity("SpeakingClub.Entity.BlogQuiz", b =>
@@ -1250,7 +1200,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             Id = "teacher1",
                             AccessFailedCount = 0,
                             Age = 30,
-                            ConcurrencyStamp = "1926fc99-73a0-495c-ab75-9ba7d96c5c3f",
+                            ConcurrencyStamp = "6db5f62e-5d87-4cf5-b857-00354ac651e5",
                             Email = "teacher1@example.com",
                             EmailConfirmed = true,
                             FirstName = "Ali",
@@ -1269,7 +1219,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             Id = "user1-id",
                             AccessFailedCount = 0,
                             Age = 22,
-                            ConcurrencyStamp = "a6860dfc-fbec-4553-943e-261b4e79b78c",
+                            ConcurrencyStamp = "dd1170ec-c590-4f87-9b0b-05c127c69964",
                             Email = "user1@example.com",
                             EmailConfirmed = true,
                             FirstName = "Mert",
@@ -1288,7 +1238,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             Id = "user2-id",
                             AccessFailedCount = 0,
                             Age = 18,
-                            ConcurrencyStamp = "7292971c-692d-4b49-b515-5bf1c43d7746",
+                            ConcurrencyStamp = "577968cc-e0fd-49fa-9011-003c770b3260",
                             Email = "user2@example.com",
                             EmailConfirmed = true,
                             FirstName = "Zeynep",
@@ -1372,17 +1322,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("SpeakingClub.Entity.BlogFile", b =>
-                {
-                    b.HasOne("SpeakingClub.Entity.Blog", "Blog")
-                        .WithMany("Files")
-                        .HasForeignKey("BlogId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Blog");
                 });
 
             modelBuilder.Entity("SpeakingClub.Entity.BlogQuiz", b =>
@@ -1542,8 +1481,6 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 
             modelBuilder.Entity("SpeakingClub.Entity.Blog", b =>
                 {
-                    b.Navigation("Files");
-
                     b.Navigation("Translations");
                 });
 

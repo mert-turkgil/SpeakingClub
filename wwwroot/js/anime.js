@@ -1,8 +1,8 @@
-import * as THREE from '/lib/three/build/three.module.js';
-import { GLTFLoader } from '/lib/three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from '/lib/three/examples/jsm/loaders/DRACOLoader.js';
+// anime.js dosyasının en başı
+import * as THREE from 'three'; // Importmap sayesinde sadece 'three' yazmanız yeterli
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 // GSAP: use the global `gsap` provided by the UMD script loaded before this module.
-// (Removed Skypack import to avoid CORS errors.)
 import { GUI } from 'https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js';
 
 /* ===============================

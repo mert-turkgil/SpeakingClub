@@ -40,6 +40,7 @@ namespace SpeakingClub.Data.Concrete
                 .Include(b => b.Category)
                 .Include(b => b.Tags)
                 .Include(b => b.Translations)
+                .Include(b => b.Files)
                 .Include(b => b.Quiz)
                     .ThenInclude(q => q.Questions)
                     .ThenInclude(q => q.Answers)
@@ -54,6 +55,7 @@ namespace SpeakingClub.Data.Concrete
                 .Include(b => b.Category)
                 .Include(b => b.Tags)
                 .Include(b => b.Translations)
+                .Include(b => b.Files)
                 .Include(b => b.Quiz)
                 .ToListAsync();
         }
@@ -64,6 +66,7 @@ namespace SpeakingClub.Data.Concrete
                 .Include(b => b.Tags)
                 .Include(b => b.Quiz)
                 .Include(b => b.Translations)
+                .Include(b => b.Files)
                 .FirstOrDefaultAsync(b => b.BlogId == id);
         }
     }

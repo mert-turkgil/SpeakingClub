@@ -31,6 +31,14 @@
     var linkedinShareUrl = $"https://www.linkedin.com/sharing/share-offsite/?url={encodedUrl}";
     
     // JSON-LD Structured Data for BlogPosting
+    var associatedMedia = Model.Files?.Select(f => new {
+        type = "MediaObject",
+        name = f.DisplayName,
+        contentUrl = $"https://almanca-konus.com/download/{f.FileId}",
+        encodingFormat = f.ContentType,
+        contentSize = $"{(f.FileSizeBytes / (1024.0 * 1024.0)):F2} MB"
+    }).ToList();
+
     var structuredData = new {
         context = "https://schema.org",
         type = "BlogPosting",
@@ -56,7 +64,8 @@
             type = "WebPage",
             id = canonicalUrl
         },
-        keywords = Model.Tags?.Select(t => t.Name).ToList()
+        keywords = Model.Tags?.Select(t => t.Name).ToList(),
+        associatedMedia = associatedMedia
     };
 }
 @section Css{
@@ -91,6 +100,12 @@
         }
         .advanced-quiz-feedback {
             font-size: 1rem;
+        }
+
+        /* File attachment cards */
+        .file-card:hover {
+            transform: translateY(-5px) !important;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15) !important;
         }
     </style>
 }
@@ -182,6 +197,118 @@
 </div>
 }
     
+    @if (Model.Files != null && Model.Files.Any())
+    {
+        var attachmentsTitle = Localizer.GetKey("Attachments")?.Value ?? "Downloadable Files";
+        var totalFiles = Model.Files.Count();
+        <!-- Downloadable Files Section -->
+        <div class="row my-4">
+            <div class="col-12">
+                <div class="card shadow-sm border-0" style="border-radius: 16px; overflow: hidden;">
+                    <!-- Header with gradient -->
+                    <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 text-white fw-bold">
+                                <i class="fa-solid fa-folder-open me-2"></i> @attachmentsTitle
+                            </h5>
+                            <span class="badge bg-white text-dark rounded-pill px-3 py-2" style="font-size: 0.85rem;">
+                                @totalFiles @(totalFiles == 1 ? "file" : "files")
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body p-4" style="background: #fafbff;">
+                        <div class="row g-4">
+                            @foreach (var file in Model.Files)
+                            {
+                                var iconClass = file.FileExtension switch
+                                {
+                                    ".pdf" => "fa-file-pdf",
+                                    ".doc" or ".docx" => "fa-file-word",
+                                    ".xls" or ".xlsx" => "fa-file-excel",
+                                    ".ppt" or ".pptx" => "fa-file-powerpoint",
+                                    _ => "fa-file"
+                                };
+                                var iconColor = file.FileExtension switch
+                                {
+                                    ".pdf" => "#dc3545",
+                                    ".doc" or ".docx" => "#2b579a",
+                                    ".xls" or ".xlsx" => "#217346",
+                                    ".ppt" or ".pptx" => "#d24726",
+                                    _ => "#6c757d"
+                                };
+                                var bgGradient = file.FileExtension switch
+                                {
+                                    ".pdf" => "linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%)",
+                                    ".doc" or ".docx" => "linear-gradient(135deg, #e8f0fe 0%, #d0e1fd 100%)",
+                                    ".xls" or ".xlsx" => "linear-gradient(135deg, #e6f9ef 0%, #c8f0d8 100%)",
+                                    ".ppt" or ".pptx" => "linear-gradient(135deg, #fef3e8 0%, #fde2cc 100%)",
+                                    _ => "linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%)"
+                                };
+                                var typeBadge = file.FileExtension?.TrimStart('.').ToUpper();
+                                var sizeMB = (file.FileSizeBytes / (1024.0 * 1024.0)).ToString("F2");
+                                var isPdf = file.FileExtension?.ToLower() == ".pdf";
+
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card h-100 border-0 shadow-sm file-card" style="border-radius: 14px; overflow: hidden; transition: all 0.3s ease;">
+                                        <!-- Preview Area -->
+                                        @if (isPdf)
+                                        {
+                                            <div style="height: 200px; overflow: hidden; position: relative; background: @bgGradient;">
+                                                <iframe src="@file.StoredFilePath#toolbar=0&navpanes=0&scrollbar=0"
+                                                        style="width: 100%; height: 100%; border: none; pointer-events: none;"
+                                                        title="@file.DisplayName preview"></iframe>
+                                                <div style="position: absolute; top: 10px; right: 10px;">
+                                                    <span class="badge rounded-pill shadow-sm" style="background: @iconColor; font-size: 0.75rem; padding: 5px 12px;">
+                                                        <i class="fa-solid @iconClass me-1"></i> @typeBadge
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="d-flex align-items-center justify-content-center position-relative" style="height: 200px; background: @bgGradient;">
+                                                <div class="text-center">
+                                                    <i class="fa-solid @iconClass" style="font-size: 4.5rem; color: @iconColor; opacity: 0.85;"></i>
+                                                    <div class="mt-2">
+                                                        <span class="badge rounded-pill shadow-sm" style="background: @iconColor; font-size: 0.75rem; padding: 5px 12px;">
+                                                            @typeBadge
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+
+                                        <!-- File Info -->
+                                        <div class="card-body p-3">
+                                            <h6 class="card-title fw-bold mb-1 text-truncate" title="@file.DisplayName" style="color: #2d3748;">
+                                                @file.DisplayName
+                                            </h6>
+                                            <p class="text-muted mb-3" style="font-size: 0.82rem;">
+                                                @sizeMB MB
+                                            </p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted" style="font-size: 0.82rem;">
+                                                    <i class="fa-solid fa-arrow-down"></i>
+                                                    <span id="download-count-@file.FileId">@file.DownloadCount</span>
+                                                </span>
+                                                <a href="/download/@file.FileId" class="btn btn-sm px-3 py-1 fw-semibold text-white"
+                                                   style="background: @iconColor; border-radius: 20px; font-size: 0.85rem; transition: all 0.2s ease;"
+                                                   onclick="incrementCount(@file.FileId)" rel="nofollow"
+                                                   onmouseover="this.style.opacity='0.85'; this.style.transform='scale(1.05)'"
+                                                   onmouseout="this.style.opacity='1'; this.style.transform='scale(1)'">
+                                                    <i class="fa-solid fa-download me-1"></i> Download
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
 
     <!-- Blog Cover Section (full width) -->
@@ -370,5 +497,13 @@
             }
             feedbackDiv.style.display = "block";
         });
+
+        // Increment download count display
+        function incrementCount(fileId) {
+            var el = document.getElementById('download-count-' + fileId);
+            if (el) {
+                el.textContent = parseInt(el.textContent) + 1;
+            }
+        }
     </script>
 }

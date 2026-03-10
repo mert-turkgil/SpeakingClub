@@ -80,14 +80,83 @@ namespace SpeakingClub.Controllers
         }
 
         #region SetLanguage
-        public IActionResult SetLanguage(string culture, string returnUrl)
+        public async Task<IActionResult> SetLanguage(string culture, string returnUrl)
         {
             Response.Cookies.Append(
                 CookieRequestCultureProvider.DefaultCookieName,
                 CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
                 new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
             );
-            return Redirect(Request.Headers["Referer"].ToString());
+
+            var targetUrl = await MapUrlToTargetCultureAsync(returnUrl, culture);
+            return LocalRedirect(targetUrl);
+        }
+
+        private async Task<string> MapUrlToTargetCultureAsync(string currentPath, string targetCulture)
+        {
+            if (string.IsNullOrEmpty(currentPath)) return "/";
+
+            bool targetIsDe = targetCulture.StartsWith("de", StringComparison.OrdinalIgnoreCase);
+
+            var path = currentPath.Split('?')[0].ToLowerInvariant().TrimEnd('/');
+            if (string.IsNullOrEmpty(path)) path = "/";
+
+            // Static page map: any alias → canonical target-culture URL
+            var staticMap = new Dictionary<string, (string tr, string de)>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["/"]            = ("/",            "/"),
+                ["/about"]       = ("/hakkimizda",  "/ueber-uns"),
+                ["/hakkimizda"]  = ("/hakkimizda",  "/ueber-uns"),
+                ["/ueber-uns"]   = ("/hakkimizda",  "/ueber-uns"),
+                ["/privacy"]     = ("/gizlilik",    "/datenschutz"),
+                ["/gizlilik"]    = ("/gizlilik",    "/datenschutz"),
+                ["/datenschutz"] = ("/gizlilik",    "/datenschutz"),
+                ["/blog"]        = ("/yazilar",     "/beitraege"),
+                ["/yazilar"]     = ("/yazilar",     "/beitraege"),
+                ["/beitraege"]   = ("/yazilar",     "/beitraege"),
+                ["/words"]       = ("/sozluk",      "/woerterbuch"),
+                ["/sozluk"]      = ("/sozluk",      "/woerterbuch"),
+                ["/woerterbuch"] = ("/sozluk",      "/woerterbuch"),
+                ["/quizzes"]     = ("/sinavlar",    "/pruefungen"),
+                ["/sinavlar"]    = ("/sinavlar",    "/pruefungen"),
+                ["/pruefungen"]  = ("/sinavlar",    "/pruefungen"),
+            };
+
+            if (staticMap.TryGetValue(path, out var pair))
+                return targetIsDe ? pair.de : pair.tr;
+
+            // Blog detail pages: /yazilar/{slug}, /beitraege/{slug}, /blog/{slug}
+            var blogPrefixes = new[] { "/yazilar/", "/beitraege/", "/blog/" };
+            foreach (var prefix in blogPrefixes)
+            {
+                if (path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    var slug = path[prefix.Length..];
+                    var targetLang = targetIsDe ? "de" : "tr";
+                    var targetPrefix = targetIsDe ? "/beitraege/" : "/yazilar/";
+
+                    // Try slug as-is in target language first
+                    var direct = await _unitOfWork.BlogTranslations.GetBySlugAsync(slug, targetLang);
+                    if (direct != null)
+                        return targetPrefix + direct.Slug;
+
+                    // Slug might belong to source language — find the blog then its target translation
+                    var sourceLang = targetIsDe ? "tr" : "de";
+                    var source = await _unitOfWork.BlogTranslations.GetBySlugAsync(slug, sourceLang);
+                    if (source != null)
+                    {
+                        var target = await _unitOfWork.BlogTranslations.GetByBlogAndLanguageAsync(source.BlogId, targetLang);
+                        if (target != null)
+                            return targetPrefix + target.Slug;
+                    }
+
+                    // Fallback to blog list
+                    return targetIsDe ? "/beitraege" : "/yazilar";
+                }
+            }
+
+            // Unknown path — go to homepage
+            return "/";
         }
         #endregion
 
@@ -188,6 +257,7 @@ namespace SpeakingClub.Controllers
         public IActionResult About()
         {
             ViewBag.TurnstileSiteKey = _configuration["Turnstile:SiteKey"];
+            ViewBag.CKEditorLicenseKey = _configuration["License:CKEditor"];
             
             if (IsGerman())
             {
@@ -453,6 +523,7 @@ namespace SpeakingClub.Controllers
                     NameLabel = _localization.GetKey("Contact_NameLabel").Value,
                     EmailLabel = _localization.GetKey("Contact_EmailLabel").Value,
                     MessageLabel = _localization.GetKey("Contact_MessageLabel").Value,
+                    MessagePlaceholder = _localization.GetKey("Contact_MessagePlaceholder").Value,
                     ButtonText = _localization.GetKey("Contact_ButtonText").Value
                 },
                 // ContactForm alanını boş olarak oluşturuyoruz.
@@ -672,7 +743,7 @@ namespace SpeakingClub.Controllers
                 {
                     BlogId = blog.BlogId,
                     Title = blog.Title,
-                    Content = blog.Content,
+                    Content = ConvertHttpToHttps(blog.Content ?? ""),
                     Date = blog.Date,
                     RawMaps = blog.RawMaps,
                     RawYT = blog.RawYT,
@@ -680,7 +751,8 @@ namespace SpeakingClub.Controllers
                     Image = blog.Image,
                     Tags = blog.Tags?.ToList() ?? new List<Tag>(),
                     Quizzes = blog.Quiz,
-                    ViewCount = blog.ViewCount
+                    ViewCount = blog.ViewCount,
+                    Files = blog.Files?.OrderBy(f => f.SortOrder).ToList() ?? new List<BlogFile>()
                 };
 
                 // Adjusting quiz question retrieval:
@@ -709,6 +781,39 @@ namespace SpeakingClub.Controllers
                 TempData["ErrorMessage"] = "An error occurred while retrieving the blog post. Please try again later.";
                 return RedirectToAction("Index");
             }
+        }
+
+        [HttpGet("download/{fileId:int}")]
+        public async Task<IActionResult> DownloadBlogFile(int fileId)
+        {
+            var blogFile = await _unitOfWork.BlogFiles.GetByIdAsync(fileId);
+            if (blogFile == null)
+                return NotFound();
+
+            var filePath = Path.Combine(
+                ((IWebHostEnvironment)HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>()).WebRootPath,
+                blogFile.StoredFilePath.TrimStart('/'));
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound();
+
+            // Increment download count
+            blogFile.DownloadCount++;
+            _unitOfWork.BlogFiles.Update(blogFile);
+            await _unitOfWork.SaveAsync();
+
+            var contentType = blogFile.ContentType ?? "application/octet-stream";
+            return PhysicalFile(filePath, contentType, blogFile.OriginalFileName);
+        }
+
+        [HttpGet("api/download-count/{fileId:int}")]
+        public async Task<IActionResult> GetDownloadCount(int fileId)
+        {
+            var blogFile = await _unitOfWork.BlogFiles.GetByIdAsync(fileId);
+            if (blogFile == null)
+                return NotFound();
+
+            return Json(new { downloadCount = blogFile.DownloadCount });
         }
 
         #endregion
@@ -998,6 +1103,49 @@ namespace SpeakingClub.Controllers
             result = System.Text.RegularExpressions.Regex.Replace(result, @"\s+", " ").Trim();
             
             return result;
+        }
+
+        /// <summary>
+        /// Converts all HTTP URLs in HTML content to HTTPS for security
+        /// </summary>
+        private string ConvertHttpToHttps(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+                return content;
+
+            try
+            {
+                // Replace HTTP URLs in src attributes
+                content = System.Text.RegularExpressions.Regex.Replace(
+                    content,
+                    @"src=[""']http://([^""']+)[""']",
+                    @"src=""https://$1""",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                );
+
+                // Replace HTTP URLs in href attributes
+                content = System.Text.RegularExpressions.Regex.Replace(
+                    content,
+                    @"href=[""']http://([^""']+)[""']",
+                    @"href=""https://$1""",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                );
+
+                // Replace HTTP URLs in style attributes (background images, etc.)
+                content = System.Text.RegularExpressions.Regex.Replace(
+                    content,
+                    @"url\(['""']?http://([^)'""\s]+)['""']?\)",
+                    @"url('https://$1')",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                );
+
+                return content;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error converting HTTP to HTTPS in content");
+                return content;
+            }
         }
     }
 }

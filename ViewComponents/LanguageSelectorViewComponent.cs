@@ -23,13 +23,17 @@ namespace SpeakingClub.ViewComponents
 
             var currentCulture = cultureFeature.RequestCulture.Culture;
 
+            // Define supported cultures: Turkish and German only
+            var supportedCultureCodes = new[] { "tr-TR", "de-DE" };
+            
             var cultures = new List<SelectListItem>();
 
-            foreach (var culture in CultureInfo.GetCultures(CultureTypes.AllCultures))
+            foreach (var cultureCode in supportedCultureCodes)
             {
+                var culture = new CultureInfo(cultureCode);
                 cultures.Add(new SelectListItem
                 {
-                    Text = culture.DisplayName,
+                    Text = culture.NativeName, // Display name in native language (Türkçe, Deutsch)
                     Value = culture.Name,
                     Selected = culture.Name == currentCulture.Name
                 });

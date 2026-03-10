@@ -17,7 +17,7 @@ namespace SpeakingClub.Entity
 
         [Required]
         [MaxLength(10)]
-        public string LanguageCode { get; set; } = string.Empty; // "tr", "de", "en", etc.
+        public string LanguageCode { get; set; } = string.Empty; // "tr" (Turkish), "de" (German)
 
         [Required]
         [MaxLength(200)]

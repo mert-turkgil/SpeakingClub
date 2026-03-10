@@ -264,11 +264,11 @@
     <value>Hakkımda</value>
   </data>
   <data name="About" xml:space="preserve">
-    <value>Hakkında</value>
-  </data>
+    <value>Hakkımda</value>
+  <comment>N/A</comment></data>
   <data name="Carousel_1_Title" xml:space="preserve">
-    <value>Hakkında</value>
-  </data>
+    <value>Hakkımda</value>
+  <comment>N/A</comment></data>
   <data name="ExamCanceledInactivity" xml:space="preserve">
     <value>Hareketsizlik nedeniyle sınavınız iptal edildi.</value>
   </data>
@@ -373,6 +373,9 @@
   </data>
   <data name="Contact_MessageLabel" xml:space="preserve">
     <value>Mesajınız</value>
+  </data>
+  <data name="Contact_MessagePlaceholder" xml:space="preserve">
+    <value>Merhaba! Mevcut Almanca seviyenizi, müsaitlik durumunuzu ve kurstan beklentilerinizi kısaca paylaşır mısınız?</value>
   </data>
   <data name="CurrentPassword" xml:space="preserve">
     <value>Mevcut Şifre</value>
@@ -510,8 +513,8 @@
     <value>Suna</value>
   </data>
   <data name="AboutImageAlt" xml:space="preserve">
-    <value>Suna Hoca</value>
-  </data>
+    <value>Suna Koç</value>
+  <comment>N/A</comment></data>
   <data name="TimeSeconds" xml:space="preserve">
     <value>Süre (s)</value>
   </data>
@@ -573,7 +576,7 @@
     <value>Zaten bir hesabınız var mı?</value>
   </data>
   <data name="Kurs" xml:space="preserve">
-    <value>Kurs</value>
+    <value>Seviyeniz</value>
   <comment>N/A</comment></data>
   <data name="Level_A1_Title" xml:space="preserve">
     <value>Başlangıç</value>
@@ -609,30 +612,33 @@
     <value>Teste Başla</value>
   </data>
   <data name="ftheader1" xml:space="preserve">
-    <value>Almanca Eğitimi ve Deneyimi</value>
-  </data>
+    <value>Almanca Koçluk Deneyimi</value>
+  <comment>N/A</comment></data>
   <data name="ftheader2" xml:space="preserve">
-    <value>Uzmanlık Alanı &amp; Konuşma Kulüpleri</value>
-  </data>
+    <value>Çalışma Yaklaşımı</value>
+  <comment>N/A</comment></data>
   <data name="ftheader3" xml:space="preserve">
-    <value>Destekleyici Öğretim Yaklaşımı</value>
-  </data>
+    <value>Konuşma Odaklı dersler</value>
+  <comment>N/A</comment></data>
   <data name="ftbody1" xml:space="preserve">
-    <value>Almanya’da doğup büyümesi ve uzun yıllar eğitim sektöründe çalışması sayesinde güçlü bir Almanca dil altyapısına sahip.</value>
-  </data>
+    <value>Almanya’da doğup büyümüş, Almancayı günlük ve mesleki iletişim bağlamlarında aktif olarak kullanmaktadır. 20 yılı aşkın süredir farklı meslek gruplarından öğrenenlerle çalışmakta; son 10 yıldır ise Almanca konuşma koçluğuna odaklanmaktadır.</value>
+  <comment>N/A</comment></data>
   <data name="ftbody2" xml:space="preserve">
-    <value>Emeklilikten sonra farklı seviyelere yönelik Almanca konuşma kulüpleri düzenleyerek, konuşma pratiği, sunum ve tartışma teknikleri üzerine odaklanıyor.</value>
-  </data>
+    <value>Derslerde, öğrencinin ifade etmek istediği içerik esas alınarak daha doğal alternatif cümleler sunulur. Konuşma akışı korunur; gramerde eksikliği fark edilen noktalar not edilir ve öğrencinin bunları sonradan pekiştirmesi teşvik edilir. Seviye ve hedeflere uygun konularla, her öğrencinin kendi hızında ve bireysel olarak ilerlemesi desteklenir. Bu yaklaşım, öğrencilerin kendilerini daha özgüvenli ve motive hissetmelerine katkı sağlar.</value>
+  <comment>N/A</comment></data>
   <data name="ftbody3" xml:space="preserve">
-    <value>Derslerde alternatif cümle önerileri, gerektiğinde gramer desteği ve seviyeye uygun konular işleyerek öğrencilere bireysel gelişim imkânı sunuyor.</value>
-  </data>
+    <value>Birebir ve grup dersleri, herkesin aktif olarak konuşabileceği şekilde yapılandırılır. Öğrenciler, ele alınacak konulara ders öncesinde hazırlanma fırsatı bulur. Uygun paket seçildiğinde, ders dışı kısa konuşma çalışmaları ve bireysel geri bildirimler sunulur. Bu yapı, akıcı konuşmanın geliştirilmesini ve öğrenme sürecinin sürdürülebilir olmasını destekler.</value>
+  <comment>N/A</comment></data>
   <data name="qt1" xml:space="preserve">
-    <value>"Düzenli içeriklerimiz sayesinde Almanca pratiğinizi artırın, öğreniminize destek olun."</value>
-  </data>
+    <value>"Hatasız Konuşmayı BEKLEMEK Hata Olur."</value>
+  <comment>N/A</comment></data>
   <data name="ShareThisPost" xml:space="preserve">
     <value>Bu Gönderiyi Paylaş</value>
   </data>
   <data name="LinkCopied" xml:space="preserve">
     <value>Link Kopyalandı!</value>
+  </data>
+  <data name="Attachments" xml:space="preserve">
+    <value>Ekler</value>
   </data>
 </root>

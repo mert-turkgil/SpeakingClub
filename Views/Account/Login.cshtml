@@ -116,13 +116,6 @@
     </script>
 
     <!-- Three.js -->
-    <script type="importmap">
-    {
-      "imports": {
-        "three": "/lib/three/build/three.module.js"
-      }
-    }
-    </script>
     <script type="module" src="~/js/splash.js"></script>
 
     <div id="splash-container"></div>
@@ -215,7 +208,19 @@
 </div>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+    <script>
+        window.onloadTurnstileLogin = function() {
+            var container = document.getElementById('turnstile-widget');
+            if (container) {
+                turnstile.render('#turnstile-widget', {
+                    sitekey: '@ViewBag.TurnstileSiteKey',
+                    theme: 'light',
+                    callback: function(token) {}
+                });
+            }
+        };
+    </script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileLogin&render=explicit" defer></script>
     <script>
         // Bot detection - timestamp field
         document.addEventListener("DOMContentLoaded", function() {
@@ -223,31 +228,6 @@
             if(tsField) {
                 tsField.value = Date.now();
             }
-            
-            // Render Turnstile widget explicitly
-            function renderTurnstile() {
-                var container = document.getElementById('turnstile-widget');
-                if (container && typeof turnstile !== 'undefined') {
-                    // Clear any existing widget
-                    container.innerHTML = '';
-                    // Render new widget
-                    turnstile.render('#turnstile-widget', {
-                        sitekey: '@ViewBag.TurnstileSiteKey',
-                        theme: 'light',
-                        callback: function(token) {
-                            console.log('Turnstile verification complete');
-                        }
-                    });
-                }
-            }
-            
-            // Wait for Turnstile API to load, then render
-            var renderInterval = setInterval(function() {
-                if (typeof turnstile !== 'undefined') {
-                    renderTurnstile();
-                    clearInterval(renderInterval);
-                }
-            }, 100);
             
             // Prevent form submission if honeypot is filled
             var form = document.getElementById('loginForm');

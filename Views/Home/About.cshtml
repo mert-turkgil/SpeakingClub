@@ -281,7 +281,12 @@
                             <label asp-for="ContactForm.Message" class="form-label fw-semibold">
                                 @Model.ContactSection.MessageLabel
                             </label>
-                            <textarea asp-for="ContactForm.Message" class="form-control" id="messageEditor" rows="5" required></textarea>
+                            <div class="ck-editor-wrapper">
+                                <textarea asp-for="ContactForm.Message" class="form-control" id="messageEditor" rows="5" required></textarea>
+                                <div class="ck-word-count-bar">
+                                    <span id="ck-word-count">0 @(System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de" ? "W&#246;rter" : "kelime")</span>
+                                </div>
+                            </div>
                             <span asp-validation-for="ContactForm.Message" class="text-danger"></span>
                         </div>
                         <!-- Cloudflare Turnstile Widget -->
@@ -299,7 +304,19 @@
 </section>
 
 @section Scripts {
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+    <script>
+        window.onloadTurnstileAbout = function() {
+            var container = document.getElementById('turnstile-widget');
+            if (container) {
+                turnstile.render('#turnstile-widget', {
+                    sitekey: '@ViewBag.TurnstileSiteKey',
+                    theme: 'light',
+                    callback: function(token) {}
+                });
+            }
+        };
+    </script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileAbout&render=explicit" defer></script>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
@@ -369,44 +386,18 @@
         AOS.init({ duration: 1000, once: true });
     </script>
     
-    <!-- Turnstile Widget Initialization -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Render Turnstile widget
-            function renderTurnstile() {
-                var container = document.getElementById('turnstile-widget');
-                if (container && typeof turnstile !== 'undefined') {
-                    container.innerHTML = '';
-                    turnstile.render('#turnstile-widget', {
-                        sitekey: '@ViewBag.TurnstileSiteKey',
-                        theme: 'light',
-                        callback: function(token) {
-                            console.log('Turnstile verification complete');
-                        }
-                    });
-                }
-            }
-            
-            var renderInterval = setInterval(function() {
-                if (typeof turnstile !== 'undefined') {
-                    renderTurnstile();
-                    clearInterval(renderInterval);
-                }
-            }, 100);
-        });
-    </script>
-    
     <!-- CKEditor Initialization -->
     <script type="module">
-        const { ClassicEditor, Essentials, Bold, Italic, Underline, Strikethrough, Font, Paragraph, Heading, Link, List, BlockQuote, Alignment, Indent, IndentBlock, Undo } = window.CKEDITOR;
+        const { ClassicEditor, Essentials, Bold, Italic, Underline, Strikethrough, Font, Paragraph, Heading, Link, List, BlockQuote, Alignment, Indent, IndentBlock, Undo, WordCount } = window.CKEDITOR;
         
         let editorInstance;
         ClassicEditor
             .create(document.querySelector('#messageEditor'), {
+                licenseKey: '@ViewBag.CKEditorLicenseKey',
                 plugins: [
                     Essentials, Bold, Italic, Underline, Strikethrough,
                     Font, Paragraph, Heading, Link, List, BlockQuote,
-                    Alignment, Indent, IndentBlock, Undo
+                    Alignment, Indent, IndentBlock, Undo, WordCount
                 ],
                 toolbar: {
                     items: [
@@ -431,8 +422,17 @@
                 fontSize: {
                     options: [10, 12, 14, 'default', 18, 20, 22]
                 },
-                placeholder: '@(Model.ContactSection.MessageLabel ?? "Your message...")',
-                language: 'en'
+                wordCount: {
+                    onUpdate: stats => {
+                        const el = document.getElementById('ck-word-count');
+                        if (el) {
+                            const lbl = @Json.Serialize(System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de" ? "Wörter" : "kelime");
+                            el.textContent = stats.words + ' ' + lbl;
+                        }
+                    }
+                },
+                placeholder: @Json.Serialize(Model.ContactSection.MessagePlaceholder ?? Model.ContactSection.MessageLabel),
+                language: @Json.Serialize(System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName)
             })
             .then(editor => {
                 editorInstance = editor;
@@ -454,26 +454,60 @@
     </script>
     
     <style>
-        /* CKEditor custom styling to match contact form */
-        .ck-editor__editable {
-            min-height: 200px;
-            border-radius: 10px !important;
-            padding: 15px !important;
+        /* CKEditor wrapper — owns the visible border and focus ring */
+        .ck-editor-wrapper {
+            border: 2px solid var(--third);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
         }
-        .ck.ck-editor__main > .ck-editor__editable:not(.ck-focused) {
-            border-color: var(--third) !important;
+        .ck-editor-wrapper:focus-within {
+            border-color: var(--fourth);
+            box-shadow: 0 0 0 4px rgba(255,148,148,0.18);
         }
-        .ck.ck-editor__main > .ck-editor__editable.ck-focused {
-            border-color: var(--fourth) !important;
-            box-shadow: 0 0 0 3px rgba(255,148,148,0.2) !important;
+        /* Strip CKEditor's own outer borders — wrapper owns them now */
+        .ck.ck-editor__top .ck-toolbar,
+        .ck.ck-editor__main > .ck-editor__editable {
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
         }
+        /* Toolbar */
         .ck.ck-toolbar {
-            border-radius: 10px 10px 0 0 !important;
-            background-color: var(--first) !important;
-            border-color: var(--third) !important;
+            background: linear-gradient(90deg, var(--first) 0%, var(--second) 100%) !important;
+            border-radius: 0 !important;
+            border-bottom: 1px solid var(--third) !important;
+            padding: 4px 8px !important;
         }
         .ck.ck-toolbar .ck-toolbar__items {
             flex-wrap: wrap;
+            gap: 2px;
+        }
+        .ck.ck-button:not(.ck-disabled):hover {
+            background-color: rgba(255,148,148,0.12) !important;
+        }
+        /* Editable area */
+        .ck-editor__editable {
+            min-height: 200px;
+            padding: 16px 18px !important;
+            font-size: 0.95rem !important;
+            line-height: 1.75 !important;
+            background: #fff !important;
+        }
+        /* Placeholder text */
+        .ck.ck-editor__editable .ck-placeholder::before {
+            color: #aaa !important;
+            font-style: italic;
+        }
+        /* Word count bar */
+        .ck-word-count-bar {
+            background: var(--first);
+            border-top: 1px solid var(--third);
+            padding: 5px 14px;
+            text-align: right;
+            font-size: 0.78rem;
+            color: #999;
+            user-select: none;
         }
         /* Turnstile widget container */
         #turnstile-widget {

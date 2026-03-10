@@ -35,5 +35,8 @@ namespace SpeakingClub.Models
 
         // Also use the entity type for Question.
         public SpeakingClub.Entity.Question? QuizQuestion { get; set; }
+
+        // File attachments
+        public ICollection<BlogFile> Files { get; set; } = new List<BlogFile>();
     }
 }

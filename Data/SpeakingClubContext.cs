@@ -12,10 +12,19 @@ namespace SpeakingClub.Data
         {
         }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            base.OnConfiguring(optionsBuilder);
+            // Suppress pending model changes warning after fixing dynamic seed data
+            optionsBuilder.ConfigureWarnings(warnings =>
+                warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        }
+
         // DbSets for core entities
         public DbSet<Blog> Blogs { get; set; }
         public DbSet<BlogQuiz> BlogQuizzes { get; set; }
         public DbSet<BlogTranslation> BlogTranslations { get; set; }
+        public DbSet<BlogFile> BlogFiles { get; set; }
         public DbSet<Quiz> Quizzes { get; set; }
         public DbSet<Question> Questions {get; set;}
         public DbSet<QuizAnalysis> QuizAnalyses { get; set; }
@@ -53,6 +62,12 @@ namespace SpeakingClub.Data
                 .HasOne(bt => bt.Blog)
                 .WithMany(b => b.Translations)
                 .HasForeignKey(bt => bt.BlogId)
+                .OnDelete(DeleteBehavior.Cascade);
+            // Configure BlogFile cascade delete
+            modelBuilder.Entity<BlogFile>()
+                .HasOne(bf => bf.Blog)
+                .WithMany(b => b.Files)
+                .HasForeignKey(bf => bf.BlogId)
                 .OnDelete(DeleteBehavior.Cascade);
             // Configure composite key for UserQuiz join table
             modelBuilder.Entity<UserQuiz>()

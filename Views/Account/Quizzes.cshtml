@@ -300,9 +300,9 @@
     </div>
     
     <div class="container">
-        <div class="row gy-4">
+        <div>
             <!-- Sol Panel -->
-            <aside class="col-lg-3 col-md-4">
+            @* <aside class="col-lg-3 col-md-4">
                 <div class="aside-inner">
                     <form id="quizSearchForm" class="mb-4 text-black" onsubmit="event.preventDefault();doFilter(1);">
                         <div class="input-group">
@@ -347,10 +347,10 @@
                         </select>
                     </div>
                 </div>
-            </aside>
+            </aside> *@
 
             <!-- Quiz Kartları -->
-            <main class="col-lg-9 col-md-8">
+            <main class="w-100">
                 @if (!SignInManager.IsSignedIn(User))
                 {
                     <div class="login-alert mb-4" role="alert">

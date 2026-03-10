@@ -91,5 +91,8 @@ namespace SpeakingClub.Entity
 
         // NEW: Multilingual support
         public virtual ICollection<BlogTranslation> Translations { get; set; }
+
+        // File attachments (PDF, Word, Excel)
+        public virtual ICollection<BlogFile> Files { get; set; } = new List<BlogFile>();
     }
 }

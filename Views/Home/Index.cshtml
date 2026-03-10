@@ -10,6 +10,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <!-- Three.js -->
+    <script type="importmap" type="importmap">
+    {
+        "imports": {
+            "three": "/lib/three/build/three.module.js",
+            "three/addons/": "/lib/three/examples/jsm/"
+        }
+    }
+    </script>
     <style>
         .icon-square {
             width: 3rem;
@@ -494,21 +503,13 @@
 </section>
 </main>
   @section Scripts {
-    <!-- Three.js -->
-      <script type="importmap">
-      {
-        "imports": {
-          "three": "/lib/three/build/three.module.js"
-        }
-      }
-    </script>
         <script src="~/lib/gsap/gsap.min.js"></script>
         <script src="~/lib/gsap/ScrollTrigger.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js" type="module"></script>
+        <script type="module" src="~/js/anime.js"></script>
         <script>
             gsap.registerPlugin(ScrollTrigger); // <-- Register explicitly
         </script>
-        <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js" type="module"></script>
-        <script type="module" src="~/js/anime.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
     <script>
       AOS.init();

@@ -69,6 +69,7 @@ namespace SpeakingClub.Models
         public string NameLabel { get; set; }
         public string EmailLabel { get; set; }
         public string MessageLabel { get; set; }
+        public string MessagePlaceholder { get; set; }
         public string ButtonText { get; set; }
     }
     

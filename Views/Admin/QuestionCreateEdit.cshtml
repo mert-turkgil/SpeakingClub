@@ -246,11 +246,8 @@
             })
             .then(editor => {
                 questionEditor = editor;
-                console.log('CKEditor initialized successfully');
             })
-            .catch(error => {
-                console.error('Error initializing CKEditor:', error);
-            });
+            .catch(error => {});
 
         // Dynamic Add/Remove for Answers
         function removeAnswer(btn) {

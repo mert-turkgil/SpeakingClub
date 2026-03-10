@@ -908,6 +908,9 @@ namespace SpeakingClub.Controllers
                 // Save translations
                 await SaveBlogTranslationsAsync(blog.BlogId, model);
 
+                // Handle file attachments
+                await SaveBlogAttachmentsAsync(blog.BlogId, model.AttachmentFiles, model.AttachmentDisplayNames);
+
                 _unitOfWork.Blogs.Update(blog);
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();
@@ -1003,7 +1006,17 @@ namespace SpeakingClub.Controllers
                 OgDescriptionDE = deTranslation?.OgDescription,
                 
                 SelectedCategoryIds = blog.CategoryId.HasValue ? new List<int> { blog.CategoryId.Value } : new List<int>(),
-                SelectedTagIds = blog.Tags?.Select(t => t.TagId).ToList() ?? new List<int>()
+                SelectedTagIds = blog.Tags?.Select(t => t.TagId).ToList() ?? new List<int>(),
+                ExistingFiles = blog.Files?.Select(f => new BlogFileViewModel
+                {
+                    FileId = f.FileId,
+                    OriginalFileName = f.OriginalFileName,
+                    DisplayName = f.DisplayName,
+                    FileExtension = f.FileExtension,
+                    FileSizeBytes = f.FileSizeBytes,
+                    DownloadCount = f.DownloadCount,
+                    UploadedDate = f.UploadedDate
+                }).ToList() ?? new List<BlogFileViewModel>()
             };
             // Determine selected quiz based on stored SelectedQuestionId
             int? selectedQuizId = null;
@@ -1156,6 +1169,9 @@ namespace SpeakingClub.Controllers
                 // Update translations
                 await SaveBlogTranslationsAsync(blog.BlogId, model);
 
+                // Handle new file attachments
+                await SaveBlogAttachmentsAsync(blog.BlogId, model.AttachmentFiles, model.AttachmentDisplayNames);
+
                 _unitOfWork.Blogs.Update(blog);
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();
@@ -1226,6 +1242,38 @@ namespace SpeakingClub.Controllers
                 _logger.LogError(ex, "Error deleting blog {BlogId}", id);
                 TempData["ErrorMessage"] = $"Error deleting blog: {ex.Message}";
                 return RedirectToAction("Index");
+            }
+        }
+
+        [HttpPost("BlogFileDelete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BlogFileDelete(int fileId, int blogId)
+        {
+            try
+            {
+                var blogFile = await _unitOfWork.BlogFiles.GetByIdAsync(fileId);
+                if (blogFile == null || blogFile.BlogId != blogId)
+                {
+                    return Json(new { success = false, message = "File not found." });
+                }
+
+                // Delete physical file
+                var filePath = Path.Combine(_env.WebRootPath, blogFile.StoredFilePath.TrimStart('/'));
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+
+                _unitOfWork.BlogFiles.Remove(blogFile);
+                await _unitOfWork.SaveAsync();
+
+                _logger.LogInformation("Deleted blog file {FileId} from blog {BlogId}", fileId, blogId);
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting blog file {FileId}", fileId);
+                return Json(new { success = false, message = "Error deleting file." });
             }
         }
 
@@ -1461,6 +1509,86 @@ namespace SpeakingClub.Controllers
 
         #endregion
 
+        #region Blog File Attachments
+
+        private static readonly HashSet<string> AllowedAttachmentExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"
+        };
+
+        private static readonly Dictionary<string, string> AttachmentContentTypes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { ".pdf", "application/pdf" },
+            { ".doc", "application/msword" },
+            { ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+            { ".xls", "application/vnd.ms-excel" },
+            { ".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+            { ".ppt", "application/vnd.ms-powerpoint" },
+            { ".pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation" }
+        };
+
+        private async Task SaveBlogAttachmentsAsync(int blogId, List<IFormFile>? files, string? displayNames)
+        {
+            if (files == null || !files.Any()) return;
+
+            var names = displayNames?.Split(',', StringSplitOptions.TrimEntries) ?? Array.Empty<string>();
+            var uploadDir = Path.Combine(_env.WebRootPath, "blog", "files", blogId.ToString());
+            Directory.CreateDirectory(uploadDir);
+
+            var existingFiles = await _unitOfWork.BlogFiles.GetFilesByBlogIdAsync(blogId);
+            var sortOrder = existingFiles.Any() ? existingFiles.Max(f => f.SortOrder) + 1 : 0;
+
+            for (int i = 0; i < files.Count; i++)
+            {
+                var file = files[i];
+                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+                if (!AllowedAttachmentExtensions.Contains(ext))
+                {
+                    _logger.LogWarning("Skipped disallowed file type: {FileName}", file.FileName);
+                    continue;
+                }
+
+                if (file.Length > 50 * 1024 * 1024) // 50MB limit
+                {
+                    _logger.LogWarning("Skipped oversized file: {FileName} ({Size} bytes)", file.FileName, file.Length);
+                    continue;
+                }
+
+                var safeFileName = $"{Guid.NewGuid()}{ext}";
+                var filePath = Path.Combine(uploadDir, safeFileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                var displayName = (i < names.Length && !string.IsNullOrWhiteSpace(names[i]))
+                    ? names[i]
+                    : Path.GetFileNameWithoutExtension(file.FileName);
+
+                var blogFile = new BlogFile
+                {
+                    BlogId = blogId,
+                    OriginalFileName = file.FileName,
+                    StoredFilePath = $"/blog/files/{blogId}/{safeFileName}",
+                    FileExtension = ext,
+                    ContentType = AttachmentContentTypes.GetValueOrDefault(ext, "application/octet-stream"),
+                    FileSizeBytes = file.Length,
+                    DisplayName = displayName,
+                    DownloadCount = 0,
+                    SortOrder = sortOrder++,
+                    UploadedDate = DateTime.UtcNow
+                };
+
+                await _unitOfWork.BlogFiles.AddAsync(blogFile);
+            }
+
+            await _unitOfWork.SaveAsync();
+        }
+
+        #endregion
+
         #region Image Upload & Management
 
         /// <summary>
@@ -1597,6 +1725,9 @@ namespace SpeakingClub.Controllers
 
             try
             {
+                // First, ensure all HTTP URLs in content are converted to HTTPS for security
+                content = ConvertHttpToHttps(content);
+                
                 // Find all temp images in content
                 var matches = Regex.Matches(content, @"src=[""'](?<url>/temp/[^""']+)[""']", RegexOptions.IgnoreCase);
                 
@@ -1790,17 +1921,14 @@ namespace SpeakingClub.Controllers
         #region Translation Management
 
         /// <summary>
-        /// Saves blog translations to resource files
+        /// Saves blog translations to resource files (Legacy method - not currently used)
         /// </summary>
-        private void SaveBlogTranslations(int blogId, string url, string titleEN, string contentEN, 
+        [Obsolete("This method is deprecated. Use SaveBlogTranslationsAsync instead.")]
+        private void SaveBlogTranslations(int blogId, string url, 
             string titleTR, string contentTR, string titleDE, string contentDE)
         {
             try
             {
-                // English (default)
-                _manageResourceService.AddOrUpdateResource($"Title_{blogId}_{url}_en", titleEN, "en-US");
-                _manageResourceService.AddOrUpdateResource($"Content_{blogId}_{url}_en", contentEN, "en-US");
-
                 // Turkish
                 if (!string.IsNullOrEmpty(titleTR))
                     _manageResourceService.AddOrUpdateResource($"Title_{blogId}_{url}_tr", titleTR, "tr-TR");
@@ -1830,7 +1958,6 @@ namespace SpeakingClub.Controllers
             {
                 var cultures = new Dictionary<string, string>
                 {
-                    { "en-US", "en" },
                     { "tr-TR", "tr" },
                     { "de-DE", "de" }
                 };
@@ -4371,6 +4498,54 @@ namespace SpeakingClub.Controllers
 
             resourceService.AddOrUpdate(key, value, culture); // Save key-value using IManageResourceService
         }
+
+        #region Security Helpers
+
+        /// <summary>
+        /// Converts all HTTP URLs in HTML content to HTTPS for security
+        /// </summary>
+        private string ConvertHttpToHttps(string content)
+        {
+            if (string.IsNullOrEmpty(content))
+                return content;
+
+            try
+            {
+                // Replace HTTP URLs in src attributes
+                content = Regex.Replace(
+                    content,
+                    @"src=[""']http://([^""']+)[""']",
+                    @"src=""https://$1""",
+                    RegexOptions.IgnoreCase
+                );
+
+                // Replace HTTP URLs in href attributes
+                content = Regex.Replace(
+                    content,
+                    @"href=[""']http://([^""']+)[""']",
+                    @"href=""https://$1""",
+                    RegexOptions.IgnoreCase
+                );
+
+                // Replace HTTP URLs in style attributes (background images, etc.)
+                content = Regex.Replace(
+                    content,
+                    @"url\(['""']?http://([^)'""\s]+)['""']?\)",
+                    @"url('https://$1')",
+                    RegexOptions.IgnoreCase
+                );
+
+                _logger.LogDebug("Converted HTTP URLs to HTTPS in content");
+                return content;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error converting HTTP to HTTPS in content");
+                return content;
+            }
+        }
+
+        #endregion
     #endregion
 
     }
