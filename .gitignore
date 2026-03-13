@@ -48,6 +48,8 @@ DataProtection-Keys/*.xml
 # User uploads & generated content
 wwwroot/uploads/
 wwwroot/blog/img/
+wwwroot/blog/files/*/*.*
+wwwroot/blog/*.*
 wwwroot/blog/gif/
 wwwroot/blog/pdf/
 
