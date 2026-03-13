@@ -17,6 +17,12 @@
 }
 @if (User.IsInRole("Admin") || User.IsInRole("Root"))
 {
+<section class="container-xxl mt-4">
+    <a href="@Url.Action("DownloadLogs", "Admin")" class="btn btn-outline-primary">
+        <i class="fa-solid fa-download me-1"></i> View Download Logs
+    </a>
+</section>
+
 <section id="RoleManagement" class="container-xxl">
     <div class="card shadow mt-4">
         <div class="card-header bg-primary text-white">

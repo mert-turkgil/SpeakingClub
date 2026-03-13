@@ -488,6 +488,47 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.ToTable("Comments");
                 });
 
+            modelBuilder.Entity("SpeakingClub.Entity.DownloadLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BlogFileId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DownloadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("UserEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("UserFullName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BlogFileId");
+
+                    b.ToTable("DownloadLogs");
+                });
+
             modelBuilder.Entity("SpeakingClub.Entity.Question", b =>
                 {
                     b.Property<int>("Id")
@@ -1250,7 +1291,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             Id = "teacher1",
                             AccessFailedCount = 0,
                             Age = 30,
-                            ConcurrencyStamp = "1926fc99-73a0-495c-ab75-9ba7d96c5c3f",
+                            ConcurrencyStamp = "5a824f29-c254-49ca-ba1f-12ecc01551a4",
                             Email = "teacher1@example.com",
                             EmailConfirmed = true,
                             FirstName = "Ali",
@@ -1269,7 +1310,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             Id = "user1-id",
                             AccessFailedCount = 0,
                             Age = 22,
-                            ConcurrencyStamp = "a6860dfc-fbec-4553-943e-261b4e79b78c",
+                            ConcurrencyStamp = "d2cf90ef-2a83-4ae7-94b8-9f5ff360ff86",
                             Email = "user1@example.com",
                             EmailConfirmed = true,
                             FirstName = "Mert",
@@ -1288,7 +1329,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             Id = "user2-id",
                             AccessFailedCount = 0,
                             Age = 18,
-                            ConcurrencyStamp = "7292971c-692d-4b49-b515-5bf1c43d7746",
+                            ConcurrencyStamp = "60ea8f01-16f6-4c5b-8ca3-a7d2b8d25c8b",
                             Email = "user2@example.com",
                             EmailConfirmed = true,
                             FirstName = "Zeynep",
@@ -1434,6 +1475,17 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.Navigation("Quiz");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SpeakingClub.Entity.DownloadLog", b =>
+                {
+                    b.HasOne("SpeakingClub.Entity.BlogFile", "BlogFile")
+                        .WithMany()
+                        .HasForeignKey("BlogFileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BlogFile");
                 });
 
             modelBuilder.Entity("SpeakingClub.Entity.Question", b =>

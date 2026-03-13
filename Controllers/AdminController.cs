@@ -924,7 +924,7 @@ namespace SpeakingClub.Controllers
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error creating blog");
-                TempData["ErrorMessage"] = $"Error creating blog: {ex.Message}";
+                ModelState.AddModelError("", $"An error occurred while saving: {ex.Message}");
                 
                 ViewBag.Categories = (await _unitOfWork.Categories.GetAllAsync())
                     .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
@@ -1067,6 +1067,44 @@ namespace SpeakingClub.Controllers
                     .Select(t => new SelectListItem(t.Name, t.TagId.ToString()));
                 ViewBag.Quizzes = (await _unitOfWork.Quizzes.GetAllAsync())
                     .Select(q => new SelectListItem(q.Title, q.Id.ToString()));
+
+                // Repopulate questions for the selected quiz
+                if (model.SelectedQuestionId.HasValue)
+                {
+                    var currentQuestion = await _unitOfWork.Questions.GetAsync(model.SelectedQuestionId.Value);
+                    if (currentQuestion != null)
+                    {
+                        var questions = (await _unitOfWork.Questions.GetQuestionsByQuizIdAsync(currentQuestion.QuizId)).ToList();
+                        ViewBag.Questions = questions
+                            .Select(q => new SelectListItem(q.QuestionText, q.Id.ToString(), q.Id == model.SelectedQuestionId.Value))
+                            .ToList();
+                    }
+                    else
+                    {
+                        ViewBag.Questions = new List<SelectListItem>();
+                    }
+                }
+                else
+                {
+                    ViewBag.Questions = new List<SelectListItem>();
+                }
+
+                // Repopulate existing files
+                if (model.ExistingFiles == null)
+                {
+                    var blogFiles = await _unitOfWork.BlogFiles.GetFilesByBlogIdAsync(model.BlogId);
+                    model.ExistingFiles = blogFiles.Select(f => new BlogFileViewModel
+                    {
+                        FileId = f.FileId,
+                        OriginalFileName = f.OriginalFileName,
+                        DisplayName = f.DisplayName,
+                        FileExtension = f.FileExtension,
+                        FileSizeBytes = f.FileSizeBytes,
+                        DownloadCount = f.DownloadCount,
+                        UploadedDate = f.UploadedDate
+                    }).ToList();
+                }
+
                 return View(model);
             }
 
@@ -1185,7 +1223,7 @@ namespace SpeakingClub.Controllers
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error updating blog {BlogId}", model.BlogId);
-                TempData["ErrorMessage"] = $"Error updating blog: {ex.Message}";
+                ModelState.AddModelError("", $"An error occurred while saving: {ex.Message}");
                 
                 ViewBag.Categories = (await _unitOfWork.Categories.GetAllAsync())
                     .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
@@ -1193,6 +1231,24 @@ namespace SpeakingClub.Controllers
                     .Select(t => new SelectListItem(t.Name, t.TagId.ToString()));
                 ViewBag.Quizzes = (await _unitOfWork.Quizzes.GetAllAsync())
                     .Select(q => new SelectListItem(q.Title, q.Id.ToString()));
+                ViewBag.Questions = new List<SelectListItem>();
+
+                // Repopulate existing files
+                if (model.ExistingFiles == null)
+                {
+                    var blogFiles = await _unitOfWork.BlogFiles.GetFilesByBlogIdAsync(model.BlogId);
+                    model.ExistingFiles = blogFiles.Select(f => new BlogFileViewModel
+                    {
+                        FileId = f.FileId,
+                        OriginalFileName = f.OriginalFileName,
+                        DisplayName = f.DisplayName,
+                        FileExtension = f.FileExtension,
+                        FileSizeBytes = f.FileSizeBytes,
+                        DownloadCount = f.DownloadCount,
+                        UploadedDate = f.UploadedDate
+                    }).ToList();
+                }
+
                 return View(model);
             }
         }
@@ -4546,6 +4602,44 @@ namespace SpeakingClub.Controllers
         }
 
         #endregion
+    #endregion
+
+    #region Download Logs
+        [Authorize(Roles = "Root,Admin")]
+        [HttpGet("DownloadLogs")]
+        public async Task<IActionResult> DownloadLogs(string? searchTerm, string? sortBy, int page = 1)
+        {
+            var logs = await _unitOfWork.GenericRepository<DownloadLog>().GetAllAsync();
+            var query = logs.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                var term = searchTerm.ToLower();
+                query = query.Where(l =>
+                    l.UserEmail.ToLower().Contains(term) ||
+                    l.UserFullName.ToLower().Contains(term) ||
+                    l.FileName.ToLower().Contains(term));
+            }
+
+            query = sortBy switch
+            {
+                "user" => query.OrderBy(l => l.UserEmail),
+                "file" => query.OrderBy(l => l.FileName),
+                "oldest" => query.OrderBy(l => l.DownloadedAt),
+                _ => query.OrderByDescending(l => l.DownloadedAt)
+            };
+
+            const int pageSize = 50;
+            var totalItems = query.Count();
+            var items = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            ViewBag.SearchTerm = searchTerm;
+            ViewBag.SortBy = sortBy;
+
+            return View(items);
+        }
     #endregion
 
     }

@@ -467,36 +467,40 @@
             });
         });
         
-        // When the advanced quiz form is submitted.
-        document.getElementById("advancedQuizForm")?.addEventListener("submit", function (e) {
-            e.preventDefault();
+        @if (Model.QuizQuestion != null)
+        {
+            // When the advanced quiz form is submitted.
+            <text>
+            document.getElementById("advancedQuizForm")?.addEventListener("submit", function (e) {
+                e.preventDefault();
 
-            // Retrieve the selected answer.
-            const selectedRadio = document.querySelector('input[name="advancedQuizAnswer"]:checked');
-            const feedbackDiv = document.getElementById("advancedQuizFeedback");
+                // Retrieve the selected answer.
+                const selectedRadio = document.querySelector('input[name="advancedQuizAnswer"]:checked');
+                const feedbackDiv = document.getElementById("advancedQuizFeedback");
 
-            if (!selectedRadio) {
-                feedbackDiv.innerHTML = "<div class='alert alert-warning animate__animated animate__shakeX'>Please select an answer.</div>";
+                if (!selectedRadio) {
+                    feedbackDiv.innerHTML = "<div class='alert alert-warning animate__animated animate__shakeX'>Please select an answer.</div>";
+                    feedbackDiv.style.display = "block";
+                    return;
+                }
+
+                // Parse the selected answer id.
+                const selectedAnswerId = parseInt(selectedRadio.value, 10);
+
+                // Provide the correct answer id and text directly from the Model.
+                const correctAnswerId = @Model.QuizQuestion.Answers.First(a => a.IsCorrect).Id;
+                const correctAnswerText = "@Model.QuizQuestion.Answers.First(a => a.IsCorrect).AnswerText";
+
+                // Show animated feedback.
+                if (selectedAnswerId === correctAnswerId) {
+                    feedbackDiv.innerHTML = "<div class='alert alert-success animate__animated animate__fadeIn'>Correct! Congratulations.</div>";
+                } else {
+                    feedbackDiv.innerHTML = "<div class='alert alert-danger animate__animated animate__fadeIn'>Incorrect. The correct answer is: <strong>" + correctAnswerText + "</strong></div>";
+                }
                 feedbackDiv.style.display = "block";
-                return;
-            }
-
-            // Parse the selected answer id.
-            const selectedAnswerId = parseInt(selectedRadio.value, 10);
-
-            // Provide the correct answer id and text directly from the Model.
-            // Here we assume there is exactly one correct answer.
-            const correctAnswerId = @Model.QuizQuestion?.Answers.First(a => a.IsCorrect).Id;
-            const correctAnswerText = "@Model.QuizQuestion?.Answers.First(a => a.IsCorrect).AnswerText";
-
-            // Show animated feedback.
-            if (selectedAnswerId === correctAnswerId) {
-                feedbackDiv.innerHTML = "<div class='alert alert-success animate__animated animate__fadeIn'>Correct! Congratulations.</div>";
-            } else {
-                feedbackDiv.innerHTML = "<div class='alert alert-danger animate__animated animate__fadeIn'>Incorrect. The correct answer is: <strong>" + correctAnswerText + "</strong></div>";
-            }
-            feedbackDiv.style.display = "block";
-        });
+            });
+            </text>
+        }
 
         // Increment download count display
         function incrementCount(fileId) {
@@ -505,5 +509,20 @@
                 el.textContent = parseInt(el.textContent) + 1;
             }
         }
+
+        // After login redirect: auto-start download and clean the URL
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            var fileId = params.get('autoDownload');
+            if (fileId) {
+                // Strip the param from the URL first so refresh won't re-trigger
+                params.delete('autoDownload');
+                var clean = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+                window.history.replaceState({}, '', clean);
+                // Navigate to download URL — browser stays on page because the
+                // server responds with Content-Disposition: attachment
+                window.location.href = '/download/' + fileId;
+            }
+        })();
     </script>
 }

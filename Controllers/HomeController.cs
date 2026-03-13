@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
@@ -790,6 +791,18 @@ namespace SpeakingClub.Controllers
             if (blogFile == null)
                 return NotFound();
 
+            // If not authenticated, redirect to login and return to the blog page
+            // (not the download URL) so the browser can handle the file download cleanly
+            if (!User.Identity!.IsAuthenticated)
+            {
+                var blog = await _unitOfWork.Blogs.GetByIdAsync(blogFile.BlogId);
+                var blogSlug = blog?.Slug ?? string.Empty;
+                var returnPath = string.IsNullOrEmpty(blogSlug)
+                    ? "/"
+                    : $"/blog/{blogSlug}?autoDownload={fileId}";
+                return Redirect($"/Account/Login?ReturnUrl={Uri.EscapeDataString(returnPath)}");
+            }
+
             var filePath = Path.Combine(
                 ((IWebHostEnvironment)HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>()).WebRootPath,
                 blogFile.StoredFilePath.TrimStart('/'));
@@ -800,6 +813,23 @@ namespace SpeakingClub.Controllers
             // Increment download count
             blogFile.DownloadCount++;
             _unitOfWork.BlogFiles.Update(blogFile);
+
+            // Log the download
+            var user = await _userManager.GetUserAsync(User);
+            if (user != null)
+            {
+                var log = new DownloadLog
+                {
+                    UserId = user.Id,
+                    UserEmail = user.Email ?? string.Empty,
+                    UserFullName = $"{user.FirstName} {user.LastName}".Trim(),
+                    BlogFileId = blogFile.FileId,
+                    FileName = blogFile.OriginalFileName,
+                    DownloadedAt = DateTime.UtcNow
+                };
+                await _unitOfWork.GenericRepository<DownloadLog>().AddAsync(log);
+            }
+
             await _unitOfWork.SaveAsync();
 
             var contentType = blogFile.ContentType ?? "application/octet-stream";

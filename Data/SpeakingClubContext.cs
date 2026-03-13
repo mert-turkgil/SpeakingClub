@@ -41,6 +41,7 @@ namespace SpeakingClub.Data
         public DbSet<UserQuiz> UserQuizzes { get; set; }
 
         public DbSet<SlideShow> Slide { get; set; }
+        public DbSet<DownloadLog> DownloadLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -112,6 +113,14 @@ namespace SpeakingClub.Data
             modelBuilder.Entity<SlideShow>().Property(s => s.CarouselTitle).IsRequired();
             modelBuilder.Entity<SlideShow>().Property(s => s.CarouselImage).IsRequired();
             modelBuilder.Entity<SlideShow>().Property(s=>s.DateAdded).HasDefaultValueSql("GETDATE()");
+
+            // Configure DownloadLog
+            modelBuilder.Entity<DownloadLog>()
+                .HasOne(dl => dl.BlogFile)
+                .WithMany()
+                .HasForeignKey(dl => dl.BlogFileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.SeedData();
         }
     }

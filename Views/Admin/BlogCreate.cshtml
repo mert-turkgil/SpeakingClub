@@ -402,12 +402,11 @@
 
             @if (!ViewData.ModelState.IsValid)
             {
-                <div class="alert alert-danger m-4 animate__animated animate__shakeX">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Please fix the errors below.
+                <div class="alert alert-danger m-4 animate__animated animate__shakeX" id="errorBanner">
+                    <strong><i class="fa-solid fa-triangle-exclamation"></i> Please fix the following errors:</strong>
+                    <div asp-validation-summary="All" class="mt-2 mb-0"></div>
                 </div>
             }
-
-            <div asp-validation-summary="ModelOnly" class="alert alert-warning m-4"></div>
 
             <!-- Tab Navigation -->
             <div class="custom-tabs">
@@ -1230,25 +1229,59 @@
             // Form Validation
             // ===================================
             $('#blogForm').on('submit', function(e) {
-                let isValid = true;
                 let errors = [];
 
                 if ($('input[name="Title"]').val().trim() === '') {
-                    errors.push('Blog title is required');
-                    isValid = false;
+                    errors.push('Blog title is required.');
                 }
-
                 if ($('input[name="Author"]').val().trim() === '') {
-                    errors.push('Author name is required');
-                    isValid = false;
+                    errors.push('Author name is required.');
                 }
 
-                if (!isValid) {
+                if (errors.length > 0) {
                     e.preventDefault();
-                    alert('Please fix the following errors:\n\n' + errors.join('\n'));
+                    var $banner = $('#clientErrorBanner');
+                    if (!$banner.length) {
+                        $banner = $('<div id="clientErrorBanner" class="alert alert-danger m-4 animate__animated animate__shakeX"><strong><i class="fa-solid fa-triangle-exclamation"></i> Please fix the following errors:</strong><ul class="mt-2 mb-0 ps-3"></ul></div>');
+                        $('.page-header').after($banner);
+                    }
+                    var $ul = $banner.find('ul').empty();
+                    errors.forEach(function(msg) { $ul.append('<li>' + msg + '</li>'); });
+                    $banner.show();
+                    $banner[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Switch to Basic tab
+                    $('.custom-tab').removeClass('active');
+                    $('[data-tab="basic"]').addClass('active');
+                    $('.tab-pane').removeClass('active');
+                    $('#tab-basic').addClass('active');
                     return false;
                 }
             });
+
+            // ===================================
+            // Auto-switch to tab with first server-side error
+            // ===================================
+            (function() {
+                var $firstError = $('.input-validation-error, .field-validation-error').filter(':visible').first();
+                if (!$firstError.length) {
+                    $firstError = $('.input-validation-error, .field-validation-error').first();
+                }
+                if ($firstError.length) {
+                    var $pane = $firstError.closest('.tab-pane');
+                    if ($pane.length) {
+                        var tabId = $pane.attr('id').replace('tab-', '');
+                        $('.custom-tab').removeClass('active');
+                        $('[data-tab="' + tabId + '"]').addClass('active');
+                        $('.tab-pane').removeClass('active');
+                        $pane.addClass('active');
+                    }
+                }
+                // Scroll error banner into view if present
+                var $banner = $('#errorBanner');
+                if ($banner.length) {
+                    setTimeout(function() { $banner[0].scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+                }
+            })();
         });
     </script>
 }

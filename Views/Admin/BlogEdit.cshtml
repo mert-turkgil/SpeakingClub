@@ -385,13 +385,13 @@
 
             @if (!ViewData.ModelState.IsValid)
             {
-                <div class="alert alert-danger m-4 animate__animated animate__shakeX">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Please fix the errors below.
+                <div class="alert alert-danger m-4 animate__animated animate__shakeX" id="errorBanner">
+                    <strong><i class="fa-solid fa-triangle-exclamation"></i> Please fix the following errors:</strong>
+                    <div asp-validation-summary="All" class="mt-2 mb-0"></div>
                 </div>
             }
 
             <input type="hidden" asp-for="BlogId" />
-            <div asp-validation-summary="All" class="alert alert-warning m-4"></div>
 
             <!-- Tab Navigation -->
             <div class="custom-tabs">
@@ -572,9 +572,12 @@
                                 <label asp-for="SelectedQuestionId" class="form-label">Select Quiz Question</label>
                                 <select asp-for="SelectedQuestionId" class="form-select" id="quizQuestionsDropdown" name="SelectedQuestionId">
                                     <option value="">-- Select a Question --</option>
-                                    @foreach (var q in (IEnumerable<SelectListItem>)ViewBag.Questions)
+                                    @if (ViewBag.Questions != null)
                                     {
-                                        <option value="@q.Value" selected="@(q.Selected ? "selected" : null)">@q.Text</option>
+                                        @foreach (var q in (IEnumerable<SelectListItem>)ViewBag.Questions)
+                                        {
+                                            <option value="@q.Value" selected="@(q.Selected ? "selected" : null)">@q.Text</option>
+                                        }
                                     }
                                 </select>
                             </div>
@@ -1179,6 +1182,31 @@
                     }
                 });
             }
+
+            // ===================================
+            // Auto-switch to tab with first server-side error
+            // ===================================
+            (function() {
+                var $firstError = $('.input-validation-error, .field-validation-error').filter(':visible').first();
+                if (!$firstError.length) {
+                    $firstError = $('.input-validation-error, .field-validation-error').first();
+                }
+                if ($firstError.length) {
+                    var $pane = $firstError.closest('.tab-pane');
+                    if ($pane.length) {
+                        var tabId = $pane.attr('id').replace('tab-', '');
+                        $('.custom-tab').removeClass('active');
+                        $('[data-tab="' + tabId + '"]').addClass('active');
+                        $('.tab-pane').removeClass('active');
+                        $pane.addClass('active');
+                    }
+                }
+                // Scroll error banner into view if present
+                var $banner = $('#errorBanner');
+                if ($banner.length) {
+                    setTimeout(function() { $banner[0].scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+                }
+            })();
         });
     </script>
 }
