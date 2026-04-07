@@ -17,6 +17,7 @@ namespace SpeakingClub.Data.Concrete
         public async Task<IEnumerable<Blog>> GetRecentBlogsAsync(int count)
         {
             return await _dbSet
+                .Where(b => b.IsPublished)
                 .OrderByDescending(b => b.Date)
                 .Take(count)
                 .ToListAsync();
@@ -25,7 +26,19 @@ namespace SpeakingClub.Data.Concrete
         public async Task<IEnumerable<Blog>> SearchBlogsByKeywordAsync(string keyword)
         {
             return await _dbSet
-                .Where(b => b.Title.Contains(keyword) || b.Content.Contains(keyword))
+                .Where(b => b.IsPublished && (b.Title.Contains(keyword) || b.Content.Contains(keyword)))
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Blog>> GetPublishedAsync()
+        {
+            return await _dbSet
+                .Where(b => b.IsPublished)
+                .Include(b => b.Category)
+                .Include(b => b.Tags)
+                .Include(b => b.Translations)
+                .Include(b => b.Files)
+                .Include(b => b.Quiz)
                 .ToListAsync();
         }
         

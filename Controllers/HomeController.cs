@@ -184,7 +184,7 @@ namespace SpeakingClub.Controllers
             ViewData["HreflangTr"] = "https://almanca-konus.com/";
             ViewData["HreflangDe"] = "https://almanca-konus.com/";
 
-            var entityBlogs = await _unitOfWork.Blogs.GetAllAsync();
+            var entityBlogs = await _unitOfWork.Blogs.GetPublishedAsync();
             var selectedBlogs = entityBlogs.Where(b => b.isHome == true).ToList();
             var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
             var langCode = currentCulture.Substring(0, 2).ToLower();
@@ -562,7 +562,7 @@ namespace SpeakingClub.Controllers
             ViewData["HreflangDe"] = "https://almanca-konus.com/beitraege";
 
             // Retrieve all blogs from the database and convert to IQueryable for filtering.
-            var entityBlogs = await _unitOfWork.Blogs.GetAllAsync();
+            var entityBlogs = await _unitOfWork.Blogs.GetPublishedAsync();
             var blogsQuery = entityBlogs.AsQueryable();
 
             // Filter by category if provided.
@@ -674,6 +674,11 @@ namespace SpeakingClub.Controllers
                     return NotFound();
                 }
 
+                if (!blog.IsPublished && !User.IsInRole("Root") && !User.IsInRole("Admin") && !User.IsInRole("Teacher"))
+                {
+                    return NotFound();
+                }
+
                 var currentCulture = CultureInfo.CurrentCulture.Name;
                 var langCode = currentCulture.Substring(0, 2).ToLower();
                 var translation = await _unitOfWork.BlogTranslations
@@ -756,22 +761,10 @@ namespace SpeakingClub.Controllers
                     Files = blog.Files?.OrderBy(f => f.SortOrder).ToList() ?? new List<BlogFile>()
                 };
 
-                // Adjusting quiz question retrieval:
+                // Load the selected question directly by its stored ID (includes answers).
                 if (blog.SelectedQuestionId.HasValue)
                 {
-                    // Try to locate the question by its ID among all questions of the quizzes.
-                    var selectedQuestion = blog.Quiz.SelectMany(q => q.Questions)
-                                                    .FirstOrDefault(q => q.Id == blog.SelectedQuestionId.Value);
-                    viewModel.QuizQuestion = selectedQuestion;
-                }
-                else if (blog.Quiz != null && blog.Quiz.Any())
-                {
-                    // Fallback: select the first question from the first quiz.
-                    var firstQuiz = blog.Quiz.First();
-                    if (firstQuiz.Questions != null && firstQuiz.Questions.Any())
-                    {
-                        viewModel.QuizQuestion = firstQuiz.Questions.First();
-                    }
+                    viewModel.QuizQuestion = await _unitOfWork.Questions.GetByIdAsync(blog.SelectedQuestionId.Value);
                 }
 
                 return View(viewModel);
