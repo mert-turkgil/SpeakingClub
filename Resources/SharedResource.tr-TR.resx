@@ -120,10 +120,10 @@
   </data>
   <data name="Carousel_2_Title" xml:space="preserve">
     <value>Blog</value>
-  </data>
+  <comment></comment></data>
   <data name="Carousel_2_Description" xml:space="preserve">
-    <value>Bu blogda Almanca öğrenme sürecine dair deneyimlerimi, konuşma önerilerini ve faydalı kaynakları paylaşıyor; böylece yeni fikirler ve motivasyon kazanabilirsiniz.</value>
-  </data>
+    <value>Çeşitli yazılar ve indirilebilir PDF'ler. </value>
+  <comment></comment></data>
   <data name="Link_LoginHere" xml:space="preserve">
     <value>Buradan giriş yapın</value>
   </data>
@@ -143,11 +143,11 @@
     <value>Daha fazla bilgi edinin</value>
   </data>
   <data name="Carousel_2_LinkText" xml:space="preserve">
-    <value>Daha Fazla Öğren</value>
-  </data>
+    <value>İçeriği keşfet.</value>
+  <comment></comment></data>
   <data name="Carousel_1_LinkText" xml:space="preserve">
-    <value>Daha Fazla Öğren</value>
-  </data>
+    <value>okumaya devam</value>
+  <comment></comment></data>
   <data name="AttemptsLabel" xml:space="preserve">
     <value>Denemeler</value>
   </data>
@@ -197,11 +197,11 @@
     <value>E-posta Adresi</value>
   </data>
   <data name="AboutParagraph2" xml:space="preserve">
-    <value>Almanca ana dilim olduğu için ve eğitim sistemimizde konuşma pratiği maalesef yeterince yer almadığından, öğrencilerin bu alanda yaşadığı zorlukları yakından biliyorum. Zaten en çok keyif aldığım konu öğrencilerimi motive etmek ve konuşturmak olduğu için, zamanla çalışma alanım bu yönde şekillendi.</value>
-  </data>
+    <value>Almanca ana dilim olduğu için ve eğitim sistemimizde konuşma pratiği maalesef yeterince yer almadığından, öğrencilerin bu alanda yaşadığı zorlukları yakından biliyorum. Zaten en çok keyif aldığım konu öğrencilerimi motive etmek ve konuşturmak olduğu için, zamanla çalışma alanım bu yönde şekillendi. Uzun yıllar boyunca farklı özel kurumlarda edindiğim deneyimin ardından, pandemiyle birlikte birebir konuşma koçluğuna odaklandım. Bu süreçte özellikle sağlık Almancası eğitimlerinde sık karşılaşılan bir eksikliği fark ettim: bilgi vardı, fakat aktif kullanım ve özgüven yeterince gelişmiyordu. Bugün çalışmalarımı tam da bu noktaya odaklayarak sürdürüyorum.</value>
+  <comment>N/A</comment></data>
   <data name="AboutParagraph3" xml:space="preserve">
-    <value>Eğer Almancayı anlıyor ama konuşurken zorlanıyorsanız, yalnız değilsiniz. İşte tam bu noktada, edindiğim deneyimi sizinle paylaşmak için özel konuşma dersleri ve konuşma kulüpleri düzenliyorum. Bu ortamda kaybettiğiniz özgüveninizi yeniden kazanacaksınız.</value>
-  </data>
+    <value>Derslerimde öğrencilerimin en çok değer verdiği şeylerden biri; anında geri bildirim alabilmeleri, düzenli şekilde desteklenmeleri ve yargılanmadan pratik yapabilmeleri. Benim için dil öğrenme süreci yalnızca sınava hazırlanmak değil, kişinin yeni hayatına daha güçlü ve daha hazır hissetmesi anlamına geliyor. Eğer Almancayı anlıyor ama konuşurken zorlanıyorsanız, yalnız değilsiniz. İşte tam bu noktada, edindiğim deneyimi sizinle paylaşmak için özel konuşma dersleri ve konuşma kulüpleri düzenliyorum. Bu ortamda kaybettiğiniz özgüveninizi yeniden kazanacaksınız.  </value>
+  <comment>N/A</comment></data>
   <data name="AboutParagraph4" xml:space="preserve">
     <value>Konuşma kulüplerimde ve birebir derslerimizde, hata yapmaktan korkmadan rahat bir ortamda Almanca konuşabileceksiniz. Ders içeriklerimiz hem günlük, hem de mesleki konuşma konulardan oluşuyor. Daha doğal ifade edebilmeniz için alternatif cümleler önerir, ihtiyaç duyduğunuzda gramer için tavsiyelerde bulunurum.</value>
   </data>
@@ -268,7 +268,7 @@
   <comment>N/A</comment></data>
   <data name="Carousel_1_Title" xml:space="preserve">
     <value>Hakkımda</value>
-  <comment>N/A</comment></data>
+  <comment></comment></data>
   <data name="ExamCanceledInactivity" xml:space="preserve">
     <value>Hareketsizlik nedeniyle sınavınız iptal edildi.</value>
   </data>
@@ -360,8 +360,8 @@
     <value>Konuşma Partneri</value>
   </data>
   <data name="Carousel_1_Description" xml:space="preserve">
-    <value>Kulüplerde farklı konular işlenir, seviyeye göre sunum ve tartışma teknikleri uygulanırken, öğrencinin verdiği cümleye alternatif cümleler verilir, gerekiyorsa gramer konularına değinir.</value>
-  </data>
+    <value>bilgisi için tıklayın..</value>
+  <comment></comment></data>
   <data name="SplashMessage" xml:space="preserve">
     <value>Merakınızı uyandırın... Macera şimdi başlıyor!</value>
   </data>
@@ -504,11 +504,11 @@
     <value>Soyadınızı giriniz</value>
   </data>
   <data name="Sözlük" xml:space="preserve">
-    <value>Sözlük</value>
-  </data>
+    <value>Praxis</value>
+  <comment>N/A</comment></data>
   <data name="PageTitleD" xml:space="preserve">
     <value>Sözlük</value>
-  </data>
+  <comment>N/A</comment></data>
   <data name="HeroImageAlt" xml:space="preserve">
     <value>Suna</value>
   </data>
@@ -621,13 +621,13 @@
     <value>Konuşma Odaklı dersler</value>
   <comment>N/A</comment></data>
   <data name="ftbody1" xml:space="preserve">
-    <value>Almanya’da doğup büyümüş, Almancayı günlük ve mesleki iletişim bağlamlarında aktif olarak kullanmaktadır. 20 yılı aşkın süredir farklı meslek gruplarından öğrenenlerle çalışmakta; son 10 yıldır ise Almanca konuşma koçluğuna odaklanmaktadır.</value>
+    <value>Almanya’da doğup büyüyen Suna Koç, 20 yılı aşkın süredir Almanca eğitimi vermekte; son yıllarda ise özellikle sağlık profesyonellerine yönelik konuşma koçluğu alanında çalışmaktadır.  Odak noktası yalnızca doğru Almanca değil; öğrencinin kendini gerçek iletişim ortamlarında daha akıcı, daha güvenli ve daha profesyonel ifade edebilmesidir. Birebir çalışma yaklaşımı, anlık geri bildirimleri ve doğal konuşma pratiğine verdiği önemle öne çıkmaktadır.</value>
   <comment>N/A</comment></data>
   <data name="ftbody2" xml:space="preserve">
-    <value>Derslerde, öğrencinin ifade etmek istediği içerik esas alınarak daha doğal alternatif cümleler sunulur. Konuşma akışı korunur; gramerde eksikliği fark edilen noktalar not edilir ve öğrencinin bunları sonradan pekiştirmesi teşvik edilir. Seviye ve hedeflere uygun konularla, her öğrencinin kendi hızında ve bireysel olarak ilerlemesi desteklenir. Bu yaklaşım, öğrencilerin kendilerini daha özgüvenli ve motive hissetmelerine katkı sağlar.</value>
+    <value>Derslerde öncelik, sağlık alanında gerçek iletişim kurabilmeye verilir. Öğrencinin anlatmak istediği içerik temel alınarak daha doğal, profesyonel ve günlük klinik iletişime uygun ifade biçimleri birlikte geliştirilir. Konuşma akışı kesilmeden anlık geri bildirim sağlanır; geliştirilmesi gereken noktalar ise öğrencinin seviyesine uygun şekilde yapılandırılarak kalıcı öğrenme desteklenir.  Amaç yalnızca doğru cümle kurmak değil, öğrencinin kendini Almanca iletişim sırasında daha güvenli, akıcı ve profesyonel hissedebilmesidir. Her çalışma süreci; öğrencinin hedeflerine, branşına ve mevcut seviyesine göre bireysel olarak şekillendirilir.</value>
   <comment>N/A</comment></data>
   <data name="ftbody3" xml:space="preserve">
-    <value>Birebir ve grup dersleri, herkesin aktif olarak konuşabileceği şekilde yapılandırılır. Öğrenciler, ele alınacak konulara ders öncesinde hazırlanma fırsatı bulur. Uygun paket seçildiğinde, ders dışı kısa konuşma çalışmaları ve bireysel geri bildirimler sunulur. Bu yapı, akıcı konuşmanın geliştirilmesini ve öğrenme sürecinin sürdürülebilir olmasını destekler.</value>
+    <value>Birebir ve grup çalışmaları, öğrencilerin aktif olarak konuşabildiği ve gerçek iletişim pratiği geliştirebildiği bir yapıda planlanır. Derslerde amaç yalnızca doğru cümle kurmak değil; sağlık alanında daha akıcı, daha doğal ve daha profesyonel iletişim kurabilmektir.  Öğrenciler ders öncesinde belirlenen konulara hazırlanma fırsatı bulur. Uygun programlarda ise ders dışı kısa konuşma çalışmaları ve bireysel geri bildirimlerle süreç desteklenir. Bu yaklaşım, konuşma pratiğinin süreklilik kazanmasına ve öğrencinin özgüveninin güçlenmesine katkı sağlar.</value>
   <comment>N/A</comment></data>
   <data name="qt1" xml:space="preserve">
     <value>"Hatasız Konuşmayı BEKLEMEK Hata Olur."</value>

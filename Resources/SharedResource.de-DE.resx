@@ -96,22 +96,22 @@
   </data>
   <data name="Carousel_1_Title" xml:space="preserve">
     <value>Über Mich</value>
-  <comment>N/A</comment></data>
+  <comment></comment></data>
   <data name="Carousel_2_Title" xml:space="preserve">
     <value>Blog </value>
-  </data>
+  <comment></comment></data>
   <data name="Carousel_1_Description" xml:space="preserve">
-    <value>Der Unterricht findet im Einzel- oder Gruppensetting statt und ist so gestaltet, dass alle aktiv zum Sprechen kommen. Die Teilnehmenden können sich vorab auf die Themen vorbereiten. Bei Wahl eines passenden Pakets werden kurze Sprechübungen außerhalb des Unterrichts sowie individuelles Feedback angeboten.</value>
-  <comment>N/A</comment></data>
+    <value>mehr Infos hier..</value>
+  <comment></comment></data>
   <data name="Carousel_2_Description" xml:space="preserve">
-    <value>In diesem Blog teile ich meine Erfahrungen beim Deutschlernen, gebe Tipps für das Sprechen und stelle hilfreiche Ressourcen vor, damit Sie neue Ideen und Motivation gewinnen können.</value>
-  </data>
+    <value>Viele verschiedene Blogs und PDF's zum herunterladen.</value>
+  <comment></comment></data>
   <data name="Carousel_2_LinkText" xml:space="preserve">
-    <value>Weitere Informationen</value>
-  </data>
+    <value>Einblick gewinnen.</value>
+  <comment></comment></data>
   <data name="Carousel_1_LinkText" xml:space="preserve">
-    <value>Weitere Informationen</value>
-  </data>
+    <value>weiter lesen</value>
+  <comment></comment></data>
   <data name="PageTitle" xml:space="preserve">
     <value>Über Mich</value>
   <comment>N/A</comment></data>
