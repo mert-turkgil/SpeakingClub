@@ -3,21 +3,22 @@
 @{
     ViewData["Title"] = "Home Page";
 }
-@section Css{
+@section Css {
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
     <link rel="stylesheet" href="~/css/Slide.css" />
     <link rel="stylesheet" href="~/css/splash.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+          rel="stylesheet">
     <!-- Three.js -->
     <script type="importmap" type="importmap">
-    {
-        "imports": {
-            "three": "/lib/three/build/three.module.js",
-            "three/addons/": "/lib/three/examples/jsm/"
+        {
+            "imports": {
+                "three": "/lib/three/build/three.module.js",
+                "three/addons/": "/lib/three/examples/jsm/"
+            }
         }
-    }
     </script>
     <style>
         .icon-square {
@@ -51,7 +52,8 @@
             width: 100%;
             height: 100%;
             z-index: 1;
-            opacity: 0.7; /* Reduce canvas opacity to improve text visibility */
+            opacity: 0.7;
+            /* Reduce canvas opacity to improve text visibility */
         }
 
         .hero-feature-col {
@@ -69,7 +71,7 @@
             line-height: 1.6;
             text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5);
         }
-        
+
         .hero-feature-col hr {
             border-color: rgba(255, 255, 255, 0.8);
             opacity: 1;
@@ -174,401 +176,466 @@
         }
     </style>
     <style>
-/* Swiper unique container */
-.swiper-levels {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto 48px auto;
-    height: 420px;
-    position: relative;
-}
-.swiper-levels .swiper-slide.level-card {
-    background-size: cover;
-    background-position: center;
-    border-radius: 28px;
-    box-shadow: 0 6px 24px 0 rgba(0,0,0,0.13);
-    display: flex;
-    align-items: flex-end;
-    overflow: hidden;
-    transition: box-shadow .32s;
-    cursor: pointer;
-    position: relative;
-}
-.swiper-levels .swiper-slide.level-card:hover, 
-.swiper-levels .swiper-slide.level-card:focus {
-    box-shadow: 0 14px 38px 0 #ff94947a, 0 3px 10px 0 rgba(0,0,0,0.11);
-}
-.level-overlay {
-    width: 100%;
-    background: linear-gradient(0deg, #1a1a1a 82%,rgba(0,0,0,.01) 100%);
-    color: #fff;
-    padding: 30px 28px 24px 28px;
-    opacity: 0.97;
-    transition: background 0.28s, opacity 0.28s;
-    min-height: 188px;
-}
-.level-card:hover .level-overlay, .level-card:focus .level-overlay {
-    background: linear-gradient(0deg, #ff9494e6 38%,#222 100%);
-    opacity: 1;
-}
-.level-overlay h2 {
-    font-size: 2.2rem;
-    font-weight: 800;
-    margin-bottom: 8px;
-}
-.level-overlay h4 {
-    font-size: 1.13rem;
-    font-weight: 500;
-    margin-bottom: 15px;
-    color: #FFD1D1;
-}
-.level-overlay p {
-    font-size: 1.05rem;
-    margin-bottom: 16px;
-    line-height: 1.55;
-    max-height: 60px;
-    overflow: hidden;
-    transition: max-height 0.4s;
-}
-.level-card:hover .level-overlay p, .level-card:focus .level-overlay p {
-    max-height: 120px;
-}
-.level-btn {
-    padding: 12px 34px;
-    border-radius: 11px;
-    background: #FF9494;
-    color: #fff;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 1rem;
-    letter-spacing: .5px;
-    transition: background .2s, color .2s, transform .19s;
-    box-shadow: 0 3px 15px #ff949447;
-    display: inline-block;
-}
-.level-btn:hover, .level-btn:focus {
-    background: #FFD1D1;
-    color: #FF9494;
-    transform: scale(1.08);
-}
-/* Responsive */
-@@media (max-width: 900px) {
-    .swiper-levels { height: 335px; }
-    .level-overlay { padding: 16px 9px 10px 12px; }
-    .level-overlay h2 { font-size: 1.35rem; }
-}
-@@media (max-width: 600px) {
-    .swiper-levels { height: 270px; }
-    .level-overlay h2 { font-size: 1.12rem; }
-    .level-overlay h4 { font-size: 1rem; }
-}
-.swiper-levels .swiper-pagination {
-    bottom: 9px !important;
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-}
-.swiper-levels .swiper-pagination-bullet {
-    width: 38px;
-    height: 7px;
-    border-radius: 4px;
-    background: #FFD1D1;
-    opacity: 0.7;
-    transition: opacity .27s, width .27s;
-}
-.swiper-levels .swiper-pagination-bullet-active {
-    background: #FF9494;
-    opacity: 1;
-    width: 60px;
-}
-.swiper-levels .swiper-button-prev,
-.swiper-levels .swiper-button-next {
-    color: #FFD1D1;
-    transition: color .22s, transform .25s;
-}
-.swiper-levels .swiper-button-prev:hover,
-.swiper-levels .swiper-button-next:hover {
-    color: #FF9494;
-    transform: scale(1.17);
-}
-</style>
-    <style>
-/* Advanced Blog Card Media Styles */
-.advanced-blog-card__media {
-    position: relative;
-    width: 100%;
-    height: 300px; /* Fixed height for uniformity */
-    overflow: hidden;
-}
-
-.advanced-blog-card__slide {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Image styling: fill container and cover */
-.advanced-blog-card__image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-/* For iframes (video and maps), force them to fill container */
-.advanced-blog-card__video,
-.advanced-blog-card__map {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 0;
-    /* Modern browsers support object-fit on iframes,
-       so it helps ensure the content covers the container. */
-    object-fit: cover;
-}
-
-    </style> 
-    <style>
-      .video-container {
-        position: relative;
-        width: 100%;
-        padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-        height: 0;
-        overflow: hidden;
-      }
-      .video-container iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-      }
-    </style>
-    }
-<main>
-<section>
-    <div data-aos="fade-down">
-        @await Component.InvokeAsync("Slide")
-    </div>
-</section>
-<!-- Hero Section: Introduction -->
-<section class="hero py-5 container-xxl">
-<canvas class="w-100" id="three-canvas"></canvas>
-    <div id="Isik">
-        <div class="px-5" id="overlayText">
-            <div class="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-3">
-                <!-- Feature 1 -->
-                <div class="col hero-feature-col">
-                    <div class="d-flex align-items-start">
-                        <div class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
-                            <svg xmlns="https://www.w3.org/2000/svg" height="30" width="30" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16" aria-hidden="true">
-                                <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="hero-heading" style="font-family: 'Open Sans', sans-serif; font-weight: 700; color: #fff;">@Localizer.GetKey("ftheader1").Value</h3>
-                            <hr/>
-                            <p style="color: #fff;">@Localizer.GetKey("ftbody1").Value</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Feature 2 -->
-                <div class="col hero-feature-col">
-                    <div class="d-flex align-items-start">
-                        <div class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
-                            <svg xmlns="https://www.w3.org/2000/svg" height="30" width="30" fill="currentColor" class="bi bi-award" viewBox="0 0 16 16" aria-hidden="true">
-                                <path d="M9.669.864 8 0 6.331.864l-1.858.282-.842 1.68-1.337 1.32L2.6 6l-.306 1.854 1.337 1.32.842 1.68 1.858.282L8 12l1.669-.864 1.858-.282.842-1.68 1.337-1.32L13.4 6l.306-1.854-1.337-1.32-.842-1.68zm1.196 1.193.684 1.365 1.086 1.072L12.387 6l.248 1.506-1.086 1.072-.684 1.365-1.51.229L8 10.874l-1.355-.702-1.51-.229-.684-1.365-1.086-1.072L3.614 6l-.25-1.506 1.087-1.072.684-1.365 1.51-.229L8 1.126l1.356.702z"/>
-                                <path d="M4 11.794V16l4-1 4 1v-4.206l-2.018.306L8 13.126 6.018 12.1z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="hero-heading" style="font-family: 'Open Sans', sans-serif; font-weight: 700; color: #fff;">@Localizer.GetKey("ftheader2").Value</h3>
-                            <hr/>
-                            <p style="color: #fff;">@Localizer.GetKey("ftbody2").Value</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Feature 3 -->
-                <div class="col hero-feature-col">
-                    <div class="d-flex align-items-start">
-                        <div class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
-                            <svg xmlns="https://www.w3.org/2000/svg" height="30" width="30" fill="currentColor" class="bi bi-search-heart-fill" viewBox="0 0 16 16" aria-hidden="true">
-                                <path d="M6.5 13a6.47 6.47 0 0 0 3.845-1.258h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1A6.47 6.47 0 0 0 13 6.5 6.5 6.5 0 0 0 6.5 0a6.5 6.5 0 1 0 0 13m0-8.518c1.664-1.673 5.825 1.254 0 5.018-5.825-3.764-1.664-6.69 0-5.018"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="hero-heading" style="font-family: 'Open Sans', sans-serif; font-weight: 700; color: #fff;">@Localizer.GetKey("ftheader3").Value</h3>
-                            <hr/>
-                            <p style="color: #fff;">@Localizer.GetKey("ftbody3").Value</p>
-                        </div>
-                    </div>
-                </div>
-                
-            </div>  
-        </div>
-    </div>
-</section>
-<!-- Head Grid Section -->
-  <section id="testimonial">
-  <div class="my-5">
-        <div class="p-5 text-center bg-alt">
-          <div class="container py-5">
-            <h2 style="font-family: 'Open Sans', sans-serif;font-weight: 700;" class="text-dark">@Localizer.GetKey("qt1").Value</h2>
-            <img class="profile-img mt-5 w-auto" src="~/img/left-pic444015.png" alt="German Teacher">
-            <p class="col-lg-8 mx-auto lead mt-2">
-              Suna, Türkiye
-            </p>
-          </div>
-
-          <div class="container">
-            <div class="row">
-              <div class="col-lg-3 col-sm-12 border-end">
-                <a href="https://www.youtube.com/@@almanca_konusma_kulubu_" target="_blank" class="text-dark">
-                <img src="~/img/YouTube.svg" alt="techcrunch" style="height:1.875rem;">
-                </a>
-              </div>
-              <div class="col-lg-6 col-sm-12 border-end">
-                <a href="https://www.instagram.com/almanca_konus_sprachcoach?igsh=MWMzNzhlcm85Ym05YQ==" target="_blank" class="me-2 text-dark">
-                <img src="~/img/insta.png" alt="bizinsider" style="height: 6.25rem;">
-                </a>
-              </div>
-              <div class="col-lg-3 col-sm-12">
-                <a href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" target="_blank" class="me-2 text-dark">
-                <img src="~/img/facebook.jpg" alt="techcrunch" class="img-fluid" style="height:1.875rem;">
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-  </section>
-<!-- Video Grid Section -->
-<section class="video-grid py-5 bg-alt">
-  <div class="container">
-    <div class="row">
-      <div class="col-12 col-md-4 mb-4">
-        <div class="video-container">
-          <iframe src="https://www.youtube.com/embed/GghnZjCahX0?si=XbEyDDN6ky9QKKQx" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
-      </div>
-      <div class="col-12 col-md-4 mb-4">
-        <div class="video-container">
-          <iframe src="https://www.youtube.com/embed/x-tX7WTu08o?si=ug28IJvh3GKNCCfH" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
-      </div>
-      <div class="col-12 col-md-4 mb-4">
-        <div class="video-container">
-          <iframe src="https://www.youtube.com/embed/KbYtsT-596U?si=GMu_NW5fJLD_Htl-" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-@{
-    var levelCodes = new[] { "A1", "A2", "B1", "B2", "C1" };
-}
-<section class="blog-grid-section pb-5">
-    <h1 class="display-4 fw-bold text-center text-fourth">@Localizer.GetKey("Kurs").Value</h1>
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="swiper swiper-levels" style="width:100%;">
-                <div class="swiper-wrapper">
-                    @foreach (var code in levelCodes)
-                    {
-                        var title = Localizer.GetKey($"Level_{code}_Title").Value;
-                        var desc  = Localizer.GetKey($"Level_{code}_Desc").Value;
-                        // Arka plan otomatik oluşturuluyor:
-                        var bg    = $"/img/{code.ToLower()}.jpeg";
-                    <div class="swiper-slide level-card" style="background-image:url('@bg');" tabindex="0">
-                        <div class="level-overlay">
-                            <h2>@code</h2>
-                            <h4>@title</h4>
-                            <p>@desc</p>
-                            <a href="@(System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de" ? "/pruefungen" : "/sinavlar")?level=@code" class="level-btn">@Localizer.GetKey("TesteBasla").Value</a>
-                        </div>
-                    </div>
-                    }
-                </div>
-                <div class="swiper-pagination"></div>
-                <div class="swiper-button-prev"></div>
-                <div class="swiper-button-next"></div>
-            </div>
-        </div>
-    </div>
-</section>
-</main>
-  @section Scripts {
-        <script src="~/lib/gsap/gsap.min.js"></script>
-        <script src="~/lib/gsap/ScrollTrigger.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js" type="module"></script>
-        <script type="module" src="~/js/anime.js"></script>
-        <script>
-            gsap.registerPlugin(ScrollTrigger); // <-- Register explicitly
-        </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-    <script>
-      AOS.init();
-    </script>
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-    // Initialize Swiper for each advanced blog card media container.
-    var blogMediaContainers = document.querySelectorAll('.advanced-blog-card__media');
-    blogMediaContainers.forEach(function(container) {
-        new Swiper(container, {
-            slidesPerView: 1,
-            spaceBetween: 10,
-            pagination: {
-                el: container.querySelector('.advanced-blog-card__pagination'),
-                clickable: true
-            },
-            navigation: {
-                nextEl: container.querySelector('.advanced-blog-card__next') || container.parentElement.querySelector('.advanced-blog-card__next'),
-                prevEl: container.querySelector('.advanced-blog-card__prev') || container.parentElement.querySelector('.advanced-blog-card__prev')
-            },
-            loop: true,
-            autoplay: {
-                delay: 5000,
-                disableOnInteraction: false
-            }
-        });
-    });
-
-    // Optional: Add GSAP hover animation for advanced blog cards.
-    gsap.utils.toArray('.advanced-blog-card').forEach(function(card) {
-        card.addEventListener('mouseenter', function () {
-            gsap.to(card, { scale: 1.03, duration: 0.3 });
-        });
-        card.addEventListener('mouseleave', function () {
-            gsap.to(card, { scale: 1, duration: 0.3 });
-        });
-    });
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    var levelsSwiper = new Swiper('.swiper-levels', {
-        slidesPerView: 1.13,
-        spaceBetween: 25,
-        centeredSlides: true,
-        loop: true,
-        pagination: {
-            el: '.swiper-levels .swiper-pagination',
-            clickable: true,
-        },
-        navigation: {
-            nextEl: '.swiper-levels .swiper-button-next',
-            prevEl: '.swiper-levels .swiper-button-prev',
-        },
-        breakpoints: {
-            700: { slidesPerView: 2.2, spaceBetween: 35 },
-            1024: { slidesPerView: 3, spaceBetween: 42 }
+        /* Swiper unique container */
+        .swiper-levels {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto 48px auto;
+            height: 420px;
+            position: relative;
         }
-    });
-});
-</script>
-  } 
+
+        .swiper-levels .swiper-slide.level-card {
+            background-size: cover;
+            background-position: center;
+            border-radius: 28px;
+            box-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.13);
+            display: flex;
+            align-items: flex-end;
+            overflow: hidden;
+            transition: box-shadow .32s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .swiper-levels .swiper-slide.level-card:hover,
+        .swiper-levels .swiper-slide.level-card:focus {
+            box-shadow: 0 14px 38px 0 #ff94947a, 0 3px 10px 0 rgba(0, 0, 0, 0.11);
+        }
+
+        .level-overlay {
+            width: 100%;
+            background: linear-gradient(0deg, #1a1a1a 82%, rgba(0, 0, 0, .01) 100%);
+            color: #fff;
+            padding: 30px 28px 24px 28px;
+            opacity: 0.97;
+            transition: background 0.28s, opacity 0.28s;
+            min-height: 188px;
+        }
+
+        .level-card:hover .level-overlay,
+        .level-card:focus .level-overlay {
+            background: linear-gradient(0deg, #ff9494e6 38%, #222 100%);
+            opacity: 1;
+        }
+
+        .level-overlay h2 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .level-overlay h4 {
+            font-size: 1.13rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: #FFD1D1;
+        }
+
+        .level-overlay p {
+            font-size: 1.05rem;
+            margin-bottom: 16px;
+            line-height: 1.55;
+            max-height: 60px;
+            overflow: hidden;
+            transition: max-height 0.4s;
+        }
+
+        .level-card:hover .level-overlay p,
+        .level-card:focus .level-overlay p {
+            max-height: 120px;
+        }
+
+        .level-btn {
+            padding: 12px 34px;
+            border-radius: 11px;
+            background: #FF9494;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: .5px;
+            transition: background .2s, color .2s, transform .19s;
+            box-shadow: 0 3px 15px #ff949447;
+            display: inline-block;
+        }
+
+        .level-btn:hover,
+        .level-btn:focus {
+            background: #FFD1D1;
+            color: #FF9494;
+            transform: scale(1.08);
+        }
+
+        /* Responsive */
+        @@media (max-width: 900px) {
+            .swiper-levels {
+                height: 335px;
+            }
+
+            .level-overlay {
+                padding: 16px 9px 10px 12px;
+            }
+
+            .level-overlay h2 {
+                font-size: 1.35rem;
+            }
+        }
+
+        @@media (max-width: 600px) {
+            .swiper-levels {
+                height: 270px;
+            }
+
+            .level-overlay h2 {
+                font-size: 1.12rem;
+            }
+
+            .level-overlay h4 {
+                font-size: 1rem;
+            }
+        }
+
+        .swiper-levels .swiper-pagination {
+            bottom: 9px !important;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .swiper-levels .swiper-pagination-bullet {
+            width: 38px;
+            height: 7px;
+            border-radius: 4px;
+            background: #FFD1D1;
+            opacity: 0.7;
+            transition: opacity .27s, width .27s;
+        }
+
+        .swiper-levels .swiper-pagination-bullet-active {
+            background: #FF9494;
+            opacity: 1;
+            width: 60px;
+        }
+
+        .swiper-levels .swiper-button-prev,
+        .swiper-levels .swiper-button-next {
+            color: #FFD1D1;
+            transition: color .22s, transform .25s;
+        }
+
+        .swiper-levels .swiper-button-prev:hover,
+        .swiper-levels .swiper-button-next:hover {
+            color: #FF9494;
+            transform: scale(1.17);
+        }
+    </style>
+    <style>
+        /* Advanced Blog Card Media Styles */
+        .advanced-blog-card__media {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            /* Fixed height for uniformity */
+            overflow: hidden;
+        }
+
+        .advanced-blog-card__slide {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Image styling: fill container and cover */
+        .advanced-blog-card__image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* For iframes (video and maps), force them to fill container */
+        .advanced-blog-card__video,
+        .advanced-blog-card__map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            /* Modern browsers support object-fit on iframes,
+           so it helps ensure the content covers the container. */
+            object-fit: cover;
+        }
+    </style>
+    <style>
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+}
+<main>
+    <section>
+        <div data-aos="fade-down">
+            @await Component.InvokeAsync("Slide")
+        </div>
+    </section>
+    <!-- Hero Section: Introduction -->
+    <section class="hero py-5 container-xxl">
+        <canvas class="w-100" id="three-canvas"></canvas>
+        <div id="Isik">
+            <div class="px-5" id="overlayText">
+                <div class="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-3">
+                    <!-- Feature 1 -->
+                    <div class="col hero-feature-col">
+                        <div class="d-flex align-items-start">
+                            <div
+                                class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
+                                <svg xmlns="https://www.w3.org/2000/svg" height="30" width="30" fill="currentColor"
+                                     class="bi bi-stars" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path
+                                    d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="hero-heading"
+                                    style="font-family: 'Open Sans', sans-serif; font-weight: 700; color: #fff;">
+                                    @Localizer.GetKey("ftheader1").Value</h3>
+                                    <hr />
+                                    <p style="color: #fff;">@Localizer.GetKey("ftbody1").Value</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Feature 2 -->
+                        <div class="col hero-feature-col">
+                            <div class="d-flex align-items-start">
+                                <div
+                                    class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
+                                    <svg xmlns="https://www.w3.org/2000/svg" height="30" width="30" fill="currentColor"
+                                         class="bi bi-award" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path
+                                        d="M9.669.864 8 0 6.331.864l-1.858.282-.842 1.68-1.337 1.32L2.6 6l-.306 1.854 1.337 1.32.842 1.68 1.858.282L8 12l1.669-.864 1.858-.282.842-1.68 1.337-1.32L13.4 6l.306-1.854-1.337-1.32-.842-1.68zm1.196 1.193.684 1.365 1.086 1.072L12.387 6l.248 1.506-1.086 1.072-.684 1.365-1.51.229L8 10.874l-1.355-.702-1.51-.229-.684-1.365-1.086-1.072L3.614 6l-.25-1.506 1.087-1.072.684-1.365 1.51-.229L8 1.126l1.356.702z" />
+                                        <path d="M4 11.794V16l4-1 4 1v-4.206l-2.018.306L8 13.126 6.018 12.1z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="hero-heading"
+                                        style="font-family: 'Open Sans', sans-serif; font-weight: 700; color: #fff;">
+                                        @Localizer.GetKey("ftheader2").Value</h3>
+                                        <hr />
+                                        <p style="color: #fff;">@Localizer.GetKey("ftbody2").Value</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Feature 3 -->
+                            <div class="col hero-feature-col">
+                                <div class="d-flex align-items-start">
+                                    <div
+                                        class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
+                                        <svg xmlns="https://www.w3.org/2000/svg" height="30" width="30" fill="currentColor"
+                                             class="bi bi-search-heart-fill" viewBox="0 0 16 16" aria-hidden="true">
+                                            <path
+                                            d="M6.5 13a6.47 6.47 0 0 0 3.845-1.258h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1A6.47 6.47 0 0 0 13 6.5 6.5 6.5 0 0 0 6.5 0a6.5 6.5 0 1 0 0 13m0-8.518c1.664-1.673 5.825 1.254 0 5.018-5.825-3.764-1.664-6.69 0-5.018" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="hero-heading"
+                                            style="font-family: 'Open Sans', sans-serif; font-weight: 700; color: #fff;">
+                                            @Localizer.GetKey("ftheader3").Value</h3>
+                                            <hr />
+                                            <p style="color: #fff;">@Localizer.GetKey("ftbody3").Value</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- Head Grid Section -->
+                <section id="testimonial">
+                    <div class="my-5">
+                        <div class="p-5 text-center bg-alt">
+                            <div class="container py-5">
+                                <h2 style="font-family: 'Open Sans', sans-serif;font-weight: 700;" class="text-dark">
+                                    @Localizer.GetKey("qt1").Value</h2>
+                                    <img class="profile-img mt-5 w-auto" src="~/img/left-pic444015.png" alt="German Teacher">
+                                    <p class="col-lg-8 mx-auto lead mt-2">
+                                        Suna, Türkiye
+                                    </p>
+                                </div>
+
+                                <div class="container">
+                                    <div class="row">
+                                        <div class="col-lg-3 col-sm-12 border-end">
+                                            <a href="https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg" target="_blank"
+                                               class="text-dark">
+                                                <img src="~/img/YouTube.svg" alt="techcrunch" style="height:1.875rem;">
+                                            </a>
+                                        </div>
+                                        <div class="col-lg-6 col-sm-12 border-end">
+                                            <a href="https://www.instagram.com/almanca_konus_sprachcoach?igsh=MWMzNzhlcm85Ym05YQ=="
+                                               target="_blank" class="me-2 text-dark">
+                                                <img src="~/img/insta.png" alt="bizinsider" style="height: 6.25rem;">
+                                            </a>
+                                        </div>
+                                        <div class="col-lg-3 col-sm-12">
+                                            <a href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" target="_blank"
+                                               class="me-2 text-dark">
+                                                <img src="~/img/facebook.jpg" alt="techcrunch" class="img-fluid"
+                                                     style="height:1.875rem;">
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <!-- Video Grid Section -->
+                    <section class="video-grid py-5 bg-alt">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-12 col-md-4 mb-4">
+                                    <div class="video-container">
+                                        <iframe src="https://www.youtube.com/embed/GghnZjCahX0?si=XbEyDDN6ky9QKKQx" frameborder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowfullscreen></iframe>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4 mb-4">
+                                    <div class="video-container">
+                                        <iframe src="https://www.youtube.com/embed/x-tX7WTu08o?si=ug28IJvh3GKNCCfH" frameborder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowfullscreen></iframe>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-4 mb-4">
+                                    <div class="video-container">
+                                        <iframe src="https://www.youtube.com/embed/KbYtsT-596U?si=GMu_NW5fJLD_Htl-" frameborder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowfullscreen></iframe>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    @{
+                        var levelCodes = new[] { "A1", "A2", "B1", "B2", "C1" };
+                    }
+                    <section class="blog-grid-section pb-5">
+                        <h1 class="display-4 fw-bold text-center text-fourth">@Localizer.GetKey("Kurs").Value</h1>
+                        <div class="container py-5">
+                            <div class="row justify-content-center">
+                                <div class="swiper swiper-levels" style="width:100%;">
+                                    <div class="swiper-wrapper">
+                                        @foreach (var code in levelCodes)
+                                        {
+                                            var title = Localizer.GetKey($"Level_{code}_Title").Value;
+                                            var desc = Localizer.GetKey($"Level_{code}_Desc").Value;
+                                            // Arka plan otomatik oluşturuluyor:
+                                            var bg = $"/img/{code.ToLower()}.jpeg";
+                                            <div class="swiper-slide level-card" style="background-image:url('@bg');" tabindex="0">
+                                                <div class="level-overlay">
+                                                    <h2>@code</h2>
+                                                    <h4>@title</h4>
+                                                    <p>@desc</p>
+                                                    <a href="@(System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de" ? "/pruefungen" : "/sinavlar")?level=@code"
+                                                       class="level-btn">@Localizer.GetKey("TesteBasla").Value</a>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="swiper-pagination"></div>
+                                    <div class="swiper-button-prev"></div>
+                                    <div class="swiper-button-next"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+                @section Scripts {
+                    <script src="~/lib/gsap/gsap.min.js"></script>
+                    <script src="~/lib/gsap/ScrollTrigger.min.js"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js" type="module"></script>
+                    <script type="module" src="~/js/anime.js"></script>
+                    <script>
+                        gsap.registerPlugin(ScrollTrigger); // <-- Register explicitly
+                    </script>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+                    <script>
+                        AOS.init();
+                    </script>
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function () {
+                        // Initialize Swiper for each advanced blog card media container.
+                        var blogMediaContainers = document.querySelectorAll('.advanced-blog-card__media');
+                        blogMediaContainers.forEach(function (container) {
+                        new Swiper(container, {
+                        slidesPerView: 1,
+                        spaceBetween: 10,
+                        pagination: {
+                        el: container.querySelector('.advanced-blog-card__pagination'),
+                        clickable: true
+                        },
+                        navigation: {
+                        nextEl: container.querySelector('.advanced-blog-card__next') || container.parentElement.querySelector('.advanced-blog-card__next'),
+                        prevEl: container.querySelector('.advanced-blog-card__prev') || container.parentElement.querySelector('.advanced-blog-card__prev')
+                        },
+                        loop: true,
+                        autoplay: {
+                        delay: 5000,
+                        disableOnInteraction: false
+                        }
+                        });
+                        });
+
+                        // Optional: Add GSAP hover animation for advanced blog cards.
+                        gsap.utils.toArray('.advanced-blog-card').forEach(function (card) {
+                        card.addEventListener('mouseenter', function () {
+                        gsap.to(card, { scale: 1.03, duration: 0.3 });
+                        });
+                        card.addEventListener('mouseleave', function () {
+                        gsap.to(card, { scale: 1, duration: 0.3 });
+                        });
+                        });
+                        });
+                    </script>
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function () {
+                        var levelsSwiper = new Swiper('.swiper-levels', {
+                        slidesPerView: 1.13,
+                        spaceBetween: 25,
+                        centeredSlides: true,
+                        loop: true,
+                        pagination: {
+                        el: '.swiper-levels .swiper-pagination',
+                        clickable: true,
+                        },
+                        navigation: {
+                        nextEl: '.swiper-levels .swiper-button-next',
+                        prevEl: '.swiper-levels .swiper-button-prev',
+                        },
+                        breakpoints: {
+                        700: { slidesPerView: 2.2, spaceBetween: 35 },
+                        1024: { slidesPerView: 3, spaceBetween: 42 }
+                        }
+                        });
+                        });
+                    </script>
+                }

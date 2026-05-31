@@ -7,124 +7,131 @@
 @inject LanguageService Localizer
 <!DOCTYPE html>
 <html lang="@System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName">
+
 <head>
-    <!-- Basic Meta Tags -->
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-    <meta name="ck-license-key" content="@Configuration["License:CKEditor"]" />
-    
-    <!-- SEO Meta Tags -->
-    <title>@(ViewData["Title"] ?? "SpeakingClub - Learn German Online")</title>
-    <meta name="description" content="@(ViewData["Description"] ?? "SpeakingClub - Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
-    <meta name="keywords" content="@(ViewData["Keywords"] ?? "German learning, Almanca öğren, German language, quiz, dictionary, speaking club")" />
-    <meta name="author" content="Suna Türkgil" />
-    <meta name="robots" content="index, follow" />
-    <meta name="language" content="@System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName" />
-    <link rel="canonical" href="@(ViewData["Canonical"] ?? "https://almanca-konus.com" + Context.Request.Path)" />
-    
-    <!-- Hreflang Alternate Language Links -->
-    @if (ViewData["HreflangTr"] != null)
-    {
-        <link rel="alternate" hreflang="tr" href="@ViewData["HreflangTr"]" />
-    }
-    @if (ViewData["HreflangDe"] != null)
-    {
-        <link rel="alternate" hreflang="de" href="@ViewData["HreflangDe"]" />
-    }
-    @if (ViewData["HreflangTr"] != null || ViewData["HreflangDe"] != null)
-    {
-        <link rel="alternate" hreflang="x-default" href="@(ViewData["HreflangTr"] ?? ViewData["Canonical"] ?? "https://almanca-konus.com" + Context.Request.Path)" />
-    }
-    
-    <!-- Open Graph Meta Tags (Facebook, LinkedIn, WhatsApp) -->
-    <meta property="og:type" content="@(ViewData["OgType"] ?? "website")" />
-    <meta property="og:site_name" content="SpeakingClub" />
-    <meta property="og:title" content="@(ViewData["Title"] ?? "SpeakingClub - Learn German Online")" />
-    <meta property="og:description" content="@(ViewData["Description"] ?? "Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
-    <meta property="og:url" content="@(ViewData["Canonical"] ?? "https://almanca-konus.com" + Context.Request.Path)" />
-    <meta property="og:image" content="@(ViewData["OgImage"] ?? "https://almanca-konus.com/img/header_logo.png")" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:locale" content="@System.Globalization.CultureInfo.CurrentCulture.Name.Replace("-", "_")" />
-    
-    <!-- Twitter Card Meta Tags -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="@(ViewData["Title"] ?? "SpeakingClub - Learn German Online")" />
-    <meta name="twitter:description" content="@(ViewData["Description"] ?? "Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
-    <meta name="twitter:image" content="@(ViewData["OgImage"] ?? "https://almanca-konus.com/img/header_logo.png")" />
-    <!-- <meta name="twitter:site" content="@@yourtwitterhandle" /> -->
-    <!-- <meta name="twitter:creator" content="@@yourtwitterhandle" /> -->
-    
-    <!-- Social Media Links -->
-    <link rel="me" href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" />
-    <link rel="me" href="https://www.instagram.com/almanca_konusma_kulubu_" />
-    <link rel="me" href="https://www.youtube.com/@@almanca_konusma_kulubu_" />
-    
-    <!-- Favicon and App Icons -->
-    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
-    <!-- <link rel="apple-touch-icon" sizes="180x180" href="~/apple-touch-icon.png" /> -->
-    <!-- <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png" /> -->
-    <!-- <link rel="icon" type="image/png" sizes="16x16" href="~/favicon-16x16.png" /> -->
-    
-    <!-- Schema.org Structured Data (JSON-LD) -->
-    <script type="application/ld+json">
-    {
-        "@@context": "https://schema.org",
-        "@@type": "EducationalOrganization",
-        "name": "SpeakingClub",
-        "description": "Interactive German language learning platform",
-        "url": "https://almanca-konus.com",
-        "logo": "https://almanca-konus.com/img/header_logo.png",
-        "sameAs": [
-            "https://www.facebook.com/AlmancaKonusmaKulubu.Suna/",
-            "https://www.instagram.com/almanca_konusma_kulubu_",
-            "https://www.youtube.com/@@almanca_konusma_kulubu_"
-        ],
-        "contactPoint": {
-            "@@type": "ContactPoint",
-            "contactType": "Customer Service",
-            "availableLanguage": ["German", "Turkish"]
-        }
-    }
-    </script>
-    
-    <!-- Blog Article Schema (Uncomment when blog is ready) -->
-    @if (ViewData["ArticleSchema"] != null)
-    {
-        @Html.Raw(ViewData["ArticleSchema"])
-    }
-    
-    <!-- Preconnect to external resources for performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-    <!-- Site-specific CSS -->
-    <link rel="stylesheet" href="~/css/custom.css">
-    <!-- Animate.css -->
-    <link rel="stylesheet" href="~/lib/animate/animate.min.css" />
+  <!-- Basic Meta Tags -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <meta name="ck-license-key" content="@Configuration["License:CKEditor"]" />
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+  <!-- SEO Meta Tags -->
+  <title>@(ViewData["Title"] ?? "SpeakingClub - Learn German Online")</title>
+  <meta name="description"
+        content="@(ViewData["Description"] ?? "SpeakingClub - Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
+  <meta name="keywords"
+        content="@(ViewData["Keywords"] ?? "German learning, Almanca öğren, German language, quiz, dictionary, speaking club")" />
+  <meta name="author" content="Suna Türkgil" />
+  <meta name="robots" content="index, follow" />
+  <meta name="language" content="@System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName" />
+  <link rel="canonical" href="@(ViewData["Canonical"] ?? "https://almanca-konus.com" + Context.Request.Path)" />
 
-    <!-- Font Awesome (all icons) -->
-    <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" />
+  <!-- Hreflang Alternate Language Links -->
+  @if (ViewData["HreflangTr"] != null)
+  {
+    <link rel="alternate" hreflang="tr" href="@ViewData["HreflangTr"]" />
+  }
+  @if (ViewData["HreflangDe"] != null)
+  {
+    <link rel="alternate" hreflang="de" href="@ViewData["HreflangDe"]" />
+  }
+  @if (ViewData["HreflangTr"] != null || ViewData["HreflangDe"] != null)
+  {
+    <link rel="alternate" hreflang="x-default"
+          href="@(ViewData["HreflangTr"] ?? ViewData["Canonical"] ?? "https://almanca-konus.com" + Context.Request.Path)" />
+  }
 
-    <!-- Swiper CSS -->
-    <link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" />
+  <!-- Open Graph Meta Tags (Facebook, LinkedIn, WhatsApp) -->
+  <meta property="og:type" content="@(ViewData["OgType"] ?? "website")" />
+  <meta property="og:site_name" content="almanca-konus" />
+  <meta property="og:title" content="@(ViewData["Title"] ?? "almanca-konus - Learn German Online")" />
+  <meta property="og:description"
+        content="@(ViewData["Description"] ?? "Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
+  <meta property="og:url" content="@(ViewData["Canonical"] ?? "https://almanca-konus.com" + Context.Request.Path)" />
+  <meta property="og:image" content="@(ViewData["OgImage"] ?? "https://almanca-konus.com/img/header_logo.png")" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="@System.Globalization.CultureInfo.CurrentCulture.Name.Replace("-", "_")" />
 
-    <!-- Site-specific CSS -->
-    <link rel="stylesheet" href="~/css/universe.css" />
-    <link rel="stylesheet" href="~/css/site.css" />
-    <link rel="stylesheet" 
-          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
-    
-    <!-- Advanced Social Media Icons CSS -->
-    <style>
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="@(ViewData["Title"] ?? "almanca-konus - Learn German Online")" />
+  <meta name="twitter:description"
+        content="@(ViewData["Description"] ?? "Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
+  <meta name="twitter:image" content="@(ViewData["OgImage"] ?? "https://almanca-konus.com/img/header_logo.png")" />
+  <!-- <meta name="twitter:site" content="@@yourtwitterhandle" /> -->
+  <!-- <meta name="twitter:creator" content="@@yourtwitterhandle" /> -->
+
+  <!-- Social Media Links -->
+  <link rel="me" href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" />
+  <link rel="me" href="https://www.instagram.com/almanca_konusma_kulubu_" />
+  <link rel="me" href="https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg" />
+  <link rel="me"
+        href="https://www.linkedin.com/in/almanca-konuş-suna-koç-2a9684407?utm_source=share_via&utm_content=profile&utm_medium=member_android" />
+  <link rel="me" href="https://linktr.ee/almancakonus.info" />
+  <!-- Favicon and App Icons -->
+  <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+  <!-- <link rel="apple-touch-icon" sizes="180x180" href="~/apple-touch-icon.png" /> -->
+  <!-- <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png" /> -->
+  <!-- <link rel="icon" type="image/png" sizes="16x16" href="~/favicon-16x16.png" /> -->
+
+  <!-- Schema.org Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+                                                {
+                                                    "@@context": "https://schema.org",
+                                                    "@@type": "EducationalOrganization",
+                                                    "name": "almanca-konus",
+                                                    "description": "Interactive German language learning platform",
+                                                    "url": "https://almanca-konus.com",
+                                                    "logo": "https://almanca-konus.com/img/header_logo.png",
+                                                    "sameAs": [
+                                                        "https://www.facebook.com/AlmancaKonusmaKulubu.Suna/",
+                                                        "https://www.instagram.com/almanca_konusma_kulubu_",
+                                                        "https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg"
+                                                    ],
+                                                    "contactPoint": {
+                                                        "@@type": "ContactPoint",
+                                                        "contactType": "Customer Service",
+                                                        "availableLanguage": ["German", "Turkish"]
+                                                    }
+                                                }
+  </script>
+
+  <!-- Blog Article Schema (Uncomment when blog is ready) -->
+  @if (ViewData["ArticleSchema"] != null)
+  {
+    @Html.Raw(ViewData["ArticleSchema"])
+  }
+
+  <!-- Preconnect to external resources for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+  <!-- Site-specific CSS -->
+  <link rel="stylesheet" href="~/css/custom.css">
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="~/lib/animate/animate.min.css" />
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+  <!-- Font Awesome (all icons) -->
+  <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" />
+
+  <!-- Swiper CSS -->
+  <link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" />
+
+  <!-- Site-specific CSS -->
+  <link rel="stylesheet" href="~/css/universe.css" />
+  <link rel="stylesheet" href="~/css/site.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
+
+  <!-- Advanced Social Media Icons CSS -->
+  <style>
       /* Social Media Icons - Advanced Hover Effect */
       .example-2 {
         list-style: none;
@@ -185,7 +192,8 @@
         transform: translateY(-3px);
       }
 
-      .example-2 .icon-content a svg {
+      .example-2 .icon-content a svg,
+      .example-2 .icon-content a i {
         position: relative;
         z-index: 1;
         width: 30px;
@@ -193,7 +201,8 @@
         transition: all 0.3s ease;
       }
 
-      .example-2 .icon-content a:hover svg {
+      .example-2 .icon-content a:hover svg,
+      .example-2 .icon-content a:hover i {
         color: white;
       }
 
@@ -213,22 +222,37 @@
         height: 100%;
       }
 
+      /* Dropdown hover for desktop menu */
+      .navbar-nav .dropdown:hover>.dropdown-menu {
+        display: block;
+      }
+
+      .navbar-nav .dropdown .dropdown-menu {
+        margin-top: 0;
+      }
+
       /* Facebook Color */
       .example-2 .icon-content a[data-social="facebook"] .filled,
-      .example-2 .icon-content a[data-social="facebook"] ~ .tooltip {
+      .example-2 .icon-content a[data-social="facebook"]~.tooltip {
         background-color: #1877f2;
       }
 
       /* Instagram Gradient */
       .example-2 .icon-content a[data-social="instagram"] .filled,
-      .example-2 .icon-content a[data-social="instagram"] ~ .tooltip {
+      .example-2 .icon-content a[data-social="instagram"]~.tooltip {
         background: linear-gradient(45deg, #405de6, #5b51db, #b33ab4, #c135b4, #e1306c, #fd1f1f);
       }
 
       /* YouTube Color */
       .example-2 .icon-content a[data-social="youtube"] .filled,
-      .example-2 .icon-content a[data-social="youtube"] ~ .tooltip {
+      .example-2 .icon-content a[data-social="youtube"]~.tooltip {
         background-color: #ff0000;
+      }
+
+      /* Linktree Color */
+      .example-2 .icon-content a[data-social="linktree"] .filled,
+      .example-2 .icon-content a[data-social="linktree"]~.tooltip {
+        background-color: #29AF7D;
       }
 
       /* Responsive - Stack on mobile */
@@ -247,42 +271,48 @@
           height: 25px;
         }
       }
-    </style>
-     @await RenderSectionAsync("Css", required: false)
-    <style>
+  </style>
+  @await RenderSectionAsync("Css", required: false)
+  <style>
       .varela-round-regular {
-      font-family: 'Varela Round', sans-serif;
-      font-weight: 700;
-      font-size: 1rem;
-      color: #000;
-      letter-spacing: 1px;
-    }
-    </style>
+        font-family: 'Varela Round', sans-serif;
+        font-weight: 700;
+        font-size: 1rem;
+        color: #000;
+        letter-spacing: 1px;
+      }
+  </style>
 </head>
+
 <body>
   @{
-    var Home = _localization.GetKey("Home").Value;
-    var Blog = _localization.GetKey("Blog").Value;
-    var About = _localization.GetKey("About").Value;
-    var Sözlük = _localization.GetKey("Sözlük").Value;
-    var Login = _localization.GetKey("Login").Value;
-    var Logo = _localization.GetKey("Logo").Value;
-    var Copyright = _localization.GetKey("Copyright").Value;
-    var FollowUs = _localization.GetKey("FollowUs").Value;
-    var ContactUs = _localization.GetKey("ContactUs").Value;
-    var FooterDescription = _localization.GetKey("FooterDescription").Value;
-    var FooterBrand = _localization.GetKey("FooterBrand").Value;
-    var currentPath = Context.Request.Path;
-    var currentController = ViewContext.RouteData.Values["controller"] as string;
-    var currentAction = ViewContext.RouteData.Values["action"] as string;
+    string? Home = _localization.GetKey("Home").Value;
+    string? Blog = _localization.GetKey("Blog").Value;
+    string? About = _localization.GetKey("About").Value;
+    string? Sözlük = _localization.GetKey("Sözlük").Value;
+    string? Arztbrief = _localization.GetKey("Arztbrief").Value;
+    string? FSP = _localization.GetKey("FSP").Value;
+    string? SeviyeniziÖlçün = _localization.GetKey("SeviyeniziÖlçün").Value;
+    string? Fallbeispiele = _localization.GetKey("Fallbeispiele").Value;
+    string? Praxis = _localization.GetKey("Praxis").Value;
+    string? Login = _localization.GetKey("Login").Value;
+    string? Logo = _localization.GetKey("Logo").Value;
+    string? Copyright = _localization.GetKey("Copyright").Value;
+    string? FollowUs = _localization.GetKey("FollowUs").Value;
+    string? ContactUs = _localization.GetKey("ContactUs").Value;
+    string? FooterDescription = _localization.GetKey("FooterDescription").Value;
+    string? FooterBrand = _localization.GetKey("FooterBrand").Value;
+    string? currentPath = Context.Request.Path;
+    string? currentController = ViewContext.RouteData.Values["controller"] as string;
+    string? currentAction = ViewContext.RouteData.Values["action"] as string;
 
     // Localized URL paths based on current culture
-    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
-    var blogListPath = isGerman ? "/beitraege" : "/yazilar";
-    var quizzesPath = isGerman ? "/pruefungen" : "/sinavlar";
-    var aboutPath = isGerman ? "/ueber-uns" : "/hakkimizda";
-    var wordsPath = isGerman ? "/woerterbuch" : "/sozluk";
-    var privacyPath = isGerman ? "/datenschutz" : "/gizlilik";
+    bool isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string? blogListPath = isGerman ? "/beitraege" : "/yazilar";
+    string? quizzesPath = isGerman ? "/pruefungen" : "/sinavlar";
+    string? aboutPath = isGerman ? "/ueber-uns" : "/hakkimizda";
+    string? wordsPath = isGerman ? "/woerterbuch" : "/sozluk";
+    string? privacyPath = isGerman ? "/datenschutz" : "/gizlilik";
   }
   <header class="sticky-top">
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
@@ -301,53 +331,58 @@
           <!-- Nav Links (Center) -->
           <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
             <li class="nav-item d-none d-xxl-block">
-              <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-controller="Home" asp-action="Index">
+              <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")"
+                 asp-controller="Home" asp-action="Index">
                 <i class="fa-solid fa-house me-1"></i> @Home
               </a>
             </li>
-              @{
-                  var levelCodes = new[] { "A1", "A2", "B1", "B2", "C1" };
-              }
-              <li class="nav-item dropdown">
-                  <a class="nav-link @(currentAction == "Quizzes" ? "active" : "")"
-                    href="#"
-                    id="kursDropdown"
-                    role="button"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false">
-                      <i class="fa-solid fa-graduation-cap me-1"></i> @Localizer.GetKey("Kurs").Value
-                  </a>
-                  <ul class="dropdown-menu rounded" aria-labelledby="kursDropdown">
-                      @foreach (var code in levelCodes)
-                      {
-                          var levelTitle = Localizer.GetKey($"Level_{code}_Title").Value;
-                          <li>
-                              <a class="dropdown-item px-2 quiz-level-link"
-                                style="border-radius: 10px;"
-                                href="@quizzesPath"
-                                data-level="@code">
-                                  <span>@levelTitle</span>
-                                  <span class="badge bg-fourth">@code</span>
-                              </a>
-                          </li>
-                      }
-                  </ul>
-              </li>
+            @{
+              var levelCodes = new[] { "A1", "A2", "B1", "B2", "C1" };
+            }
+            <li class="nav-item dropdown">
+              <a class="nav-link @(currentAction == "Quizzes" ? "active" : "")" href="#" id="kursDropdown" role="button"
+                 data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fa-solid fa-graduation-cap me-1"></i> @Localizer.GetKey("Kurs").Value
+              </a>
+              <ul class="dropdown-menu rounded" aria-labelledby="kursDropdown">
+                @foreach (var code in levelCodes)
+                {
+                  var levelTitle = Localizer.GetKey($"Level_{code}_Title").Value;
+                  <li>
+                    <a class="dropdown-item px-2 quiz-level-link" style="border-radius: 10px;" href="@quizzesPath"
+                       data-level="@code">
+                      <span>@levelTitle</span>
+                      <span class="badge bg-fourth">@code</span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            </li>
 
             <li class="nav-item">
-              <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")" href="@aboutPath">
+              <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")"
+                 href="@aboutPath">
                 <i class="fa-solid fa-circle-info me-1"></i> @About
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")" href="@blogListPath">
+              <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")"
+                 href="@blogListPath">
                 <i class="fa-solid fa-blog me-1"></i> @Blog
               </a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link @(currentController == "Home" && currentAction == "Words" ? "active" : "")" href="@wordsPath">
-                <i class="fa-solid fa-book me-1"></i> @Sözlük
+            <li class="nav-item dropdown">
+              <a class="nav-link @(currentController == "Home" && currentAction == "Words" ? "active" : "")"
+                 href="@wordsPath" id="dictionaryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fa-solid fa-book me-1"></i> @Praxis
               </a>
+              <ul class="dropdown-menu rounded" aria-labelledby="dictionaryDropdown">
+                <li><a class="dropdown-item px-2 quiz-level-link" href="@wordsPath">@FSP</a></li>
+                <li><a class="dropdown-item px-2 quiz-level-link" href="@wordsPath">@Fallbeispiele</a></li>
+                <li><a class="dropdown-item px-2 quiz-level-link" href="@wordsPath">@Arztbrief</a></li>
+                <li><a class="dropdown-item px-2 quiz-level-link" href="@wordsPath">@SeviyeniziÖlçün</a></li>
+                <li><a class="dropdown-item px-2 quiz-level-link" href="@wordsPath">@Sözlük</a></li>
+              </ul>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="@(aboutPath)#contact-form">
@@ -357,49 +392,46 @@
           </ul>
           <!-- Account & Language (Right) -->
           <div class="d-flex align-items-center gap-3">
-          @if (SignInManager.IsSignedIn(User))
-          {
+            @if (SignInManager.IsSignedIn(User))
+            {
               var currentUser = await UserManager.GetUserAsync(User);
               var fullName = $"{currentUser?.FirstName} {currentUser?.LastName}";
 
               <div class="dropdown">
-                  <button class="btn btn-custom bg-fourth dropdown-toggle" 
-                          type="button" 
-                          id="userDropdown" 
-                          data-bs-toggle="dropdown" 
-                          aria-expanded="false">
-                      <i class="fa-solid fa-user me-1"></i> @fullName
-                  </button>
-                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                      @if (User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root"))
-                      {
-                          <li>
-                              <a class="dropdown-item" asp-controller="Admin" asp-action="Index">
-                                  <i class="fa-solid fa-cog me-2"></i> Admin Panel
-                              </a>
-                          </li>
-                      }
-                            <li>
-                              <a class="dropdown-item" asp-controller="Account" asp-action="Account">
-                                  <i class="fa-solid fa-cog me-2"></i> Manage Account
-                              </a>
-                          </li>
-                       <li>
-                          <form asp-controller="Account" asp-action="Logout" method="post">
-                              <button type="submit" class="dropdown-item">
-                                  <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
-                              </button>
-                          </form>
-                      </li>
-                  </ul>
+                <button class="btn btn-custom bg-fourth dropdown-toggle" type="button" id="userDropdown"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fa-solid fa-user me-1"></i> @fullName
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                  @if (User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root"))
+                  {
+                    <li>
+                      <a class="dropdown-item" asp-controller="Admin" asp-action="Index">
+                        <i class="fa-solid fa-cog me-2"></i> Admin Panel
+                      </a>
+                    </li>
+                  }
+                  <li>
+                    <a class="dropdown-item" asp-controller="Account" asp-action="Account">
+                      <i class="fa-solid fa-cog me-2"></i> Manage Account
+                    </a>
+                  </li>
+                  <li>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                      <button type="submit" class="dropdown-item">
+                        <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
+                      </button>
+                    </form>
+                  </li>
+                </ul>
               </div>
-          }
-          else
-          {
+            }
+            else
+            {
               <a asp-controller="Account" asp-action="Login" class="btn btn-custom bg-fourth">
-                  <i class="fa-solid fa-user me-1"></i> @Login
+                <i class="fa-solid fa-user me-1"></i> @Login
               </a>
-          }
+            }
 
             <div class="dropdown">
               @await Component.InvokeAsync("LanguageSelector")
@@ -408,24 +440,24 @@
         </div>
       </div>
     </nav>
-        @if (TempData["ContactSuccess"] != null)
-        {
-           <div class="container mt-3">
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fa fa-check-circle"></i> @TempData["ContactSuccess"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            </div>
-        }
-        @if (TempData["ContactError"] != null)
-        {
-          <div class="container mt-3">
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fa fa-exclamation-triangle"></i> @TempData["ContactError"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-          </div>
-        }
+    @if (TempData["ContactSuccess"] != null)
+    {
+      <div class="container mt-3">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="fa fa-check-circle"></i> @TempData["ContactSuccess"]
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </div>
+    }
+    @if (TempData["ContactError"] != null)
+    {
+      <div class="container mt-3">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="fa fa-exclamation-triangle"></i> @TempData["ContactError"]
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </div>
+    }
 
     <!-- Offcanvas for Mobile Menu -->
     <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
@@ -440,49 +472,55 @@
         <!-- Offcanvas Nav Links -->
         <ul class="navbar-nav mb-3">
           <li class="nav-item">
-            <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")" asp-controller="Home" asp-action="Index">
+            <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")"
+               asp-controller="Home" asp-action="Index">
               <i class="fa-solid fa-house me-1"></i> @Home
             </a>
           </li>
-              <li class="nav-item dropdown">
-                  <a class="nav-link @(currentAction == "Quizzes" ? "active" : "")"
-                    href="#"
-                    id="kursDropdown"
-                    role="button"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false">
-                      <i class="fa-solid fa-graduation-cap me-1"></i> @Localizer.GetKey("Kurs").Value
+          <li class="nav-item dropdown">
+            <a class="nav-link @(currentAction == "Quizzes" ? "active" : "")" href="#" id="kursDropdown" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fa-solid fa-graduation-cap me-1"></i> @Localizer.GetKey("Kurs").Value
+            </a>
+            <ul class="dropdown-menu rounded" aria-labelledby="kursDropdown">
+              @foreach (var code in levelCodes)
+              {
+                var levelTitle = Localizer.GetKey($"Level_{code}_Title").Value;
+                <li>
+                  <a class="dropdown-item px-2 quiz-level-link" style="border-radius: 10px;" href="@quizzesPath"
+                     data-level="@code">
+                    <span>@levelTitle</span>
+                    <span class="badge bg-fourth">@code</span>
                   </a>
-                  <ul class="dropdown-menu rounded" aria-labelledby="kursDropdown">
-                      @foreach (var code in levelCodes)
-                      {
-                          var levelTitle = Localizer.GetKey($"Level_{code}_Title").Value;
-                          <li>
-                              <a class="dropdown-item px-2 quiz-level-link"
-                                style="border-radius: 10px;"
-                                href="@quizzesPath"
-                                data-level="@code">
-                                  <span>@levelTitle</span>
-                                  <span class="badge bg-fourth">@code</span>
-                              </a>
-                          </li>
-                      }
-                  </ul>
-              </li>
+                </li>
+              }
+            </ul>
+          </li>
           <li class="nav-item">
-            <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")" href="@aboutPath">
+            <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")"
+               href="@aboutPath">
               <i class="fa-solid fa-circle-info me-1"></i> @About
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")" href="@blogListPath">
+            <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")"
+               href="@blogListPath">
               <i class="fa-solid fa-blog me-1"></i> @Blog
             </a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link @(currentController == "Home" && currentAction == "Words" ? "active" : "")" href="@wordsPath">
-              <i class="fa-solid fa-book me-1"></i> @Sözlük
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle @(currentController == "Home" && currentAction == "Words" ? "active" : "")"
+               href="@wordsPath" id="dictionaryDropdownMobile" role="button" data-bs-toggle="dropdown"
+               aria-expanded="false">
+              <i class="fa-solid fa-book me-1"></i> @Praxis
             </a>
+            <ul class="dropdown-menu rounded" aria-labelledby="dictionaryDropdownMobile">
+              <li><a class="dropdown-item" href="@wordsPath">@FSP</a></li>
+              <li><a class="dropdown-item" href="@wordsPath">@Fallbeispiele</a></li>
+              <li><a class="dropdown-item" href="@wordsPath">@Arztbrief</a></li>
+              <li><a class="dropdown-item" href="@wordsPath">@SeviyeniziÖlçün</a></li>
+              <li><a class="dropdown-item" href="@wordsPath">@Sözlük</a></li>
+            </ul>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="@(aboutPath)#contact-form">
@@ -492,37 +530,37 @@
         </ul>
         @if (SignInManager.IsSignedIn(User))
         {
-            var currentUser = await UserManager.GetUserAsync(User);
-            var fullName = $"{currentUser?.FirstName} {currentUser?.LastName}";
+          var currentUser = await UserManager.GetUserAsync(User);
+          var fullName = $"{currentUser?.FirstName} {currentUser?.LastName}";
 
-            <div class="dropdown w-100">
-              <button class="btn btn-custom bg-fourth dropdown-toggle w-100 mb-2" type="button" data-bs-toggle="dropdown">
-                  <i class="fa-solid fa-user me-1"></i> @fullName
-              </button>
-              <ul class="dropdown-menu w-100">
-                @if (User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root"))
-                {
-                  <li>
-                    <a class="dropdown-item" asp-controller="Account" asp-action="Account">
-                      <i class="fa-solid fa-cog me-2"></i> Account
-                    </a>
-                  </li>
-                }
+          <div class="dropdown w-100">
+            <button class="btn btn-custom bg-fourth dropdown-toggle w-100 mb-2" type="button" data-bs-toggle="dropdown">
+              <i class="fa-solid fa-user me-1"></i> @fullName
+            </button>
+            <ul class="dropdown-menu w-100">
+              @if (User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root"))
+              {
                 <li>
-                  <form asp-controller="Account" asp-action="Logout" method="post" class="dropdown-item">
-                    <button type="submit" class="btn btn-link p-0 m-0 text-decoration-none text-dark">
-                      <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
-                    </button>
-                  </form>
+                  <a class="dropdown-item" asp-controller="Account" asp-action="Account">
+                    <i class="fa-solid fa-cog me-2"></i> Account
+                  </a>
                 </li>
-              </ul>
-            </div>
+              }
+              <li>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="dropdown-item">
+                  <button type="submit" class="btn btn-link p-0 m-0 text-decoration-none text-dark">
+                    <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
+                  </button>
+                </form>
+              </li>
+            </ul>
+          </div>
         }
         else
         {
-            <a asp-controller="Account" asp-action="Login" class="btn btn-custom bg-fourth w-100 mb-2">
-              <i class="fa-solid fa-user me-1"></i> @Login
-            </a>
+          <a asp-controller="Account" asp-action="Login" class="btn btn-custom bg-fourth w-100 mb-2">
+            <i class="fa-solid fa-user me-1"></i> @Login
+          </a>
         }
         <div class="dropdown w-100">
           @await Component.InvokeAsync("LanguageSelector")
@@ -532,9 +570,9 @@
   </header>
 
   <div style="height: max-content;" id="mainContent" class="m-0">
-      <main role="main" class="bg-first">
-        @RenderBody()
-      </main>
+    <main role="main" class="bg-first">
+      @RenderBody()
+    </main>
   </div>
   <footer class="py-4">
     <div class="container">
@@ -558,8 +596,6 @@
             </li>
             <li class="contact-item text-truncate">
               Phone: <a href="tel:+49 1603866222">+49 1603866222</a>
-</a>
-
             </li>
             <li>Address: Istanbul, Turkey</li>
           </ul>
@@ -569,31 +605,56 @@
           <h5>@FollowUs</h5>
           <ul class="example-2">
             <li class="icon-content">
-              <a href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" aria-label="Facebook" data-social="facebook" target="_blank">
+              <a href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" aria-label="Facebook" data-social="facebook"
+                 target="_blank">
                 <div class="filled"></div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-facebook" viewBox="0 0 16 16" xml:space="preserve">
-                  <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.166 1.791.166v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z" fill="currentColor"></path>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-facebook" viewBox="0 0 16 16" xml:space="preserve">
+                  <path
+                  d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.166 1.791.166v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"
+                  fill="currentColor"></path>
                 </svg>
               </a>
               <div class="tooltip">Facebook</div>
             </li>
             <li class="icon-content">
-              <a href="https://www.instagram.com/almanca_konus_/" aria-label="Instagram" data-social="instagram" target="_blank">
+              <a href="https://www.instagram.com/almanca_konus_/" aria-label="Instagram" data-social="instagram"
+                 target="_blank">
                 <div class="filled"></div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-instagram" viewBox="0 0 16 16" xml:space="preserve">
-                  <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334" fill="currentColor"></path>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                     class="bi bi-instagram" viewBox="0 0 16 16" xml:space="preserve">
+                  <path
+                  d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"
+                  fill="currentColor"></path>
                 </svg>
               </a>
               <div class="tooltip">Instagram</div>
             </li>
             <li class="icon-content">
-              <a href="https://www.youtube.com/@@almanca_konusma_kulubu_" aria-label="Youtube" data-social="youtube" target="_blank">
+              <a href="https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg" aria-label="Youtube"
+                 data-social="youtube" target="_blank">
                 <div class="filled"></div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-youtube" viewBox="0 0 16 16" xml:space="preserve">
-                  <path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.01 2.01 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.01 2.01 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31 31 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.01 2.01 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A100 100 0 0 1 7.858 2zM6.4 5.209v4.818l4.157-2.408z" fill="currentColor"></path>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-youtube"
+                     viewBox="0 0 16 16" xml:space="preserve">
+                  <path
+                  d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.01 2.01 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.01 2.01 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31 31 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.01 2.01 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A100 100 0 0 1 7.858 2zM6.4 5.209v4.818l4.157-2.408z"
+                  fill="currentColor"></path>
                 </svg>
               </a>
               <div class="tooltip">Youtube</div>
+            </li>
+            <li class="icon-content">
+              <a href="https://linktr.ee/almancakonus.info" aria-label="Linktree" data-social="linktree"
+                 target="_blank">
+                <div class="filled"></div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" fill="currentColor" height="16"
+                     viewBox="0 0 640 640">
+                  <path
+                  d="M112 237.4L237.8 237.4L148.4 152L197.9 101L283.1 188.8L283.1 64L357 64L357 188.8L442.2 101.2L491.6 152L402.2 237.2L527.9 237.2L527.9 307.7L401.5 307.7L491.5 395.3L442.2 445.1L320 322.1L197.8 445.1L148.3 395.5L238.3 307.9L111.9 307.9L111.9 237.4zM282.9 408.8L356.8 408.8L356.8 576L282.9 576L282.9 408.8z"
+                  fill="currentColor" />
+                </svg>
+              </a>
+              <div class="tooltip">Linktree</div>
             </li>
           </ul>
         </div>
@@ -603,51 +664,52 @@
       </div>
     </div>
   </footer>
-    <!-- 1. jQuery FIRST -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- 1. jQuery FIRST -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <!-- 2. Bootstrap Bundle (uses jQuery) -->
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- 2. Bootstrap Bundle (uses jQuery) -->
+  <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- 3. DataTables Core (requires jQuery) -->
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <!-- 3. DataTables Core (requires jQuery) -->
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
-    <!-- 4. DataTables Bootstrap 5 Integration -->
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <!-- mark.js core -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js"></script>
+  <!-- 4. DataTables Bootstrap 5 Integration -->
+  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+  <!-- mark.js core -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js"></script>
 
-    <!-- DataTables mark plugin -->
-    <script src="https://cdn.jsdelivr.net/npm/datatables.mark.js@2.1.0/dist/datatables.mark.min.js"></script>
-    <!-- 5. DataTables Responsive -->
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
-    <!-- Swiper JS -->
-    <script src="~/lib/swiper/swiper-bundle.min.js"></script>
-    <!-- If you need separate Popper (only if not using the bundle) -->
-    <!-- Bootstrap Bundle (includes Popper) -->
-    <!-- REMOVE THESE LINES: -->
-    <!-- <script src="~/lib/popper/popper.min.js"></script> -->
-    <!-- <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script> -->
+  <!-- DataTables mark plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/datatables.mark.js@2.1.0/dist/datatables.mark.min.js"></script>
+  <!-- 5. DataTables Responsive -->
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+  <!-- Swiper JS -->
+  <script src="~/lib/swiper/swiper-bundle.min.js"></script>
+  <!-- If you need separate Popper (only if not using the bundle) -->
+  <!-- Bootstrap Bundle (includes Popper) -->
+  <!-- REMOVE THESE LINES: -->
+  <!-- <script src="~/lib/popper/popper.min.js"></script> -->
+  <!-- <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script> -->
 
-    <!-- Site-specific JS -->
-    <script src="~/js/site.js"></script>
-    
-    <!-- Quiz Level Navigation Handler -->
-    <script>
-    $(document).ready(function() {
-        // Handle quiz level links - store level and navigate
-        $(document).on('click', '.quiz-level-link', function(e) {
-            e.preventDefault();
-            var level = $(this).data('level');
-            if (level) {
-                sessionStorage.setItem('quizFilterLevel', level);
-            }
-            window.location.href = $(this).attr('href');
-        });
+  <!-- Site-specific JS -->
+  <script src="~/js/site.js"></script>
+
+  <!-- Quiz Level Navigation Handler -->
+  <script>
+    $(document).ready(function () {
+    // Handle quiz level links - store level and navigate
+    $(document).on('click', '.quiz-level-link', function (e) {
+    e.preventDefault();
+    var level = $(this).data('level');
+    if (level) {
+    sessionStorage.setItem('quizFilterLevel', level);
+    }
+    window.location.href = $(this).attr('href');
     });
-    </script>
+    });
+  </script>
 
-    @await RenderSectionAsync("Scripts", required: false)
+  @await RenderSectionAsync("Scripts", required: false)
 </body>
+
 </html>

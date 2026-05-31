@@ -2,7 +2,7 @@
 <!-- Banner -->
 <p align="center">
   <!-- Logo -->
-  <img src="https://github.com/user-attachments/assets/c596c1b9-d9b0-49aa-ae27-807392884582" alt="SpeakingClub Logo" width="200" />
+  <img src="https://github.com/user-attachments/assets/c596c1b9-d9b0-49aa-ae27-807392884582" alt="AlmancaKonus Logo" width="200" />
 
   <!-- SVG Banner -->
   <svg xmlns="https://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">

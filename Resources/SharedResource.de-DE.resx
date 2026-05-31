@@ -70,9 +70,26 @@
   <data name="About" xml:space="preserve">
     <value>Vita</value>
   <comment>N/A</comment></data>
+  <!-- Navbar Sözlük ve alt dalları -->
   <data name="Sözlük" xml:space="preserve">
     <value>Wörterbuch</value>
-  </data>
+  <comment>N/A</comment></data>
+    <data name="Praxis" xml:space="preserve">
+    <value>Praxis</value>
+  <comment>N/A</comment></data>
+  <data name="Arztbrief" xml:space="preserve">
+    <value>Arztbrief</value>
+  <comment>N/A</comment></data>
+  <data name="FSP" xml:space="preserve">
+    <value>FSP</value>
+  <comment>N/A</comment></data>
+  <data name="Fallbeispiele" xml:space="preserve">
+    <value>Fallbeispiele</value>
+  <comment>N/A</comment></data>
+  <data name="SeviyeniziÖlçün" xml:space="preserve">
+    <value>Testet euer Niveau</value>
+  <comment>N/A</comment></data>
+  <!-- Navbar Sözlük ve alt dalları  bitiş -->
   <data name="Login" xml:space="preserve">
     <value>Konto</value>
   </data>

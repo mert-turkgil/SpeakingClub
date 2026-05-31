@@ -1,7 +1,7 @@
 {
-  "name": "speakingclub",
+  "name": "almanca_konus",
   "version": "1.0.0",
-  "description": "German Speaking Club",
+  "description": "Almanca_Konus is a web application designed to help users learn and practice German language skills. It offers interactive lessons, quizzes, and exercises to enhance vocabulary, grammar, and conversational abilities. The platform provides a user-friendly interface and engaging content to make language learning enjoyable and effective.",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@popperjs/core": "^2.11.8",

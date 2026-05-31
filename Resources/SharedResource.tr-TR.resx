@@ -503,9 +503,26 @@
   <data name="Placeholder_LastName" xml:space="preserve">
     <value>Soyadınızı giriniz</value>
   </data>
+  <!-- Navbar Sözlük ve alt dalları -->
   <data name="Sözlük" xml:space="preserve">
+    <value>Sözlük</value>
+  <comment>N/A</comment></data>
+  <data name="Arztbrief" xml:space="preserve">
+    <value>Doktor raporu</value>
+  <comment>N/A</comment></data>
+  <data name="FSP" xml:space="preserve">
+    <value>FSP</value>
+  <comment>N/A</comment></data>
+  <data name="Fallbeispiele" xml:space="preserve">
+    <value>Vaka örnekleri</value>
+  <comment>N/A</comment></data>
+  <data name="SeviyeniziÖlçün" xml:space="preserve">
+    <value>Seviyenizi Ölçün</value>
+  <comment>N/A</comment></data>
+  <data name="Praxis" xml:space="preserve">
     <value>Praxis</value>
   <comment>N/A</comment></data>
+  <!-- Navbar Sözlük ve alt dalları  bitiş -->
   <data name="PageTitleD" xml:space="preserve">
     <value>Sözlük</value>
   <comment>N/A</comment></data>
