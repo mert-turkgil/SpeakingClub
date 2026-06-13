@@ -78,24 +78,24 @@
 
   <!-- Schema.org Structured Data (JSON-LD) -->
   <script type="application/ld+json">
-                                                {
-                                                    "@@context": "https://schema.org",
-                                                    "@@type": "EducationalOrganization",
-                                                    "name": "almanca-konus",
-                                                    "description": "Interactive German language learning platform",
-                                                    "url": "https://almanca-konus.com",
-                                                    "logo": "https://almanca-konus.com/img/header_logo.png",
-                                                    "sameAs": [
-                                                        "https://www.facebook.com/AlmancaKonusmaKulubu.Suna/",
-                                                        "https://www.instagram.com/almanca_konusma_kulubu_",
-                                                        "https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg"
-                                                    ],
-                                                    "contactPoint": {
-                                                        "@@type": "ContactPoint",
-                                                        "contactType": "Customer Service",
-                                                        "availableLanguage": ["German", "Turkish"]
-                                                    }
-                                                }
+                                                                          {
+                                                                              "@@context": "https://schema.org",
+                                                                              "@@type": "EducationalOrganization",
+                                                                              "name": "almanca-konus",
+                                                                              "description": "Interactive German language learning platform",
+                                                                              "url": "https://almanca-konus.com",
+                                                                              "logo": "https://almanca-konus.com/img/header_logo.png",
+                                                                              "sameAs": [
+                                                                                  "https://www.facebook.com/AlmancaKonusmaKulubu.Suna/",
+                                                                                  "https://www.instagram.com/almanca_konusma_kulubu_",
+                                                                                  "https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg"
+                                                                              ],
+                                                                              "contactPoint": {
+                                                                                  "@@type": "ContactPoint",
+                                                                                  "contactType": "Customer Service",
+                                                                                  "availableLanguage": ["German", "Turkish"]
+                                                                              }
+                                                                          }
   </script>
 
   <!-- Blog Article Schema (Uncomment when blog is ready) -->
@@ -322,10 +322,17 @@
           <img src="~/img/logo.svg" alt="Logo" width="45" height="45" class="img-thumbnail"> @Logo
         </a>
         <!-- Offcanvas Toggler (visible on mobile) -->
-        <button class="navbar-toggler shadow-sm" type="button" data-bs-toggle="offcanvas"
-                data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
-          <span class="fa-solid fa-sliders fa-xl py-4"></span>
+        <button class="btn btn-sm rounded-3 px-3 py-2 navbar-toggler shadow-sm" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Menu"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
+          <i class="fa-solid fa-bars"></i>
         </button>
+        <style>
+                  .navbar-toggler:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6) !important;
+                  }
+        </style>
         <!-- Standard Navbar (visible on large screens) -->
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <!-- Nav Links (Center) -->
@@ -344,19 +351,6 @@
                  data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fa-solid fa-graduation-cap me-1"></i> @Localizer.GetKey("Kurs").Value
               </a>
-              <ul class="dropdown-menu rounded" aria-labelledby="kursDropdown">
-                @foreach (var code in levelCodes)
-                {
-                  var levelTitle = Localizer.GetKey($"Level_{code}_Title").Value;
-                  <li>
-                    <a class="dropdown-item px-2 quiz-level-link" style="border-radius: 10px;" href="@quizzesPath"
-                       data-level="@code">
-                      <span>@levelTitle</span>
-                      <span class="badge bg-fourth">@code</span>
-                    </a>
-                  </li>
-                }
-              </ul>
             </li>
 
             <li class="nav-item">
@@ -377,339 +371,324 @@
                 <i class="fa-solid fa-book me-1"></i> @Praxis
               </a>
               <ul class="dropdown-menu rounded" aria-labelledby="dictionaryDropdown">
-                <li><a class="dropdown-item px-2 quiz-level-link" href="@wordsPath">@FSP</a></li>
-                <li><a class="dropdown-item px-2 quiz-level-link" href="@wordsPath">@Fallbeispiele</a></li>
-                <li><a class="dropdown-item px-2 quiz-level-link" href="@wordsPath">@Arztbrief</a></li>
-                <li><a class="dropdown-item px-2 quiz-level-link" href="@wordsPath">@SeviyeniziÖlçün</a></li>
-                <li><a class="dropdown-item px-2 quiz-level-link" href="@wordsPath">@Sözlük</a></li>
-              </ul>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="@(aboutPath)#contact-form">
-                <i class="fa-solid fa-envelope me-1"></i> @ContactUs
-              </a>
-            </li>
-          </ul>
-          <!-- Account & Language (Right) -->
-          <div class="d-flex align-items-center gap-3">
-            @if (SignInManager.IsSignedIn(User))
-            {
-              var currentUser = await UserManager.GetUserAsync(User);
-              var fullName = $"{currentUser?.FirstName} {currentUser?.LastName}";
+                <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                  class="fa-solid fa-stethoscope me-2 text-fourth"></i>@FSP</a></li>
+                  <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                    class="fa-solid fa-book-medical me-2 text-fourth"></i>@Fallbeispiele</a></li>
+                    <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                      class="fa-solid fa-envelope-open me-2 text-fourth"></i>@Arztbrief</a></li>
+                      <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                        class="fa-solid fa-chart-line me-2 text-fourth"></i>@SeviyeniziÖlçün</a></li>
+                        <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                          class="fa-solid fa-spell-check me-2 text-fourth"></i>@Sözlük</a></li>
+                        </ul>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" href="@(aboutPath)#contact-form">
+                          <i class="fa-solid fa-envelope me-1"></i> @ContactUs
+                        </a>
+                      </li>
+                    </ul>
+                    <!-- Account & Language (Right) -->
+                    <div class="d-flex align-items-center gap-3">
+                      @if (SignInManager.IsSignedIn(User))
+                      {
+                        var currentUser = await UserManager.GetUserAsync(User);
+                        var fullName = $"{currentUser?.FirstName} {currentUser?.LastName}";
 
-              <div class="dropdown">
-                <button class="btn btn-custom bg-fourth dropdown-toggle" type="button" id="userDropdown"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="fa-solid fa-user me-1"></i> @fullName
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                  @if (User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root"))
-                  {
-                    <li>
-                      <a class="dropdown-item" asp-controller="Admin" asp-action="Index">
-                        <i class="fa-solid fa-cog me-2"></i> Admin Panel
+                        <div class="dropdown">
+                          <button class="btn btn-custom bg-fourth dropdown-toggle" type="button" id="userDropdown"
+                                  data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-user me-1"></i> @fullName
+                          </button>
+                          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            @if (User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root"))
+                            {
+                              <li>
+                                <a class="dropdown-item" asp-controller="Admin" asp-action="Index">
+                                  <i class="fa-solid fa-cog me-2"></i> Admin Panel
+                                </a>
+                              </li>
+                            }
+                            <li>
+                              <a class="dropdown-item" asp-controller="Account" asp-action="Account">
+                                <i class="fa-solid fa-cog me-2"></i> Manage Account
+                              </a>
+                            </li>
+                            <li>
+                              <form asp-controller="Account" asp-action="Logout" method="post">
+                                <button type="submit" class="dropdown-item">
+                                  <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
+                                </button>
+                              </form>
+                            </li>
+                          </ul>
+                        </div>
+                      }
+                      else
+                      {
+                        <a asp-controller="Account" asp-action="Login" class="btn btn-custom bg-fourth">
+                          <i class="fa-solid fa-user me-1"></i> @Login
+                        </a>
+                      }
+
+                      <div class="dropdown">
+                        @await Component.InvokeAsync("LanguageSelector")
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </nav>
+              @if (TempData["ContactSuccess"] != null)
+              {
+                <div class="container mt-3">
+                  <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fa fa-check-circle"></i> @TempData["ContactSuccess"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                </div>
+              }
+              @if (TempData["ContactError"] != null)
+              {
+                <div class="container mt-3">
+                  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fa fa-exclamation-triangle"></i> @TempData["ContactError"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                </div>
+              }
+
+              <!-- Offcanvas for Mobile Menu -->
+              <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+                <div class="offcanvas-header">
+                  <h1 class="offcanvas-title varela-round-regular" id="offcanvasNavbarLabel">
+                    <img src="~/img/logo.svg" alt="Logo" class="img-thumbnail w-50 d-block">
+                    @Logo
+                  </h1>
+                  <button type="button" class="btn btn-icon" data-bs-dismiss="offcanvas" aria-label="Close"
+                          style="background: none; border: none; font-size: 1.5rem;">
+                    <i class="fa-solid fa-arrow-left-long text-dark"></i>
+                  </button>
+                </div>
+                <div class="offcanvas-body">
+                  <!-- Offcanvas Nav Links -->
+                  <ul class="navbar-nav mb-3">
+                    <li class="nav-item">
+                      <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")"
+                         asp-controller="Home" asp-action="Index">
+                        <i class="fa-solid fa-house me-1"></i> @Home
                       </a>
                     </li>
-                  }
-                  <li>
-                    <a class="dropdown-item" asp-controller="Account" asp-action="Account">
-                      <i class="fa-solid fa-cog me-2"></i> Manage Account
-                    </a>
-                  </li>
-                  <li>
-                    <form asp-controller="Account" asp-action="Logout" method="post">
-                      <button type="submit" class="dropdown-item">
-                        <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
-                      </button>
-                    </form>
-                  </li>
-                </ul>
-              </div>
-            }
-            else
-            {
-              <a asp-controller="Account" asp-action="Login" class="btn btn-custom bg-fourth">
-                <i class="fa-solid fa-user me-1"></i> @Login
-              </a>
-            }
+                    <li class="nav-item dropdown">
+                      <a class="nav-link @(currentAction == "Quizzes" ? "active" : "")" href="#" id="kursDropdown" role="button"
+                         data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-graduation-cap me-1"></i> @Localizer.GetKey("Kurs").Value
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")"
+                         href="@aboutPath">
+                        <i class="fa-solid fa-circle-info me-1"></i> @About
+                      </a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")"
+                         href="@blogListPath">
+                        <i class="fa-solid fa-blog me-1"></i> @Blog
+                      </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle @(currentController == "Home" && currentAction == "Words" ? "active" : "")"
+                         href="@wordsPath" id="dictionaryDropdownMobile" role="button" data-bs-toggle="dropdown"
+                         aria-expanded="false">
+                        <i class="fa-solid fa-book me-1"></i> @Praxis
+                      </a>
+                      <ul class="dropdown-menu rounded w-100" aria-labelledby="dictionaryDropdownMobile" style="min-width: auto;">
+                        <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                          class="fa-solid fa-stethoscope me-2 text-fourth"></i>@FSP</a></li>
+                          <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                            class="fa-solid fa-book-medical me-2 text-fourth"></i>@Fallbeispiele</a></li>
+                            <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                              class="fa-solid fa-envelope-open me-2 text-fourth"></i>@Arztbrief</a></li>
+                              <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                                class="fa-solid fa-chart-line me-2 text-fourth"></i>@SeviyeniziÖlçün</a></li>
+                                <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                                  class="fa-solid fa-spell-check me-2 text-fourth"></i>@Sözlük</a></li>
+                                </ul>
+                              </li>
+                              <li class="nav-item">
+                                <a class="nav-link" href="@(aboutPath)#contact-form">
+                                  <i class="fa-solid fa-envelope me-1"></i> @ContactUs
+                                </a>
+                              </li>
+                            </ul>
+                            @if (SignInManager.IsSignedIn(User))
+                            {
+                              var currentUser = await UserManager.GetUserAsync(User);
+                              var fullName = $"{currentUser?.FirstName} {currentUser?.LastName}";
 
-            <div class="dropdown">
-              @await Component.InvokeAsync("LanguageSelector")
-            </div>
-          </div>
-        </div>
-      </div>
-    </nav>
-    @if (TempData["ContactSuccess"] != null)
-    {
-      <div class="container mt-3">
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-          <i class="fa fa-check-circle"></i> @TempData["ContactSuccess"]
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      </div>
-    }
-    @if (TempData["ContactError"] != null)
-    {
-      <div class="container mt-3">
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-          <i class="fa fa-exclamation-triangle"></i> @TempData["ContactError"]
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      </div>
-    }
+                              <div class="dropdown w-100">
+                                <button class="btn btn-custom bg-fourth dropdown-toggle w-100 mb-2" type="button" data-bs-toggle="dropdown">
+                                  <i class="fa-solid fa-user me-1"></i> @fullName
+                                </button>
+                                <ul class="dropdown-menu w-100">
+                                  @if (User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root"))
+                                  {
+                                    <li>
+                                      <a class="dropdown-item" asp-controller="Account" asp-action="Account">
+                                        <i class="fa-solid fa-cog me-2"></i> Account
+                                      </a>
+                                    </li>
+                                  }
+                                  <li>
+                                    <form asp-controller="Account" asp-action="Logout" method="post" class="dropdown-item">
+                                      <button type="submit" class="btn btn-link p-0 m-0 text-decoration-none text-dark">
+                                        <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
+                                      </button>
+                                    </form>
+                                  </li>
+                                </ul>
+                              </div>
+                            }
+                            else
+                            {
+                              <a asp-controller="Account" asp-action="Login" class="btn btn-custom bg-fourth w-100 mb-2">
+                                <i class="fa-solid fa-user me-1"></i> @Login
+                              </a>
+                            }
+                            <div class="dropdown w-100">
+                              @await Component.InvokeAsync("LanguageSelector")
+                            </div>
+                          </div>
+                        </div>
+                      </header>
 
-    <!-- Offcanvas for Mobile Menu -->
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-      <div class="offcanvas-header">
-        <h1 class="offcanvas-title varela-round-regular" id="offcanvasNavbarLabel">
-          <img src="~/img/logo.svg" alt="Logo" class="img-thumbnail w-50 d-block">
-          @Logo
-        </h1>
-        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-      </div>
-      <div class="offcanvas-body">
-        <!-- Offcanvas Nav Links -->
-        <ul class="navbar-nav mb-3">
-          <li class="nav-item">
-            <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")"
-               asp-controller="Home" asp-action="Index">
-              <i class="fa-solid fa-house me-1"></i> @Home
-            </a>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link @(currentAction == "Quizzes" ? "active" : "")" href="#" id="kursDropdown" role="button"
-               data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="fa-solid fa-graduation-cap me-1"></i> @Localizer.GetKey("Kurs").Value
-            </a>
-            <ul class="dropdown-menu rounded" aria-labelledby="kursDropdown">
-              @foreach (var code in levelCodes)
-              {
-                var levelTitle = Localizer.GetKey($"Level_{code}_Title").Value;
-                <li>
-                  <a class="dropdown-item px-2 quiz-level-link" style="border-radius: 10px;" href="@quizzesPath"
-                     data-level="@code">
-                    <span>@levelTitle</span>
-                    <span class="badge bg-fourth">@code</span>
-                  </a>
-                </li>
-              }
-            </ul>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")"
-               href="@aboutPath">
-              <i class="fa-solid fa-circle-info me-1"></i> @About
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")"
-               href="@blogListPath">
-              <i class="fa-solid fa-blog me-1"></i> @Blog
-            </a>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle @(currentController == "Home" && currentAction == "Words" ? "active" : "")"
-               href="@wordsPath" id="dictionaryDropdownMobile" role="button" data-bs-toggle="dropdown"
-               aria-expanded="false">
-              <i class="fa-solid fa-book me-1"></i> @Praxis
-            </a>
-            <ul class="dropdown-menu rounded" aria-labelledby="dictionaryDropdownMobile">
-              <li><a class="dropdown-item" href="@wordsPath">@FSP</a></li>
-              <li><a class="dropdown-item" href="@wordsPath">@Fallbeispiele</a></li>
-              <li><a class="dropdown-item" href="@wordsPath">@Arztbrief</a></li>
-              <li><a class="dropdown-item" href="@wordsPath">@SeviyeniziÖlçün</a></li>
-              <li><a class="dropdown-item" href="@wordsPath">@Sözlük</a></li>
-            </ul>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="@(aboutPath)#contact-form">
-              <i class="fa-solid fa-envelope me-1"></i> @ContactUs
-            </a>
-          </li>
-        </ul>
-        @if (SignInManager.IsSignedIn(User))
-        {
-          var currentUser = await UserManager.GetUserAsync(User);
-          var fullName = $"{currentUser?.FirstName} {currentUser?.LastName}";
+                      <div style="height: max-content;" id="mainContent" class="m-0">
+                        <main role="main" class="bg-first">
+                          @RenderBody()
+                        </main>
+                      </div>
+                      <footer class="py-4">
+                        <div class="container">
+                          <div class="row">
+                            <!-- Footer Brand and Description -->
+                            <div class="col-md-4 mb-4">
+                              <a href="#" class="d-flex align-items-center mb-2 text-dark text-decoration-none">
+                                <img src="~/img/footer_logo.png" alt="AKK Logo" style="height:40px;" class="me-2" />
+                                <span class="fs-5 varela-round-regular">@Logo</span>
+                              </a>
+                              <p class="text-muted">
+                                @FooterDescription
+                              </p>
+                            </div>
+                            <!-- Contact Information -->
+                            <div class="col-md-4 mb-4">
+                              <h5>@ContactUs</h5>
+                              <ul class="list-unstyled">
+                                <li class="contact-item text-truncate">
+                                  Email: <a href="mailto:almancakonus.info@gmail.com">almancakonus.info@gmail.com</a>
+                                </li>
+                                <li class="contact-item text-truncate">
+                                  Phone: <a href="tel:+49 1603866222">+49 1603866222</a>
+                                </li>
+                                <li>Address: Istanbul, Turkey</li>
+                              </ul>
+                            </div>
+                            <!-- Social Media Links -->
+                            <div class="col-md-4 mb-4">
+                              <h5>@FollowUs</h5>
+                              <ul class="example-2">
+                                <li class="icon-content">
+                                  <a href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" aria-label="Facebook" data-social="facebook"
+                                     target="_blank">
+                                    <div class="filled"></div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                         class="bi bi-facebook" viewBox="0 0 16 16" xml:space="preserve">
+                                      <path
+                                      d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.166 1.791.166v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"
+                                      fill="currentColor"></path>
+                                    </svg>
+                                  </a>
+                                  <div class="tooltip">Facebook</div>
+                                </li>
+                                <li class="icon-content">
+                                  <a href="https://www.instagram.com/almanca_konus_/" aria-label="Instagram" data-social="instagram"
+                                     target="_blank">
+                                    <div class="filled"></div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                         class="bi bi-instagram" viewBox="0 0 16 16" xml:space="preserve">
+                                      <path
+                                      d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"
+                                      fill="currentColor"></path>
+                                    </svg>
+                                  </a>
+                                  <div class="tooltip">Instagram</div>
+                                </li>
+                                <li class="icon-content">
+                                  <a href="https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg" aria-label="Youtube"
+                                     data-social="youtube" target="_blank">
+                                    <div class="filled"></div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-youtube"
+                                         viewBox="0 0 16 16" xml:space="preserve">
+                                      <path
+                                      d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.01 2.01 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.01 2.01 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31 31 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.01 2.01 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A100 100 0 0 1 7.858 2zM6.4 5.209v4.818l4.157-2.408z"
+                                      fill="currentColor"></path>
+                                    </svg>
+                                  </a>
+                                  <div class="tooltip">Youtube</div>
+                                </li>
+                                <li class="icon-content">
+                                  <a href="https://linktr.ee/almancakonus.info" aria-label="Linktree" data-social="linktree"
+                                     target="_blank">
+                                    <div class="filled"></div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" fill="currentColor" height="16"
+                                         viewBox="0 0 640 640">
+                                      <path
+                                      d="M112 237.4L237.8 237.4L148.4 152L197.9 101L283.1 188.8L283.1 64L357 64L357 188.8L442.2 101.2L491.6 152L402.2 237.2L527.9 237.2L527.9 307.7L401.5 307.7L491.5 395.3L442.2 445.1L320 322.1L197.8 445.1L148.3 395.5L238.3 307.9L111.9 307.9L111.9 237.4zM282.9 408.8L356.8 408.8L356.8 576L282.9 576L282.9 408.8z"
+                                      fill="currentColor" />
+                                    </svg>
+                                  </a>
+                                  <div class="tooltip">Linktree</div>
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                          <div class="text-center varela-round-regular text-muted">
+                            @Copyright
+                          </div>
+                        </div>
+                      </footer>
+                      <!-- 1. jQuery FIRST -->
+                      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-          <div class="dropdown w-100">
-            <button class="btn btn-custom bg-fourth dropdown-toggle w-100 mb-2" type="button" data-bs-toggle="dropdown">
-              <i class="fa-solid fa-user me-1"></i> @fullName
-            </button>
-            <ul class="dropdown-menu w-100">
-              @if (User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root"))
-              {
-                <li>
-                  <a class="dropdown-item" asp-controller="Account" asp-action="Account">
-                    <i class="fa-solid fa-cog me-2"></i> Account
-                  </a>
-                </li>
-              }
-              <li>
-                <form asp-controller="Account" asp-action="Logout" method="post" class="dropdown-item">
-                  <button type="submit" class="btn btn-link p-0 m-0 text-decoration-none text-dark">
-                    <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
-                  </button>
-                </form>
-              </li>
-            </ul>
-          </div>
-        }
-        else
-        {
-          <a asp-controller="Account" asp-action="Login" class="btn btn-custom bg-fourth w-100 mb-2">
-            <i class="fa-solid fa-user me-1"></i> @Login
-          </a>
-        }
-        <div class="dropdown w-100">
-          @await Component.InvokeAsync("LanguageSelector")
-        </div>
-      </div>
-    </div>
-  </header>
+                      <!-- 2. Bootstrap Bundle (uses jQuery) -->
+                      <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
-  <div style="height: max-content;" id="mainContent" class="m-0">
-    <main role="main" class="bg-first">
-      @RenderBody()
-    </main>
-  </div>
-  <footer class="py-4">
-    <div class="container">
-      <div class="row">
-        <!-- Footer Brand and Description -->
-        <div class="col-md-4 mb-4">
-          <a href="#" class="d-flex align-items-center mb-2 text-dark text-decoration-none">
-            <img src="~/img/footer_logo.png" alt="AKK Logo" style="height:40px;" class="me-2" />
-            <span class="fs-5 varela-round-regular">@Logo</span>
-          </a>
-          <p class="text-muted">
-            @FooterDescription
-          </p>
-        </div>
-        <!-- Contact Information -->
-        <div class="col-md-4 mb-4">
-          <h5>@ContactUs</h5>
-          <ul class="list-unstyled">
-            <li class="contact-item text-truncate">
-              Email: <a href="mailto:almancakonus.info@gmail.com">almancakonus.info@gmail.com</a>
-            </li>
-            <li class="contact-item text-truncate">
-              Phone: <a href="tel:+49 1603866222">+49 1603866222</a>
-            </li>
-            <li>Address: Istanbul, Turkey</li>
-          </ul>
-        </div>
-        <!-- Social Media Links -->
-        <div class="col-md-4 mb-4">
-          <h5>@FollowUs</h5>
-          <ul class="example-2">
-            <li class="icon-content">
-              <a href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" aria-label="Facebook" data-social="facebook"
-                 target="_blank">
-                <div class="filled"></div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                     class="bi bi-facebook" viewBox="0 0 16 16" xml:space="preserve">
-                  <path
-                  d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.166 1.791.166v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"
-                  fill="currentColor"></path>
-                </svg>
-              </a>
-              <div class="tooltip">Facebook</div>
-            </li>
-            <li class="icon-content">
-              <a href="https://www.instagram.com/almanca_konus_/" aria-label="Instagram" data-social="instagram"
-                 target="_blank">
-                <div class="filled"></div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                     class="bi bi-instagram" viewBox="0 0 16 16" xml:space="preserve">
-                  <path
-                  d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"
-                  fill="currentColor"></path>
-                </svg>
-              </a>
-              <div class="tooltip">Instagram</div>
-            </li>
-            <li class="icon-content">
-              <a href="https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg" aria-label="Youtube"
-                 data-social="youtube" target="_blank">
-                <div class="filled"></div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-youtube"
-                     viewBox="0 0 16 16" xml:space="preserve">
-                  <path
-                  d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.01 2.01 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.01 2.01 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31 31 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.01 2.01 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A100 100 0 0 1 7.858 2zM6.4 5.209v4.818l4.157-2.408z"
-                  fill="currentColor"></path>
-                </svg>
-              </a>
-              <div class="tooltip">Youtube</div>
-            </li>
-            <li class="icon-content">
-              <a href="https://linktr.ee/almancakonus.info" aria-label="Linktree" data-social="linktree"
-                 target="_blank">
-                <div class="filled"></div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" fill="currentColor" height="16"
-                     viewBox="0 0 640 640">
-                  <path
-                  d="M112 237.4L237.8 237.4L148.4 152L197.9 101L283.1 188.8L283.1 64L357 64L357 188.8L442.2 101.2L491.6 152L402.2 237.2L527.9 237.2L527.9 307.7L401.5 307.7L491.5 395.3L442.2 445.1L320 322.1L197.8 445.1L148.3 395.5L238.3 307.9L111.9 307.9L111.9 237.4zM282.9 408.8L356.8 408.8L356.8 576L282.9 576L282.9 408.8z"
-                  fill="currentColor" />
-                </svg>
-              </a>
-              <div class="tooltip">Linktree</div>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div class="text-center varela-round-regular text-muted">
-        @Copyright
-      </div>
-    </div>
-  </footer>
-  <!-- 1. jQuery FIRST -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                      <!-- 3. DataTables Core (requires jQuery) -->
+                      <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
-  <!-- 2. Bootstrap Bundle (uses jQuery) -->
-  <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+                      <!-- 4. DataTables Bootstrap 5 Integration -->
+                      <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+                      <!-- mark.js core -->
+                      <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js"></script>
 
-  <!-- 3. DataTables Core (requires jQuery) -->
-  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+                      <!-- DataTables mark plugin -->
+                      <script src="https://cdn.jsdelivr.net/npm/datatables.mark.js@2.1.0/dist/datatables.mark.min.js"></script>
+                      <!-- 5. DataTables Responsive -->
+                      <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+                      <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+                      <!-- Swiper JS -->
+                      <script src="~/lib/swiper/swiper-bundle.min.js"></script>
+                      <!-- If you need separate Popper (only if not using the bundle) -->
+                      <!-- Bootstrap Bundle (includes Popper) -->
+                      <!-- REMOVE THESE LINES: -->
+                      <!-- <script src="~/lib/popper/popper.min.js"></script> -->
+                      <!-- <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script> -->
 
-  <!-- 4. DataTables Bootstrap 5 Integration -->
-  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-  <!-- mark.js core -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js"></script>
+                      <!-- Site-specific JS -->
+                      <script src="~/js/site.js"></script>
 
-  <!-- DataTables mark plugin -->
-  <script src="https://cdn.jsdelivr.net/npm/datatables.mark.js@2.1.0/dist/datatables.mark.min.js"></script>
-  <!-- 5. DataTables Responsive -->
-  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-  <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
-  <!-- Swiper JS -->
-  <script src="~/lib/swiper/swiper-bundle.min.js"></script>
-  <!-- If you need separate Popper (only if not using the bundle) -->
-  <!-- Bootstrap Bundle (includes Popper) -->
-  <!-- REMOVE THESE LINES: -->
-  <!-- <script src="~/lib/popper/popper.min.js"></script> -->
-  <!-- <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script> -->
+                      @await RenderSectionAsync("Scripts", required: false)
+                    </body>
 
-  <!-- Site-specific JS -->
-  <script src="~/js/site.js"></script>
-
-  <!-- Quiz Level Navigation Handler -->
-  <script>
-    $(document).ready(function () {
-    // Handle quiz level links - store level and navigate
-    $(document).on('click', '.quiz-level-link', function (e) {
-    e.preventDefault();
-    var level = $(this).data('level');
-    if (level) {
-    sessionStorage.setItem('quizFilterLevel', level);
-    }
-    window.location.href = $(this).attr('href');
-    });
-    });
-  </script>
-
-  @await RenderSectionAsync("Scripts", required: false)
-</body>
-
-</html>
+                  </html>
