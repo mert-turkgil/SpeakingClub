@@ -78,24 +78,24 @@
 
   <!-- Schema.org Structured Data (JSON-LD) -->
   <script type="application/ld+json">
-                                                                          {
-                                                                              "@@context": "https://schema.org",
-                                                                              "@@type": "EducationalOrganization",
-                                                                              "name": "almanca-konus",
-                                                                              "description": "Interactive German language learning platform",
-                                                                              "url": "https://almanca-konus.com",
-                                                                              "logo": "https://almanca-konus.com/img/header_logo.png",
-                                                                              "sameAs": [
-                                                                                  "https://www.facebook.com/AlmancaKonusmaKulubu.Suna/",
-                                                                                  "https://www.instagram.com/almanca_konusma_kulubu_",
-                                                                                  "https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg"
-                                                                              ],
-                                                                              "contactPoint": {
-                                                                                  "@@type": "ContactPoint",
-                                                                                  "contactType": "Customer Service",
-                                                                                  "availableLanguage": ["German", "Turkish"]
-                                                                              }
-                                                                          }
+                                                                                {
+                                                                                    "@@context": "https://schema.org",
+                                                                                    "@@type": "EducationalOrganization",
+                                                                                    "name": "almanca-konus",
+                                                                                    "description": "Interactive German language learning platform",
+                                                                                    "url": "https://almanca-konus.com",
+                                                                                    "logo": "https://almanca-konus.com/img/header_logo.png",
+                                                                                    "sameAs": [
+                                                                                        "https://www.facebook.com/AlmancaKonusmaKulubu.Suna/",
+                                                                                        "https://www.instagram.com/almanca_konusma_kulubu_",
+                                                                                        "https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg"
+                                                                                    ],
+                                                                                    "contactPoint": {
+                                                                                        "@@type": "ContactPoint",
+                                                                                        "contactType": "Customer Service",
+                                                                                        "availableLanguage": ["German", "Turkish"]
+                                                                                    }
+                                                                                }
   </script>
 
   <!-- Blog Article Schema (Uncomment when blog is ready) -->
@@ -343,16 +343,6 @@
                 <i class="fa-solid fa-house me-1"></i> @Home
               </a>
             </li>
-            @{
-              var levelCodes = new[] { "A1", "A2", "B1", "B2", "C1" };
-            }
-            <li class="nav-item dropdown">
-              <a class="nav-link @(currentAction == "Quizzes" ? "active" : "")" href="#" id="kursDropdown" role="button"
-                 data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fa-solid fa-graduation-cap me-1"></i> @Localizer.GetKey("Kurs").Value
-              </a>
-            </li>
-
             <li class="nav-item">
               <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")"
                  href="@aboutPath">
@@ -477,12 +467,6 @@
                       <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")"
                          asp-controller="Home" asp-action="Index">
                         <i class="fa-solid fa-house me-1"></i> @Home
-                      </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                      <a class="nav-link @(currentAction == "Quizzes" ? "active" : "")" href="#" id="kursDropdown" role="button"
-                         data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fa-solid fa-graduation-cap me-1"></i> @Localizer.GetKey("Kurs").Value
                       </a>
                     </li>
                     <li class="nav-item">
