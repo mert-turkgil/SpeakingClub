@@ -78,24 +78,24 @@
 
   <!-- Schema.org Structured Data (JSON-LD) -->
   <script type="application/ld+json">
-                                                                                {
-                                                                                    "@@context": "https://schema.org",
-                                                                                    "@@type": "EducationalOrganization",
-                                                                                    "name": "almanca-konus",
-                                                                                    "description": "Interactive German language learning platform",
-                                                                                    "url": "https://almanca-konus.com",
-                                                                                    "logo": "https://almanca-konus.com/img/header_logo.png",
-                                                                                    "sameAs": [
-                                                                                        "https://www.facebook.com/AlmancaKonusmaKulubu.Suna/",
-                                                                                        "https://www.instagram.com/almanca_konusma_kulubu_",
-                                                                                        "https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg"
-                                                                                    ],
-                                                                                    "contactPoint": {
-                                                                                        "@@type": "ContactPoint",
-                                                                                        "contactType": "Customer Service",
-                                                                                        "availableLanguage": ["German", "Turkish"]
-                                                                                    }
-                                                                                }
+                                                      {
+                                                          "@@context": "https://schema.org",
+                                                          "@@type": "EducationalOrganization",
+                                                          "name": "almanca-konus",
+                                                          "description": "Interactive German language learning platform",
+                                                          "url": "https://almanca-konus.com",
+                                                          "logo": "https://almanca-konus.com/img/header_logo.png",
+                                                          "sameAs": [
+                                                              "https://www.facebook.com/AlmancaKonusmaKulubu.Suna/",
+                                                              "https://www.instagram.com/almanca_konusma_kulubu_",
+                                                              "https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg"
+                                                          ],
+                                                          "contactPoint": {
+                                                              "@@type": "ContactPoint",
+                                                              "contactType": "Customer Service",
+                                                              "availableLanguage": ["German", "Turkish"]
+                                                          }
+                                                      }
   </script>
 
   <!-- Blog Article Schema (Uncomment when blog is ready) -->
@@ -361,15 +361,15 @@
                 <i class="fa-solid fa-book me-1"></i> @Praxis
               </a>
               <ul class="dropdown-menu rounded" aria-labelledby="dictionaryDropdown">
-                <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Index"><i
                   class="fa-solid fa-stethoscope me-2 text-fourth"></i>@FSP</a></li>
-                  <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                  <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Index"><i
                     class="fa-solid fa-book-medical me-2 text-fourth"></i>@Fallbeispiele</a></li>
-                    <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                    <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Index"><i
                       class="fa-solid fa-envelope-open me-2 text-fourth"></i>@Arztbrief</a></li>
-                      <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                      <li><a class="dropdown-item px-3 py-2" asp-controller="Account" asp-action="Quizzes"><i
                         class="fa-solid fa-chart-line me-2 text-fourth"></i>@SeviyeniziÖlçün</a></li>
-                        <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                        <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Words"><i
                           class="fa-solid fa-spell-check me-2 text-fourth"></i>@Sözlük</a></li>
                         </ul>
                       </li>
@@ -482,21 +482,21 @@
                       </a>
                     </li>
                     <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle @(currentController == "Home" && currentAction == "Words" ? "active" : "")"
+                      <a class="nav-link dropdown-toggle @(currentController == "Home" && currentAction == "Words" || currentController=="Account" && currentAction == "Quizzes" ? "active" : "")"
                          href="@wordsPath" id="dictionaryDropdownMobile" role="button" data-bs-toggle="dropdown"
                          aria-expanded="false">
                         <i class="fa-solid fa-book me-1"></i> @Praxis
                       </a>
                       <ul class="dropdown-menu rounded w-100" aria-labelledby="dictionaryDropdownMobile" style="min-width: auto;">
-                        <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                        <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Index"><i
                           class="fa-solid fa-stethoscope me-2 text-fourth"></i>@FSP</a></li>
-                          <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                          <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Index"><i
                             class="fa-solid fa-book-medical me-2 text-fourth"></i>@Fallbeispiele</a></li>
-                            <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                            <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Index"><i
                               class="fa-solid fa-envelope-open me-2 text-fourth"></i>@Arztbrief</a></li>
-                              <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                              <li><a class="dropdown-item px-3 py-2" asp-controller="Account" asp-action="Quizzes"><i
                                 class="fa-solid fa-chart-line me-2 text-fourth"></i>@SeviyeniziÖlçün</a></li>
-                                <li><a class="dropdown-item px-3 py-2" href="@wordsPath"><i
+                                <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Words"><i
                                   class="fa-solid fa-spell-check me-2 text-fourth"></i>@Sözlük</a></li>
                                 </ul>
                               </li>
@@ -567,7 +567,7 @@
                             </div>
                             <!-- Contact Information -->
                             <div class="col-md-4 mb-4">
-                              <h5>@ContactUs</h5>
+                              <h5 class="fw-bold">@ContactUs</h5>
                               <ul class="list-unstyled">
                                 <li class="contact-item text-truncate">
                                   Email: <a href="mailto:almancakonus.info@gmail.com">almancakonus.info@gmail.com</a>
@@ -580,7 +580,7 @@
                             </div>
                             <!-- Social Media Links -->
                             <div class="col-md-4 mb-4">
-                              <h5>@FollowUs</h5>
+                              <h5 class="fw-bold text-center">@FollowUs</h5>
                               <ul class="example-2">
                                 <li class="icon-content">
                                   <a href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" aria-label="Facebook" data-social="facebook"
@@ -634,6 +634,14 @@
                                   </a>
                                   <div class="tooltip">Linktree</div>
                                 </li>
+                              </ul>
+                            </div>
+                            @* Links For the llm and sitemap links *@
+                            <div class="col-12 mb-4">
+                              <h6 class="text-muted mb-2">Site Resources:</h6>
+                              <ul class="list-unstyled text-muted small d-flex gap-3">
+                                <li><a href="/Sitemap" class="text-decoration-none text-muted" target="_blank"><i class="fa-solid fa-sitemap me-1"></i>XML Sitemap</a></li>
+                                <li><a href="/robots.txt" class="text-decoration-none text-muted" target="_blank"><i class="fa-solid fa-robot me-1"></i>Robots.txt</a></li>
                               </ul>
                             </div>
                           </div>

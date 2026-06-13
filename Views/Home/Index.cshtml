@@ -22,7 +22,12 @@
     </script>
     <style>
          @* Video Shorts Start *@
-                                    .shorts-container {
+                                    .youtube-shorts-section {
+                                width: 100%;
+                                overflow: hidden;
+                            }
+
+                            .shorts-container {
                                 aspect-ratio: 9 / 16;
                                 overflow: hidden;
                                 border-radius: 15px;
@@ -34,7 +39,8 @@
 
                             .swiper-shorts {
                                 padding: 40px 0;
-                                overflow: visible !important;
+                                overflow: hidden;
+                                width: 100%;
                             }
 
                             .shorts-slide {
@@ -588,7 +594,7 @@
                     <!-- YouTube Shorts Swiper Section -->
                     <section class="youtube-shorts-section py-5 bg-alt">
                         <div class="container-fluid">
-                            <div class="swiper swiper-shorts" style="width: 100%; max-width: 100%; overflow: visible;">
+                            <div class="swiper swiper-shorts">
                                 <div class="swiper-wrapper">
                                     <!-- Short 1 -->
                                     <div class="swiper-slide shorts-slide">
@@ -711,6 +717,7 @@
                                 <!-- Navigation buttons -->
                                 <div class="swiper-button-prev shorts-button-prev"></div>
                                 <div class="swiper-button-next shorts-button-next"></div>
+                                <div class="swiper-pagination"></div>
                             </div>
                         </div>
                     </section>
@@ -764,40 +771,30 @@
                         document.addEventListener("DOMContentLoaded", function () {
                             // Initialize Swiper for YouTube Shorts
                             const shortsSwiper = new Swiper('.swiper-shorts', {
-                                slidesPerView: 4.5,
+                                slidesPerView: 3.5,
                                 slidesPerGroupAuto: true,
-                                snapToSlideEdge: true,
-                                roundLengths: true,
-                                rewind: true,
+                                centeredSlides: true,
+                                centeredSlidesBounds: true,
+                                normalizeSlideIndex: false,
+                                loop: true,
                                 effect: "coverflow",
+                                freeMode: {
+                                    enabled: true
+                                },
                                 navigation: {
                                     nextEl: ".shorts-button-next",
-                                    prevEl: ".shorts-button-prev"
+                                    prevEl: ".shorts-button-prev",
+                                    hideOnClick: true
+                                },
+                                pagination: {
+                                    el: ".swiper-pagination",
+                                    type: "fraction",
+                                    hideOnClick: true
                                 },
                                 autoplay: {
-                                    delay: 4000,
-                                    disableOnInteraction: true,
                                     pauseOnMouseEnter: true
                                 },
-                                keyboard: true,
-                                breakpoints: {
-                                    320: {
-                                        slidesPerView: 1.2,
-                                        spaceBetween: 15
-                                    },
-                                    640: {
-                                        slidesPerView: 2.2,
-                                        spaceBetween: 20
-                                    },
-                                    768: {
-                                        slidesPerView: 2.8,
-                                        spaceBetween: 25
-                                    },
-                                    1024: {
-                                        slidesPerView: 4.5,
-                                        spaceBetween: 30
-                                    }
-                                }
+                                keyboard: true
                             });
 
                             // Initialize Swiper for each advanced blog card media container.
