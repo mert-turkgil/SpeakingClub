@@ -28,6 +28,12 @@ Allow: /Home/Words
 Allow: /Home/Blog
 Allow: /Home/BlogDetail
 
+# Allow clinical German pages (doctors & nurses)
+Allow: /hekim-almancasi
+Allow: /aerztedeutsch
+Allow: /hemsirelik-almancasi
+Allow: /pflegedeutsch
+
 # Allow quizzes listing (public view)
 Allow: /Account/Quizzes
 
@@ -42,4 +48,4 @@ Disallow: /uploads/temp/
 Sitemap: https://almanca-konus.com/sitemap.xml
 
 # Crawl-delay for polite crawling
-Crawl-delay: 10
+Crawl-delay: 1

@@ -1,0 +1,476 @@
+@{
+    Layout = "_Layout";
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+}
+@section Css {
+    <link rel="stylesheet" href="~/css/clinical.css" />
+    <link rel="stylesheet" href="https://unpkg.com/aos@@2.3.4/dist/aos.css" />
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "LearningResource",
+      "name": "@T("Hekimler için Klinik Almanca", "Deutsch für Ärzte")",
+      "description": "@T("Doktorlar için klinik Almanca: FSP hazırlığı, anamnez, hasta sunumu, Arztbrief, klinik iletişim, kalıp ifadeler ve tıbbi kısaltmalar.", "Klinisches Deutsch für Ärzte: FSP-Vorbereitung, Anamnese, Patientenvorstellung, Arztbrief, klinische Kommunikation, Redemittel und medizinische Abkürzungen.")",
+      "inLanguage": "de",
+      "learningResourceType": "Sprachkurs / Beispieldialoge",
+      "educationalLevel": "B2-C1",
+      "audience": { "@@type": "EducationalAudience", "educationalRole": "@T("Hekimler", "Ärztinnen und Ärzte")" },
+      "provider": { "@@type": "Organization", "name": "Almanca Konuş", "url": "https://almanca-konus.com" },
+      "url": "https://almanca-konus.com@(isGerman ? "/aerztedeutsch" : "/hekim-almancasi")"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@@type": "ListItem", "position": 1, "name": "@T("Ana Sayfa", "Startseite")", "item": "https://almanca-konus.com/" },
+        { "@@type": "ListItem", "position": 2, "name": "@T("Hekimler için Klinik Almanca", "Deutsch für Ärzte")", "item": "https://almanca-konus.com@(isGerman ? "/aerztedeutsch" : "/hekim-almancasi")" }
+      ]
+    }
+    </script>
+}
+
+<div class="clinical-page">
+    <!-- Hero -->
+    <header class="clinical-hero">
+        <div class="container">
+            <span class="clinical-eyebrow"><i class="fa-solid fa-user-doctor me-1"></i>@T("Klinik Almanca", "Klinisches Deutsch")</span>
+            <h1>@T("Hekimler için Klinik Almanca", "Deutsch für Ärzte")</h1>
+            <p class="lead">
+                @T("Fachsprachprüfung (FSP) ve klinik günlük yaşam için: anamnez alma, hastayı sunma, Arztbrief yazma ve meslektaşlarla iletişim. Aşağıda gerçek örnek diyaloglar, kalıp ifadeler ve tıbbi kısaltmalar yer alır.",
+                   "Für die Fachsprachprüfung (FSP) und den klinischen Alltag: Anamnese erheben, Patienten vorstellen, Arztbriefe schreiben und mit Kolleginnen und Kollegen kommunizieren. Unten finden Sie echte Beispieldialoge, Redemittel und medizinische Abkürzungen.")
+            </p>
+        </div>
+    </header>
+
+    <!-- Section nav -->
+    <nav class="clinical-nav" aria-label="@T("Bölümler", "Abschnitte")">
+        <div class="container">
+            <div class="clinical-nav__scroll">
+                <a href="#fsp">FSP</a>
+                <a href="#anamnese">Anamnese</a>
+                <a href="#patientenvorstellung">Patientenvorstellung</a>
+                <a href="#arztbrief">Arztbrief</a>
+                <a href="#kommunikation">@T("Klinik İletişim", "Klinische Kommunikation")</a>
+                <a href="#redemittel">@T("Kalıp İfadeler", "Redemittel")</a>
+                <a href="#abkuerzungen">@T("Kısaltmalar", "Abkürzungen")</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- ===================== FSP ===================== -->
+        <section id="fsp" class="clinical-section" data-aos="fade-up">
+            <div class="clinical-section__head">
+                <span class="clinical-section__icon"><i class="fa-solid fa-stethoscope"></i></span>
+                <div>
+                    <h2>FSP – Fachsprachprüfung</h2>
+                    <p>@T("Mesleki Dil Sınavı", "Die fachsprachliche Prüfung für ausländische Ärzte")</p>
+                </div>
+            </div>
+            <p class="clinical-section__intro">
+                @T("Fachsprachprüfung (FSP), Almanya'da doktor olarak çalışmak isteyen uluslararası hekimlerin girdiği mesleki dil sınavıdır. Bu sınavda yalnızca Almanca dil bilgisi değil; hasta, hasta yakını ve meslektaşlarla etkili iletişim kurabilme becerisi de değerlendirilir.",
+                   "Die Fachsprachprüfung (FSP) ist die fachsprachliche Prüfung für internationale Ärztinnen und Ärzte, die in Deutschland arbeiten möchten. Geprüft werden nicht nur Deutschkenntnisse, sondern auch die Fähigkeit, mit Patienten, Angehörigen und Kollegen wirksam zu kommunizieren.")
+            </p>
+            <div class="phrase-box">
+                <h3><i class="fa-solid fa-list-check"></i>@T("FSP'de önemli alanlar", "Wichtige Bereiche der FSP")</h3>
+                <ul>
+                    <li>@T("Hastadan anamnez alma", "Anamnese erheben") → Anamnese</li>
+                    <li>@T("Hastayı yapılandırılmış şekilde sunma", "Patienten strukturiert vorstellen") → Patientenvorstellung</li>
+                    <li>@T("Arztbrief (tıbbi rapor) yazma", "Arztbrief schreiben") → Arztbrief</li>
+                    <li>@T("Meslektaşlarla tıbbi iletişim", "Klinische Kommunikation mit Kollegen") → Klinische Kommunikation</li>
+                    <li>@T("Tıbbi terminoloji ve kalıpları doğru kullanma", "Fachterminologie und Redemittel korrekt verwenden") → Redemittel</li>
+                    <li>@T("Tıbbi kısaltmalar", "Medizinische Abkürzungen") → Abkürzungen</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ===================== ANAMNESE ===================== -->
+        <section id="anamnese" class="clinical-section" data-aos="fade-up">
+            <div class="clinical-section__head">
+                <span class="clinical-section__icon"><i class="fa-solid fa-clipboard-question"></i></span>
+                <div>
+                    <h2>Anamnese</h2>
+                    <p>@T("Yapılandırılmış hasta görüşmesi", "Das strukturierte Anamnesegespräch")</p>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-hand-holding-medical"></i>1. Anamnese – Bauchschmerzen</div>
+                <div class="dialogue">
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Guten Tag, mein Name ist Dr. Weber. Ich werde heute das Gespräch mit Ihnen führen. Was führt Sie zu uns?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Ich habe seit gestern starke Bauchschmerzen.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Können Sie mir zeigen, wo genau die Schmerzen sind?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Zuerst waren die Schmerzen eher um den Bauchnabel herum. Jetzt habe ich sie hauptsächlich im rechten Unterbauch.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Seit wann bestehen die Beschwerden genau?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Seit gestern Nachmittag.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Wie würden Sie die Schmerzen beschreiben? Eher stechend, drückend oder krampfartig?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Eher stechend.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Auf einer Skala von 0 bis 10 – wie stark sind die Schmerzen?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Etwa 8 von 10.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Haben Sie zusätzlich Übelkeit oder Erbrechen?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Mir ist übel, aber erbrochen habe ich nicht.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Haben Sie Fieber bemerkt?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Ja, gestern Abend hatte ich 38 Grad.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Leiden Sie an Vorerkrankungen? Nehmen Sie regelmäßig Medikamente ein? Haben Sie Allergien oder wurden Sie schon einmal operiert?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Nein, ich bin eigentlich gesund. Keine Medikamente, keine Allergien, keine Operationen.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Vielen Dank. Wir werden Sie jetzt untersuchen und weitere Untersuchungen veranlassen.</div></div>
+                </div>
+                <div class="callout">
+                    <div class="callout__label"><i class="fa-solid fa-magnifying-glass"></i>Mögliche Verdachtsdiagnose</div>
+                    <p class="mb-0"><em>V.a. akute Appendizitis</em></p>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-person-falling-burst"></i>2. Anamnese – Schwindel und Synkope</div>
+                <div class="dialogue">
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Guten Tag. Mein Name ist Dr. Weber. Was führt Sie heute zu uns?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patientin</div><div class="dialogue__line">Ich hatte gestern einen Ohnmachtsanfall.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Können Sie mir bitte genauer beschreiben, was passiert ist?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patientin</div><div class="dialogue__line">Ich war beim Einkaufen. Plötzlich wurde mir schwindelig und dann bin ich kurz bewusstlos geworden.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Wie lange waren Sie bewusstlos? Haben Sie sich dabei verletzt?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patientin</div><div class="dialogue__line">Nur wenige Sekunden, sagten die Leute. Verletzt habe ich mich zum Glück nicht.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Hatten Sie Herzrasen, Brustschmerzen oder Atemnot?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patientin</div><div class="dialogue__line">Nein, das hatte ich nicht.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Leiden Sie an Vorerkrankungen?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patientin</div><div class="dialogue__line">Bei mir wurde letztes Jahr Diabetes mellitus festgestellt. Medikamente nehme ich derzeit keine ein. Ich habe eine Katzenallergie und wurde vor etwa 15 Jahren am Fuß operiert.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Vielen Dank. Wir werden jetzt einige Untersuchungen durchführen, um die Ursache der Synkope abzuklären.</div></div>
+                </div>
+                <div class="callout">
+                    <div class="callout__label"><i class="fa-solid fa-magnifying-glass"></i>Mögliche Verdachtsdiagnosen</div>
+                    <ul class="mb-0">
+                        <li>Synkope unklarer Genese</li>
+                        <li>Vasovagale Synkope</li>
+                        <li>Kardiale Ursache (Differenzialdiagnose)</li>
+                        <li>Orthostatische Dysregulation</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-heart-circle-exclamation"></i>3. Anamnese – Brustschmerzen</div>
+                <div class="dialogue">
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Guten Tag. Mein Name ist Dr. Weber. Was führt Sie heute zu uns?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Ich habe seit heute Morgen starke Brustschmerzen.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Können Sie mir zeigen, wo genau die Schmerzen sitzen?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Hier, hinter dem Brustbein.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Seit wann bestehen die Beschwerden und sind sie plötzlich aufgetreten?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Seit etwa zwei Stunden. Sie haben plötzlich begonnen.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Wie würden Sie die Schmerzen beschreiben? Strahlen sie irgendwohin aus?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Es fühlt sich wie ein starker Druck auf der Brust an. Sie strahlen in den linken Arm und etwas in den Kiefer aus.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Haben Sie zusätzlich Atemnot, Übelkeit oder Schweißausbrüche?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Ja, ich bekomme schlechter Luft, mir ist übel und ich schwitze stark.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Leiden Sie an Vorerkrankungen und nehmen Sie Medikamente ein?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Ich habe Bluthochdruck und erhöhte Cholesterinwerte und nehme Tabletten gegen den Blutdruck. Ich rauche etwa eine Schachtel pro Tag. Mein Vater hatte mit 58 Jahren einen Herzinfarkt.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Vielen Dank. Aufgrund Ihrer Beschwerden müssen wir Ihr Herz umgehend untersuchen.</div></div>
+                </div>
+                <div class="callout">
+                    <div class="callout__label"><i class="fa-solid fa-magnifying-glass"></i>Mögliche Verdachtsdiagnosen</div>
+                    <ul class="mb-0">
+                        <li>Akutes Koronarsyndrom (ACS)</li>
+                        <li>NSTEMI / STEMI</li>
+                        <li>Angina pectoris</li>
+                    </ul>
+                </div>
+                <div class="phrase-box mt-3">
+                    <h3><i class="fa-solid fa-quote-right"></i>Wichtige Formulierungen aus diesem Gespräch</h3>
+                    <ul>
+                        <li>Die Schmerzen strahlen in den linken Arm aus.</li>
+                        <li>Es fühlt sich wie ein Druck auf der Brust an.</li>
+                        <li>Ich bekomme schlecht Luft.</li>
+                        <li>Ich schwitze stark.</li>
+                        <li>Die Beschwerden haben plötzlich begonnen.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== PATIENTENVORSTELLUNG ===================== -->
+        <section id="patientenvorstellung" class="clinical-section" data-aos="fade-up">
+            <div class="clinical-section__head">
+                <span class="clinical-section__icon"><i class="fa-solid fa-person-chalkboard"></i></span>
+                <div>
+                    <h2>Patientenvorstellung</h2>
+                    <p>@T("Hastayı yapılandırılmış şekilde sunma", "Den Patienten strukturiert vorstellen")</p>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-hand-holding-medical"></i>1. Akute Appendizitis</div>
+                <p class="mb-0">Guten Tag, ich möchte Ihnen Herrn Meier vorstellen. Herr Meier ist 28 Jahre alt und stellte sich heute in unserer Notaufnahme vor, weil er seit gestern ständig Bauchschmerzen hat. Die Beschwerden begannen periumbilikal und verlagerten sich in den rechten Unterbauch. Der Patient beschreibt die Schmerzen als stechend (8/10). Begleitend berichtet er über Übelkeit sowie eine Temperatur bis 38 °C; Erbrechen, Durchfall und Obstipation werden verneint. Vorerkrankungen, Dauermedikation, Allergien und Voroperationen bestehen nicht. Bei der Untersuchung zeigte sich ein Druckschmerz im rechten Unterbauch mit positiven Appendizitiszeichen. Laborchemisch fanden sich erhöhte Entzündungsparameter mit Leukozytose und erhöhtem CRP. Der Befund spricht am ehesten für eine akute Appendizitis. Zur weiteren Diagnostik wurde eine Sonografie des Abdomens veranlasst; bei Bestätigung ist eine operative Therapie vorgesehen.</p>
+            </div>
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-person-falling-burst"></i>2. Synkope unklarer Genese</div>
+                <p class="mb-0">Guten Tag, ich möchte Ihnen Frau Schmidt vorstellen. Frau Schmidt ist 47 Jahre alt und stellte sich heute vor, weil sie gestern eine Synkope erlitten hatte. Sie berichtet, während des Einkaufens plötzlich Schwindel verspürt zu haben und anschließend für wenige Sekunden bewusstlos geworden zu sein; ein Trauma kam nicht vor. Brustschmerzen, Herzrasen, Atemnot und neurologische Ausfälle werden verneint. An Vorerkrankungen besteht ein Diabetes mellitus (vor ca. einem Jahr diagnostiziert), aktuell ohne medikamentöse Therapie; zudem eine Katzenallergie und eine Fußoperation vor ca. 15 Jahren. Bei der Untersuchung war die Patientin kreislaufstabil und neurologisch unauffällig. Differenzialdiagnostisch kommen eine vasovagale Synkope, eine orthostatische Dysregulation sowie kardiale Ursachen infrage.</p>
+            </div>
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-heart-circle-exclamation"></i>3. Thoraxschmerzen</div>
+                <p class="mb-0">Guten Tag, ich möchte Ihnen Herrn Schneider vorstellen. Herr Schneider ist 58 Jahre alt und stellte sich heute aufgrund akut aufgetretener Thoraxschmerzen vor. Die Beschwerden begannen vor etwa zwei Stunden plötzlich; die Schmerzen sind retrosternal lokalisiert, von drückendem Charakter und strahlen in den linken Arm sowie in den Kiefer aus (9/10). Begleitend bestehen Atemnot, Übelkeit und ausgeprägte Schweißausbrüche. An Vorerkrankungen bestehen eine arterielle Hypertonie und eine Hypercholesterinämie; der Patient nimmt Antihypertensiva ein und raucht etwa eine Schachtel täglich. Der Vater erlitt mit 58 Jahren einen Herzinfarkt. Aufgrund der Symptomatik besteht der dringende Verdacht auf ein akutes Koronarsyndrom; differenzialdiagnostisch ein NSTEMI oder STEMI.</p>
+            </div>
+        </section>
+
+        <!-- ===================== ARZTBRIEF ===================== -->
+        <section id="arztbrief" class="clinical-section" data-aos="fade-up">
+            <div class="clinical-section__head">
+                <span class="clinical-section__icon"><i class="fa-solid fa-envelope-open-text"></i></span>
+                <div>
+                    <h2>Arztbrief</h2>
+                    <p>@T("Tıbbi rapor örnekleri", "Beispiele für ärztliche Briefe")</p>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-file-medical"></i>1. Akute Appendizitis</div>
+                <p>Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege,</p>
+                <p>hiermit berichten wir Ihnen über Herrn Meier, der sich am heutigen Tag aufgrund von seit gestern bestehenden Bauchschmerzen in unserer Notaufnahme vorstellte. Der 28-jährige Patient gab an, dass die Schmerzen zunächst periumbilikal begonnen und sich in den rechten Unterbauch verlagert hätten. Die Beschwerden seien stechend (8/10). Begleitend bestünden Übelkeit sowie eine Temperaturerhöhung bis 38 °C. An Vorerkrankungen seien keine bekannt; keine Dauermedikation, keine Allergien, keine Voroperationen. Klinisch zeigte sich ein Druckschmerz im rechten Unterbauch mit positiven Appendizitiszeichen. Laborchemisch fanden sich erhöhte Entzündungsparameter mit Leukozytose und erhöhtem CRP. Es besteht der dringende Verdacht auf eine akute Appendizitis. Wir veranlassten eine Sonografie des Abdomens; bei Bestätigung empfehlen wir die operative Versorgung.</p>
+                <p class="mb-0">Mit freundlichen Grüßen<br><em>M. Özkan, Assistenzarzt</em></p>
+            </div>
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-file-medical"></i>2. Synkope unklarer Genese</div>
+                <p>Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege,</p>
+                <p>hiermit berichten wir Ihnen über Frau Schmidt, die sich heute wegen einer Synkope am Vortag vorstellte. Die 47-jährige Patientin gab an, während des Einkaufens plötzlich Schwindel verspürt zu haben und anschließend für wenige Sekunden bewusstlos geworden zu sein; ein Sturztrauma kam nicht vor. Brustschmerzen, Herzrasen, Atemnot und neurologische Ausfälle wurden verneint. An Vorerkrankungen besteht ein Diabetes mellitus (vor ca. einem Jahr diagnostiziert), derzeit ohne medikamentöse Therapie; ferner eine Katzenallergie und eine Fußoperation vor ca. 15 Jahren. Klinisch war die Patientin kreislaufstabil und neurologisch unauffällig. Zur Abklärung wurden EKG, Laboruntersuchungen sowie eine Überwachung der Vitalparameter veranlasst. Differenzialdiagnostisch kommen eine vasovagale Synkope, eine orthostatische Dysregulation sowie kardiale Ursachen infrage. Wir empfehlen die ambulante Weiterbetreuung sowie die weitere diagnostische Abklärung.</p>
+                <p class="mb-0">Mit freundlichen Grüßen<br><em>M. Özkan, Assistenzarzt</em></p>
+            </div>
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-file-medical"></i>3. Thoraxschmerzen bei V.a. akutes Koronarsyndrom</div>
+                <p>Sehr geehrte Frau Kollegin, sehr geehrter Herr Kollege,</p>
+                <p>hiermit berichten wir Ihnen über Herrn Schneider, der sich heute aufgrund akut aufgetretener Thoraxschmerzen vorstellte. Der 58-jährige Patient gab an, dass die Beschwerden etwa zwei Stunden vor der Vorstellung plötzlich begonnen hätten. Die Schmerzen seien retrosternal lokalisiert, von drückendem Charakter und würden in den linken Arm sowie in den Kiefer ausstrahlen (9/10). Begleitend bestünden Atemnot, Übelkeit und ausgeprägte Schweißausbrüche. An Vorerkrankungen seien eine arterielle Hypertonie sowie eine Hypercholesterinämie bekannt; der Patient nehme regelmäßig Antihypertensiva ein und rauche langjährig. Der Vater erlitt mit 58 Jahren einen Herzinfarkt. Aufgrund der Symptomatik bestand der dringende Verdacht auf ein akutes Koronarsyndrom. Zur Diagnostik wurden umgehend ein EKG, Laboruntersuchungen einschließlich kardialer Marker sowie eine kontinuierliche Überwachung veranlasst. Differenzialdiagnostisch kommen insbesondere ein NSTEMI oder STEMI infrage. Wir empfehlen die stationäre Weiterbehandlung sowie die weitere kardiologische Abklärung.</p>
+                <p class="mb-0">Mit freundlichen Grüßen<br><em>M. Özkan, Assistenzarzt</em></p>
+            </div>
+        </section>
+
+        <!-- ===================== KLINISCHE KOMMUNIKATION ===================== -->
+        <section id="kommunikation" class="clinical-section" data-aos="fade-up">
+            <div class="clinical-section__head">
+                <span class="clinical-section__icon"><i class="fa-solid fa-comments"></i></span>
+                <div>
+                    <h2>@T("Klinik İletişim", "Klinische Kommunikation")</h2>
+                    <p>@T("Hasta, hasta yakını ve meslektaşlarla iletişim", "Kommunikation mit Patienten, Angehörigen und Kollegen")</p>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-user-doctor"></i>Arzt-Patienten-Gespräch</div>
+                <div class="scenario-card__situation">Situation: Der Patient kommt wegen seit drei Tagen bestehender Halsschmerzen in die Praxis.</div>
+                <div class="dialogue">
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Guten Morgen. Was kann ich für Sie tun?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Ich habe seit drei Tagen starke Halsschmerzen.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Haben Sie zusätzlich Fieber oder Husten? Können Sie normal essen und trinken?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Gestern hatte ich 38,5 Grad Fieber, Husten nur wenig. Das Schlucken tut weh, aber trinken kann ich noch.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Gut. Dann schaue ich mir zunächst Ihren Hals an.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__stage">(nach der Untersuchung)</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Die Mandeln sind gerötet und leicht geschwollen. Es handelt sich wahrscheinlich um eine akute Rachenentzündung. Im Moment sehe ich keinen zwingenden Grund für Antibiotika. Wichtig sind ausreichend Flüssigkeit, Schonung und gegebenenfalls Schmerzmittel. Falls das Fieber steigt, stellen Sie sich bitte erneut vor.</div></div>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-people-roof"></i>Kommunikation mit Angehörigen</div>
+                <div class="scenario-card__situation">Situation: Die Tochter eines Patienten möchte wissen, wie es ihrem Vater nach der Operation geht.</div>
+                <div class="dialogue">
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Tochter</div><div class="dialogue__line">Guten Tag. Ich bin die Tochter von Herrn Meier. Können Sie mir sagen, wie es meinem Vater geht?</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Guten Tag. Ja, selbstverständlich. Die Operation ist gut verlaufen. Ihr Vater ist wach und ansprechbar, die Vitalparameter sind stabil, und es gibt derzeit keine Hinweise auf Komplikationen.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Tochter</div><div class="dialogue__line">Hat er noch Schmerzen? Wann kann ich ihn besuchen?</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Er hat leichte Schmerzen im Operationsbereich und erhält dafür Schmerzmedikamente. Ein Besuch ist voraussichtlich heute Nachmittag möglich; das Pflegepersonal wird Sie informieren. Falls sich sein Zustand verändert, informieren wir Sie selbstverständlich umgehend.</div></div>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-user-nurse"></i>Kollegiale Kommunikation</div>
+                <div class="scenario-card__situation">Situation: Ein Assistenzarzt bespricht einen Patienten mit der Oberärztin.</div>
+                <div class="dialogue">
+                    <div class="dialogue__turn"><div class="dialogue__role">Assistenzarzt</div><div class="dialogue__line">Guten Morgen, Frau Dr. Schneider. Ich würde gerne einen Patienten mit Ihnen besprechen. Es handelt sich um Herrn Meier, 58 Jahre alt, der heute Morgen mit Thoraxschmerzen aufgenommen wurde.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Oberärztin</div><div class="dialogue__line">Seit wann bestehen die Beschwerden und gibt es relevante Vorerkrankungen?</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Assistenzarzt</div><div class="dialogue__line">Die Schmerzen bestehen seit etwa zwei Stunden und strahlen in den linken Arm aus. Bekannt sind eine arterielle Hypertonie und eine Hypercholesterinämie. Im EKG zeigen sich keine ST-Hebungen; die Troponinwerte stehen noch aus.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Oberärztin</div><div class="dialogue__line">Gut. Dann sollten wir den Patienten weiter monitorüberwachen und die Laborwerte abwarten. Bitte organisieren Sie zusätzlich eine Echokardiografie.</div></div>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-phone"></i>Konsilanforderung</div>
+                <div class="scenario-card__situation">Situation: Ein Assistenzarzt bittet die Kardiologie um ein Konsil.</div>
+                <div class="dialogue">
+                    <div class="dialogue__turn"><div class="dialogue__role">Assistenzarzt</div><div class="dialogue__line">Guten Tag, hier spricht Dr. Weber von der Inneren Medizin. Ich würde gerne ein kardiologisches Konsil anfordern.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Kardiologe</div><div class="dialogue__line">Worum handelt es sich?</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Assistenzarzt</div><div class="dialogue__line">Es geht um einen 68-jährigen Patienten mit neu aufgetretenem Vorhofflimmern seit gestern Abend. Er berichtet über Palpitationen und leichte Belastungsdyspnoe und ist derzeit hämodynamisch stabil. Das EKG zeigt Vorhofflimmern mit einer Frequenz von etwa 130 pro Minute.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Kardiologe</div><div class="dialogue__line">In Ordnung. Ich komme im Laufe des Vormittags vorbei und sehe mir den Patienten an.</div></div>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-bed"></i>Visite und Stationsalltag</div>
+                <div class="scenario-card__situation">Situation: Morgenvisite auf der Station.</div>
+                <div class="dialogue">
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Guten Morgen, Herr Meier. Wie geht es Ihnen heute? Haben Sie noch Schmerzen?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Mir geht es etwas besser als gestern. Schmerzen habe ich noch, aber nicht mehr so stark – vielleicht 3 von 10.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Das klingt erfreulich. Konnten Sie heute Morgen schon etwas essen? Gab es Übelkeit?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Ja, ein kleines Frühstück. Übelkeit hatte ich nicht. Wann darf ich nach Hause?</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Arzt</div><div class="dialogue__line">Die Blutwerte haben sich ebenfalls verbessert. Wenn sich Ihr Zustand weiterhin stabil entwickelt, ist eine Entlassung in den nächsten Tagen möglich.</div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== REDEMITTEL ===================== -->
+        <section id="redemittel" class="clinical-section" data-aos="fade-up">
+            <div class="clinical-section__head">
+                <span class="clinical-section__icon"><i class="fa-solid fa-comment-dots"></i></span>
+                <div>
+                    <h2>@T("Kalıp İfadeler", "Redemittel für Ärztinnen und Ärzte")</h2>
+                    <p>@T("Klinik ortamda sık kullanılan pratik ifade kalıpları", "Praktische Formulierungen für den klinischen Alltag")</p>
+                </div>
+            </div>
+            <div class="phrase-grid">
+                <div class="phrase-box">
+                    <h3><i class="fa-solid fa-hand"></i>Gesprächsbeginn</h3>
+                    <ul>
+                        <li>Guten Tag, mein Name ist Dr. …</li>
+                        <li>Was führt Sie heute zu uns?</li>
+                        <li>Wie kann ich Ihnen helfen?</li>
+                        <li>Ich würde Ihnen gerne einige Fragen stellen.</li>
+                    </ul>
+                </div>
+                <div class="phrase-box">
+                    <h3><i class="fa-solid fa-clipboard-question"></i>Anamnese</h3>
+                    <ul>
+                        <li>Seit wann bestehen die Beschwerden?</li>
+                        <li>Können Sie die Beschwerden genauer beschreiben?</li>
+                        <li>Haben Sie zusätzlich … bemerkt?</li>
+                        <li>Leiden Sie an Vorerkrankungen?</li>
+                        <li>Nehmen Sie regelmäßig Medikamente ein?</li>
+                    </ul>
+                </div>
+                <div class="phrase-box">
+                    <h3><i class="fa-solid fa-stethoscope"></i>Untersuchung</h3>
+                    <ul>
+                        <li>Ich würde Sie jetzt gerne untersuchen.</li>
+                        <li>Könnten Sie bitte tief einatmen?</li>
+                        <li>Tut das hier weh?</li>
+                        <li>Bitte sagen Sie mir Bescheid, falls Sie Schmerzen haben.</li>
+                    </ul>
+                </div>
+                <div class="phrase-box">
+                    <h3><i class="fa-solid fa-file-waveform"></i>Befunde erklären</h3>
+                    <ul>
+                        <li>Die Untersuchung hat gezeigt, dass …</li>
+                        <li>Die Blutwerte sind unauffällig.</li>
+                        <li>Es gibt Hinweise auf …</li>
+                        <li>Wir müssen weitere Untersuchungen durchführen.</li>
+                    </ul>
+                </div>
+                <div class="phrase-box">
+                    <h3><i class="fa-solid fa-pills"></i>Therapie und Empfehlungen</h3>
+                    <ul>
+                        <li>Ich empfehle Ihnen …</li>
+                        <li>Sie sollten sich körperlich schonen.</li>
+                        <li>Bitte nehmen Sie das Medikament wie besprochen ein.</li>
+                        <li>Falls sich die Beschwerden verschlimmern, sollten Sie sich erneut vorstellen.</li>
+                    </ul>
+                </div>
+                <div class="phrase-box">
+                    <h3><i class="fa-solid fa-users-gear"></i>Kommunikation mit Kollegen</h3>
+                    <ul>
+                        <li>Ich würde gerne einen Patienten mit Ihnen besprechen.</li>
+                        <li>Wir bitten um Ihre Mitbeurteilung.</li>
+                        <li>Können Sie bitte ein Konsil durchführen?</li>
+                        <li>Vielen Dank für Ihre Unterstützung.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== ABKÜRZUNGEN ===================== -->
+        <section id="abkuerzungen" class="clinical-section" data-aos="fade-up">
+            <div class="clinical-section__head">
+                <span class="clinical-section__icon"><i class="fa-solid fa-notes-medical"></i></span>
+                <div>
+                    <h2>@T("Tıbbi Kısaltmalar", "Medizinische Abkürzungen")</h2>
+                    <p>@T("Dokümantasyon ve ekip iletişiminde sık kullanılır", "Häufig in Dokumentation und Teamkommunikation")</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="abbr-group">
+                        <h3>Vitalzeichen</h3>
+                        <div class="table-responsive">
+                            <table class="abbr-table"><tbody>
+                                <tr><td class="abbr-key">RR</td><td>Blutdruck</td></tr>
+                                <tr><td class="abbr-key">HF</td><td>Herzfrequenz</td></tr>
+                                <tr><td class="abbr-key">AF</td><td>Atemfrequenz</td></tr>
+                                <tr><td class="abbr-key">SpO₂</td><td>Sauerstoffsättigung</td></tr>
+                                <tr><td class="abbr-key">BZ</td><td>Blutzucker</td></tr>
+                            </tbody></table>
+                        </div>
+                    </div>
+                    <div class="abbr-group">
+                        <h3>Erkrankungen und Befunde</h3>
+                        <div class="table-responsive">
+                            <table class="abbr-table"><tbody>
+                                <tr><td class="abbr-key">COPD</td><td>Chronisch obstruktive Lungenerkrankung</td></tr>
+                                <tr><td class="abbr-key">DM</td><td>Diabetes mellitus</td></tr>
+                                <tr><td class="abbr-key">VHF</td><td>Vorhofflimmern</td></tr>
+                                <tr><td class="abbr-key">TIA</td><td>Transitorische ischämische Attacke</td></tr>
+                                <tr><td class="abbr-key">Apoplex</td><td>Schlaganfall</td></tr>
+                            </tbody></table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="abbr-group">
+                        <h3>Pflege und Versorgung</h3>
+                        <div class="table-responsive">
+                            <table class="abbr-table"><tbody>
+                                <tr><td class="abbr-key">DK</td><td>Dauerkatheter</td></tr>
+                                <tr><td class="abbr-key">PEG</td><td>Perkutane endoskopische Gastrostomie</td></tr>
+                                <tr><td class="abbr-key">VK</td><td>Venenkatheter</td></tr>
+                                <tr><td class="abbr-key">ZVK</td><td>Zentralvenöser Katheter</td></tr>
+                            </tbody></table>
+                        </div>
+                    </div>
+                    <div class="abbr-group">
+                        <h3>Dokumentation und Übergabe</h3>
+                        <div class="table-responsive">
+                            <table class="abbr-table"><tbody>
+                                <tr><td class="abbr-key">V.a.</td><td>Verdacht auf</td></tr>
+                                <tr><td class="abbr-key">Z.n.</td><td>Zustand nach</td></tr>
+                                <tr><td class="abbr-key">o.B.</td><td>ohne Befund</td></tr>
+                                <tr><td class="abbr-key">pat.</td><td>pathologisch</td></tr>
+                                <tr><td class="abbr-key">unauff.</td><td>unauffällig</td></tr>
+                            </tbody></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="callout">
+                <div class="callout__label"><i class="fa-solid fa-list"></i>Häufige Beispiele</div>
+                <ul class="mb-0">
+                    <li>RR 130/80 mmHg · BZ 145 mg/dl · SpO₂ 95 % unter Raumluft</li>
+                    <li>Z.n. Hüft-TEP · V.a. Pneumonie · DK reizlos · PEG in situ</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/aos@@2.3.4/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 700, once: true });
+        (function () {
+            var links = Array.from(document.querySelectorAll('.clinical-nav a'));
+            var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+            function onScroll() {
+                var y = window.scrollY + 140;
+                var idx = 0;
+                for (var i = 0; i < sections.length; i++) {
+                    if (sections[i] && sections[i].offsetTop <= y) idx = i;
+                }
+                links.forEach(function (l, i) { l.classList.toggle('active', i === idx); });
+            }
+            window.addEventListener('scroll', onScroll, { passive: true });
+            onScroll();
+        })();
+    </script>
+}

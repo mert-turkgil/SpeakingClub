@@ -90,28 +90,123 @@
         background: var(--quiz-medium);
         color: #444;
     }
-    .tag-filter.active { 
-        background: var(--quiz-accent) !important; 
+    .tag-filter.active {
+        background: var(--quiz-accent) !important;
         color: #fff;
         border-color: var(--quiz-accent);
+        box-shadow: 0 4px 12px rgba(255,148,148,0.4);
     }
-    
+
+    /* Filter Bar */
+    .quiz-filterbar {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.07);
+        padding: 1.5rem;
+        position: sticky;
+        top: 80px;
+        z-index: 20;
+    }
+    .quiz-search {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+    .quiz-search i {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--quiz-accent);
+        pointer-events: none;
+    }
+    .quiz-search .form-control {
+        border-radius: 12px;
+        border: 2px solid var(--quiz-light);
+        padding: 12px 15px 12px 42px;
+    }
+    .quiz-search .form-control:focus {
+        border-color: var(--quiz-accent);
+        box-shadow: 0 0 0 3px rgba(255,148,148,0.2);
+    }
+    .quiz-filterbar-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .quiz-tags {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+        flex: 1 1 auto;
+    }
+    .quiz-filter-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+    .quiz-filter-controls .form-select {
+        border-radius: 12px;
+        border: 2px solid var(--quiz-light);
+        padding: 10px 14px;
+        min-width: 180px;
+    }
+    .quiz-filter-controls .form-select:focus {
+        border-color: var(--quiz-accent);
+        box-shadow: 0 0 0 3px rgba(255,148,148,0.2);
+    }
+    .btn-clear-filters {
+        background: var(--quiz-light);
+        color: var(--quiz-accent);
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 10px 18px;
+        white-space: nowrap;
+        transition: all 0.25s ease;
+    }
+    .btn-clear-filters:hover {
+        background: var(--quiz-accent);
+        color: #fff;
+    }
+    @@media (max-width: 767px) {
+        .quiz-filterbar { position: static; padding: 1.1rem; }
+        .quiz-filter-controls { width: 100%; }
+        .quiz-filter-controls .form-select { flex: 1 1 auto; min-width: 0; }
+    }
+
     /* Quiz Cards */
     .card.quiz-card {
-        background: white; 
-        border: none; 
+        background: white;
+        border: none;
         border-radius: 20px;
         box-shadow: 0 5px 20px rgba(0,0,0,0.08);
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        min-height: 480px; 
-        display: flex; 
+        min-height: 480px;
+        display: flex;
         flex-direction: column;
         overflow: hidden;
+        position: relative;
     }
-    .card.quiz-card:hover { 
-        box-shadow: 0 15px 40px rgba(255,148,148,0.25); 
+    .card.quiz-card::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--quiz-accent) 0%, var(--quiz-medium) 100%);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s ease;
+        z-index: 5;
+    }
+    .card.quiz-card:hover {
+        box-shadow: 0 15px 40px rgba(255,148,148,0.25);
         transform: translateY(-8px);
     }
+    .card.quiz-card:hover::before { transform: scaleX(1); }
     .quiz-card .card-body { 
         flex: 1 1 auto; 
         display: flex; 
@@ -287,6 +382,48 @@
         .card.quiz-card { min-height: 420px;}
         .quiz-hero { padding: 2rem 0 1.5rem; }
     }
+
+    /* ===== Dark mode (kept here so it overrides the light rules above,
+       since this section renders after dark-mode.css) ===== */
+    html[data-bs-theme="dark"] .main-bg {
+        background: linear-gradient(180deg, #1f1a16 0%, #15110e 100%) !important;
+    }
+    html[data-bs-theme="dark"] .quiz-hero {
+        background: linear-gradient(135deg, #2a221d 0%, #1f1a16 100%);
+    }
+    html[data-bs-theme="dark"] .quiz-hero p { color: #b8aea4 !important; }
+    html[data-bs-theme="dark"] .quiz-filterbar,
+    html[data-bs-theme="dark"] .card.quiz-card,
+    html[data-bs-theme="dark"] .swiper-slide,
+    html[data-bs-theme="dark"] .quiz-media {
+        background: #2a221d;
+    }
+    html[data-bs-theme="dark"] .card.quiz-card { color: #ece6df; }
+    html[data-bs-theme="dark"] .card.quiz-card .card-title { color: #fff; }
+    html[data-bs-theme="dark"] .card.quiz-card .mb-3 { color: #c9c0b7 !important; }
+    html[data-bs-theme="dark"] .quiz-meta { color: #b8aea4; }
+    html[data-bs-theme="dark"] .quiz-search .form-control,
+    html[data-bs-theme="dark"] .quiz-filter-controls .form-select {
+        background: #362c26;
+        border-color: rgba(255,255,255,0.12);
+        color: #ece6df;
+    }
+    html[data-bs-theme="dark"] .quiz-search .form-control::placeholder { color: #b8aea4; }
+    html[data-bs-theme="dark"] .tag-filter { background: #362c26; color: #d8cfc6; }
+    html[data-bs-theme="dark"] .tag-filter:hover { background: #463a32; color: #fff; }
+    html[data-bs-theme="dark"] .btn-clear-filters { background: #362c26; color: var(--quiz-accent); }
+    html[data-bs-theme="dark"] .btn-clear-filters:hover { background: var(--quiz-accent); color: #2a221d; }
+    html[data-bs-theme="dark"] .quiz-badges .badge { background: #362c26; color: var(--quiz-accent); }
+    html[data-bs-theme="dark"] .modal-content { background: #2a221d; color: #ece6df; }
+    html[data-bs-theme="dark"] .modal-header {
+        background: linear-gradient(135deg, #362c26 0%, #2a221d 100%);
+    }
+    html[data-bs-theme="dark"] .login-alert {
+        background: linear-gradient(135deg, #1d2733 0%, #16202b 100%);
+        color: #d8e3ee;
+    }
+    html[data-bs-theme="dark"] .login-alert .text-muted { color: #a9b6c2 !important; }
+    html[data-bs-theme="dark"] #noResults .text-muted { color: #b8aea4 !important; }
 </style>
 }
 
@@ -301,53 +438,47 @@
     
     <div class="container">
         <div>
-            <!-- Sol Panel -->
-            @* <aside class="col-lg-3 col-md-4">
-                <div class="aside-inner">
-                    <form id="quizSearchForm" class="mb-4 text-black" onsubmit="event.preventDefault();doFilter(1);">
-                        <div class="input-group">
-                            <input id="quizSearch" type="text" class="form-control" placeholder="Quiz ara...">
-                            <button class="btn search-btn" type="submit"><i style="color: black;" class="fas fa-search"></i></button>
-                        </div>
-                    </form>
-                    <button type="button" id="clearFiltersBtn" class="btn btn-outline-secondary w-100 mb-4" style="border-radius: 12px; font-weight: 600;">
-                        <i class="bi bi-arrow-counterclockwise me-2"></i> Filtreleri Temizle
-                    </button>
-                    <div class="mb-4">
-                        <div class="section-label"><i class="bi bi-tags"></i> Etiketler</div>
-                        <div id="tagFilters">
-                            <span class="tag-filter active" data-tag="">Tümü</span>
-                            @{
-                                var allTags = (Model.AvailableQuizzes ?? Enumerable.Empty<QuizSummaryViewModel>())
-                                    .SelectMany(q => q.Tags ?? new List<SpeakingClub.Entity.Tag>())
-                                    .Select(t => t.Name)
-                                    .Distinct()
-                                    .OrderBy(x => x);
-                                foreach (var tag in allTags)
-                                {
-                                    <span class="tag-filter" data-tag="@tag">@tag</span>
-                                }
-                            }
-                        </div>
+            <!-- Filtre Çubuğu -->
+            @{
+                var allTags = (Model.AvailableQuizzes ?? Enumerable.Empty<QuizSummaryViewModel>())
+                    .SelectMany(q => q.Tags ?? new List<SpeakingClub.Entity.Tag>())
+                    .Select(t => t.Name)
+                    .Where(n => !string.IsNullOrWhiteSpace(n))
+                    .Distinct()
+                    .OrderBy(x => x);
+                var allCats = (Model.AvailableQuizzes ?? Enumerable.Empty<QuizSummaryViewModel>())
+                    .Select(q => q.CategoryName)
+                    .Where(c => !string.IsNullOrWhiteSpace(c))
+                    .Distinct()
+                    .OrderBy(x => x);
+            }
+            <div class="quiz-filterbar mb-4">
+                <form id="quizSearchForm" class="quiz-search" onsubmit="event.preventDefault();doFilter(1);">
+                    <i class="bi bi-search"></i>
+                    <input id="quizSearch" type="text" class="form-control" placeholder="Quiz ara...">
+                </form>
+                <div class="quiz-filterbar-row">
+                    <div class="quiz-tags" id="tagFilters">
+                        <span class="tag-filter active" data-tag=""><i class="bi bi-grid-3x3-gap me-1"></i>Tümü</span>
+                        @foreach (var tag in allTags)
+                        {
+                            <span class="tag-filter" data-tag="@tag">@tag</span>
+                        }
                     </div>
-                    <div class="mb-2">
-                        <div class="section-label"><i class="bi bi-folder"></i> Kategori</div>
+                    <div class="quiz-filter-controls">
                         <select id="categoryFilter" class="form-select">
                             <option value="">Tüm Kategoriler</option>
-                            @{
-                                var allCats = (Model.AvailableQuizzes ?? Enumerable.Empty<QuizSummaryViewModel>()).Select(q => q.CategoryName).Distinct();
-                                foreach (var cat in allCats)
-                                {
-                                    if (!string.IsNullOrWhiteSpace(cat))
-                                    {
-                                        <option value="@cat">@cat</option>
-                                    }
-                                }
+                            @foreach (var cat in allCats)
+                            {
+                                <option value="@cat">@cat</option>
                             }
                         </select>
+                        <button type="button" id="clearFiltersBtn" class="btn btn-clear-filters">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Temizle
+                        </button>
                     </div>
                 </div>
-            </aside> *@
+            </div>
 
             <!-- Quiz Kartları -->
             <main class="w-100">
@@ -619,13 +750,27 @@ $(function(){
         new bootstrap.Modal($('#startQuizModal')[0]).show();
     });
     
-    // Init Swiper
+    // Init Swiper — scope navigation/pagination to each card so they
+    // control their own carousel (not just the first card on the page).
     $('.mySwiper').each(function(){
-        new Swiper(this, {
+        var container = this;
+        var slideCount = container.querySelectorAll('.swiper-slide').length;
+        new Swiper(container, {
             loop: false,
-            navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
-            pagination: { el: '.swiper-pagination', clickable: true }
+            navigation: {
+                nextEl: container.querySelector('.swiper-button-next'),
+                prevEl: container.querySelector('.swiper-button-prev')
+            },
+            pagination: {
+                el: container.querySelector('.swiper-pagination'),
+                clickable: true
+            }
         });
+        // Hide controls when there's nothing to scroll through.
+        if (slideCount <= 1) {
+            container.querySelectorAll('.swiper-button-next, .swiper-button-prev, .swiper-pagination')
+                .forEach(function(el){ el.style.display = 'none'; });
+        }
     });
     
     // Initial load

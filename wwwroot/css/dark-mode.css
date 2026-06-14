@@ -1,0 +1,355 @@
+/* =====================================================================
+   dark-mode.css
+   Site-wide dark theme + sun/moon theme toggle.
+   Loaded LAST in <head> so it overrides custom.css / universe.css / site.css.
+   Dark rules are scoped under html[data-bs-theme="dark"].
+   The toggle styles are global (work in both themes).
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   1. THEME TOGGLE (sun/moon) — adapted from Uiverse.io (mobinkakei)
+   Static layout so it sits inline in the footer / off-canvas.
+   --------------------------------------------------------------------- */
+.toggleWrapper {
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  color: #fff;
+}
+
+.toggleWrapper .input {
+  position: absolute;
+  left: -99em;
+}
+
+.toggle {
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  width: 90px;
+  height: 50px;
+  background-color: #83d8ff;
+  border-radius: 84px;
+  transition: background-color 200ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
+}
+
+.toggle__handler {
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+  top: 3px;
+  left: 3px;
+  width: 44px;
+  height: 44px;
+  background-color: #ffcf96;
+  border-radius: 50px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: all 400ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  transform: rotate(-45deg);
+}
+
+.toggle__handler .crater {
+  position: absolute;
+  background-color: #e8cda5;
+  opacity: 0;
+  transition: opacity 200ms ease-in-out;
+  border-radius: 100%;
+}
+
+.toggle__handler .crater--1 { top: 18px; left: 10px; width: 4px; height: 4px; }
+.toggle__handler .crater--2 { top: 28px; left: 22px; width: 6px; height: 6px; }
+.toggle__handler .crater--3 { top: 10px; left: 25px; width: 8px; height: 8px; }
+
+.star {
+  position: absolute;
+  background-color: #fff;
+  transition: all 300ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
+  border-radius: 50%;
+}
+
+.star--1 { top: 10px; left: 35px; z-index: 0; width: 30px; height: 3px; }
+.star--2 { top: 18px; left: 28px; z-index: 1; width: 30px; height: 3px; }
+.star--3 { top: 27px; left: 40px; z-index: 0; width: 30px; height: 3px; }
+
+.star--4,
+.star--5,
+.star--6 {
+  opacity: 0;
+  transition: all 300ms 0 cubic-bezier(0.445, 0.05, 0.55, 0.95);
+}
+
+.star--4 { top: 16px; left: 11px; z-index: 0; width: 2px; height: 2px; transform: translate3d(3px, 0, 0); }
+.star--5 { top: 32px; left: 17px; z-index: 0; width: 3px; height: 3px; transform: translate3d(3px, 0, 0); }
+.star--6 { top: 36px; left: 28px; z-index: 0; width: 2px; height: 2px; transform: translate3d(3px, 0, 0); }
+
+.input:checked + .toggle { background-color: #749dd6; }
+
+.input:checked + .toggle .toggle__handler {
+  background-color: #ffe5b5;
+  transform: translate3d(40px, 0, 0) rotate(0);
+}
+
+.input:checked + .toggle .toggle__handler .crater { opacity: 1; }
+
+.input:checked + .toggle .star--1 { width: 2px; height: 2px; }
+.input:checked + .toggle .star--2 { width: 4px; height: 4px; transform: translate3d(-5px, 0, 0); }
+.input:checked + .toggle .star--3 { width: 2px; height: 2px; transform: translate3d(-7px, 0, 0); }
+
+.input:checked + .toggle .star--4,
+.input:checked + .toggle .star--5,
+.input:checked + .toggle .star--6 {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.input:checked + .toggle .star--4 { transition: all 300ms 200ms cubic-bezier(0.445, 0.05, 0.55, 0.95); }
+.input:checked + .toggle .star--5 { transition: all 300ms 300ms cubic-bezier(0.445, 0.05, 0.55, 0.95); }
+.input:checked + .toggle .star--6 { transition: all 300ms 400ms cubic-bezier(0.445, 0.05, 0.55, 0.95); }
+
+/* Footer toggle row */
+.theme-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.theme-toggle-row .theme-toggle-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* =====================================================================
+   2. DARK THEME TOKENS
+   Warm-dark ramp that keeps the #FF9494 brand accent.
+   ===================================================================== */
+html[data-bs-theme="dark"] {
+  --color-lightest: #15110e;   /* base page bg  (was #FFF5E4) */
+  --color-light:    #1f1a16;   /* navbar/footer (was #FFE3E1) */
+  --color-medium:   #2a221d;   /* raised cards  (was #FFD1D1) */
+  --color-accent:   #FF9494;   /* accent stays  */
+
+  --surface-1: #1f1a16;
+  --surface-2: #2a221d;
+  --surface-3: #362c26;
+  --dark-text:   #ece6df;
+  --dark-muted:  #b8aea4;
+  --dark-border: rgba(255, 255, 255, 0.10);
+
+  --bs-body-bg: #15110e;
+  --bs-body-color: #ece6df;
+  --bs-border-color: rgba(255, 255, 255, 0.12);
+  --bs-emphasis-color: #ffffff;
+  --bs-secondary-color: rgba(236, 230, 223, 0.75);
+  --bs-tertiary-bg: #2a221d;
+}
+
+/* ---- Base / layout chrome ------------------------------------------- */
+html[data-bs-theme="dark"] body { background-color: var(--color-lightest); color: var(--dark-text); }
+
+html[data-bs-theme="dark"] main.bg-first,
+html[data-bs-theme="dark"] .bg-first { background-color: var(--color-lightest) !important; }
+
+html[data-bs-theme="dark"] .bg-second { background-color: var(--surface-1) !important; }
+html[data-bs-theme="dark"] .bg-third  { background-color: var(--surface-2) !important; }
+html[data-bs-theme="dark"] .bg-alt,
+html[data-bs-theme="dark"] .bg-light  { background-color: var(--surface-1) !important; }
+
+/* Keep the brand accent bg readable */
+html[data-bs-theme="dark"] .bg-fourth { background-color: var(--color-accent) !important; color: #2a221d !important; }
+
+/* Text utilities */
+html[data-bs-theme="dark"] .text-dark { color: var(--dark-text) !important; }
+html[data-bs-theme="dark"] .text-muted { color: var(--dark-muted) !important; }
+html[data-bs-theme="dark"] .text-fourth { color: var(--color-accent) !important; }
+
+/* ---- Navbar --------------------------------------------------------- */
+html[data-bs-theme="dark"] .navbar {
+  background-color: var(--surface-1) !important;
+  border-bottom: 1px solid var(--dark-border);
+}
+html[data-bs-theme="dark"] .navbar-brand,
+html[data-bs-theme="dark"] .navbar-nav .nav-link {
+  color: var(--dark-text) !important;
+}
+html[data-bs-theme="dark"] .navbar-nav .nav-link:hover,
+html[data-bs-theme="dark"] .nav-link.active { color: var(--color-accent) !important; }
+
+/* Dropdown menus */
+html[data-bs-theme="dark"] .dropdown-menu {
+  background-color: var(--surface-2);
+  border-color: var(--dark-border);
+}
+html[data-bs-theme="dark"] .dropdown-item { color: var(--dark-text); }
+html[data-bs-theme="dark"] .dropdown-item:hover,
+html[data-bs-theme="dark"] .dropdown-item:focus { background-color: var(--surface-3); color: #fff; }
+
+/* ---- Off-canvas ----------------------------------------------------- */
+html[data-bs-theme="dark"] .offcanvas {
+  background-color: var(--surface-1);
+  color: var(--dark-text);
+}
+html[data-bs-theme="dark"] .offcanvas .text-dark { color: var(--dark-text) !important; }
+
+/* ---- Footer --------------------------------------------------------- */
+html[data-bs-theme="dark"] footer {
+  background-color: var(--surface-1) !important;
+  color: var(--dark-text);
+}
+html[data-bs-theme="dark"] footer a,
+html[data-bs-theme="dark"] footer .text-dark,
+html[data-bs-theme="dark"] footer .text-muted { color: var(--dark-muted) !important; }
+html[data-bs-theme="dark"] footer a:hover { color: var(--color-accent) !important; }
+
+/* =====================================================================
+   3. CARDS / SURFACES / FORMS (Bootstrap + custom)
+   ===================================================================== */
+html[data-bs-theme="dark"] .card,
+html[data-bs-theme="dark"] .card-custom {
+  background-color: var(--surface-2);
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+html[data-bs-theme="dark"] .form-control,
+html[data-bs-theme="dark"] .form-select {
+  background-color: var(--surface-2);
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+}
+html[data-bs-theme="dark"] .form-control::placeholder { color: var(--dark-muted); }
+html[data-bs-theme="dark"] .form-control:focus,
+html[data-bs-theme="dark"] .form-select:focus {
+  background-color: var(--surface-2);
+  border-color: var(--color-accent);
+  color: var(--dark-text);
+  box-shadow: 0 0 0 0.2rem rgba(255, 148, 148, 0.25);
+}
+
+/* Tables / DataTables (dictionary, quizzes) */
+html[data-bs-theme="dark"] .table {
+  --bs-table-bg: var(--surface-2);
+  --bs-table-color: var(--dark-text);
+  --bs-table-border-color: var(--dark-border);
+  --bs-table-striped-bg: var(--surface-3);
+  --bs-table-striped-color: var(--dark-text);
+  --bs-table-hover-bg: var(--surface-3);
+  --bs-table-hover-color: #fff;
+}
+html[data-bs-theme="dark"] .dataTables_wrapper,
+html[data-bs-theme="dark"] .dataTables_wrapper .dataTables_info,
+html[data-bs-theme="dark"] .dataTables_wrapper .dataTables_length,
+html[data-bs-theme="dark"] .dataTables_wrapper .dataTables_filter { color: var(--dark-muted); }
+html[data-bs-theme="dark"] .page-link {
+  background-color: var(--surface-2);
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+}
+html[data-bs-theme="dark"] .page-item.active .page-link {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #2a221d;
+}
+
+/* Modals */
+html[data-bs-theme="dark"] .modal-content {
+  background-color: var(--surface-2);
+  color: var(--dark-text);
+  border-color: var(--dark-border);
+}
+
+/* =====================================================================
+   4. HOMEPAGE (Index)
+   ===================================================================== */
+/* Testimonial / quote band */
+html[data-bs-theme="dark"] #testimonial .bg-alt { background-color: var(--surface-1) !important; }
+html[data-bs-theme="dark"] #testimonial .text-dark { color: var(--dark-text) !important; }
+
+/* First-image quote card (Part 5) */
+html[data-bs-theme="dark"] .quote-feature {
+  background-color: var(--surface-2);
+  border-color: rgba(255, 148, 148, 0.35);
+}
+html[data-bs-theme="dark"] .quote-feature .quote-text { color: var(--dark-text); }
+
+/* The Shorts band is intentionally dark in BOTH themes — no overrides. */
+
+/* =====================================================================
+   5. ABOUT PAGE
+   ===================================================================== */
+html[data-bs-theme="dark"] .hero-section {
+  background: linear-gradient(135deg, #1b1612 0%, #241d18 100%);
+}
+html[data-bs-theme="dark"] .about-section {
+  background: var(--surface-2);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+html[data-bs-theme="dark"] .about-section p,
+html[data-bs-theme="dark"] .about-section .lead { color: var(--dark-text); }
+
+html[data-bs-theme="dark"] .process-card {
+  background-color: var(--surface-2);
+  color: var(--dark-text);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+html[data-bs-theme="dark"] .process-card:hover {
+  background-color: var(--color-accent);
+  color: #2a221d;
+}
+
+/* FAQ accordion */
+html[data-bs-theme="dark"] .accordion {
+  --bs-accordion-bg: var(--surface-2);
+  --bs-accordion-color: var(--dark-text);
+  --bs-accordion-border-color: var(--dark-border);
+}
+html[data-bs-theme="dark"] .accordion-item { background-color: var(--surface-2); }
+html[data-bs-theme="dark"] .accordion-button {
+  background-color: var(--surface-2);
+  color: var(--dark-text);
+}
+html[data-bs-theme="dark"] .accordion-button:not(.collapsed) {
+  background-color: var(--color-accent);
+  color: #2a221d;
+}
+html[data-bs-theme="dark"] .accordion-button::after { filter: invert(1) grayscale(1) brightness(1.4); }
+
+/* Contact section */
+html[data-bs-theme="dark"] .contact-section {
+  background: linear-gradient(135deg, #241d18 0%, #1b1612 100%);
+}
+
+/* CKEditor (contact form) */
+html[data-bs-theme="dark"] .ck-editor-wrapper { border-color: var(--dark-border); }
+html[data-bs-theme="dark"] .ck.ck-toolbar {
+  background: var(--surface-3) !important;
+  border-bottom-color: var(--dark-border) !important;
+}
+html[data-bs-theme="dark"] .ck-editor__editable {
+  background: var(--surface-2) !important;
+  color: var(--dark-text) !important;
+}
+html[data-bs-theme="dark"] .ck.ck-button,
+html[data-bs-theme="dark"] .ck.ck-toolbar .ck-icon { color: var(--dark-text) !important; }
+html[data-bs-theme="dark"] .ck-word-count-bar {
+  background: var(--surface-3);
+  border-top-color: var(--dark-border);
+  color: var(--dark-muted);
+}
+
+/* =====================================================================
+   6. MISC
+   ===================================================================== */
+html[data-bs-theme="dark"] hr { border-color: var(--dark-border); }
+html[data-bs-theme="dark"] .border-end,
+html[data-bs-theme="dark"] .border-top,
+html[data-bs-theme="dark"] .border-bottom,
+html[data-bs-theme="dark"] .border { border-color: var(--dark-border) !important; }
+
+/* Klinik Almanca mega-menu */
+html[data-bs-theme="dark"] .klinik-megamenu__head,
+html[data-bs-theme="dark"] .klinik-collapse__head { border-bottom-color: #463a32; }
+html[data-bs-theme="dark"] .klinik-megamenu__col--tools { border-left-color: rgba(255,255,255,.1); }
+html[data-bs-theme="dark"] .klinik-megamenu__panel .dropdown-item:hover { background: #362c26; color: #FF9494; }
+
+/* Alerts keep their semantic colors but soften the surface */
+html[data-bs-theme="dark"] .alert-success { background-color: #1e2e1e; border-color: #2f4a2f; color: #c6e6c6; }
+html[data-bs-theme="dark"] .alert-danger  { background-color: #2e1e1e; border-color: #4a2f2f; color: #e6c6c6; }

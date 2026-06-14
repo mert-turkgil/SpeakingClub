@@ -1,0 +1,375 @@
+/* =====================================================================
+   clinical.css — shared styles for the Clinical-German pages
+   (Doctors / Nurses). Loaded per-page in @section Css, AFTER dark-mode.css,
+   so the dark overrides at the bottom win the cascade.
+   Brand palette: #FFF5E4 / #FFE3E1 / #FFD1D1 / #FF9494
+   ===================================================================== */
+.clinical-page {
+    --c1: #FFF5E4;
+    --c2: #FFE3E1;
+    --c3: #FFD1D1;
+    --c4: #FF9494;
+    --c-ink: #3a2f2b;
+    --c-muted: #7a6f69;
+    background: var(--c1);
+    overflow-x: hidden;
+}
+
+/* ---------- Hero ---------- */
+.clinical-hero {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--c1) 0%, var(--c2) 100%);
+    padding: clamp(2.5rem, 6vw, 5rem) 0 clamp(3.5rem, 7vw, 6rem);
+    text-align: center;
+}
+.clinical-hero::before {
+    content: "";
+    position: absolute;
+    top: -45%;
+    right: -25%;
+    width: 60%;
+    height: 120%;
+    background: radial-gradient(circle, var(--c4) 0%, transparent 70%);
+    opacity: 0.12;
+    pointer-events: none;
+}
+.clinical-hero .clinical-eyebrow {
+    display: inline-block;
+    background: #fff;
+    color: var(--c4);
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    padding: 6px 16px;
+    border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(255, 148, 148, 0.25);
+    margin-bottom: 1.1rem;
+}
+.clinical-hero h1 {
+    font-weight: 800;
+    color: var(--c4);
+    font-size: clamp(1.9rem, 5vw, 3rem);
+    margin-bottom: 1rem;
+    line-height: 1.15;
+}
+.clinical-hero p.lead {
+    color: var(--c-muted);
+    max-width: 760px;
+    margin: 0 auto;
+    font-size: clamp(1rem, 2.2vw, 1.2rem);
+    line-height: 1.7;
+}
+
+/* ---------- Sticky section nav (anchor pills) ---------- */
+.clinical-nav {
+    position: sticky;
+    top: 70px;
+    z-index: 30;
+    background: rgba(255, 245, 228, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--c3);
+    padding: 12px 0;
+}
+.clinical-nav__scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+}
+.clinical-nav__scroll::-webkit-scrollbar { height: 5px; }
+.clinical-nav__scroll::-webkit-scrollbar-thumb { background: var(--c3); border-radius: 4px; }
+.clinical-nav a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--c-ink);
+    background: #fff;
+    border: 1.5px solid var(--c3);
+    border-radius: 999px;
+    padding: 8px 16px;
+    transition: all 0.2s ease;
+}
+.clinical-nav a:hover,
+.clinical-nav a.active {
+    background: var(--c4);
+    border-color: var(--c4);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(255, 148, 148, 0.4);
+}
+
+/* ---------- Section shell ---------- */
+.clinical-section {
+    padding: clamp(2.2rem, 5vw, 3.5rem) 0;
+    scroll-margin-top: 130px;
+}
+.clinical-section__head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 1.6rem;
+}
+.clinical-section__icon {
+    flex: 0 0 auto;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    font-size: 1.35rem;
+    color: #fff;
+    background: linear-gradient(135deg, var(--c4), #ff7b7b);
+    box-shadow: 0 6px 16px rgba(255, 148, 148, 0.4);
+}
+.clinical-section__head h2 {
+    font-weight: 800;
+    color: var(--c-ink);
+    font-size: clamp(1.4rem, 3.4vw, 2rem);
+    margin: 0;
+}
+.clinical-section__head p {
+    margin: 2px 0 0;
+    color: var(--c-muted);
+    font-size: 0.95rem;
+}
+.clinical-section__intro {
+    color: var(--c-ink);
+    line-height: 1.8;
+    margin-bottom: 1.8rem;
+    max-width: 920px;
+}
+
+/* ---------- Scenario card (wraps a dialogue) ---------- */
+.scenario-card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+    padding: clamp(1.1rem, 3vw, 1.8rem);
+    margin-bottom: 1.4rem;
+    border: 1px solid var(--c2);
+}
+.scenario-card__title {
+    font-weight: 700;
+    color: var(--c4);
+    font-size: 1.08rem;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.scenario-card__situation {
+    color: var(--c-muted);
+    font-style: italic;
+    font-size: 0.92rem;
+    margin-bottom: 1rem;
+}
+
+/* ---------- Dialogue transcript ---------- */
+.dialogue {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.dialogue__turn {
+    display: grid;
+    grid-template-columns: minmax(110px, 150px) 1fr;
+    gap: 12px;
+    align-items: start;
+}
+.dialogue__role {
+    font-weight: 700;
+    color: var(--c4);
+    font-size: 0.9rem;
+    padding-top: 9px;
+}
+.dialogue__line {
+    background: var(--c1);
+    border-radius: 12px;
+    padding: 10px 14px;
+    line-height: 1.6;
+    color: var(--c-ink);
+}
+.dialogue__turn--b .dialogue__role { color: #6b8cae; }
+.dialogue__turn--b .dialogue__line { background: #eef3f8; }
+.dialogue__stage {
+    color: var(--c-muted);
+    font-style: italic;
+    font-size: 0.9rem;
+    padding-left: 4px;
+}
+
+/* ---------- Phrase / Redemittel boxes ---------- */
+.phrase-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.1rem;
+}
+.phrase-box {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid var(--c2);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+    padding: 1.25rem 1.35rem;
+}
+.phrase-box h3 {
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: var(--c-ink);
+    margin-bottom: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.phrase-box h3 i { color: var(--c4); }
+.phrase-box ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.phrase-box li {
+    position: relative;
+    padding: 6px 0 6px 22px;
+    line-height: 1.55;
+    color: var(--c-ink);
+    border-bottom: 1px dashed var(--c2);
+}
+.phrase-box li:last-child { border-bottom: 0; }
+.phrase-box li::before {
+    content: "\f054"; /* fa chevron-right */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    left: 0;
+    top: 7px;
+    font-size: 0.7rem;
+    color: var(--c4);
+}
+
+/* ---------- Abbreviation tables ---------- */
+.abbr-group { margin-bottom: 1.6rem; }
+.abbr-group h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--c4);
+    margin-bottom: 0.7rem;
+}
+.abbr-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+}
+.abbr-table th,
+.abbr-table td {
+    text-align: left;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--c2);
+    vertical-align: top;
+}
+.abbr-table th { background: var(--c2); color: var(--c-ink); font-weight: 700; }
+.abbr-table td.abbr-key { font-weight: 700; color: var(--c4); white-space: nowrap; }
+.abbr-table tr:last-child td { border-bottom: 0; }
+.abbr-table tr:hover td { background: var(--c1); }
+
+/* ---------- Callout boxes (Verdachtsdiagnose / Tipp) ---------- */
+.callout {
+    border-radius: 14px;
+    padding: 1.1rem 1.3rem;
+    margin: 1.2rem 0;
+    border-left: 5px solid var(--c4);
+    background: #fff7f7;
+}
+.callout__label {
+    font-weight: 700;
+    color: var(--c4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0.35rem;
+}
+.callout--tip { border-left-color: #4caf93; background: #f1faf6; }
+.callout--tip .callout__label { color: #2e8b6f; }
+.callout ul { margin: 0.3rem 0 0; padding-left: 1.1rem; }
+.callout li { line-height: 1.6; }
+
+/* ---------- Doc/Spoken split (Pflegedokumentation) ---------- */
+.docpair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+.docpair__col {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--c2);
+}
+.docpair__col h4 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--c-muted);
+    margin-bottom: 0.5rem;
+}
+.docpair__col--doc { border-left: 4px solid var(--c3); }
+.docpair__col--spoken { border-left: 4px solid var(--c4); }
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media (max-width: 768px) {
+    .dialogue__turn {
+        grid-template-columns: 1fr;
+        gap: 3px;
+    }
+    .dialogue__role { padding-top: 0; }
+    .docpair { grid-template-columns: 1fr; }
+    .clinical-nav { top: 62px; }
+    .clinical-section { scroll-margin-top: 118px; }
+}
+@media (max-width: 480px) {
+    .clinical-section__head { gap: 10px; }
+    .clinical-section__icon { width: 44px; height: 44px; font-size: 1.15rem; }
+    .phrase-grid { grid-template-columns: 1fr; }
+}
+
+/* =====================================================================
+   DARK MODE (this file loads after dark-mode.css, so these win)
+   ===================================================================== */
+html[data-bs-theme="dark"] .clinical-page {
+    --c1: #15110e;
+    --c2: #241d18;
+    --c3: #362c26;
+    --c4: #FF9494;
+    --c-ink: #ece6df;
+    --c-muted: #b8aea4;
+    background: #15110e;
+}
+html[data-bs-theme="dark"] .clinical-hero {
+    background: linear-gradient(135deg, #1b1612 0%, #241d18 100%);
+}
+html[data-bs-theme="dark"] .clinical-hero .clinical-eyebrow { background: #2a221d; }
+html[data-bs-theme="dark"] .clinical-nav {
+    background: rgba(21, 17, 14, 0.92);
+    border-bottom-color: #362c26;
+}
+html[data-bs-theme="dark"] .clinical-nav a { background: #241d18; border-color: #362c26; color: #ece6df; }
+html[data-bs-theme="dark"] .scenario-card,
+html[data-bs-theme="dark"] .phrase-box,
+html[data-bs-theme="dark"] .abbr-table,
+html[data-bs-theme="dark"] .docpair__col { background: #241d18; border-color: #362c26; }
+html[data-bs-theme="dark"] .dialogue__line { background: #2c2320; }
+html[data-bs-theme="dark"] .dialogue__turn--b .dialogue__line { background: #1e2733; }
+html[data-bs-theme="dark"] .abbr-table th { background: #2c2320; }
+html[data-bs-theme="dark"] .abbr-table tr:hover td { background: #2c2320; }
+html[data-bs-theme="dark"] .callout { background: #2a1f1f; }
+html[data-bs-theme="dark"] .callout--tip { background: #16241f; }
+html[data-bs-theme="dark"] .phrase-box li { border-bottom-color: #362c26; }

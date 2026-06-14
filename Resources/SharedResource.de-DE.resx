@@ -646,7 +646,7 @@
     <value>Der Unterricht findet im Einzel- oder Gruppensetting statt und ist so gestaltet, dass alle aktiv zum Sprechen kommen. Die Teilnehmenden können sich vorab auf die Themen vorbereiten. Bei Wahl eines passenden Pakets werden kurze Sprechübungen außerhalb des Unterrichts sowie individuelles Feedback angeboten.</value>
   <comment>N/A</comment></data>
   <data name="qt1" xml:space="preserve">
-    <value>„Darauf zu warten, dass man fehlerfrei spricht ist DER FEHLER."</value>
+    <value>„Darauf zu warten, dass man fehlerfrei spricht ist DER FEHLER.“</value>
   <comment>N/A</comment></data>
   <data name="ShareThisPost" xml:space="preserve">
     <value>Diesen Beitrag teilen</value>
@@ -656,5 +656,26 @@
   </data>
   <data name="Attachments" xml:space="preserve">
     <value>Anhänge</value>
+  </data>
+  <data name="ThemeToggle" xml:space="preserve">
+    <value>Dunkel-/Hell-Modus</value>
+  </data>
+  <data name="ShortsTitle" xml:space="preserve">
+    <value>YouTube Shorts</value>
+  </data>
+  <data name="ShortsSubtitle" xml:space="preserve">
+    <value>Kurze und effektive Deutschstunden</value>
+  </data>
+  <data name="KlinikAlmanca" xml:space="preserve">
+    <value>Klinisches Deutsch</value>
+  </data>
+  <data name="FuerAerzte" xml:space="preserve">
+    <value>Für Ärzte</value>
+  </data>
+  <data name="FuerPflege" xml:space="preserve">
+    <value>Für Pflegekräfte</value>
+  </data>
+  <data name="ToolsGroup" xml:space="preserve">
+    <value>Werkzeuge</value>
   </data>
 </root>

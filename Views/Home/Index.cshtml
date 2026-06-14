@@ -21,90 +21,195 @@
             }
     </script>
     <style>
-         @* Video Shorts Start *@
-                                    .youtube-shorts-section {
-                                width: 100%;
-                                overflow: hidden;
-                            }
+        @* Video Shorts Start *@
+        .youtube-shorts-section {
+            background: linear-gradient(160deg, #0c0c0c 0%, #150a0a 60%, #0a0a18 100%);
+            padding: 80px 0;
+            overflow: hidden;
+        }
 
-                            .shorts-container {
-                                aspect-ratio: 9 / 16;
-                                overflow: hidden;
-                                border-radius: 15px;
-                                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-                                max-width: 100%;
-                                margin: 0 auto;
-                                height: 100%;
-                            }
+        .shorts-header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 0 20px;
+        }
 
-                            .swiper-shorts {
-                                padding: 40px 0;
-                                overflow: hidden;
-                                width: 100%;
-                            }
+        .shorts-header h2 {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 14px;
+            letter-spacing: -0.5px;
+        }
 
-                            .shorts-slide {
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                height: 550px;
-                            }
+        .shorts-header-bar {
+            width: 56px;
+            height: 4px;
+            background: linear-gradient(90deg, #ff4757, #FF9494);
+            border-radius: 2px;
+            margin: 0 auto 14px;
+        }
 
-                            .swiper-button-prev.shorts-button-prev,
-                            .swiper-button-next.shorts-button-next {
-                                color: #667eea;
-                                background: rgba(255, 255, 255, 0.9);
-                                width: 50px;
-                                height: 50px;
-                                border-radius: 50%;
-                                top: 50%;
-                                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                                z-index: 10;
-                            }
+        .shorts-header p {
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 0.95rem;
+            margin: 0;
+        }
 
-                            .swiper-button-prev.shorts-button-prev:after,
-                            .swiper-button-next.shorts-button-next:after {
-                                font-size: 20px;
-                            }
+        .swiper-shorts {
+            width: 100%;
+            padding: 30px 0 70px;
+            overflow: hidden;
+        }
 
-                            .swiper-button-prev.shorts-button-prev {
-                                left: 10px;
-                            }
+        .swiper-shorts .swiper-wrapper {
+            align-items: center;
+        }
 
-                            .swiper-button-next.shorts-button-next {
-                                right: 10px;
-                            }
+        .shorts-slide {
+            border-radius: 20px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
 
-                            .swiper-button-prev.shorts-button-prev:hover,
-                            .swiper-button-next.shorts-button-next:hover {
-                                background: rgba(102, 126, 234, 0.2);
-                                color: #667eea;
-                                transform: scale(1.1);
-                            }
+        .shorts-slide.shorts-tall {
+            height: 520px;
+            width: 293px !important;
+        }
 
-                            @@media (max-width: 768px) {
-                                .shorts-slide {
-                                    height: 400px;
-                                }
-                                
-                                .swiper-button-prev.shorts-button-prev,
-                                .swiper-button-next.shorts-button-next {
-                                    width: 40px;
-                                    height: 40px;
-                                }
-                                
-                                .swiper-button-prev.shorts-button-prev:after,
-                                .swiper-button-next.shorts-button-next:after {
-                                    font-size: 16px;
-                                }
-                            }
-                            
-                            @@media (max-width: 480px) {
-                                .shorts-slide {
-                                    height: 300px;
-                                }
-                            }
-                            @* Video Shorts END *@
+        .shorts-slide.shorts-short {
+            height: 405px;
+            width: 228px !important;
+        }
+
+        .shorts-container {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            border-radius: 20px;
+            position: relative;
+            filter: brightness(0.65) saturate(0.8);
+            transition: filter 0.4s ease, box-shadow 0.4s ease, transform 0.4s cubic-bezier(.25, .46, .45, .94);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .shorts-slide.swiper-slide-active .shorts-container {
+            filter: brightness(1) saturate(1);
+            box-shadow: 0 20px 60px rgba(255, 71, 87, 0.38), 0 8px 24px rgba(0, 0, 0, 0.55);
+        }
+
+        .shorts-slide:hover .shorts-container {
+            filter: brightness(0.92) saturate(1);
+            box-shadow: 0 16px 50px rgba(255, 71, 87, 0.28), 0 6px 20px rgba(0, 0, 0, 0.5);
+            transform: scale(1.04);
+        }
+
+        .shorts-slide.swiper-slide-active:hover .shorts-container {
+            transform: scale(1.03);
+            box-shadow: 0 24px 70px rgba(255, 71, 87, 0.45), 0 10px 28px rgba(0, 0, 0, 0.6);
+        }
+
+        .shorts-container iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+        }
+
+        .shorts-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 0, 0, 0.9);
+            color: #fff;
+            font-size: 0.62rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 5px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            transform: translateY(-6px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .shorts-slide:hover .shorts-badge {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .swiper-button-prev.shorts-button-prev,
+        .swiper-button-next.shorts-button-next {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            top: 50%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            z-index: 20;
+            transition: all 0.25s ease;
+        }
+
+        .swiper-button-prev.shorts-button-prev:after,
+        .swiper-button-next.shorts-button-next:after {
+            font-size: 17px;
+            font-weight: 900;
+        }
+
+        .swiper-button-prev.shorts-button-prev { left: 16px; }
+        .swiper-button-next.shorts-button-next { right: 16px; }
+
+        .swiper-button-prev.shorts-button-prev:hover,
+        .swiper-button-next.shorts-button-next:hover {
+            background: rgba(255, 71, 87, 0.8);
+            border-color: rgba(255, 71, 87, 0.9);
+            transform: scale(1.12);
+            box-shadow: 0 6px 28px rgba(255, 71, 87, 0.45);
+        }
+
+        .swiper-shorts .swiper-pagination {
+            bottom: 20px !important;
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 0.88rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        @@media (max-width: 900px) {
+            .shorts-slide.shorts-tall { height: 420px; width: 236px !important; }
+            .shorts-slide.shorts-short { height: 338px; width: 190px !important; }
+        }
+
+        @@media (max-width: 600px) {
+            .shorts-slide.shorts-tall { height: 355px; width: 200px !important; }
+            .shorts-slide.shorts-short { height: 280px; width: 157px !important; }
+            .swiper-button-prev.shorts-button-prev,
+            .swiper-button-next.shorts-button-next {
+                width: 40px;
+                height: 40px;
+            }
+            .swiper-button-prev.shorts-button-prev:after,
+            .swiper-button-next.shorts-button-next:after {
+                font-size: 14px;
+            }
+            .swiper-button-prev.shorts-button-prev { left: 6px; }
+            .swiper-button-next.shorts-button-next { right: 6px; }
+        }
+
+        @@media (max-width: 400px) {
+            .shorts-slide.shorts-tall { height: 320px; width: 180px !important; }
+            .shorts-slide.shorts-short { height: 250px; width: 141px !important; }
+            .swiper-shorts { padding: 20px 0 60px; }
+            .shorts-header { margin-bottom: 32px; }
+        }
+        @* Video Shorts END *@
         .icon-square {
             width: 3rem;
             height: 3rem;
@@ -115,6 +220,82 @@
             border-radius: 50%;
             height: 15.625rem;
             max-width: 100%;
+        }
+
+        /* Quote + portrait feature row */
+        .quote-feature .quote-text {
+            font-size: clamp(1.4rem, 3vw, 2.2rem);
+        }
+
+        .quote-feature-img {
+            width: auto;
+            max-width: 100%;
+            max-height: 600px;
+            border-radius: 22px;
+            border: 5px solid #fff;
+            box-shadow: 0 18px 45px rgba(255, 148, 148, 0.3), 0 6px 18px rgba(0, 0, 0, 0.08);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        @@media (min-width: 992px) {
+            .quote-feature-img { max-height: 640px; }
+        }
+
+        /* Social row under the quote */
+        .quote-socials {
+            margin-top: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .quote-socials__label {
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-size: 0.85rem;
+        }
+
+        .quote-socials__links {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2.5rem;
+            flex-wrap: wrap;
+        }
+
+        .quote-socials__links a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #fff;
+            color: #FF9494;
+            font-size: 1.6rem;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, color 0.25s ease;
+        }
+
+        .quote-socials__links a:hover {
+            transform: translateY(-5px) scale(1.08);
+            color: #fff;
+            box-shadow: 0 12px 26px rgba(255, 148, 148, 0.45);
+        }
+
+        .quote-socials__links a.social-yt:hover { background: #FF0000; }
+        .quote-socials__links a.social-ig:hover { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+        .quote-socials__links a.social-fb:hover { background: #1877F2; }
+
+        @@media (max-width: 480px) {
+            .quote-socials__links { gap: 1.5rem; }
+            .quote-socials__links a { width: 50px; height: 50px; font-size: 1.4rem; }
+        }
+
+        .quote-feature-img:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 26px 60px rgba(255, 148, 148, 0.4), 0 10px 24px rgba(0, 0, 0, 0.12);
         }
 
         /* Hero Section Responsive Styles */
@@ -555,166 +736,175 @@
                 <!-- Head Grid Section -->
                 <section id="testimonial">
                     <div class="my-5">
-                        <div class="p-5 text-center bg-alt">
+                        <div class="p-5 bg-alt quote-feature">
                             <div class="container py-5">
-                                <h2 style="font-family: 'Open Sans', sans-serif;font-weight: 700;" class="text-dark">
-                                    @Localizer.GetKey("qt1").Value</h2>
-                                    <img class="profile-img mt-5 w-auto" src="~/img/left-pic444015.png" alt="German Teacher">
-                                    <p class="col-lg-8 mx-auto lead mt-2">
-                                        Suna, Türkiye
-                                    </p>
+                                <div class="row align-items-center g-5">
+                                    <!-- Quote -->
+                                    <div class="col-lg-6 text-center text-lg-start" data-aos="fade-right">
+                                        <i class="fa-solid fa-quote-left fs-1 text-fourth mb-3 d-block"></i>
+                                        <h2 class="quote-text text-dark"
+                                            style="font-family: 'Open Sans', sans-serif; font-weight: 700; line-height: 1.3;">
+                                            @Localizer.GetKey("qt1").Value</h2>
+                                        <p class="lead mt-4 mb-0 fw-semibold text-fourth">Suna, Türkiye</p>
+                                    </div>
+                                    <!-- Portrait -->
+                                    <div class="col-lg-6 text-center" data-aos="fade-left">
+                                        <img class="quote-feature-img img-fluid"
+                                             src="~/img/FirstImageThatGoesForTheIndex.jpeg"
+                                             alt="Suna Koç – Almanca Konuşma Koçu" loading="lazy">
+                                    </div>
                                 </div>
-
-                                <div class="container">
-                                    <div class="row">
-                                        <div class="col-lg-3 col-sm-12 border-end">
-                                            <a href="https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg" target="_blank"
-                                               class="text-dark">
-                                                <img src="~/img/YouTube.svg" alt="techcrunch" style="height:1.875rem;">
-                                            </a>
-                                        </div>
-                                        <div class="col-lg-6 col-sm-12 border-end">
-                                            <a href="https://www.instagram.com/almanca_konus_sprachcoach?igsh=MWMzNzhlcm85Ym05YQ=="
-                                               target="_blank" class="me-2 text-dark">
-                                                <img src="~/img/insta.png" alt="bizinsider" style="height: 6.25rem;">
-                                            </a>
-                                        </div>
-                                        <div class="col-lg-3 col-sm-12">
-                                            <a href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" target="_blank"
-                                               class="me-2 text-dark">
-                                                <img src="~/img/facebook.jpg" alt="techcrunch" class="img-fluid"
-                                                     style="height:1.875rem;">
-                                            </a>
-                                        </div>
+                            </div>
+                            <div class="container">
+                                <div class="quote-socials">
+                                    <span class="quote-socials__label text-fourth fw-semibold">@Localizer.GetKey("FollowUs").Value</span>
+                                    <div class="quote-socials__links">
+                                        <a href="https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg" target="_blank"
+                                           rel="noopener" aria-label="YouTube" class="social-yt">
+                                            <i class="fa-brands fa-youtube"></i>
+                                        </a>
+                                        <a href="https://www.instagram.com/almanca_konus_sprachcoach?igsh=MWMzNzhlcm85Ym05YQ=="
+                                           target="_blank" rel="noopener" aria-label="Instagram" class="social-ig">
+                                            <i class="fa-brands fa-instagram"></i>
+                                        </a>
+                                        <a href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" target="_blank"
+                                           rel="noopener" aria-label="Facebook" class="social-fb">
+                                            <i class="fa-brands fa-facebook"></i>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </section>
                     <!-- YouTube Shorts Swiper Section -->
-                    <section class="youtube-shorts-section py-5 bg-alt">
-                        <div class="container-fluid">
+                    <section class="youtube-shorts-section">
+                        <div class="shorts-header">
+                            <h2>@Localizer.GetKey("ShortsTitle").Value</h2>
+                            <div class="shorts-header-bar"></div>
+                            <p>@Localizer.GetKey("ShortsSubtitle").Value</p>
+                        </div>
+                        <div class="container-fluid px-0">
                             <div class="swiper swiper-shorts">
                                 <div class="swiper-wrapper">
                                     <!-- Short 1 -->
-                                    <div class="swiper-slide shorts-slide">
+                                    <div class="swiper-slide shorts-slide shorts-tall">
                                         <div class="shorts-container">
-                                            <iframe width="100%" height="600"
-                                                    src="https://www.youtube.com/embed/rc2WQ26x3ME" frameborder="0"
+                                            <span class="shorts-badge">Shorts</span>
+                                            <iframe src="https://www.youtube.com/embed/rc2WQ26x3ME"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen style="border-radius: 15px;"></iframe>
+                                                    allowfullscreen></iframe>
                                         </div>
                                     </div>
                                     <!-- Short 2 -->
-                                    <div class="swiper-slide shorts-slide">
+                                    <div class="swiper-slide shorts-slide shorts-short">
                                         <div class="shorts-container">
-                                            <iframe width="100%" height="600"
-                                                    src="https://www.youtube.com/embed/Xr83xGCEA_U" frameborder="0"
+                                            <span class="shorts-badge">Shorts</span>
+                                            <iframe src="https://www.youtube.com/embed/Xr83xGCEA_U"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen style="border-radius: 15px;"></iframe>
+                                                    allowfullscreen></iframe>
                                         </div>
                                     </div>
                                     <!-- Short 3 -->
-                                    <div class="swiper-slide shorts-slide">
+                                    <div class="swiper-slide shorts-slide shorts-tall">
                                         <div class="shorts-container">
-                                            <iframe width="100%" height="600"
-                                                    src="https://www.youtube.com/embed/sTQWle9gtzs" frameborder="0"
+                                            <span class="shorts-badge">Shorts</span>
+                                            <iframe src="https://www.youtube.com/embed/sTQWle9gtzs"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen style="border-radius: 15px;"></iframe>
+                                                    allowfullscreen></iframe>
                                         </div>
                                     </div>
                                     <!-- Short 4 -->
-                                    <div class="swiper-slide shorts-slide">
+                                    <div class="swiper-slide shorts-slide shorts-short">
                                         <div class="shorts-container">
-                                            <iframe width="100%" height="600"
-                                                    src="https://www.youtube.com/embed/8qR-ptz53TU" frameborder="0"
+                                            <span class="shorts-badge">Shorts</span>
+                                            <iframe src="https://www.youtube.com/embed/8qR-ptz53TU"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen style="border-radius: 15px;"></iframe>
+                                                    allowfullscreen></iframe>
                                         </div>
                                     </div>
                                     <!-- Short 5 -->
-                                    <div class="swiper-slide shorts-slide">
+                                    <div class="swiper-slide shorts-slide shorts-tall">
                                         <div class="shorts-container">
-                                            <iframe width="100%" height="600"
-                                                    src="https://www.youtube.com/embed/u4ZOGWZ1uZE" frameborder="0"
+                                            <span class="shorts-badge">Shorts</span>
+                                            <iframe src="https://www.youtube.com/embed/u4ZOGWZ1uZE"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen style="border-radius: 15px;"></iframe>
+                                                    allowfullscreen></iframe>
                                         </div>
                                     </div>
                                     <!-- Short 6 -->
-                                    <div class="swiper-slide shorts-slide">
+                                    <div class="swiper-slide shorts-slide shorts-short">
                                         <div class="shorts-container">
-                                            <iframe width="100%" height="600"
-                                                    src="https://www.youtube.com/embed/wbhst8AgHdo" frameborder="0"
+                                            <span class="shorts-badge">Shorts</span>
+                                            <iframe src="https://www.youtube.com/embed/wbhst8AgHdo"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen style="border-radius: 15px;"></iframe>
+                                                    allowfullscreen></iframe>
                                         </div>
                                     </div>
                                     <!-- Short 7 -->
-                                    <div class="swiper-slide shorts-slide">
+                                    <div class="swiper-slide shorts-slide shorts-tall">
                                         <div class="shorts-container">
-                                            <iframe width="100%" height="600"
-                                                    src="https://www.youtube.com/embed/euc6ko6NYDg" frameborder="0"
+                                            <span class="shorts-badge">Shorts</span>
+                                            <iframe src="https://www.youtube.com/embed/euc6ko6NYDg"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen style="border-radius: 15px;"></iframe>
+                                                    allowfullscreen></iframe>
                                         </div>
                                     </div>
                                     <!-- Short 8 -->
-                                    <div class="swiper-slide shorts-slide">
+                                    <div class="swiper-slide shorts-slide shorts-short">
                                         <div class="shorts-container">
-                                            <iframe width="100%" height="600"
-                                                    src="https://www.youtube.com/embed/E4VymzSDsK4" frameborder="0"
+                                            <span class="shorts-badge">Shorts</span>
+                                            <iframe src="https://www.youtube.com/embed/E4VymzSDsK4"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen style="border-radius: 15px;"></iframe>
+                                                    allowfullscreen></iframe>
                                         </div>
                                     </div>
                                     <!-- Short 9 -->
-                                    <div class="swiper-slide shorts-slide">
+                                    <div class="swiper-slide shorts-slide shorts-tall">
                                         <div class="shorts-container">
-                                            <iframe width="100%" height="600"
-                                                    src="https://www.youtube.com/embed/ZD5mekHCQt8" frameborder="0"
+                                            <span class="shorts-badge">Shorts</span>
+                                            <iframe src="https://www.youtube.com/embed/ZD5mekHCQt8"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen style="border-radius: 15px;"></iframe>
+                                                    allowfullscreen></iframe>
                                         </div>
                                     </div>
                                     <!-- Short 10 -->
-                                    <div class="swiper-slide shorts-slide">
+                                    <div class="swiper-slide shorts-slide shorts-short">
                                         <div class="shorts-container">
-                                            <iframe width="100%" height="600"
-                                                    src="https://www.youtube.com/embed/GSCndE0gpkE" frameborder="0"
+                                            <span class="shorts-badge">Shorts</span>
+                                            <iframe src="https://www.youtube.com/embed/GSCndE0gpkE"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen style="border-radius: 15px;"></iframe>
+                                                    allowfullscreen></iframe>
                                         </div>
                                     </div>
                                     <!-- Short 11 -->
-                                    <div class="swiper-slide shorts-slide">
+                                    <div class="swiper-slide shorts-slide shorts-tall">
                                         <div class="shorts-container">
-                                            <iframe width="100%" height="600"
-                                                    src="https://www.youtube.com/embed/T__UufkqlcE" frameborder="0"
+                                            <span class="shorts-badge">Shorts</span>
+                                            <iframe src="https://www.youtube.com/embed/T__UufkqlcE"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen style="border-radius: 15px;"></iframe>
+                                                    allowfullscreen></iframe>
                                         </div>
                                     </div>
                                     <!-- Short 12 -->
-                                    <div class="swiper-slide shorts-slide">
+                                    <div class="swiper-slide shorts-slide shorts-short">
                                         <div class="shorts-container">
-                                            <iframe width="100%" height="600"
-                                                    src="https://www.youtube.com/embed/dvkT1iu88-Q" frameborder="0"
+                                            <span class="shorts-badge">Shorts</span>
+                                            <iframe src="https://www.youtube.com/embed/dvkT1iu88-Q"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen style="border-radius: 15px;"></iframe>
+                                                    allowfullscreen></iframe>
                                         </div>
                                     </div>
                                     <!-- Short 13 -->
-                                    <div class="swiper-slide shorts-slide">
+                                    <div class="swiper-slide shorts-slide shorts-tall">
                                         <div class="shorts-container">
-                                            <iframe width="100%" height="600"
-                                                    src="https://www.youtube.com/embed/OG7vm0mAbuk" frameborder="0"
+                                            <span class="shorts-badge">Shorts</span>
+                                            <iframe src="https://www.youtube.com/embed/OG7vm0mAbuk"
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen style="border-radius: 15px;"></iframe>
+                                                    allowfullscreen></iframe>
                                         </div>
                                     </div>
                                 </div>
-                                <!-- Navigation buttons -->
+                                <!-- Navigation -->
                                 <div class="swiper-button-prev shorts-button-prev"></div>
                                 <div class="swiper-button-next shorts-button-next"></div>
                                 <div class="swiper-pagination"></div>
@@ -769,32 +959,35 @@
                     </script>
                     <script>
                         document.addEventListener("DOMContentLoaded", function () {
-                            // Initialize Swiper for YouTube Shorts
+                            // Initialize Swiper for YouTube Shorts — masonry stagger layout
                             const shortsSwiper = new Swiper('.swiper-shorts', {
-                                slidesPerView: 3.5,
-                                slidesPerGroupAuto: true,
+                                slidesPerView: 'auto',
+                                spaceBetween: 18,
                                 centeredSlides: true,
-                                centeredSlidesBounds: true,
-                                normalizeSlideIndex: false,
+                                slideToClickedSlide: true,
                                 loop: true,
-                                effect: "coverflow",
-                                freeMode: {
-                                    enabled: true
+                                watchOverflow: true,
+                                speed: 650,
+                                grabCursor: true,
+                                breakpoints: {
+                                    320: { spaceBetween: 10 },
+                                    600: { spaceBetween: 14 },
+                                    900: { spaceBetween: 18 }
                                 },
                                 navigation: {
                                     nextEl: ".shorts-button-next",
-                                    prevEl: ".shorts-button-prev",
-                                    hideOnClick: true
+                                    prevEl: ".shorts-button-prev"
                                 },
                                 pagination: {
-                                    el: ".swiper-pagination",
-                                    type: "fraction",
-                                    hideOnClick: true
+                                    el: ".swiper-shorts .swiper-pagination",
+                                    type: "fraction"
                                 },
                                 autoplay: {
-                                    pauseOnMouseEnter: true
+                                    delay: 4500,
+                                    pauseOnMouseEnter: true,
+                                    disableOnInteraction: false
                                 },
-                                keyboard: true
+                                keyboard: { enabled: true }
                             });
 
                             // Initialize Swiper for each advanced blog card media container.

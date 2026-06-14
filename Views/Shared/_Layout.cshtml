@@ -9,6 +9,13 @@
 <html lang="@System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName">
 
 <head>
+  <!-- Theme (dark/light) — applied before paint to avoid a flash of the wrong theme -->
+  <script>
+    (function () {
+      var t = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-bs-theme', t);
+    })();
+  </script>
   <!-- Basic Meta Tags -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -125,6 +132,8 @@
   <!-- Site-specific CSS -->
   <link rel="stylesheet" href="~/css/universe.css" />
   <link rel="stylesheet" href="~/css/site.css" />
+  <!-- Dark mode (must load last so it overrides the above) -->
+  <link rel="stylesheet" href="~/css/dark-mode.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -295,9 +304,14 @@
     string? SeviyeniziÖlçün = _localization.GetKey("SeviyeniziÖlçün").Value;
     string? Fallbeispiele = _localization.GetKey("Fallbeispiele").Value;
     string? Praxis = _localization.GetKey("Praxis").Value;
+    string? KlinikAlmanca = _localization.GetKey("KlinikAlmanca").Value;
+    string? FuerAerzte = _localization.GetKey("FuerAerzte").Value;
+    string? FuerPflege = _localization.GetKey("FuerPflege").Value;
+    string? ToolsGroup = _localization.GetKey("ToolsGroup").Value;
     string? Login = _localization.GetKey("Login").Value;
     string? Logo = _localization.GetKey("Logo").Value;
     string? Copyright = _localization.GetKey("Copyright").Value;
+    string? ThemeToggle = _localization.GetKey("ThemeToggle").Value;
     string? FollowUs = _localization.GetKey("FollowUs").Value;
     string? ContactUs = _localization.GetKey("ContactUs").Value;
     string? FooterDescription = _localization.GetKey("FooterDescription").Value;
@@ -313,6 +327,9 @@
     string? aboutPath = isGerman ? "/ueber-uns" : "/hakkimizda";
     string? wordsPath = isGerman ? "/woerterbuch" : "/sozluk";
     string? privacyPath = isGerman ? "/datenschutz" : "/gizlilik";
+    string? doctorsPath = isGerman ? "/aerztedeutsch" : "/hekim-almancasi";
+    string? nursesPath = isGerman ? "/pflegedeutsch" : "/hemsirelik-almancasi";
+    bool isClinical = currentController == "Home" && (currentAction == "DoctorsGerman" || currentAction == "NursesGerman");
   }
   <header class="sticky-top">
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
@@ -331,6 +348,53 @@
                   .navbar-toggler:hover {
                     transform: translateY(-2px);
                     box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6) !important;
+                  }
+                  /* ---- Klinik Almanca mega-menu (desktop) ---- */
+                  .klinik-megamenu__panel {
+                    border: none;
+                    border-radius: 16px;
+                    box-shadow: 0 18px 50px rgba(0,0,0,.16);
+                    padding: 18px;
+                    margin-top: 8px;
+                  }
+                  .klinik-megamenu__grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, minmax(180px, 1fr));
+                    gap: 10px 22px;
+                  }
+                  .klinik-megamenu__col { display: flex; flex-direction: column; }
+                  .klinik-megamenu__col--tools { border-left: 1px solid rgba(0,0,0,.08); padding-left: 18px; }
+                  .klinik-megamenu__head {
+                    font-weight: 800;
+                    color: #FF9494;
+                    text-decoration: none;
+                    padding: 6px 8px;
+                    margin-bottom: 4px;
+                    border-bottom: 2px solid #FFE3E1;
+                  }
+                  .klinik-megamenu__head:hover { color: #ff7b7b; }
+                  .klinik-megamenu__panel .dropdown-item {
+                    border-radius: 8px;
+                    padding: 7px 10px;
+                    font-size: .93rem;
+                  }
+                  .klinik-megamenu__panel .dropdown-item:hover { background: #FFF1F1; color: #FF9494; }
+                  /* Hover-open on desktop (lg+) */
+                  @@media (min-width: 992px) {
+                    .klinik-megamenu:hover > .klinik-megamenu__panel { display: block; }
+                    .klinik-megamenu__panel { min-width: 620px; }
+                  }
+                  /* ---- Klinik Almanca collapse (offcanvas/mobile) ---- */
+                  .klinik-collapse { padding: 6px 0 6px 8px; }
+                  .klinik-collapse__group { margin-bottom: 10px; }
+                  .klinik-collapse__head {
+                    display: block;
+                    font-weight: 800;
+                    color: #FF9494;
+                    text-decoration: none;
+                    padding: 6px 8px;
+                    border-bottom: 2px solid #FFE3E1;
+                    margin-bottom: 2px;
                   }
         </style>
         <!-- Standard Navbar (visible on large screens) -->
@@ -355,24 +419,38 @@
                 <i class="fa-solid fa-blog me-1"></i> @Blog
               </a>
             </li>
-            <li class="nav-item dropdown">
-              <a class="nav-link @(currentController == "Home" && currentAction == "Words" ? "active" : "")"
-                 href="@wordsPath" id="dictionaryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fa-solid fa-book me-1"></i> @Praxis
+            <li class="nav-item dropdown klinik-megamenu">
+              <a class="nav-link @(isClinical ? "active" : "")"
+                 href="@doctorsPath" id="klinikDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fa-solid fa-staff-snake me-1"></i> @KlinikAlmanca
               </a>
-              <ul class="dropdown-menu rounded" aria-labelledby="dictionaryDropdown">
-                <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Index"><i
-                  class="fa-solid fa-stethoscope me-2 text-fourth"></i>@FSP</a></li>
-                  <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Index"><i
-                    class="fa-solid fa-book-medical me-2 text-fourth"></i>@Fallbeispiele</a></li>
-                    <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Index"><i
-                      class="fa-solid fa-envelope-open me-2 text-fourth"></i>@Arztbrief</a></li>
-                      <li><a class="dropdown-item px-3 py-2" asp-controller="Account" asp-action="Quizzes"><i
-                        class="fa-solid fa-chart-line me-2 text-fourth"></i>@SeviyeniziÖlçün</a></li>
-                        <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Words"><i
-                          class="fa-solid fa-spell-check me-2 text-fourth"></i>@Sözlük</a></li>
-                        </ul>
-                      </li>
+              <div class="dropdown-menu rounded klinik-megamenu__panel" aria-labelledby="klinikDropdown">
+                <div class="klinik-megamenu__grid">
+                  <div class="klinik-megamenu__col">
+                    <a class="klinik-megamenu__head" href="@doctorsPath"><i class="fa-solid fa-user-doctor me-2"></i>@FuerAerzte</a>
+                    <a class="dropdown-item" href="@(doctorsPath)#anamnese">Anamnese</a>
+                    <a class="dropdown-item" href="@(doctorsPath)#patientenvorstellung">Patientenvorstellung</a>
+                    <a class="dropdown-item" href="@(doctorsPath)#arztbrief">Arztbrief</a>
+                    <a class="dropdown-item" href="@(doctorsPath)#kommunikation">Klinische Kommunikation</a>
+                    <a class="dropdown-item" href="@(doctorsPath)#redemittel">Redemittel</a>
+                    <a class="dropdown-item" href="@(doctorsPath)#abkuerzungen">Abkürzungen</a>
+                  </div>
+                  <div class="klinik-megamenu__col">
+                    <a class="klinik-megamenu__head" href="@nursesPath"><i class="fa-solid fa-user-nurse me-2"></i>@FuerPflege</a>
+                    <a class="dropdown-item" href="@(nursesPath)#pflegekommunikation">Pflegekommunikation</a>
+                    <a class="dropdown-item" href="@(nursesPath)#patientenuebergabe">Patientenübergabe</a>
+                    <a class="dropdown-item" href="@(nursesPath)#pflegedokumentation">Pflegedokumentation</a>
+                    <a class="dropdown-item" href="@(nursesPath)#redemittel">Redemittel</a>
+                    <a class="dropdown-item" href="@(nursesPath)#abkuerzungen">Abkürzungen</a>
+                  </div>
+                  <div class="klinik-megamenu__col klinik-megamenu__col--tools">
+                    <span class="klinik-megamenu__head"><i class="fa-solid fa-toolbox me-2"></i>@ToolsGroup</span>
+                    <a class="dropdown-item" href="@wordsPath"><i class="fa-solid fa-spell-check me-2 text-fourth"></i>@Sözlük</a>
+                    <a class="dropdown-item" asp-controller="Account" asp-action="Quizzes"><i class="fa-solid fa-chart-line me-2 text-fourth"></i>@SeviyeniziÖlçün</a>
+                  </div>
+                </div>
+              </div>
+            </li>
                       <li class="nav-item">
                         <a class="nav-link" href="@(aboutPath)#contact-form">
                           <i class="fa-solid fa-envelope me-1"></i> @ContactUs
@@ -481,25 +559,36 @@
                         <i class="fa-solid fa-blog me-1"></i> @Blog
                       </a>
                     </li>
-                    <li class="nav-item dropdown">
-                      <a class="nav-link dropdown-toggle @(currentController == "Home" && currentAction == "Words" || currentController=="Account" && currentAction == "Quizzes" ? "active" : "")"
-                         href="@wordsPath" id="dictionaryDropdownMobile" role="button" data-bs-toggle="dropdown"
-                         aria-expanded="false">
-                        <i class="fa-solid fa-book me-1"></i> @Praxis
+                    <li class="nav-item">
+                      <a class="nav-link dropdown-toggle @(isClinical ? "active" : "")" data-bs-toggle="collapse"
+                         href="#klinikCollapse" role="button" aria-expanded="false" aria-controls="klinikCollapse">
+                        <i class="fa-solid fa-staff-snake me-1"></i> @KlinikAlmanca
                       </a>
-                      <ul class="dropdown-menu rounded w-100" aria-labelledby="dictionaryDropdownMobile" style="min-width: auto;">
-                        <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Index"><i
-                          class="fa-solid fa-stethoscope me-2 text-fourth"></i>@FSP</a></li>
-                          <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Index"><i
-                            class="fa-solid fa-book-medical me-2 text-fourth"></i>@Fallbeispiele</a></li>
-                            <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Index"><i
-                              class="fa-solid fa-envelope-open me-2 text-fourth"></i>@Arztbrief</a></li>
-                              <li><a class="dropdown-item px-3 py-2" asp-controller="Account" asp-action="Quizzes"><i
-                                class="fa-solid fa-chart-line me-2 text-fourth"></i>@SeviyeniziÖlçün</a></li>
-                                <li><a class="dropdown-item px-3 py-2" asp-controller="Home" asp-action="Words"><i
-                                  class="fa-solid fa-spell-check me-2 text-fourth"></i>@Sözlük</a></li>
-                                </ul>
-                              </li>
+                      <div class="collapse klinik-collapse" id="klinikCollapse">
+                        <div class="klinik-collapse__group">
+                          <a class="klinik-collapse__head" href="@doctorsPath"><i class="fa-solid fa-user-doctor me-2"></i>@FuerAerzte</a>
+                          <a class="dropdown-item" href="@(doctorsPath)#anamnese">Anamnese</a>
+                          <a class="dropdown-item" href="@(doctorsPath)#patientenvorstellung">Patientenvorstellung</a>
+                          <a class="dropdown-item" href="@(doctorsPath)#arztbrief">Arztbrief</a>
+                          <a class="dropdown-item" href="@(doctorsPath)#kommunikation">Klinische Kommunikation</a>
+                          <a class="dropdown-item" href="@(doctorsPath)#redemittel">Redemittel</a>
+                          <a class="dropdown-item" href="@(doctorsPath)#abkuerzungen">Abkürzungen</a>
+                        </div>
+                        <div class="klinik-collapse__group">
+                          <a class="klinik-collapse__head" href="@nursesPath"><i class="fa-solid fa-user-nurse me-2"></i>@FuerPflege</a>
+                          <a class="dropdown-item" href="@(nursesPath)#pflegekommunikation">Pflegekommunikation</a>
+                          <a class="dropdown-item" href="@(nursesPath)#patientenuebergabe">Patientenübergabe</a>
+                          <a class="dropdown-item" href="@(nursesPath)#pflegedokumentation">Pflegedokumentation</a>
+                          <a class="dropdown-item" href="@(nursesPath)#redemittel">Redemittel</a>
+                          <a class="dropdown-item" href="@(nursesPath)#abkuerzungen">Abkürzungen</a>
+                        </div>
+                        <div class="klinik-collapse__group">
+                          <span class="klinik-collapse__head"><i class="fa-solid fa-toolbox me-2"></i>@ToolsGroup</span>
+                          <a class="dropdown-item" href="@wordsPath"><i class="fa-solid fa-spell-check me-2 text-fourth"></i>@Sözlük</a>
+                          <a class="dropdown-item" asp-controller="Account" asp-action="Quizzes"><i class="fa-solid fa-chart-line me-2 text-fourth"></i>@SeviyeniziÖlçün</a>
+                        </div>
+                      </div>
+                    </li>
                               <li class="nav-item">
                                 <a class="nav-link" href="@(aboutPath)#contact-form">
                                   <i class="fa-solid fa-envelope me-1"></i> @ContactUs
@@ -542,6 +631,25 @@
                             }
                             <div class="dropdown w-100">
                               @await Component.InvokeAsync("LanguageSelector")
+                            </div>
+                            <div class="d-flex align-items-center gap-2 mt-4">
+                              <div class="toggleWrapper">
+                                <input class="input js-theme-toggle" id="dn-offcanvas" type="checkbox" aria-label="@ThemeToggle" />
+                                <label class="toggle" for="dn-offcanvas" title="@ThemeToggle">
+                                  <span class="toggle__handler">
+                                    <span class="crater crater--1"></span>
+                                    <span class="crater crater--2"></span>
+                                    <span class="crater crater--3"></span>
+                                  </span>
+                                  <span class="star star--1"></span>
+                                  <span class="star star--2"></span>
+                                  <span class="star star--3"></span>
+                                  <span class="star star--4"></span>
+                                  <span class="star star--5"></span>
+                                  <span class="star star--6"></span>
+                                </label>
+                              </div>
+                              <span class="theme-toggle-label">@ThemeToggle</span>
                             </div>
                           </div>
                         </div>
@@ -645,6 +753,24 @@
                               </ul>
                             </div>
                           </div>
+                          <div class="d-none d-md-flex justify-content-center mb-3">
+                            <div class="toggleWrapper theme-toggle-row">
+                              <input class="input js-theme-toggle" id="dn-footer" type="checkbox" aria-label="@ThemeToggle" />
+                              <label class="toggle" for="dn-footer" title="@ThemeToggle">
+                                <span class="toggle__handler">
+                                  <span class="crater crater--1"></span>
+                                  <span class="crater crater--2"></span>
+                                  <span class="crater crater--3"></span>
+                                </span>
+                                <span class="star star--1"></span>
+                                <span class="star star--2"></span>
+                                <span class="star star--3"></span>
+                                <span class="star star--4"></span>
+                                <span class="star star--5"></span>
+                                <span class="star star--6"></span>
+                              </label>
+                            </div>
+                          </div>
                           <div class="text-center varela-round-regular text-muted">
                             @Copyright
                           </div>
@@ -655,6 +781,29 @@
 
                       <!-- 2. Bootstrap Bundle (uses jQuery) -->
                       <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+                      <!-- Dark/light theme toggle (footer + off-canvas, kept in sync, persisted) -->
+                      <script>
+                        (function () {
+                          var toggles = document.querySelectorAll('.js-theme-toggle');
+                          function current() { return document.documentElement.getAttribute('data-bs-theme') || 'light'; }
+                          function sync() {
+                            var isDark = current() === 'dark';
+                            toggles.forEach(function (t) { t.checked = isDark; });
+                          }
+                          function apply(theme) {
+                            document.documentElement.setAttribute('data-bs-theme', theme);
+                            try { localStorage.setItem('theme', theme); } catch (e) {}
+                            sync();
+                          }
+                          sync();
+                          toggles.forEach(function (t) {
+                            t.addEventListener('change', function () {
+                              apply(this.checked ? 'dark' : 'light');
+                            });
+                          });
+                        })();
+                      </script>
 
                       <!-- 3. DataTables Core (requires jQuery) -->
                       <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>

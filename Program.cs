@@ -484,6 +484,28 @@ app.MapControllerRoute(
     pattern: "datenschutz",
     defaults: new { controller = "Home", action = "Privacy" });
 
+// Localized Clinical German – Doctors Routes
+app.MapControllerRoute(
+    name: "doctors-tr",
+    pattern: "hekim-almancasi",
+    defaults: new { controller = "Home", action = "DoctorsGerman" });
+
+app.MapControllerRoute(
+    name: "doctors-de",
+    pattern: "aerztedeutsch",
+    defaults: new { controller = "Home", action = "DoctorsGerman" });
+
+// Localized Clinical German – Nurses Routes
+app.MapControllerRoute(
+    name: "nurses-tr",
+    pattern: "hemsirelik-almancasi",
+    defaults: new { controller = "Home", action = "NursesGerman" });
+
+app.MapControllerRoute(
+    name: "nurses-de",
+    pattern: "pflegedeutsch",
+    defaults: new { controller = "Home", action = "NursesGerman" });
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

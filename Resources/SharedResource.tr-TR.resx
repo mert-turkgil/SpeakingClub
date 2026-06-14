@@ -658,4 +658,25 @@
   <data name="Attachments" xml:space="preserve">
     <value>Ekler</value>
   </data>
+  <data name="ThemeToggle" xml:space="preserve">
+    <value>Karanlık/Aydınlık tema</value>
+  </data>
+  <data name="ShortsTitle" xml:space="preserve">
+    <value>YouTube Shorts</value>
+  </data>
+  <data name="ShortsSubtitle" xml:space="preserve">
+    <value>Kısa ve etkili Almanca dersleri</value>
+  </data>
+  <data name="KlinikAlmanca" xml:space="preserve">
+    <value>Klinik Almanca</value>
+  </data>
+  <data name="FuerAerzte" xml:space="preserve">
+    <value>Hekimler İçin</value>
+  </data>
+  <data name="FuerPflege" xml:space="preserve">
+    <value>Hemşireler İçin</value>
+  </data>
+  <data name="ToolsGroup" xml:space="preserve">
+    <value>Araçlar</value>
+  </data>
 </root>

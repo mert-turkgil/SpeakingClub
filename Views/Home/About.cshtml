@@ -31,6 +31,19 @@
             opacity: 0.1;
         }
         
+        /* Hero portrait */
+        .about-hero-img {
+            max-height: 420px;
+            width: auto;
+            border-radius: 24px;
+            object-fit: cover;
+            box-shadow: 0 18px 45px rgba(255, 148, 148, 0.35), 0 8px 20px rgba(0, 0, 0, 0.12);
+            border: 5px solid #fff;
+        }
+        @@media (max-width: 575px) {
+            .about-hero-img { max-height: 320px; }
+        }
+
         /* About Section */
         .about-section {
             background: white;
@@ -154,7 +167,7 @@
         <h2 class="lead animate__animated animate__fadeInUp text-muted mb-4">
             @Model.HeroSection.Subtitle
         </h2>
-        <img src="~/img/about-group317216.png" alt="@Model.HeroSection.ImageAlt" class="img-fluid me-5" style="max-height: 350px;" data-aos="zoom-in">
+        <img src="~/img/SecondImageGoesForAboutMe.jpeg" alt="@Model.HeroSection.ImageAlt" class="img-fluid about-hero-img" data-aos="zoom-in">
     </div>
 </section>
 

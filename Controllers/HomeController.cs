@@ -251,6 +251,60 @@ namespace SpeakingClub.Controllers
         }
         #endregion
 
+        #region Klinik Almanca - Hekimler / Ärzte
+        [HttpGet("hekim-almancasi")]
+        [HttpGet("aerztedeutsch")]
+        public IActionResult DoctorsGerman()
+        {
+            if (IsGerman())
+            {
+                SetSeoData(
+                    "Deutsch für Ärzte – FSP, Anamnese, Arztbrief | Almanca Konuş",
+                    "Klinisches Deutsch für Ärztinnen und Ärzte: FSP-Vorbereitung, Anamnese, Patientenvorstellung, Arztbrief, klinische Kommunikation, Redemittel und medizinische Abkürzungen – mit echten Beispieldialogen.",
+                    "Deutsch für Ärzte, FSP, Fachsprachprüfung, Anamnese, Arztbrief, Patientenvorstellung, klinische Kommunikation, medizinische Abkürzungen, Redemittel",
+                    "/aerztedeutsch");
+            }
+            else
+            {
+                SetSeoData(
+                    "Hekimler için Klinik Almanca – FSP, Anamnez, Arztbrief | Almanca Konuş",
+                    "Doktorlar için klinik Almanca: FSP hazırlığı, anamnez, hasta sunumu (Patientenvorstellung), Arztbrief, klinik iletişim, kalıp ifadeler ve tıbbi kısaltmalar – gerçek örnek diyaloglarla.",
+                    "hekimler için almanca, FSP, Fachsprachprüfung, anamnez, Arztbrief, hasta sunumu, klinik iletişim, tıbbi kısaltmalar, Redemittel",
+                    "/hekim-almancasi");
+            }
+            ViewData["HreflangTr"] = "https://almanca-konus.com/hekim-almancasi";
+            ViewData["HreflangDe"] = "https://almanca-konus.com/aerztedeutsch";
+            return View();
+        }
+        #endregion
+
+        #region Klinik Almanca - Hemşireler / Pflegekräfte
+        [HttpGet("hemsirelik-almancasi")]
+        [HttpGet("pflegedeutsch")]
+        public IActionResult NursesGerman()
+        {
+            if (IsGerman())
+            {
+                SetSeoData(
+                    "Pflegedeutsch – Übergabe, Kommunikation, Dokumentation | Almanca Konuş",
+                    "Deutsch für Pflegekräfte: Pflegekommunikation, Patientenübergabe, Pflegedokumentation, Redemittel und medizinische Abkürzungen – mit praxisnahen Beispieldialogen aus dem Klinikalltag.",
+                    "Pflegedeutsch, Deutsch für Pflegekräfte, Patientenübergabe, Pflegekommunikation, Pflegedokumentation, medizinische Abkürzungen, Redemittel für Pflegekräfte",
+                    "/pflegedeutsch");
+            }
+            else
+            {
+                SetSeoData(
+                    "Hemşirelik Almancası – Hasta Devri, İletişim, Dokümantasyon | Almanca Konuş",
+                    "Hemşireler için Almanca: hasta ile iletişim (Pflegekommunikation), hasta devri (Patientenübergabe), dokümantasyon, kalıp ifadeler ve tıbbi kısaltmalar – klinik günlük yaşamdan örnek diyaloglarla.",
+                    "hemşirelik almancası, hemşireler için almanca, hasta devri, Pflegekommunikation, Pflegedokumentation, tıbbi kısaltmalar, Redemittel",
+                    "/hemsirelik-almancasi");
+            }
+            ViewData["HreflangTr"] = "https://almanca-konus.com/hemsirelik-almancasi";
+            ViewData["HreflangDe"] = "https://almanca-konus.com/pflegedeutsch";
+            return View();
+        }
+        #endregion
+
         #region Hakkında
         [HttpGet("about")]
         [HttpGet("hakkimizda")]

@@ -1,0 +1,494 @@
+@{
+    Layout = "_Layout";
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+}
+@section Css {
+    <link rel="stylesheet" href="~/css/clinical.css" />
+    <link rel="stylesheet" href="https://unpkg.com/aos@@2.3.4/dist/aos.css" />
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "LearningResource",
+      "name": "@T("Hemşirelik Almancası", "Pflegedeutsch")",
+      "description": "@T("Hemşireler için klinik Almanca: hasta ile iletişim, hasta devri, dokümantasyon, kalıp ifadeler ve tıbbi kısaltmalar.", "Deutsch für Pflegekräfte: Pflegekommunikation, Patientenübergabe, Dokumentation, Redemittel und medizinische Abkürzungen.")",
+      "inLanguage": "de",
+      "learningResourceType": "Sprachkurs / Beispieldialoge",
+      "educationalLevel": "B1-B2",
+      "audience": { "@@type": "EducationalAudience", "educationalRole": "@T("Hemşireler", "Pflegekräfte")" },
+      "provider": { "@@type": "Organization", "name": "Almanca Konuş", "url": "https://almanca-konus.com" },
+      "url": "https://almanca-konus.com@(isGerman ? "/pflegedeutsch" : "/hemsirelik-almancasi")"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@@type": "ListItem", "position": 1, "name": "@T("Ana Sayfa", "Startseite")", "item": "https://almanca-konus.com/" },
+        { "@@type": "ListItem", "position": 2, "name": "@T("Hemşirelik Almancası", "Pflegedeutsch")", "item": "https://almanca-konus.com@(isGerman ? "/pflegedeutsch" : "/hemsirelik-almancasi")" }
+      ]
+    }
+    </script>
+}
+
+<div class="clinical-page">
+    <!-- Hero -->
+    <header class="clinical-hero">
+        <div class="container">
+            <span class="clinical-eyebrow"><i class="fa-solid fa-user-nurse me-1"></i>@T("Klinik Almanca", "Klinisches Deutsch")</span>
+            <h1>@T("Hemşirelik Almancası", "Pflegedeutsch")</h1>
+            <p class="lead">
+                @T("Almanya'da hemşire olarak çalışmak yalnızca tıbbi bilgi değil, etkili iletişim de gerektirir. Bu sayfada klinik ve bakım ortamlarında sık karşılaşılan iletişim durumlarına yönelik gerçek örnek diyaloglar, kullanışlı kalıplar ve tıbbi kısaltmalar bulabilirsiniz.",
+                       "Als Pflegekraft in Deutschland zu arbeiten erfordert nicht nur Fachwissen, sondern auch wirksame Kommunikation. Auf dieser Seite finden Sie praxisnahe Beispieldialoge, nützliche Redemittel und medizinische Abkürzungen aus dem Klinik- und Pflegealltag.")
+            </p>
+        </div>
+    </header>
+
+    <!-- Section nav -->
+    <nav class="clinical-nav" aria-label="@T("Bölümler", "Abschnitte")">
+        <div class="container">
+            <div class="clinical-nav__scroll">
+                <a href="#pflegekommunikation">@T("Hasta ile İletişim", "Pflegekommunikation")</a>
+                <a href="#patientenuebergabe">@T("Hasta Devri", "Patientenübergabe")</a>
+                <a href="#pflegedokumentation">@T("Dokümantasyon", "Pflegedokumentation")</a>
+                <a href="#redemittel">@T("Kalıp İfadeler", "Redemittel")</a>
+                <a href="#abkuerzungen">@T("Kısaltmalar", "Abkürzungen")</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- ===================== PFLEGEKOMMUNIKATION ===================== -->
+        <section id="pflegekommunikation" class="clinical-section" data-aos="fade-up">
+            <div class="clinical-section__head">
+                <span class="clinical-section__icon"><i class="fa-solid fa-comments"></i></span>
+                <div>
+                    <h2>@T("Hasta ile İletişim", "Pflegekommunikation")</h2>
+                    <p>@T("Temel bakım, ölçümler, ilaç uygulamaları ve hasta bilgilendirmesi", "Grundpflege, Messungen, Medikamentengabe und Patienteninformation")</p>
+                </div>
+            </div>
+            <p class="clinical-section__intro">
+                @T("Hasta ile iletişim yalnızca soru sormaktan ibaret değildir; bakım uygulamalarını açıklayabilmek, hastanın endişelerini anlayabilmek ve uygun ifadeleri kullanabilmek de önemlidir.",
+                   "Kommunikation mit Patienten bedeutet mehr als Fragen zu stellen: Pflegemaßnahmen erklären, Sorgen verstehen und passende Formulierungen verwenden.")
+            </p>
+
+            <!-- 1. Grundpflege -->
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-hands-bubbles"></i>1. Grundpflege @T("(Temel bakım)", "")</div>
+                <div class="scenario-card__situation">Situation: Die Pflegekraft unterstützt eine Patientin bei der morgendlichen Körperpflege.</div>
+                <div class="dialogue">
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Guten Morgen, Frau Meier. Haben Sie gut geschlafen?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patientin</div><div class="dialogue__line">Ja, ganz gut, danke.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Schön. Möchten Sie sich jetzt waschen und frisch machen?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patientin</div><div class="dialogue__line">Ja, gerne.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Gut. Ich helfe Ihnen dabei. Können Sie sich selbst waschen oder benötigen Sie Unterstützung?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patientin</div><div class="dialogue__line">Beim Oberkörper schaffe ich es noch selbst, aber beim Rücken brauche ich Hilfe.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Kein Problem. Dann unterstützen wir Sie dort, wo Sie Hilfe benötigen.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Ist das Wasser angenehm für Sie?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patientin</div><div class="dialogue__line">Ja, die Temperatur passt.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Sehr gut. Wenn Ihnen schwindelig wird oder Sie Schmerzen haben, sagen Sie mir bitte sofort Bescheid.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Möchten Sie anschließend frische Kleidung anziehen?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patientin</div><div class="dialogue__line">Ja, bitte.</div></div>
+                </div>
+                <div class="phrase-box mt-3">
+                    <h3><i class="fa-solid fa-quote-right"></i>Nützliche Formulierungen</h3>
+                    <ul>
+                        <li>Haben Sie gut geschlafen?</li>
+                        <li>Möchten Sie sich waschen?</li>
+                        <li>Benötigen Sie Unterstützung?</li>
+                        <li>Ich helfe Ihnen dabei.</li>
+                        <li>Ist das Wasser angenehm für Sie?</li>
+                        <li>Bitte sagen Sie mir Bescheid, wenn …</li>
+                        <li>Möchten Sie frische Kleidung anziehen?</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 2. Blutdruck und Vitalzeichenkontrolle -->
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-heart-pulse"></i>2. Blutdruck und Vitalzeichenkontrolle</div>
+                <div class="scenario-card__situation">Situation: Die Pflegekraft misst Blutdruck, Puls und Sauerstoffsättigung.</div>
+                <div class="dialogue">
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Guten Morgen, Herr Meier. Ich möchte jetzt Ihre Vitalwerte kontrollieren.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Guten Morgen.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Ich werde zuerst Ihren Blutdruck messen. Bitte setzen Sie sich bequem hin und entspannen Sie den Arm.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">In Ordnung.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Bitte sprechen Sie während der Messung möglichst nicht.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__stage">(nach der Messung)</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Gut, das hat geklappt. Jetzt messe ich noch Ihren Puls.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Anschließend bekommen Sie noch den Sauerstoffsensor an den Finger.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Wofür ist das?</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Damit messen wir die Sauerstoffsättigung im Blut. Das dauert nur wenige Sekunden.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Vielen Dank. Die Werte sehen im Moment unauffällig aus. Haben Sie aktuell Beschwerden wie Schwindel, Atemnot oder Schmerzen?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Nein, im Moment geht es mir gut.</div></div>
+                </div>
+                <div class="phrase-box mt-3">
+                    <h3><i class="fa-solid fa-quote-right"></i>Nützliche Formulierungen</h3>
+                    <ul>
+                        <li>Ich möchte Ihre Vitalwerte kontrollieren.</li>
+                        <li>Ich messe jetzt Ihren Blutdruck.</li>
+                        <li>Bitte entspannen Sie den Arm.</li>
+                        <li>Bitte sprechen Sie während der Messung nicht.</li>
+                        <li>Ich lege Ihnen den Sauerstoffsensor an den Finger.</li>
+                        <li>Die Werte sind unauffällig.</li>
+                        <li>Haben Sie aktuell Beschwerden?</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 3. Medikamentengabe -->
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-pills"></i>3. Medikamentengabe @T("(İlaç uygulamaları)", "")</div>
+                <div class="scenario-card__situation">Situation: Die Pflegekraft bringt dem Patienten die verordneten Medikamente.</div>
+                <div class="dialogue">
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Guten Morgen, Herr Meier. Ich bringe Ihnen jetzt Ihre Medikamente.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Guten Morgen.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Haben Sie die Medikamente heute schon eingenommen?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Nein, noch nicht.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Gut. Hier sind Ihre Tabletten für den Morgen.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Wofür sind diese Medikamente?</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Die weiße Tablette ist für den Blutdruck. Die andere dient zur Blutverdünnung.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Muss ich die Medikamente vor oder nach dem Frühstück einnehmen?</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Diese Medikamente können Sie nach dem Frühstück einnehmen.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Haben Sie Schwierigkeiten beim Schlucken von Tabletten?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Nein.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Gut. Hier ist ein Glas Wasser für Sie. Bitte informieren Sie uns, falls nach der Einnahme Beschwerden auftreten sollten.</div></div>
+                </div>
+                <div class="phrase-box mt-3">
+                    <h3><i class="fa-solid fa-quote-right"></i>Nützliche Formulierungen</h3>
+                    <ul>
+                        <li>Ich bringe Ihnen jetzt Ihre Medikamente.</li>
+                        <li>Haben Sie die Medikamente bereits eingenommen?</li>
+                        <li>Diese Tablette ist für …</li>
+                        <li>Bitte nehmen Sie die Medikamente mit ausreichend Wasser ein.</li>
+                        <li>Haben Sie Schwierigkeiten beim Schlucken?</li>
+                        <li>Bitte informieren Sie uns, falls Beschwerden auftreten.</li>
+                        <li>Die Medikamente wurden vom Arzt verordnet.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 4. Patientenaufklärung -->
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-circle-info"></i>4. Patientenaufklärung @T("(Hastayı Bilgilendirme)", "")</div>
+                <div class="scenario-card__situation">Situation: Die Pflegekraft informiert einen Patienten über eine bevorstehende Blutabnahme.</div>
+                <div class="dialogue">
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Guten Morgen, Herr Meier. Ich möchte Sie kurz über die geplante Blutabnahme informieren.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Guten Morgen. Wann wird die Blutabnahme durchgeführt?</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Die Blutabnahme findet heute Vormittag statt.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Muss ich dafür etwas beachten?</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Nein, in Ihrem Fall sind keine besonderen Vorbereitungen erforderlich.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Wofür wird das Blut untersucht?</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Der Arzt hat verschiedene Laboruntersuchungen angeordnet. Unter anderem werden die Entzündungswerte und einige weitere Blutwerte kontrolliert.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Tut die Blutabnahme weh?</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Sie werden einen kurzen Einstich spüren. Die Untersuchung dauert normalerweise nur wenige Minuten.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Bitte melden Sie sich jederzeit, falls Sie weitere Fragen haben.</div></div>
+                </div>
+                <div class="phrase-box mt-3">
+                    <h3><i class="fa-solid fa-quote-right"></i>Nützliche Formulierungen</h3>
+                    <ul>
+                        <li>Ich möchte Sie kurz informieren.</li>
+                        <li>Für die Untersuchung sind keine besonderen Vorbereitungen erforderlich.</li>
+                        <li>Die Untersuchung findet heute statt.</li>
+                        <li>Der Arzt hat die Untersuchung angeordnet.</li>
+                        <li>Die Untersuchung dauert nur wenige Minuten.</li>
+                        <li>Bitte melden Sie sich, falls Sie weitere Fragen haben.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 5. OP-Vorbereitung -->
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-bed-pulse"></i>5. Untersuchungs- und Operationsvorbereitung @T("(Ameliyat ve Tetkik Hazırlığı)", "")</div>
+                <div class="scenario-card__situation">Situation: Die Pflegekraft bereitet einen Patienten auf eine Operation vor.</div>
+                <div class="dialogue">
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Guten Morgen, Herr Meier. Ich möchte mit Ihnen die Vorbereitungen für die Operation besprechen.</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Guten Morgen.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Wann haben Sie zuletzt gegessen oder getrunken?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Gestern Abend gegen 22 Uhr.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Sehr gut. Tragen Sie Schmuck, eine Uhr oder eine herausnehmbare Zahnprothese?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Ja, ich habe einen Ring und eine Zahnprothese.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Bitte legen Sie den Ring ab. Die Zahnprothese müssen Sie ebenfalls vor der Operation herausnehmen.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Haben Sie Kontaktlinsen oder Hörgeräte?</div></div>
+                    <div class="dialogue__turn dialogue__turn--b"><div class="dialogue__role">Patient</div><div class="dialogue__line">Ich trage ein Hörgerät.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Das Hörgerät nehmen wir kurz vor dem Eingriff heraus. Ich werde Ihnen jetzt das Identifikationsarmband anlegen und anschließend noch Ihre Vitalwerte kontrollieren.</div></div>
+                    <div class="dialogue__turn"><div class="dialogue__role">Pflegekraft</div><div class="dialogue__line">Dann bringen wir Sie in Kürze in den Operationsbereich.</div></div>
+                </div>
+                <div class="phrase-box mt-3">
+                    <h3><i class="fa-solid fa-quote-right"></i>Nützliche Formulierungen</h3>
+                    <ul>
+                        <li>Ich möchte mit Ihnen die Vorbereitungen besprechen.</li>
+                        <li>Wann haben Sie zuletzt gegessen oder getrunken?</li>
+                        <li>Bitte bleiben Sie weiterhin nüchtern.</li>
+                        <li>Tragen Sie Schmuck oder eine Zahnprothese?</li>
+                        <li>Ich werde Ihnen jetzt das Identifikationsarmband anlegen.</li>
+                        <li>Wir kontrollieren noch einmal Ihre Vitalwerte.</li>
+                        <li>Wir bringen Sie in Kürze in den Operationsbereich.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== PATIENTENÜBERGABE ===================== -->
+        <section id="patientenuebergabe" class="clinical-section" data-aos="fade-up">
+            <div class="clinical-section__head">
+                <span class="clinical-section__icon"><i class="fa-solid fa-people-arrows"></i></span>
+                <div>
+                    <h2>@T("Hasta Devri", "Patientenübergabe")</h2>
+                    <p>@T("Hasta bilgilerinin ekip içinde yapılandırılmış şekilde aktarılması", "Strukturierte Übergabe von Patienteninformationen im Team")</p>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-lungs"></i>1. Patientenübergabe – Pneumonie</div>
+                <p class="mb-2"><strong>Guten Morgen zusammen. Ich übergebe Ihnen Frau Müller, 68 Jahre alt, Zimmer 12.</strong></p>
+                <p>Die Patientin wurde gestern mit einer Pneumonie aufgenommen. Sie ist wach, orientiert und kooperativ. Frau Müller klagt weiterhin über Husten und Belastungsdyspnoe. Fieber besteht aktuell nicht mehr. Die Sauerstoffsättigung liegt unter 2 Litern Sauerstoff über die Nasenbrille bei 94 %. Die Patientin erhält eine antibiotische Therapie gemäß ärztlicher Anordnung. Essen und Trinken sind möglich; die Trinkmenge sollte weiterhin beobachtet werden. Die Mobilisation erfolgt mit Unterstützung. Beim Aufstehen berichtet die Patientin gelegentlich über Schwindel. Urin- und Stuhlausscheidung sind unauffällig. Die Vitalzeichen waren im Nachtdienst stabil. Bitte achten Sie weiterhin auf die Atmung, die Sauerstoffsättigung sowie den Allgemeinzustand. Gibt es noch Fragen zu Frau Müller?</p>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-brain"></i>2. Patientenübergabe – Schlaganfall</div>
+                <p class="mb-2"><strong>Guten Morgen zusammen. Ich übergebe Ihnen Herrn Schneider, 74 Jahre alt, Zimmer 8.</strong></p>
+                <p>Der Patient wurde vorgestern aufgrund eines ischämischen Schlaganfalls auf unserer Station aufgenommen. Herr Schneider ist wach und orientiert. Zeitweise wirkt er jedoch etwas verlangsamt. Es besteht eine leichte rechtsseitige Hemiparese. Die Mobilisation erfolgt mit Unterstützung von zwei Personen. Der Patient kann kurze Strecken mit dem Rollator zurücklegen. Die Sprache ist leicht verlangsamt, die Kommunikation ist jedoch gut möglich. Essen und Trinken erfolgen nach Rücksprache mit der Logopädie; der Patient erhält aktuell Koststufe 5 sowie angedickte Flüssigkeiten. Die Medikamentengabe erfolgt problemlos. Urin- und Stuhlausscheidung sind unauffällig. Die Vitalzeichen waren während des Nachtdienstes stabil. Bitte achten Sie weiterhin auf neurologische Veränderungen, die Mobilisation sowie die ausreichende Flüssigkeitsaufnahme.</p>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-person-falling"></i>3. Patientenübergabe – Sturzpatientin</div>
+                <p class="mb-2"><strong>Guten Morgen zusammen. Ich übergebe Ihnen Frau Weber, 82 Jahre alt, Zimmer 15.</strong></p>
+                <p>Die Patientin wurde gestern nach einem häuslichen Sturz aufgenommen. Laut Patientin sei sie auf dem Weg zur Toilette gestolpert und auf die rechte Seite gefallen. Frau Weber ist wach, orientiert und kooperativ. Sie klagt über Schmerzen im Bereich der rechten Hüfte, insbesondere bei Bewegung. Eine Fraktur konnte radiologisch ausgeschlossen werden. Die Mobilisation erfolgt derzeit mit Unterstützung einer Pflegekraft und einem Rollator. Beim Aufstehen besteht weiterhin ein erhöhtes Sturzrisiko. Die Patientin benötigt Unterstützung bei der Körperpflege sowie beim An- und Auskleiden. Essen und Trinken sind selbstständig möglich. Urin- und Stuhlausscheidung sind unauffällig. Die Vitalzeichen waren während des Nachtdienstes stabil. Bitte achten Sie besonders auf die sichere Mobilisation, die Schmerzsymptomatik sowie die Sturzprophylaxe.</p>
+            </div>
+
+            <div class="phrase-box">
+                <h3><i class="fa-solid fa-list-check"></i>Nützliche Formulierungen für die Übergabe</h3>
+                <ul>
+                    <li>Ich übergebe Ihnen …</li>
+                    <li>Die Patientin wurde mit … aufgenommen.</li>
+                    <li>Die Patientin ist wach, orientiert und kooperativ.</li>
+                    <li>Die Sauerstoffsättigung liegt bei …</li>
+                    <li>Die Mobilisation erfolgt mit Unterstützung.</li>
+                    <li>Es besteht ein erhöhtes Sturzrisiko.</li>
+                    <li>Die Vitalzeichen waren stabil.</li>
+                    <li>Bitte achten Sie auf …</li>
+                    <li>Gibt es noch Fragen zu diesem Patienten?</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- ===================== PFLEGEDOKUMENTATION ===================== -->
+        <section id="pflegedokumentation" class="clinical-section" data-aos="fade-up">
+            <div class="clinical-section__head">
+                <span class="clinical-section__icon"><i class="fa-solid fa-file-pen"></i></span>
+                <div>
+                    <h2>@T("Dokümantasyon", "Pflegedokumentation")</h2>
+                    <p>@T("Kısa dokümantasyon notu ile sözlü ifade arasındaki fark", "Vom kurzen Dokumentationssatz zur gesprochenen Sprache")</p>
+                </div>
+            </div>
+
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-heart-pulse"></i>Beispiel 1: Vitalzeichenkontrolle</div>
+                <div class="docpair">
+                    <div class="docpair__col docpair__col--doc"><h4>Dokumentation</h4><p class="mb-0">RR 128/76 mmHg, Puls 78/min, SpO₂ 96 % unter Raumluft. Patient wach und orientiert. Keine Beschwerden.</p></div>
+                    <div class="docpair__col docpair__col--spoken"><h4>Gesprochene Sprache</h4><p class="mb-0">Die Vitalwerte waren unauffällig. Der Patient war wach und orientiert und hatte keine Beschwerden.</p></div>
+                </div>
+            </div>
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-person-walking"></i>Beispiel 2: Mobilisation</div>
+                <div class="docpair">
+                    <div class="docpair__col docpair__col--doc"><h4>Dokumentation</h4><p class="mb-0">Patient mit Rollator und Unterstützung mobilisiert. Keine Schwindelbeschwerden. Mobilisation gut toleriert.</p></div>
+                    <div class="docpair__col docpair__col--spoken"><h4>Gesprochene Sprache</h4><p class="mb-0">Der Patient konnte mit Unterstützung und Rollator mobilisiert werden. Dabei trat kein Schwindel auf.</p></div>
+                </div>
+            </div>
+            <div class="scenario-card">
+                <div class="scenario-card__title"><i class="fa-solid fa-utensils"></i>Beispiel 3: Nahrungsaufnahme</div>
+                <div class="docpair">
+                    <div class="docpair__col docpair__col--doc"><h4>Dokumentation</h4><p class="mb-0">Frühstück vollständig eingenommen. Trinkmenge ausreichend. Keine Übelkeit.</p></div>
+                    <div class="docpair__col docpair__col--spoken"><h4>Gesprochene Sprache</h4><p class="mb-0">Der Patient hat gut gegessen und ausreichend getrunken. Übelkeit bestand nicht.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== REDEMITTEL ===================== -->
+        <section id="redemittel" class="clinical-section" data-aos="fade-up">
+            <div class="clinical-section__head">
+                <span class="clinical-section__icon"><i class="fa-solid fa-comment-dots"></i></span>
+                <div>
+                    <h2>@T("Kalıp İfadeler", "Redemittel für Pflegekräfte")</h2>
+                    <p>@T("Hasta, hasta yakını ve ekip içi iletişimde kullanışlı kalıplar", "Praktische Formulierungen für Patient, Angehörige und Team")</p>
+                </div>
+            </div>
+            <div class="phrase-grid">
+                <div class="phrase-box">
+                    <h3><i class="fa-solid fa-hand"></i>Begrüßung und Gesprächsbeginn</h3>
+                    <ul>
+                        <li>Guten Morgen. Wie geht es Ihnen heute?</li>
+                        <li>Haben Sie gut geschlafen?</li>
+                        <li>Gibt es etwas, wobei ich Ihnen helfen kann?</li>
+                        <li>Wie fühlen Sie sich heute?</li>
+                    </ul>
+                </div>
+                <div class="phrase-box">
+                    <h3><i class="fa-solid fa-hands-bubbles"></i>Grundpflege</h3>
+                    <ul>
+                        <li>Ich helfe Ihnen bei der Körperpflege.</li>
+                        <li>Benötigen Sie Unterstützung?</li>
+                        <li>Ist die Wassertemperatur angenehm?</li>
+                        <li>Bitte sagen Sie Bescheid, wenn Ihnen schwindelig wird.</li>
+                    </ul>
+                </div>
+                <div class="phrase-box">
+                    <h3><i class="fa-solid fa-person-walking"></i>Mobilisation</h3>
+                    <ul>
+                        <li>Ich möchte Sie jetzt mobilisieren.</li>
+                        <li>Bitte stehen Sie langsam auf.</li>
+                        <li>Fühlen Sie sich sicher auf den Beinen?</li>
+                        <li>Brauchen Sie Unterstützung beim Gehen?</li>
+                    </ul>
+                </div>
+                <div class="phrase-box">
+                    <h3><i class="fa-solid fa-pills"></i>Medikamentengabe</h3>
+                    <ul>
+                        <li>Ich bringe Ihnen jetzt Ihre Medikamente.</li>
+                        <li>Haben Sie die Medikamente bereits eingenommen?</li>
+                        <li>Bitte nehmen Sie die Tabletten mit ausreichend Wasser ein.</li>
+                        <li>Haben Sie Schwierigkeiten beim Schlucken?</li>
+                    </ul>
+                </div>
+                <div class="phrase-box">
+                    <h3><i class="fa-solid fa-users"></i>Kommunikation mit Angehörigen</h3>
+                    <ul>
+                        <li>Der Zustand des Patienten ist stabil.</li>
+                        <li>Die Ärztin / der Arzt wird Sie später informieren.</li>
+                        <li>Haben Sie noch Fragen?</li>
+                        <li>Vielen Dank für Ihr Verständnis.</li>
+                    </ul>
+                </div>
+                <div class="phrase-box">
+                    <h3><i class="fa-solid fa-people-arrows"></i>Übergabe und Teamkommunikation</h3>
+                    <ul>
+                        <li>Ich übergebe Ihnen …</li>
+                        <li>Die Vitalzeichen waren stabil.</li>
+                        <li>Bitte achten Sie auf …</li>
+                        <li>Gibt es noch Fragen zu diesem Patienten?</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="callout callout--tip">
+                <div class="callout__label"><i class="fa-solid fa-lightbulb"></i>Tipp für den Klinikalltag</div>
+                <p class="mb-0">Einzelne Redemittel auswendig zu lernen ist oft weniger hilfreich, als ganze Formulierungen in realistischen Situationen zu üben. Je häufiger bestimmte Satzmuster verwendet werden, desto leichter fällt die spontane Kommunikation im Berufsalltag.</p>
+            </div>
+        </section>
+
+        <!-- ===================== ABKÜRZUNGEN ===================== -->
+        <section id="abkuerzungen" class="clinical-section" data-aos="fade-up">
+            <div class="clinical-section__head">
+                <span class="clinical-section__icon"><i class="fa-solid fa-notes-medical"></i></span>
+                <div>
+                    <h2>@T("Tıbbi Kısaltmalar", "Medizinische Abkürzungen")</h2>
+                    <p>@T("Hasta devri, dokümantasyon ve günlük ekip iletişiminde sık kullanılır", "Häufig bei Übergabe, Dokumentation und Teamkommunikation")</p>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="abbr-group">
+                        <h3>Vitalzeichen</h3>
+                        <div class="table-responsive">
+                            <table class="abbr-table">
+                                <tbody>
+                                    <tr><td class="abbr-key">RR</td><td>Blutdruck</td></tr>
+                                    <tr><td class="abbr-key">HF</td><td>Herzfrequenz</td></tr>
+                                    <tr><td class="abbr-key">AF</td><td>Atemfrequenz</td></tr>
+                                    <tr><td class="abbr-key">SpO₂</td><td>Sauerstoffsättigung</td></tr>
+                                    <tr><td class="abbr-key">BZ</td><td>Blutzucker</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="abbr-group">
+                        <h3>Erkrankungen und Befunde</h3>
+                        <div class="table-responsive">
+                            <table class="abbr-table">
+                                <tbody>
+                                    <tr><td class="abbr-key">COPD</td><td>Chronisch obstruktive Lungenerkrankung</td></tr>
+                                    <tr><td class="abbr-key">DM</td><td>Diabetes mellitus</td></tr>
+                                    <tr><td class="abbr-key">VHF</td><td>Vorhofflimmern</td></tr>
+                                    <tr><td class="abbr-key">TIA</td><td>Transitorische ischämische Attacke</td></tr>
+                                    <tr><td class="abbr-key">Apoplex</td><td>Schlaganfall</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="abbr-group">
+                        <h3>Pflege und Versorgung</h3>
+                        <div class="table-responsive">
+                            <table class="abbr-table">
+                                <tbody>
+                                    <tr><td class="abbr-key">DK</td><td>Dauerkatheter</td></tr>
+                                    <tr><td class="abbr-key">PEG</td><td>Perkutane endoskopische Gastrostomie</td></tr>
+                                    <tr><td class="abbr-key">VK</td><td>Venenkatheter</td></tr>
+                                    <tr><td class="abbr-key">ZVK</td><td>Zentralvenöser Katheter</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="abbr-group">
+                        <h3>Dokumentation und Übergabe</h3>
+                        <div class="table-responsive">
+                            <table class="abbr-table">
+                                <tbody>
+                                    <tr><td class="abbr-key">V.a.</td><td>Verdacht auf</td></tr>
+                                    <tr><td class="abbr-key">Z.n.</td><td>Zustand nach</td></tr>
+                                    <tr><td class="abbr-key">o.B.</td><td>ohne Befund</td></tr>
+                                    <tr><td class="abbr-key">pat.</td><td>pathologisch</td></tr>
+                                    <tr><td class="abbr-key">unauff.</td><td>unauffällig</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout">
+                <div class="callout__label"><i class="fa-solid fa-list"></i>Häufige Beispiele</div>
+                <ul class="mb-0">
+                    <li>RR 130/80 mmHg</li>
+                    <li>BZ 145 mg/dl</li>
+                    <li>SpO₂ 95 % unter Raumluft</li>
+                    <li>Z.n. Hüft-TEP</li>
+                    <li>V.a. Pneumonie</li>
+                    <li>DK reizlos</li>
+                    <li>PEG in situ</li>
+                </ul>
+            </div>
+            <div class="callout callout--tip">
+                <div class="callout__label"><i class="fa-solid fa-lightbulb"></i>Tipp für den Pflegealltag</div>
+                <p class="mb-0">Abkürzungen sollten nicht nur erkannt, sondern auch verstanden werden. Beispiel: „Z.n. Hüft-TEP“ → Der Patient hat in der Vergangenheit ein künstliches Hüftgelenk erhalten. „V.a. Pneumonie“ → Es besteht der Verdacht auf eine Lungenentzündung. „DK liegt reizlos.“ → Der Dauerkatheter zeigt keine Auffälligkeiten.</p>
+            </div>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/aos@@2.3.4/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 700, once: true });
+        // Highlight active section pill while scrolling
+        (function () {
+            var links = Array.from(document.querySelectorAll('.clinical-nav a'));
+            var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+            function onScroll() {
+                var y = window.scrollY + 140;
+                var idx = 0;
+                for (var i = 0; i < sections.length; i++) {
+                    if (sections[i] && sections[i].offsetTop <= y) idx = i;
+                }
+                links.forEach(function (l, i) { l.classList.toggle('active', i === idx); });
+            }
+            window.addEventListener('scroll', onScroll, { passive: true });
+            onScroll();
+        })();
+    </script>
+}

@@ -57,7 +57,13 @@ namespace SpeakingClub.Controllers
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/woerterbuch", SITE_URL + "/sozluk", SITE_URL + "/woerterbuch", "0.9", "weekly"));
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/beitraege", SITE_URL + "/yazilar", SITE_URL + "/beitraege", "0.9", "daily"));
                 urls.Add(CreateLocalizedUrl(SITE_URL + "/pruefungen", SITE_URL + "/sinavlar", SITE_URL + "/pruefungen", "0.9", "weekly"));
-                
+
+                // Clinical German pages (Turkish canonical + reciprocal German)
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/hekim-almancasi", SITE_URL + "/hekim-almancasi", SITE_URL + "/aerztedeutsch", "0.8", "monthly"));
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/aerztedeutsch", SITE_URL + "/hekim-almancasi", SITE_URL + "/aerztedeutsch", "0.8", "monthly"));
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/hemsirelik-almancasi", SITE_URL + "/hemsirelik-almancasi", SITE_URL + "/pflegedeutsch", "0.8", "monthly"));
+                urls.Add(CreateLocalizedUrl(SITE_URL + "/pflegedeutsch", SITE_URL + "/hemsirelik-almancasi", SITE_URL + "/pflegedeutsch", "0.8", "monthly"));
+
                 _logger.LogInformation($"Added {urls.Count} static pages");
 
                 // Dynamic: Blog posts with multilingual support
@@ -354,9 +360,10 @@ namespace SpeakingClub.Controllers
             sb.AppendLine("");
             sb.AppendLine("# Block temp files");
             sb.AppendLine("Disallow: /temp/");
+            sb.AppendLine("Disallow: /uploads/temp/");
             sb.AppendLine("");
-            sb.AppendLine("# Crawl delay");
-            sb.AppendLine("Crawl-delay: 10");
+            sb.AppendLine("# Crawl delay (low so search engines index quickly)");
+            sb.AppendLine("Crawl-delay: 1");
 
             return Content(sb.ToString(), "text/plain", Encoding.UTF8);
         }
