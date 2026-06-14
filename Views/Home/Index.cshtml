@@ -117,6 +117,17 @@
             display: block;
         }
 
+        /* Transparent layer so click-and-drag works over the YouTube iframe.
+           The centered (active) slide turns it off so the video stays playable. */
+        .shorts-drag-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 6;
+            cursor: grab;
+        }
+        .swiper-shorts.swiper-grabbing .shorts-drag-layer { cursor: grabbing; }
+        .shorts-slide.swiper-slide-active .shorts-drag-layer { pointer-events: none; }
+
         .shorts-badge {
             position: absolute;
             top: 12px;
@@ -223,8 +234,35 @@
         }
 
         /* Quote + portrait feature row */
+        .quote-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
         .quote-feature .quote-text {
             font-size: clamp(1.4rem, 3vw, 2.2rem);
+            margin: 0;
+        }
+
+        .quote-mark {
+            color: #FF9494;
+            opacity: 0.45;
+            font-size: clamp(1.6rem, 4vw, 2.6rem);
+            line-height: 1;
+        }
+
+        .quote-mark--open { margin-bottom: 0.6rem; align-self: center; }
+        .quote-mark--close { margin-top: 0.6rem; align-self: center; }
+
+        @@media (min-width: 992px) {
+            .quote-block {
+                align-items: flex-start;
+                text-align: left;
+            }
+            .quote-mark--open { align-self: flex-start; }
+            .quote-mark--close { align-self: flex-end; }
         }
 
         .quote-feature-img {
@@ -740,12 +778,16 @@
                             <div class="container py-5">
                                 <div class="row align-items-center g-5">
                                     <!-- Quote -->
-                                    <div class="col-lg-6 text-center text-lg-start" data-aos="fade-right">
-                                        <i class="fa-solid fa-quote-left fs-1 text-fourth mb-3 d-block"></i>
-                                        <h2 class="quote-text text-dark"
-                                            style="font-family: 'Open Sans', sans-serif; font-weight: 700; line-height: 1.3;">
-                                            @Localizer.GetKey("qt1").Value</h2>
-                                        <p class="lead mt-4 mb-0 fw-semibold text-fourth">Suna, Türkiye</p>
+                                    <div class="col-lg-6" data-aos="fade-right">
+                                        <figure class="quote-block mb-0">
+                                            <i class="fa-solid fa-quote-left quote-mark quote-mark--open" aria-hidden="true"></i>
+                                            <blockquote class="quote-text text-dark"
+                                                        style="font-family: 'Open Sans', sans-serif; font-weight: 700; line-height: 1.3;">
+                                                @Localizer.GetKey("qt1").Value
+                                            </blockquote>
+                                            <i class="fa-solid fa-quote-right quote-mark quote-mark--close" aria-hidden="true"></i>
+                                            <figcaption class="lead mt-2 mb-0 fw-semibold text-fourth">— Suna, Türkiye</figcaption>
+                                        </figure>
                                     </div>
                                     <!-- Portrait -->
                                     <div class="col-lg-6 text-center" data-aos="fade-left">
@@ -988,6 +1030,18 @@
                                     disableOnInteraction: false
                                 },
                                 keyboard: { enabled: true }
+                            });
+
+                            // Add a transparent drag layer over each Shorts video so the
+                            // carousel can be dragged left/right with the mouse even over
+                            // the YouTube iframe. The centered slide keeps its layer disabled
+                            // (via CSS) so the active video stays clickable/playable.
+                            document.querySelectorAll('.swiper-shorts .shorts-container').forEach(function (c) {
+                                if (!c.querySelector('.shorts-drag-layer')) {
+                                    var layer = document.createElement('div');
+                                    layer.className = 'shorts-drag-layer';
+                                    c.appendChild(layer);
+                                }
                             });
 
                             // Initialize Swiper for each advanced blog card media container.
