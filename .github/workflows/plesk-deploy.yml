@@ -63,7 +63,7 @@ env:
   # --- Deployment mechanics ------------------------------------------------------------------------
   # How long to wait after app_offline.htm lands before uploading DLLs. IIS can be slow to release
   # file locks; uploads that hit a locked DLL fail the whole deploy.
-  OFFLINE_WAIT_SECONDS: '300'
+  OFFLINE_WAIT_SECONDS: '120'
   PUBLISH_DIR: publish
 
   # --- Pre-migration database backup ---------------------------------------------------------------
@@ -193,7 +193,7 @@ jobs:
       # Runs against the bin/Release output from publish (--no-build) and before the site goes
       # offline, so a failed migration leaves the old build running untouched.
       - name: Install EF Core tools
-        run: dotnet tool install --global dotnet-ef --version 10.0.11
+        run: dotnet tool install --global dotnet-ef --version 10.0.13
 
       # `migrations list --json` marks each migration "applied": true/false, or null when the
       # database could not be reached. Null is treated as a failure: without it the deploy would
