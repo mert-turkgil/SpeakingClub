@@ -100,6 +100,8 @@
           75%, to { stroke-dashoffset: 439.82; transform: translate(100px,100px) rotate(112deg); }
         }
     </style>
+    <!-- Without JavaScript: reload every 60 seconds. -->
+    <noscript><meta http-equiv="refresh" content="60"></noscript>
 </head>
 <body>
     <svg xmlns="http://www.w3.org/2000/svg" height="200px" width="200px" viewBox="0 0 200 200" class="pencil">
@@ -142,5 +144,17 @@
             <h2>Bitte warten Sie etwa 10 Minuten.</h2>
         </div>
     </div>
+    <script>
+        // IIS answers 503 with this page while app_offline.htm exists. Ask for the same URL every
+        // 10 seconds; once the site answers normally again, reload so the visitor lands on it.
+        (function () {
+            function check() {
+                fetch(window.location.href, { cache: 'no-store', credentials: 'same-origin' })
+                    .then(function (r) { if (r.ok) { window.location.reload(); } })
+                    .catch(function () { /* still offline or network blip: try again */ });
+            }
+            setInterval(check, 10000);
+        })();
+    </script>
 </body>
 </html>
