@@ -83,6 +83,9 @@ namespace SpeakingClub.Controllers
         #region SetLanguage
         public async Task<IActionResult> SetLanguage(string culture, string returnUrl)
         {
+            // The site has only Turkish and German; anything else (e.g. en-US) falls back to Turkish.
+            culture = string.Equals(culture, "de-DE", StringComparison.OrdinalIgnoreCase) ? "de-DE" : "tr-TR";
+
             Response.Cookies.Append(
                 CookieRequestCultureProvider.DefaultCookieName,
                 CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
