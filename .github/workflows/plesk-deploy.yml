@@ -1,7 +1,9 @@
 # Deploys almanca-konus.com to Plesk over FTP on every push to main.
 #
 # What happens, in order:
-#   1. Build and publish the .NET app; drop in .github/deploy/web.config (Production environment).
+#   1. Write appsettings.Production.json from GitHub Secrets + the env block below (the file is
+#      gitignored on purpose — this is the only place production configuration is assembled), then
+#      build and publish the .NET app and drop in .github/deploy/web.config.
 #   2. Ask the production database which EF migrations it has not seen yet (both contexts:
 #      SpeakingClubContext and ApplicationDbContext). If the database cannot be reached, the deploy
 #      stops here — before anything on the server has been touched.
@@ -16,9 +18,13 @@
 # The FTP account's home directory is httpdocs\publish (the site root), so FTP paths below are
 # relative to that folder.
 #
-# Things that live only on the server survive deployments: appsettings.Production.json (connection
-# string, SMTP, API keys — gitignored, never uploaded from here), logs/, wwwroot/uploads. The FTP sync
-# only deletes files it uploaded itself. Never turn on dangerous-clean-slate — that would wipe them.
+# Non-secret configuration lives in the `env:` block below and is changed by editing this file.
+# Secrets live in GitHub → Settings → Secrets and variables → Actions (see the list at the bottom).
+# Editing appsettings.Production.json on the server works only until the next deploy overwrites it.
+#
+# Things the app writes at runtime (logs/, wwwroot/uploads, wwwroot/blog/img) survive deployments:
+# the FTP sync only deletes files it uploaded itself. Never turn on dangerous-clean-slate — that
+# would wipe them.
 
 name: Deploy to Plesk
 
@@ -40,6 +46,19 @@ concurrency:
 
 env:
   SITE_BASE_URL: 'https://www.almanca-konus.com'
+
+  # --- Outbound email (EmailSender section; Gmail SMTP) --------------------------------------------
+  # SMTP_USERNAME / SMTP_PASSWORD are secrets — see the bottom of this file. The password is a Gmail
+  # app password (Google Account → Security → App passwords), not the account's login password.
+  SMTP_HOST: 'smtp.gmail.com'
+  SMTP_PORT: '587'
+  SMTP_FROM_EMAIL: 'almancakonus.info@gmail.com'
+  SMTP_FROM_NAME: 'Almanca Konuşma Kulübü'
+  SMTP_REPLY_TO_EMAIL: 'suna.almancakonus@gmail.com'
+
+  # --- Cloudflare Turnstile ------------------------------------------------------------------------
+  # The site key is public (it is sent to every browser); the secret key is a GitHub secret.
+  TURNSTILE_SITE_KEY: '0x4AAAAAACZN4pAcGvIUwMXu'
 
   # --- Deployment mechanics ------------------------------------------------------------------------
   # How long to wait after app_offline.htm lands before uploading DLLs. IIS can be slow to release
@@ -76,15 +95,28 @@ jobs:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           PROD_CONNECTION_STRING: ${{ secrets.PROD_CONNECTION_STRING }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          PONS_API_KEY: ${{ secrets.PONS_API_KEY }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+          DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
+          CKEDITOR_LICENSE_KEY: ${{ secrets.CKEDITOR_LICENSE_KEY }}
         run: |
+          # Required: the app refuses to start in Production without SMTP credentials (Program.cs)
+          # or the PONS key (DictionaryService throws), and nothing works without the database.
           missing=0
-          for name in FTP_SERVER FTP_USERNAME FTP_PASSWORD PROD_CONNECTION_STRING; do
+          for name in FTP_SERVER FTP_USERNAME FTP_PASSWORD PROD_CONNECTION_STRING \
+                      SMTP_USERNAME SMTP_PASSWORD PONS_API_KEY; do
             if [ -z "${!name}" ]; then
               echo "::error::Repository secret $name is not set."
               missing=1
             fi
           done
           [ "$missing" -eq 0 ] || exit 1
+          # Not fatal, but each of these leaves a feature dark; say so in the run log.
+          [ -n "$TURNSTILE_SECRET_KEY" ] || echo "::warning::TURNSTILE_SECRET_KEY is empty — the contact and sign-up forms cannot verify the captcha."
+          [ -n "$DEEPL_API_KEY" ]        || echo "::warning::DEEPL_API_KEY is empty — translations are off."
+          [ -n "$CKEDITOR_LICENSE_KEY" ] || echo "::warning::CKEDITOR_LICENSE_KEY is empty — the admin rich-text editor will not load."
 
       # --- Build -----------------------------------------------------------------------------------
       - name: Setup .NET
@@ -94,6 +126,52 @@ jobs:
 
       - name: Restore
         run: dotnet restore SpeakingClub.csproj
+
+      # Written before publish so the Web SDK picks it up like any other appsettings*.json, and so
+      # the dotnet ef steps below (ASPNETCORE_ENVIRONMENT=Production) see the same configuration.
+      # jq --arg does the JSON escaping, so passwords with quotes/backslashes/% survive intact.
+      - name: Write appsettings.Production.json
+        env:
+          PROD_CONNECTION_STRING: ${{ secrets.PROD_CONNECTION_STRING }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+          DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
+          PONS_API_KEY: ${{ secrets.PONS_API_KEY }}
+          CKEDITOR_LICENSE_KEY: ${{ secrets.CKEDITOR_LICENSE_KEY }}
+        run: |
+          jq -n \
+            --arg connectionString "$PROD_CONNECTION_STRING" \
+            --arg smtpHost         "$SMTP_HOST" \
+            --arg smtpPort         "$SMTP_PORT" \
+            --arg smtpUsername     "$SMTP_USERNAME" \
+            --arg smtpPassword     "$SMTP_PASSWORD" \
+            --arg smtpFromEmail    "$SMTP_FROM_EMAIL" \
+            --arg smtpFromName     "$SMTP_FROM_NAME" \
+            --arg smtpReplyTo      "$SMTP_REPLY_TO_EMAIL" \
+            --arg turnstileSite    "$TURNSTILE_SITE_KEY" \
+            --arg turnstileSecret  "$TURNSTILE_SECRET_KEY" \
+            --arg deeplKey         "$DEEPL_API_KEY" \
+            --arg ponsKey          "$PONS_API_KEY" \
+            --arg ckeditorKey      "$CKEDITOR_LICENSE_KEY" \
+            '{
+              Logging: {
+                LogLevel: { Default: "Information", "Microsoft.AspNetCore": "Warning", "Microsoft.Hosting.Lifetime": "Information" }
+              },
+              ConnectionStrings: { DefaultConnection: $connectionString },
+              AllowedHosts: "*",
+              EmailSender: {
+                Username: $smtpUsername, SMTPMail: $smtpHost, Port: $smtpPort, Password: $smtpPassword,
+                FromEmail: $smtpFromEmail, FromName: $smtpFromName, ReplyToEmail: $smtpReplyTo
+              },
+              Turnstile: { SiteKey: $turnstileSite, SecretKey: $turnstileSecret },
+              DeepL: { ApiKey: $deeplKey },
+              Pons: { ApiKey: $ponsKey },
+              License: { CKEditor: $ckeditorKey }
+            }' > appsettings.Production.json
+
+          echo "appsettings.Production.json written. Non-secret sections:"
+          jq 'del(.ConnectionStrings, .EmailSender.Password, .Turnstile.SecretKey, .DeepL, .Pons, .License)' appsettings.Production.json
 
       - name: Publish
         run: >
@@ -106,12 +184,10 @@ jobs:
         run: |
           cp .github/deploy/web.config "$PUBLISH_DIR/web.config"
           cd "$PUBLISH_DIR"
-          for f in SpeakingClub.dll web.config appsettings.json wwwroot; do
+          for f in SpeakingClub.dll web.config appsettings.json appsettings.Production.json wwwroot; do
             [ -e "$f" ] || { echo "::error::Expected $f in the publish output."; exit 1; }
           done
-          for f in appsettings.Development.json appsettings.Production.json; do
-            [ ! -e "$f" ] || { echo "::error::$f must not be published from CI — it would overwrite the server's copy."; exit 1; }
-          done
+          [ ! -e appsettings.Development.json ] || { echo "::error::appsettings.Development.json must not be published."; exit 1; }
 
       # --- Database --------------------------------------------------------------------------------
       # Runs against the bin/Release output from publish (--no-build) and before the site goes
@@ -125,9 +201,9 @@ jobs:
       - name: Check for pending migrations
         id: pending
         env:
-          # dotnet ef's design-time host defaults to Development, which would try to load
-          # appsettings.Development.json and the SMTP checks in Program.cs. --connection below
-          # supplies the database.
+          # dotnet ef's design-time host defaults to Development, which looks for
+          # appsettings.Development.json (not on the runner). In Production it reads the
+          # appsettings.Production.json written above; --connection names the database explicitly.
           ASPNETCORE_ENVIRONMENT: Production
           PROD_CONNECTION_STRING: ${{ secrets.PROD_CONNECTION_STRING }}
         run: |
@@ -301,9 +377,15 @@ jobs:
 #   FTP_SERVER              Plesk FTP host name only, no protocol
 #   FTP_USERNAME            Plesk FTP user (home directory: /httpdocs\publish)
 #   FTP_PASSWORD            Plesk FTP password
-#   PROD_CONNECTION_STRING  The production database's connection string as reachable FROM THE
-#                           INTERNET — the server's public host name or IP (Plesk → Veritabanları →
-#                           Bağlantı bilgisi), not ".\MSSQLSERVER2022", which only works on the server
-#                           itself. Add TrustServerCertificate=True unless the server has a trusted
-#                           certificate. SQL Server must accept remote connections on its port.
+#   PROD_CONNECTION_STRING  ConnectionStrings:DefaultConnection. Used by the app AND by this
+#                           workflow's backup/migration steps, so it must name the server by its
+#                           public address (104.247.167.202\MSSQLSERVER2022), not ".\…", which only
+#                           works on the server itself.
+#   SMTP_USERNAME           EmailSender:Username (the Gmail address that sends)
+#   SMTP_PASSWORD           EmailSender:Password (that address's Gmail app password)
+#   TURNSTILE_SECRET_KEY    Turnstile:SecretKey (Cloudflare dashboard → Turnstile → the site)
+#   DEEPL_API_KEY           DeepL:ApiKey
+#   PONS_API_KEY            Pons:ApiKey
+#   CKEDITOR_LICENSE_KEY    License:CKEditor (the production key licensed for almanca-konus.com —
+#                           not the development key, which only allows localhost / private IPs)
 # ---------------------------------------------------------------------------------------------------
