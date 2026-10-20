@@ -60,18 +60,19 @@ if (!builder.Environment.IsDevelopment() && !string.IsNullOrEmpty(emailSettings.
 
 #region Data Protection - CRITICAL for Plesk
 // IMPORTANT: Configure DataProtection to persist keys across app restarts
-// Without this, authentication cookies become invalid when Plesk recycles the app pool
-var keysFolder = Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys");
-
-// Ensure the keys directory exists and is writable
-Directory.CreateDirectory(keysFolder);
+// Without this, authentication cookies become invalid when Plesk recycles the app pool.
+// Keys live in SQL Server: when they were files in the publish folder, key rotation failed
+// as soon as the folder lost write permission and every page with a form returned 500.
+builder.Services.AddDbContext<DataProtectionKeysContext>(options =>
+    options.UseSqlServer(config.GetConnectionString("DefaultConnection"))
+);
 
 builder.Services.AddDataProtection()
     .SetApplicationName("SpeakingClub")
-    .PersistKeysToFileSystem(new DirectoryInfo(keysFolder))
+    .PersistKeysToDbContext<DataProtectionKeysContext>()
     .SetDefaultKeyLifetime(TimeSpan.FromDays(90)); // Keys last 90 days
 
-Console.WriteLine($"Data Protection Keys Path: {keysFolder}");
+Console.WriteLine("Data Protection Keys: stored in database table [DataProtectionKeys]");
 #endregion
 
 #region DbContext Registration
@@ -296,6 +297,15 @@ using (var scope = app.Services.CreateScope())
     {
         Console.WriteLine($"Warning: Database migration failed: {ex.Message}");
         Console.WriteLine("Continuing startup without database...");
+    }
+
+    try
+    {
+        scope.ServiceProvider.GetRequiredService<DataProtectionKeysContext>().EnsureKeysTable();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Warning: Could not create DataProtectionKeys table: {ex.Message}");
     }
 
     // Identity seeding and role/user checking (safe to run in production)
@@ -551,6 +561,27 @@ app.MapControllerRoute(
 
 #region SignalR Configuration
 app.MapHub<SpeakingClub.Hubs.QuizMonitorHub>("/quizMonitorHub");
+#endregion
+
+#region Health Check
+// Used by the deploy workflow's smoke check: 200 {"status":"Healthy"} when the database answers,
+// 503 {"status":"Unhealthy"} when it does not.
+app.MapGet("/health", async (SpeakingClubContext db) =>
+{
+    var canConnect = false;
+    try
+    {
+        canConnect = await db.Database.CanConnectAsync();
+    }
+    catch
+    {
+        // CanConnectAsync can still throw on some provider errors; treat as unhealthy.
+    }
+
+    return canConnect
+        ? Results.Json(new { status = "Healthy" })
+        : Results.Json(new { status = "Unhealthy" }, statusCode: StatusCodes.Status503ServiceUnavailable);
+});
 #endregion
 
 Console.WriteLine("");
