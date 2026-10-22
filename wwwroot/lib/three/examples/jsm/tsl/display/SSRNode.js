@@ -279,7 +279,7 @@ class SSRNode extends TempNode {
 
 			// https://mathworld.wolfram.com/Point-PlaneDistance.html
 			// https://en.wikipedia.org/wiki/Plane_(geometry)
-			// https://paulbourke.net/geometry/pointlineplane/
+			// http://paulbourke.net/geometry/pointlineplane/
 
 			const d = mul( planeNormal.x, planePoint.x ).add( mul( planeNormal.y, planePoint.y ) ).add( mul( planeNormal.z, planePoint.z ) ).negate().toVar();
 

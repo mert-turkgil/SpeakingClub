@@ -1,5 +1,5 @@
 // Ported from Stefan Gustavson's java implementation
-// https://staffwww.itn.liu.se/~stegu/simplexnoise/simplexnoise.pdf
+// http://staffwww.itn.liu.se/~stegu/simplexnoise/simplexnoise.pdf
 // Read Stefan's excellent paper for details on how this code works.
 //
 // Sean McCullough banksean@gmail.com

@@ -1,6 +1,6 @@
 /**
  * Luminosity
- * https://en.wikipedia.org/wiki/Luminosity
+ * http://en.wikipedia.org/wiki/Luminosity
  */
 
 const LuminosityShader = {

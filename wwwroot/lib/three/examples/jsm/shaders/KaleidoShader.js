@@ -1,8 +1,8 @@
 /**
  * Kaleidoscope Shader
  * Radial reflection around center point
- * Ported from: https://pixelshaders.com/editor/
- * by Toby Schachman / https://tobyschachman.com/
+ * Ported from: http://pixelshaders.com/editor/
+ * by Toby Schachman / http://tobyschachman.com/
  *
  * sides: number of reflections
  * angle: initial angle in radians

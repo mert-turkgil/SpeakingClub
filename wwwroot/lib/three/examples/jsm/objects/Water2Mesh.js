@@ -13,7 +13,7 @@ import { Fn, vec2, viewportSafeUV, viewportSharedTexture, reflector, pow, float,
 /**
  * References:
  *	https://alex.vlachos.com/graphics/Vlachos-SIGGRAPH10-WaterFlow.pdf
- *	https://graphicsrunner.blogspot.de/2010/08/water-using-flow-maps.html
+ *	http://graphicsrunner.blogspot.de/2010/08/water-using-flow-maps.html
  *
  */
 

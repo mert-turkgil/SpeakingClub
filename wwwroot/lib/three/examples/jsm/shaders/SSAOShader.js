@@ -5,7 +5,7 @@ import {
 
 /**
  * References:
- * https://john-chapman-graphics.blogspot.com/2013/01/ssao-tutorial.html
+ * http://john-chapman-graphics.blogspot.com/2013/01/ssao-tutorial.html
  * https://learnopengl.com/Advanced-Lighting/SSAO
  * https://github.com/McNopper/OpenGL/blob/master/Example28/shader/ssao.frag.glsl
  */

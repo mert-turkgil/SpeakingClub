@@ -1,7 +1,7 @@
 /**
  * Depth-of-field shader with bokeh
  * ported from GLSL shader by Martins Upitis
- * https://artmartinsh.blogspot.com/2010/02/glsl-lens-blur-filter-with-bokeh.html
+ * http://artmartinsh.blogspot.com/2010/02/glsl-lens-blur-filter-with-bokeh.html
  */
 
 const BokehShader = {

@@ -310,7 +310,7 @@ class Quaternion {
 
 		const x = euler._x, y = euler._y, z = euler._z, order = euler._order;
 
-		// https://www.mathworks.com/matlabcentral/fileexchange/
+		// http://www.mathworks.com/matlabcentral/fileexchange/
 		// 	20696-function-to-convert-between-dcm-euler-angles-quaternions-and-euler-vectors/
 		//	content/SpinCalc.m
 
@@ -389,7 +389,7 @@ class Quaternion {
 	 */
 	setFromAxisAngle( axis, angle ) {
 
-		// https://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
+		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
 
 		const halfAngle = angle / 2, s = Math.sin( halfAngle );
 
@@ -412,7 +412,7 @@ class Quaternion {
 	 */
 	setFromRotationMatrix( m ) {
 
-		// https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
+		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
 
 		// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
 
@@ -701,7 +701,7 @@ class Quaternion {
 	 */
 	multiplyQuaternions( a, b ) {
 
-		// from https://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/code/index.htm
+		// from http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/code/index.htm
 
 		const qax = a._x, qay = a._y, qaz = a._z, qaw = a._w;
 		const qbx = b._x, qby = b._y, qbz = b._z, qbw = b._w;
@@ -731,7 +731,7 @@ class Quaternion {
 
 		const x = this._x, y = this._y, z = this._z, w = this._w;
 
-		// https://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/
+		// http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/slerp/
 
 		let cosHalfTheta = w * qb._w + x * qb._x + y * qb._y + z * qb._z;
 

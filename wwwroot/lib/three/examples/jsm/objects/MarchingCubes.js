@@ -9,7 +9,7 @@ import {
 } from 'three';
 
 /**
- * Port of https://webglsamples.org/blob/blob.html
+ * Port of http://webglsamples.org/blob/blob.html
  */
 
 class MarchingCubes extends Mesh {
@@ -579,7 +579,7 @@ class MarchingCubes extends Mesh {
 							this.field[ y_offset + x ] += val * sign;
 
 							// optimization
-							// https://www.geisswerks.com/ryan/BLOBS/blobs.html
+							// http://www.geisswerks.com/ryan/BLOBS/blobs.html
 							const ratio =
 								Math.sqrt( ( x - xs ) * ( x - xs ) + ( y - ys ) * ( y - ys ) + ( z - zs ) * ( z - zs ) ) / radius;
 							const contrib =
@@ -878,7 +878,7 @@ class MarchingCubes extends Mesh {
 /////////////////////////////////////
 
 // These tables are straight from Paul Bourke's page:
-// https://paulbourke.net/geometry/polygonise/
+// http://paulbourke.net/geometry/polygonise/
 // who in turn got them from Cory Gene Bloyd.
 
 const edgeTable = new Int32Array( [

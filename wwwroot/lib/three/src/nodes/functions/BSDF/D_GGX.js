@@ -1,7 +1,7 @@
 import { Fn } from '../../tsl/TSLBase.js';
 
 // Microfacet Models for Refraction through Rough Surfaces - equation (33)
-// https://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
+// http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
 // alpha is "roughness squared" in Disney’s reparameterization
 const D_GGX = /*@__PURE__*/ Fn( ( { alpha, dotNH } ) => {
 
