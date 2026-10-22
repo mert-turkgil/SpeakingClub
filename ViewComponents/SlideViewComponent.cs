@@ -25,6 +25,21 @@ namespace SpeakingClub.ViewComponents
             if (!slides.Any()) {
                 return Content(string.Empty);
             }
+            var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+            // Url.Action picks any of an action's routes (/blog, /yazilar or /beitraege), which could send a Turkish
+            // visitor to the German page; link to the page in the visitor's language instead.
+            string LinkFor(string action) => action.ToLowerInvariant() switch
+            {
+                "index" => "/",
+                "blog" => isGerman ? "/beitraege" : "/yazilar",
+                "about" => isGerman ? "/ueber-uns" : "/hakkimizda",
+                "words" => isGerman ? "/woerterbuch" : "/sozluk",
+                "privacy" => isGerman ? "/datenschutz" : "/gizlilik",
+                "quizzes" => isGerman ? "/pruefungen" : "/sinavlar",
+                "doctorsgerman" => isGerman ? "/aerztedeutsch" : "/hekim-almancasi",
+                "nursesgerman" => isGerman ? "/pflegedeutsch" : "/hemsirelik-almancasi",
+                _ => Url.Action(action, "Home") ?? "/"
+            };
             var slideItems = new SlideItemModel{SlideItems = slides.Select(s =>
             {
                 var action = string.IsNullOrEmpty(s.CarouselLink) ? "Index" : s.CarouselLink;
@@ -37,7 +52,7 @@ namespace SpeakingClub.ViewComponents
                     CarouselImage600w = s.CarouselImage600w,
                     CarouselImage1200w = s.CarouselImage1200w,
                     CarouselDescription =  _localization.GetKey($"Carousel_{s.SlideId}_Description")?.Value ?? s.CarouselDescription,
-                    CarouselLink = Url.Action(finalAction, "Home")?? "/", 
+                    CarouselLink = LinkFor(finalAction),
                     CarouselLinkText = _localization.GetKey($"Carousel_{s.SlideId}_LinkText")?.Value ?? s.CarouselLinkText,
                     DateAdded = s.DateAdded
                 };

@@ -8,14 +8,14 @@
 
 <form asp-controller="Home" asp-action="SetLanguage"
       asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)" method="post" style="display:inline;">
-    <label class="switch" aria-label="Dil Değiştir">
+    <label class="switch" aria-label="@(isTr ? "Dil değiştir" : "Sprache wechseln")" title="@(isTr ? "Dil değiştir" : "Sprache wechseln")">
         <input type="checkbox"
                name="culture"
                value="de-DE"
                @(isTr ? "" : "checked")
                onchange="toggleLanguage(this)" />
-        <span class="d-inline"> <i class="fa-solid fa-globe me-1"></i>Türkçe</span>
-        <span class="d-inline"> <i class="fa-solid fa-globe me-1"></i>Deutsch</span>
+        <span lang="tr">Türkçe</span>
+        <span lang="de">Deutsch</span>
     </label>
     <input type="hidden" name="culture" value="@(isTr ? "tr-TR" : "de-DE")" />
 </form>

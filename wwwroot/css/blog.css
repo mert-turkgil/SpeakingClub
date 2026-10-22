@@ -7,9 +7,10 @@
    ===================================================================== */
 
 /* ---------------------------------------------------------------------
-   1. TOKENS
+   1. TOKENS  (shared with the home page: .home-page, see home.css)
    --------------------------------------------------------------------- */
-.blog-page {
+.blog-page,
+.home-page {
   --bp-canvas: #FFF5E4;
   --bp-surface: #FFFFFF;
   --bp-surface-soft: #FFFAF3;
@@ -49,7 +50,8 @@
   padding-bottom: 4rem;
 }
 
-html[data-bs-theme="dark"] .blog-page {
+html[data-bs-theme="dark"] .blog-page,
+html[data-bs-theme="dark"] .home-page {
   --bp-canvas: #15110e;
   --bp-surface: #1f1a16;
   --bp-surface-soft: #251f1a;
@@ -66,7 +68,8 @@ html[data-bs-theme="dark"] .blog-page {
   --bp-shadow-3: 0 26px 50px -18px rgba(0, 0, 0, 0.8);
 }
 
-.blog-page ::selection { background: var(--bp-pink); color: var(--bp-ink); }
+.blog-page ::selection,
+.home-page ::selection { background: var(--bp-pink); color: var(--bp-ink); }
 
 .bp-container {
   width: min(1180px, 100% - 2rem);
@@ -81,7 +84,8 @@ html[data-bs-theme="dark"] .blog-page {
   white-space: nowrap; border: 0;
 }
 
-.blog-page :focus-visible {
+.blog-page :focus-visible,
+.home-page :focus-visible {
   outline: 3px solid var(--bp-coral) !important;
   outline-offset: 3px;
   border-radius: 6px;
@@ -114,7 +118,8 @@ html[data-bs-theme="dark"] .blog-page {
 .bp-js .reveal.is-visible { opacity: 1; transform: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .blog-page *, .blog-page *::before, .blog-page *::after {
+  .blog-page *, .blog-page *::before, .blog-page *::after,
+  .home-page *, .home-page *::before, .home-page *::after {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;

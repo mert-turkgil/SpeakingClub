@@ -1,57 +1,89 @@
-@using Azure.Core
 @model SlideItemModel
+@{
+    // Home page "highlights" slider. Slides are managed in the admin panel (Carousel).
+    // home.js runs the slider (tabs, autoplay, swipe, keyboard); home-3d.js upgrades it to WebGL
+    // transitions with Three.js when the browser supports it. Without either it still shows slide 1.
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var count = Model.SlideItems.Count;
+}
+<section class="hp-highlights bp-container reveal" aria-labelledby="hp-highlights-title">
+    <h2 class="visually-hidden" id="hp-highlights-title">@T("Öne çıkanlar", "Highlights")</h2>
+    <div class="hp-gl-slider" data-slider data-interval="7000" data-active="0"
+         role="region" aria-roledescription="@T("slayt gösterisi", "Karussell")" aria-labelledby="hp-highlights-title">
+        <div class="hp-gl-slider__stage">
+            <canvas class="hp-gl-slider__canvas" aria-hidden="true"></canvas>
+            @for (var i = 0; i < count; i++)
+            {
+                var slide = Model.SlideItems[i];
+                var imageDefault = Url.Content($"/img/{slide.CarouselImage}");
+                var image600w = Url.Content($"/img/{slide.CarouselImage600w}");
+                var image1200w = Url.Content($"/img/{slide.CarouselImage1200w}");
+                var words = (slide.CarouselTitle ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-<div class="alpha-carousel swiper-container">
-    <div class="swiper-wrapper">
-        @foreach (var slide in Model.SlideItems)
+                <div class="hp-gl-slide @(i == 0 ? "is-active" : "")" data-index="@i"
+                     role="group" aria-roledescription="@T("slayt", "Folie")" aria-label="@(i + 1) / @count"
+                     aria-hidden="@(i == 0 ? "false" : "true")">
+                    <img class="hp-gl-slide__img"
+                         src="@image1200w"
+                         srcset="@image600w 600w, @image1200w 1200w, @imageDefault 1920w"
+                         sizes="(max-width: 1180px) 100vw, 1180px"
+                         alt=""
+                         loading="@(i == 0 ? "eager" : "lazy")"
+                         decoding="async" />
+                    <div class="hp-gl-slide__shade" aria-hidden="true"></div>
+                    <div class="hp-gl-slide__content">
+                        <span class="hp-gl-slide__count">@((i + 1).ToString("00")) <span>/ @count.ToString("00")</span></span>
+                        <h3 class="hp-gl-slide__title">
+                            @for (var w = 0; w < words.Length; w++)
+                            {
+                                <span class="w"><span style="--wi: @w">@words[w]</span></span>
+                                @(" ")
+                            }
+                        </h3>
+                        @if (!string.IsNullOrWhiteSpace(slide.CarouselDescription))
+                        {
+                            <p class="hp-gl-slide__text">@slide.CarouselDescription</p>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(slide.CarouselLinkText))
+                        {
+                            <a href="@slide.CarouselLink" class="bp-btn bp-btn--light hp-gl-slide__btn" tabindex="@(i == 0 ? null : "-1")">
+                                @slide.CarouselLinkText <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (count > 1)
         {
-            var imageDefault = Url.Content($"/img/{slide.CarouselImage}");
-            var image600w    = Url.Content($"/img/{slide.CarouselImage600w}");
-            var image1200w   = Url.Content($"/img/{slide.CarouselImage1200w}");
-            var image1920w   = Url.Content($"/img/{slide.CarouselImage}"); // Full size for large screens
-            
-            <div class="swiper-slide">
-                <picture>
-                    <source media="(max-width: 600px)" srcset="@image600w" />
-                    <source media="(max-width: 1200px)" srcset="@image1200w" />
-                    <source media="(min-width: 1201px)" srcset="@image1920w" />
-                    <img 
-                        src="@imageDefault"
-                        srcset="@image600w 600w, @image1200w 1200w, @image1920w 1920w"
-                        sizes="(max-width: 600px) 100vw, (max-width: 1200px) 100vw, 1920px"
-                        class="slide-image"
-                        alt="@slide.CarouselTitle"
-                        loading="eager"
-                        decoding="async" />
-                </picture>
-                <div class="slide-overlay">
-                    <h2 class="slide-title">@slide.CarouselTitle</h2>
-                    <p class="slide-description">@slide.CarouselDescription</p>
-                    <a href="@slide.CarouselLink" class="slide-button" aria-label="@slide.CarouselLinkText for @slide.CarouselTitle">@slide.CarouselLinkText</a>
+            <div class="hp-gl-slider__bar">
+                <ol class="hp-gl-slider__tabs">
+                    @for (var i = 0; i < count; i++)
+                    {
+                        <li>
+                            <button type="button" class="hp-gl-tab @(i == 0 ? "is-active" : "")" data-go="@i"
+                                    aria-current="@(i == 0 ? "true" : null)" aria-label="@(i + 1) / @count: @Model.SlideItems[i].CarouselTitle">
+                                <span class="hp-gl-tab__meta">
+                                    <span class="hp-gl-tab__num">@((i + 1).ToString("00"))</span>
+                                    <span class="hp-gl-tab__title">@Model.SlideItems[i].CarouselTitle</span>
+                                </span>
+                                <span class="hp-gl-tab__progress" aria-hidden="true"><span></span></span>
+                            </button>
+                        </li>
+                    }
+                </ol>
+                <div class="hp-gl-slider__buttons">
+                    <button type="button" class="hp-gl-btn" data-pause aria-pressed="false"
+                            data-label-pause="@T("Otomatik geçişi durdur", "Automatik anhalten")" data-label-play="@T("Otomatik geçişi başlat", "Automatik starten")"
+                            aria-label="@T("Otomatik geçişi durdur", "Automatik anhalten")">
+                        <i class="fa-solid fa-pause" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="hp-gl-btn" data-prev aria-label="@T("Önceki", "Zurück")"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+                    <button type="button" class="hp-gl-btn hp-gl-btn--primary" data-next aria-label="@T("Sonraki", "Weiter")"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
                 </div>
             </div>
         }
     </div>
-
-    <div class="swiper-pagination" role="group" aria-label="Slide pagination"></div>
-    <button class="swiper-button-prev" aria-label="Previous slide"></button>
-    <button class="swiper-button-next" aria-label="Next slide"></button>
-</div>
-
-@{
-    var req = ViewContext.HttpContext.Request;
-    var fullImagePaths = Model.SlideItems
-        .Select(s => $"{req.Scheme}://{req.Host}/img/{Url.Content(s.CarouselImage)}")
-        .ToList();
-}
-<script>
-    window.carouselImages = [
-        @foreach(var image in fullImagePaths)
-        {
-            @: "@image",
-        }
-    ];
-</script>
-<!-- Now load your slide.js -->
-<script src="~/js/slide.js"></script>
-
+</section>

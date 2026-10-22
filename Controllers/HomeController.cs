@@ -241,8 +241,9 @@ namespace SpeakingClub.Controllers
 
         #region Anasayfa
         [HttpGet("")]
-        [HttpGet("Home")]
-        [HttpGet("Home/Index")]
+        // "Home…" aliases have Order = 1 so generated links (asp-action, RedirectToAction) use "/" and never a redirect
+        [HttpGet("Home", Order = 1)]
+        [HttpGet("Home/Index", Order = 1)]
         public async Task<IActionResult> Index()
         {
             if (RedirectToCanonical("/") is { } redirect)
@@ -266,39 +267,17 @@ namespace SpeakingClub.Controllers
             }
             // No hreflang: the home page has one URL for both languages (an alternate pointing to itself is ignored).
 
+            // Posts marked "show on home" first, then the newest; same cards (translation, URL) as the blog list
             var entityBlogs = await _unitOfWork.Blogs.GetPublishedAsync();
-            var selectedBlogs = entityBlogs.Where(b => b.isHome == true).ToList();
-            var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
-            var langCode = currentCulture.Substring(0, 2).ToLower();
             var model = new IndexModel
             {
-                BlogItems = selectedBlogs.Any() ?
-                    selectedBlogs.Select(b => new SpeakingClub.Entity.Blog
-                    {
-                        BlogId = b.BlogId,
-                        Image = b.Image,
-                        Url = b.Url,
-                        RawYT = b.RawYT,
-                        RawMaps = b.RawMaps,
-                        Title = _localization.GetKey($"Title_{b.BlogId}_{b.Url}_{langCode}")?.Value ?? b.Title,
-                        Content = _localization.GetKey($"Content_{b.BlogId}_{b.Url}_{langCode}")?.Value ?? b.Content,
-                        Date = b.Date,
-                        Author = b.Author,
-                        Tags = b.Tags
-                    }).ToList() :
-                    entityBlogs.Select(b => new SpeakingClub.Entity.Blog
-                    {
-                        BlogId = b.BlogId,
-                        Image = b.Image,
-                        Url = b.Url,
-                        RawYT = b.RawYT,
-                        RawMaps = b.RawMaps,
-                        Title = _localization.GetKey($"Title_{b.BlogId}_{b.Url}_{langCode}")?.Value ?? b.Title,
-                        Content = _localization.GetKey($"Content_{b.BlogId}_{b.Url}_{langCode}")?.Value ?? b.Content,
-                        Date = b.Date,
-                        Author = b.Author,
-                        Tags = b.Tags
-                    }).ToList()
+                LatestPosts = entityBlogs
+                    .Where(b => !b.NoIndex)
+                    .OrderByDescending(b => b.isHome)
+                    .ThenByDescending(b => b.Date)
+                    .Take(3)
+                    .Select(BuildBlogCard)
+                    .ToList()
             };
 
             return View(model);
@@ -309,7 +288,7 @@ namespace SpeakingClub.Controllers
         [HttpGet("privacy")]
         [HttpGet("gizlilik")]
         [HttpGet("datenschutz")]
-        [HttpGet("Home/Privacy")]
+        [HttpGet("Home/Privacy", Order = 1)]
         public IActionResult Privacy()
         {
             if (RedirectToCanonical(GetLocalizedPath("/gizlilik", "/datenschutz", "/gizlilik")) is { } redirect)
@@ -392,7 +371,7 @@ namespace SpeakingClub.Controllers
         [HttpGet("about")]
         [HttpGet("hakkimizda")]
         [HttpGet("ueber-uns")]
-        [HttpGet("Home/About")]
+        [HttpGet("Home/About", Order = 1)]
         public IActionResult About()
         {
             if (RedirectToCanonical(GetLocalizedPath("/hakkimizda", "/ueber-uns", "/hakkimizda")) is { } redirect)
@@ -554,11 +533,11 @@ namespace SpeakingClub.Controllers
             {
                 _logger.LogError(ex, "Contact form email sending failed.");
                 TempData["ContactError"] = "An error occurred while sending your message. Please try again later.";
-                return RedirectToAction("About");
+                return Redirect(GetLocalizedPath("/hakkimizda", "/ueber-uns", "/hakkimizda"));
             }
 
             TempData["ContactSuccess"] = "Your message was sent successfully!";
-            return RedirectToAction("About");
+            return Redirect(GetLocalizedPath("/hakkimizda", "/ueber-uns", "/hakkimizda"));
         }
 
         // Contact form gönderimi sonrası onay sayfası
@@ -679,7 +658,7 @@ namespace SpeakingClub.Controllers
         [HttpGet("blog")]
         [HttpGet("yazilar")]
         [HttpGet("beitraege")]
-        [HttpGet("Home/Blog")]
+        [HttpGet("Home/Blog", Order = 1)]
         public async Task<IActionResult> Blog(string category, string tag, string searchTerm, int page = 1)
         {
             var isGerman = IsGerman();
@@ -805,7 +784,7 @@ namespace SpeakingClub.Controllers
         [HttpGet("blog/{url}")]
         [HttpGet("yazilar/{url}")]
         [HttpGet("beitraege/{url}")]
-        [HttpGet("Home/BlogDetail/{url}")]
+        [HttpGet("Home/BlogDetail/{url}", Order = 1)]
         public async Task<IActionResult> BlogDetail(string url)
         {
             try
@@ -1093,7 +1072,7 @@ namespace SpeakingClub.Controllers
         [HttpGet("words")]
         [HttpGet("sozluk")]
         [HttpGet("woerterbuch")]
-        [HttpGet("Home/Words")]
+        [HttpGet("Home/Words", Order = 1)]
         public async Task<IActionResult> Words(string searchTerm)
         {
             if (RedirectToCanonical(GetLocalizedPath("/sozluk", "/woerterbuch", "/sozluk")) is { } redirect)

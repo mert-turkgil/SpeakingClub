@@ -1,5 +1,5 @@
 // ============================================================================
-// blog.js — interactions for the blog list and blog post pages.
+// blog.js — interactions for the blog list, blog post and home pages.
 // No dependencies. Everything is progressive enhancement: without this file
 // the pages are fully readable, only the motion and the helpers are missing.
 // UI strings come from data-* attributes on .blog-page (localized in Razor).
@@ -7,7 +7,8 @@
 (function () {
     'use strict';
 
-    var root = document.querySelector('.blog-page');
+    // Also runs on the home page, which reuses the blog cards, buttons and reveal animations
+    var root = document.querySelector('.blog-page, .home-page');
     if (!root) return;
 
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

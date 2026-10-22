@@ -2,13 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using SpeakingClub.Entity;
 
 namespace SpeakingClub.Models
 {
     public class IndexModel
     {
-    // Use the entity namespace instead of the model namespace
-    public List<SpeakingClub.Entity.Blog> BlogItems { get; set; } = new List<SpeakingClub.Entity.Blog>();
+        // Newest posts for the home page: the ones marked "show on home" first, then the latest
+        public List<BlogCardModel> LatestPosts { get; set; } = new List<BlogCardModel>();
     }
 }

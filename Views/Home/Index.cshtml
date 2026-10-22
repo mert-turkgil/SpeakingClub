@@ -1,1102 +1,284 @@
 ﻿@model IndexModel
 @inject LanguageService Localizer
+@inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider FileVersion
 @{
     ViewData["Title"] ??= "Almanca Konuşma Kulübü"; // the controller sets the SEO title
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    string Key(string key) => Localizer.GetKey(key).Value;
+
+    var blogListPath = isGerman ? "/beitraege" : "/yazilar";
+    var quizzesPath = isGerman ? "/pruefungen" : "/sinavlar";
+    var aboutPath = isGerman ? "/ueber-uns" : "/hakkimizda";
+    var doctorsPath = isGerman ? "/aerztedeutsch" : "/hekim-almancasi";
+    var nursesPath = isGerman ? "/pflegedeutsch" : "/hemsirelik-almancasi";
+
+    var levels = new[] { "A1", "A2", "B1", "B2", "C1" };
+    var shorts = new[]
+    {
+        "rc2WQ26x3ME", "Xr83xGCEA_U", "sTQWle9gtzs", "8qR-ptz53TU", "u4ZOGWZ1uZE", "wbhst8AgHdo", "euc6ko6NYDg",
+        "E4VymzSDsK4", "ZD5mekHCQt8", "GSCndE0gpkE", "T__UufkqlcE", "dvkT1iu88-Q", "OG7vm0mAbuk"
+    };
+    var features = new[]
+    {
+        (Icon: "fa-award", Title: Key("ftheader1"), Body: Key("ftbody1")),
+        (Icon: "fa-comments", Title: Key("ftheader2"), Body: Key("ftbody2")),
+        (Icon: "fa-people-group", Title: Key("ftheader3"), Body: Key("ftbody3"))
+    };
 }
 @section Css {
-    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
-    <link rel="stylesheet" href="~/css/Slide.css" />
-    <link rel="stylesheet" href="~/css/splash.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
-          rel="stylesheet">
-    <!-- Three.js -->
-    <script type="importmap" type="importmap">
-            {
-                "imports": {
-                    "three": "/lib/three/build/three.module.js",
-                    "three/addons/": "/lib/three/examples/jsm/"
-                }
-            }
-    </script>
-    <style>
-        @* Video Shorts Start *@
-        .youtube-shorts-section {
-            background: linear-gradient(160deg, #0c0c0c 0%, #150a0a 60%, #0a0a18 100%);
-            padding: 80px 0;
-            overflow: hidden;
-        }
-
-        .shorts-header {
-            text-align: center;
-            margin-bottom: 50px;
-            padding: 0 20px;
-        }
-
-        .shorts-header h2 {
-            font-size: clamp(1.8rem, 4vw, 2.8rem);
-            font-weight: 800;
-            color: #fff;
-            margin-bottom: 14px;
-            letter-spacing: -0.5px;
-        }
-
-        .shorts-header-bar {
-            width: 56px;
-            height: 4px;
-            background: linear-gradient(90deg, #ff4757, #FF9494);
-            border-radius: 2px;
-            margin: 0 auto 14px;
-        }
-
-        .shorts-header p {
-            color: rgba(255, 255, 255, 0.45);
-            font-size: 0.95rem;
-            margin: 0;
-        }
-
-        .swiper-shorts {
-            width: 100%;
-            padding: 30px 0 70px;
-            overflow: hidden;
-        }
-
-        .swiper-shorts .swiper-wrapper {
-            align-items: center;
-        }
-
-        .shorts-slide {
-            border-radius: 20px;
-            overflow: hidden;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .shorts-slide.shorts-tall {
-            height: 520px;
-            width: 293px !important;
-        }
-
-        .shorts-slide.shorts-short {
-            height: 405px;
-            width: 228px !important;
-        }
-
-        .shorts-container {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            border-radius: 20px;
-            position: relative;
-            filter: brightness(0.65) saturate(0.8);
-            transition: filter 0.4s ease, box-shadow 0.4s ease, transform 0.4s cubic-bezier(.25, .46, .45, .94);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .shorts-slide.swiper-slide-active .shorts-container {
-            filter: brightness(1) saturate(1);
-            box-shadow: 0 20px 60px rgba(255, 71, 87, 0.38), 0 8px 24px rgba(0, 0, 0, 0.55);
-        }
-
-        .shorts-slide:hover .shorts-container {
-            filter: brightness(0.92) saturate(1);
-            box-shadow: 0 16px 50px rgba(255, 71, 87, 0.28), 0 6px 20px rgba(0, 0, 0, 0.5);
-            transform: scale(1.04);
-        }
-
-        .shorts-slide.swiper-slide-active:hover .shorts-container {
-            transform: scale(1.03);
-            box-shadow: 0 24px 70px rgba(255, 71, 87, 0.45), 0 10px 28px rgba(0, 0, 0, 0.6);
-        }
-
-        .shorts-container iframe {
-            width: 100%;
-            height: 100%;
-            border: 0;
-            display: block;
-        }
-
-        /* Transparent layer so click-and-drag works over the YouTube iframe.
-           The centered (active) slide turns it off so the video stays playable. */
-        .shorts-drag-layer {
-            position: absolute;
-            inset: 0;
-            z-index: 6;
-            cursor: grab;
-        }
-        .swiper-shorts.swiper-grabbing .shorts-drag-layer { cursor: grabbing; }
-        .shorts-slide.swiper-slide-active .shorts-drag-layer { pointer-events: none; }
-
-        .shorts-badge {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: rgba(255, 0, 0, 0.9);
-            color: #fff;
-            font-size: 0.62rem;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 5px;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            pointer-events: none;
-            z-index: 10;
-            opacity: 0;
-            transform: translateY(-6px);
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-
-        .shorts-slide:hover .shorts-badge {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .swiper-button-prev.shorts-button-prev,
-        .swiper-button-next.shorts-button-next {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            top: 50%;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-            z-index: 20;
-            transition: all 0.25s ease;
-        }
-
-        .swiper-button-prev.shorts-button-prev:after,
-        .swiper-button-next.shorts-button-next:after {
-            font-size: 17px;
-            font-weight: 900;
-        }
-
-        .swiper-button-prev.shorts-button-prev { left: 16px; }
-        .swiper-button-next.shorts-button-next { right: 16px; }
-
-        .swiper-button-prev.shorts-button-prev:hover,
-        .swiper-button-next.shorts-button-next:hover {
-            background: rgba(255, 71, 87, 0.8);
-            border-color: rgba(255, 71, 87, 0.9);
-            transform: scale(1.12);
-            box-shadow: 0 6px 28px rgba(255, 71, 87, 0.45);
-        }
-
-        .swiper-shorts .swiper-pagination {
-            bottom: 20px !important;
-            color: rgba(255, 255, 255, 0.45);
-            font-size: 0.88rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-
-        @@media (max-width: 900px) {
-            .shorts-slide.shorts-tall { height: 420px; width: 236px !important; }
-            .shorts-slide.shorts-short { height: 338px; width: 190px !important; }
-        }
-
-        @@media (max-width: 600px) {
-            .shorts-slide.shorts-tall { height: 355px; width: 200px !important; }
-            .shorts-slide.shorts-short { height: 280px; width: 157px !important; }
-            .swiper-button-prev.shorts-button-prev,
-            .swiper-button-next.shorts-button-next {
-                width: 40px;
-                height: 40px;
-            }
-            .swiper-button-prev.shorts-button-prev:after,
-            .swiper-button-next.shorts-button-next:after {
-                font-size: 14px;
-            }
-            .swiper-button-prev.shorts-button-prev { left: 6px; }
-            .swiper-button-next.shorts-button-next { right: 6px; }
-        }
-
-        @@media (max-width: 400px) {
-            .shorts-slide.shorts-tall { height: 320px; width: 180px !important; }
-            .shorts-slide.shorts-short { height: 250px; width: 141px !important; }
-            .swiper-shorts { padding: 20px 0 60px; }
-            .shorts-header { margin-bottom: 32px; }
-        }
-        @* Video Shorts END *@
-        .icon-square {
-            width: 3rem;
-            height: 3rem;
-            border-radius: 0.75rem;
-        }
-
-        .profile-img {
-            border-radius: 50%;
-            height: 15.625rem;
-            max-width: 100%;
-        }
-
-        /* Quote + portrait feature row */
-        .quote-block {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-
-        .quote-feature .quote-text {
-            font-size: clamp(1.4rem, 3vw, 2.2rem);
-            margin: 0;
-        }
-
-        .quote-mark {
-            color: #FF9494;
-            opacity: 0.45;
-            font-size: clamp(1.6rem, 4vw, 2.6rem);
-            line-height: 1;
-        }
-
-        .quote-mark--open { margin-bottom: 0.6rem; align-self: center; }
-        .quote-mark--close { margin-top: 0.6rem; align-self: center; }
-
-        @@media (min-width: 992px) {
-            .quote-block {
-                align-items: flex-start;
-                text-align: left;
-            }
-            .quote-mark--open { align-self: flex-start; }
-            .quote-mark--close { align-self: flex-end; }
-        }
-
-        .quote-feature-img {
-            width: auto;
-            max-width: 100%;
-            max-height: 600px;
-            border-radius: 22px;
-            border: 5px solid #fff;
-            box-shadow: 0 18px 45px rgba(255, 148, 148, 0.3), 0 6px 18px rgba(0, 0, 0, 0.08);
-            transition: transform 0.4s ease, box-shadow 0.4s ease;
-        }
-
-        @@media (min-width: 992px) {
-            .quote-feature-img { max-height: 640px; }
-        }
-
-        /* Social row under the quote */
-        .quote-socials {
-            margin-top: 2.5rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .quote-socials__label {
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-size: 0.85rem;
-        }
-
-        .quote-socials__links {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 2.5rem;
-            flex-wrap: wrap;
-        }
-
-        .quote-socials__links a {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: #fff;
-            color: #FF9494;
-            font-size: 1.6rem;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, color 0.25s ease;
-        }
-
-        .quote-socials__links a:hover {
-            transform: translateY(-5px) scale(1.08);
-            color: #fff;
-            box-shadow: 0 12px 26px rgba(255, 148, 148, 0.45);
-        }
-
-        .quote-socials__links a.social-yt:hover { background: #FF0000; }
-        .quote-socials__links a.social-ig:hover { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
-        .quote-socials__links a.social-fb:hover { background: #1877F2; }
-
-        @@media (max-width: 480px) {
-            .quote-socials__links { gap: 1.5rem; }
-            .quote-socials__links a { width: 50px; height: 50px; font-size: 1.4rem; }
-        }
-
-        .quote-feature-img:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 26px 60px rgba(255, 148, 148, 0.4), 0 10px 24px rgba(0, 0, 0, 0.12);
-        }
-
-        /* Hero Section Responsive Styles */
-        #Isik {
-            position: relative;
-            min-height: 800px;
-            padding: 60px 0;
-        }
-
-        #overlayText {
-            position: relative;
-            z-index: 2;
-        }
-
-        #three-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            opacity: 0.7;
-            /* Reduce canvas opacity to improve text visibility */
-        }
-
-        .hero-feature-col {
-            margin-bottom: 2rem;
-        }
-
-        .hero-feature-col h3 {
-            font-size: clamp(1.25rem, 3vw, 2rem);
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 0, 0, 0.6);
-        }
-
-        .hero-feature-col p {
-            font-size: clamp(0.9rem, 2vw, 1.1rem);
-            line-height: 1.6;
-            text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.5);
-        }
-
-        .hero-feature-col hr {
-            border-color: rgba(255, 255, 255, 0.8);
-            opacity: 1;
-        }
-
-        /* Responsive adjustments */
-        @@media (max-width: 991px) {
-            #Isik {
-                min-height: 600px;
-                padding: 40px 0;
-            }
-
-            .icon-square {
-                width: 2.5rem;
-                height: 2.5rem;
-            }
-
-            .icon-square svg {
-                height: 24px;
+    <script>document.documentElement.classList.add('bp-js');</script>
+    <link rel="preload" as="image" href="~/img/FirstImageThatGoesForTheIndex.jpeg" fetchpriority="high" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@@0,9..144,600;1,9..144,600&display=swap" />
+    <link rel="stylesheet" href="~/css/blog.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
+    @* Three.js for the slider transitions and the 3D clinical band (home-3d.js loads it only when needed).
+       "<!script>" opts out of ASP.NET's ScriptTagHelper, which takes over type="importmap" and drops the attribute.
+       Both build files carry a content hash (like asp-append-version) so browsers never reuse a stale copy;
+       the second entry also catches three.module's own relative import of three.core. *@
+    <!script type="importmap">
+        {
+            "imports": {
+                "three": "@FileVersion.AddFileVersionToPath(Context.Request.PathBase, "/lib/three/build/three.module.min.js")",
+                "/lib/three/build/three.core.min.js": "@FileVersion.AddFileVersionToPath(Context.Request.PathBase, "/lib/three/build/three.core.min.js")",
+                "three/addons/": "/lib/three/examples/jsm/"
             }
         }
-
-        @@media (max-width: 767px) {
-            #Isik {
-                min-height: auto;
-                padding: 30px 0 20px 0;
-            }
-
-            .hero-feature-col {
-                text-align: center;
-                margin-bottom: 2rem;
-            }
-
-            .hero-feature-col .d-flex {
-                flex-direction: column;
-                align-items: center !important;
-            }
-
-            .icon-square {
-                width: 2rem;
-                height: 2rem;
-                margin-right: 0 !important;
-                margin-bottom: 0.5rem;
-            }
-
-            .icon-square svg {
-                height: 20px;
-                width: 20px;
-            }
-
-            .hero-feature-col h3 {
-                font-size: 1.1rem;
-                margin-bottom: 0.5rem;
-            }
-
-            .hero-feature-col p {
-                font-size: 0.85rem;
-                padding: 0 0.5rem;
-                line-height: 1.4;
-            }
-
-            .hero-feature-col hr {
-                width: 50%;
-                margin: 0.5rem auto;
-            }
-        }
-
-        @@media (max-width: 480px) {
-            #Isik {
-                min-height: auto;
-                padding: 25px 0 15px 0;
-            }
-
-            .hero-feature-col {
-                margin-bottom: 1.5rem;
-            }
-
-            .icon-square {
-                width: 1.8rem;
-                height: 1.8rem;
-            }
-
-            .icon-square svg {
-                height: 18px;
-                width: 18px;
-            }
-
-            .hero-feature-col h3 {
-                font-size: 1rem;
-                margin-bottom: 0.4rem;
-            }
-
-            .hero-feature-col p {
-                font-size: 0.8rem;
-                line-height: 1.3;
-            }
-
-            .hero-feature-col hr {
-                width: 40%;
-                margin: 0.4rem auto;
-            }
-        }
-    </style>
-    <style>
-        /* Swiper unique container */
-        .swiper-levels {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto 48px auto;
-            height: 420px;
-            position: relative;
-        }
-
-        .swiper-levels .swiper-slide.level-card {
-            background-size: cover;
-            background-position: center;
-            border-radius: 28px;
-            box-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.13);
-            display: flex;
-            align-items: flex-end;
-            overflow: hidden;
-            transition: box-shadow .32s;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .swiper-levels .swiper-slide.level-card:hover,
-        .swiper-levels .swiper-slide.level-card:focus {
-            box-shadow: 0 14px 38px 0 #ff94947a, 0 3px 10px 0 rgba(0, 0, 0, 0.11);
-        }
-
-        .level-overlay {
-            width: 100%;
-            background: linear-gradient(0deg, #1a1a1a 82%, rgba(0, 0, 0, .01) 100%);
-            color: #fff;
-            padding: 30px 28px 24px 28px;
-            opacity: 0.97;
-            transition: background 0.28s, opacity 0.28s;
-            min-height: 188px;
-        }
-
-        .level-card:hover .level-overlay,
-        .level-card:focus .level-overlay {
-            background: linear-gradient(0deg, #ff9494e6 38%, #222 100%);
-            opacity: 1;
-        }
-
-        .level-overlay h2 {
-            font-size: 2.2rem;
-            font-weight: 800;
-            margin-bottom: 8px;
-        }
-
-        .level-overlay h4 {
-            font-size: 1.13rem;
-            font-weight: 500;
-            margin-bottom: 15px;
-            color: #FFD1D1;
-        }
-
-        .level-overlay p {
-            font-size: 1.05rem;
-            margin-bottom: 16px;
-            line-height: 1.55;
-            max-height: 60px;
-            overflow: hidden;
-            transition: max-height 0.4s;
-        }
-
-        .level-card:hover .level-overlay p,
-        .level-card:focus .level-overlay p {
-            max-height: 120px;
-        }
-
-        .level-btn {
-            padding: 12px 34px;
-            border-radius: 11px;
-            background: #FF9494;
-            color: #fff;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 1rem;
-            letter-spacing: .5px;
-            transition: background .2s, color .2s, transform .19s;
-            box-shadow: 0 3px 15px #ff949447;
-            display: inline-block;
-        }
-
-        .level-btn:hover,
-        .level-btn:focus {
-            background: #FFD1D1;
-            color: #FF9494;
-            transform: scale(1.08);
-        }
-
-        /* Responsive */
-        @@media (max-width: 900px) {
-            .swiper-levels {
-                height: 335px;
-            }
-
-            .level-overlay {
-                padding: 16px 9px 10px 12px;
-            }
-
-            .level-overlay h2 {
-                font-size: 1.35rem;
-            }
-        }
-
-        @@media (max-width: 600px) {
-            .swiper-levels {
-                height: 270px;
-            }
-
-            .level-overlay h2 {
-                font-size: 1.12rem;
-            }
-
-            .level-overlay h4 {
-                font-size: 1rem;
-            }
-        }
-
-        .swiper-levels .swiper-pagination {
-            bottom: 9px !important;
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        .swiper-levels .swiper-pagination-bullet {
-            width: 38px;
-            height: 7px;
-            border-radius: 4px;
-            background: #FFD1D1;
-            opacity: 0.7;
-            transition: opacity .27s, width .27s;
-        }
-
-        .swiper-levels .swiper-pagination-bullet-active {
-            background: #FF9494;
-            opacity: 1;
-            width: 60px;
-        }
-
-        .swiper-levels .swiper-button-prev,
-        .swiper-levels .swiper-button-next {
-            color: #FFD1D1;
-            transition: color .22s, transform .25s;
-        }
-
-        .swiper-levels .swiper-button-prev:hover,
-        .swiper-levels .swiper-button-next:hover {
-            color: #FF9494;
-            transform: scale(1.17);
-        }
-    </style>
-    <style>
-        /* Advanced Blog Card Media Styles */
-        .advanced-blog-card__media {
-            position: relative;
-            width: 100%;
-            height: 300px;
-            /* Fixed height for uniformity */
-            overflow: hidden;
-        }
-
-        .advanced-blog-card__slide {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Image styling: fill container and cover */
-        .advanced-blog-card__image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        /* For iframes (video and maps), force them to fill container */
-        .advanced-blog-card__video,
-        .advanced-blog-card__map {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 0;
-            /* Modern browsers support object-fit on iframes,
-               so it helps ensure the content covers the container. */
-            object-fit: cover;
-        }
-    </style>
-    <style>
-        .video-container {
-            position: relative;
-            width: 100%;
-            padding-bottom: 56.25%;
-            /* 16:9 Aspect Ratio */
-            height: 0;
-            overflow: hidden;
-        }
-
-        .video-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-    </style>
+    </!script>
 }
-<main>
-    <section>
-        <div data-aos="fade-down">
-            @await Component.InvokeAsync("Slide")
+
+<div class="home-page"
+     data-play-label="@T("Videoyu oynat", "Video abspielen")">
+
+    <!-- Hero ------------------------------------------------------------- -->
+    <section class="hp-hero">
+        <div class="bp-container hp-hero__grid">
+            <div class="hp-hero__copy">
+                <span class="bp-eyebrow bp-enter"><span class="hp-flag" aria-hidden="true"></span>@Key("HeroSubtitle")</span>
+                <h1 class="hp-hero__title bp-enter" style="--bp-delay: 80ms">
+                    @if (isGerman)
+                    {
+                        <text>Deutsch lernen – <em>durch Sprechen.</em></text>
+                    }
+                    else
+                    {
+                        <text>Almancayı <em>konuşarak</em> öğrenin.</text>
+                    }
+                </h1>
+                <p class="hp-hero__lead bp-enter" style="--bp-delay: 160ms">
+                    @T("Almanya'da doğup büyüyen Suna Koç ile birebir ve grup konuşma dersleri. Sağlık profesyonelleri için klinik Almanca dahil, özgüvenle konuşmanız için.",
+                       "Gesprächstraining mit Suna Koç, aufgewachsen in Deutschland: Einzel- und Gruppenunterricht – inklusive klinischem Deutsch für Gesundheitsberufe. Damit Sie selbstbewusst sprechen.")
+                </p>
+                <div class="hp-hero__actions bp-enter" style="--bp-delay: 240ms">
+                    <a class="bp-btn" href="@quizzesPath">@Key("SeviyeniziÖlçün") <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                    <a class="bp-btn bp-btn--ghost" href="@(aboutPath)#contact-form"><i class="fa-regular fa-paper-plane" aria-hidden="true"></i>@T("Bize yazın", "Schreiben Sie uns")</a>
+                </div>
+                <ul class="hp-hero__facts bp-enter" style="--bp-delay: 320ms">
+                    <li><i class="fa-solid fa-medal" aria-hidden="true"></i>@T("20+ yıl deneyim", "20+ Jahre Erfahrung")</li>
+                    <li><i class="fa-solid fa-user-group" aria-hidden="true"></i>@T("Birebir & grup", "Einzeln & in Gruppen")</li>
+                    <li><i class="fa-solid fa-stethoscope" aria-hidden="true"></i>@Key("KlinikAlmanca")</li>
+                </ul>
+            </div>
+
+            <div class="hp-hero__visual">
+                <figure class="hp-portrait">
+                    <img src="~/img/FirstImageThatGoesForTheIndex.jpeg" alt="@T("Suna Koç – Almanca konuşma koçu", "Suna Koç – Deutsch-Sprechcoach")"
+                         width="1512" height="2016" fetchpriority="high" decoding="async" />
+                </figure>
+                <div class="hp-bubble hp-bubble--1" aria-hidden="true">Guten Tag! 👋</div>
+                <div class="hp-bubble hp-bubble--2" aria-hidden="true">Wie geht es Ihnen?</div>
+                <div class="hp-bubble hp-bubble--3" aria-hidden="true">Ich spreche Deutsch!</div>
+                <div class="hp-hero__badge">
+                    <span class="hp-hero__badge-icon" aria-hidden="true"><i class="fa-solid fa-microphone-lines"></i></span>
+                    <span><strong>Suna Koç</strong><small>@T("Almanca konuşma koçu", "Deutsch-Sprechcoach")</small></span>
+                </div>
+            </div>
         </div>
     </section>
-    <!-- Hero Section: Introduction -->
-    <section class="hero py-5 container-xxl">
-        <canvas class="w-100" id="three-canvas"></canvas>
-        <div id="Isik">
-            <div class="px-5" id="overlayText">
-                <div class="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-3">
-                    <!-- Feature 1 -->
-                    <div class="col hero-feature-col">
-                        <div class="d-flex align-items-start">
-                            <div
-                                class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
-                                <svg xmlns="https://www.w3.org/2000/svg" height="30" width="30" fill="currentColor"
-                                     class="bi bi-stars" viewBox="0 0 16 16" aria-hidden="true">
-                                    <path
-                                    d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 class="hero-heading"
-                                    style="font-family: 'Open Sans', sans-serif; font-weight: 700; color: #fff;">
-                                    @Localizer.GetKey("ftheader1").Value</h3>
-                                    <hr />
-                                    <p style="color: #fff;">@Localizer.GetKey("ftbody1").Value</p>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Feature 2 -->
-                        <div class="col hero-feature-col">
-                            <div class="d-flex align-items-start">
-                                <div
-                                    class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
-                                    <svg xmlns="https://www.w3.org/2000/svg" height="30" width="30" fill="currentColor"
-                                         class="bi bi-award" viewBox="0 0 16 16" aria-hidden="true">
-                                        <path
-                                        d="M9.669.864 8 0 6.331.864l-1.858.282-.842 1.68-1.337 1.32L2.6 6l-.306 1.854 1.337 1.32.842 1.68 1.858.282L8 12l1.669-.864 1.858-.282.842-1.68 1.337-1.32L13.4 6l.306-1.854-1.337-1.32-.842-1.68zm1.196 1.193.684 1.365 1.086 1.072L12.387 6l.248 1.506-1.086 1.072-.684 1.365-1.51.229L8 10.874l-1.355-.702-1.51-.229-.684-1.365-1.086-1.072L3.614 6l-.25-1.506 1.087-1.072.684-1.365 1.51-.229L8 1.126l1.356.702z" />
-                                        <path d="M4 11.794V16l4-1 4 1v-4.206l-2.018.306L8 13.126 6.018 12.1z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="hero-heading"
-                                        style="font-family: 'Open Sans', sans-serif; font-weight: 700; color: #fff;">
-                                        @Localizer.GetKey("ftheader2").Value</h3>
-                                        <hr />
-                                        <p style="color: #fff;">@Localizer.GetKey("ftbody2").Value</p>
-                                    </div>
-                                </div>
-                            </div>
+    <!-- Highlights (admin-managed carousel) -------------------------------- -->
+    @await Component.InvokeAsync("Slide")
 
-                            <!-- Feature 3 -->
-                            <div class="col hero-feature-col">
-                                <div class="d-flex align-items-start">
-                                    <div
-                                        class="icon-square bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
-                                        <svg xmlns="https://www.w3.org/2000/svg" height="30" width="30" fill="currentColor"
-                                             class="bi bi-search-heart-fill" viewBox="0 0 16 16" aria-hidden="true">
-                                            <path
-                                            d="M6.5 13a6.47 6.47 0 0 0 3.845-1.258h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1A6.47 6.47 0 0 0 13 6.5 6.5 6.5 0 0 0 6.5 0a6.5 6.5 0 1 0 0 13m0-8.518c1.664-1.673 5.825 1.254 0 5.018-5.825-3.764-1.664-6.69 0-5.018" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h3 class="hero-heading"
-                                            style="font-family: 'Open Sans', sans-serif; font-weight: 700; color: #fff;">
-                                            @Localizer.GetKey("ftheader3").Value</h3>
-                                            <hr />
-                                            <p style="color: #fff;">@Localizer.GetKey("ftbody3").Value</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
+    <!-- Approach --------------------------------------------------------------- -->
+    <section class="hp-section bp-container" aria-labelledby="hp-approach-title">
+        <header class="hp-head reveal">
+            <span class="bp-eyebrow">@T("Yaklaşımımız", "Unser Ansatz")</span>
+            <h2 class="hp-head__title" id="hp-approach-title">@T("Konuşarak öğrenmek, hatadan korkmadan.", "Lernen durch Sprechen – ohne Angst vor Fehlern.")</h2>
+        </header>
+        <div class="hp-features">
+            @for (var i = 0; i < features.Length; i++)
+            {
+                <article class="hp-feature reveal" style="--bp-delay: @(i * 90)ms">
+                    <div class="hp-feature__top">
+                        <span class="hp-feature__icon" aria-hidden="true"><i class="fa-solid @features[i].Icon"></i></span>
+                        <span class="hp-feature__num" aria-hidden="true">0@(i + 1)</span>
                     </div>
-                </section>
-                <!-- Head Grid Section -->
-                <section id="testimonial">
-                    <div class="my-5">
-                        <div class="p-5 bg-alt quote-feature">
-                            <div class="container py-5">
-                                <div class="row align-items-center g-5">
-                                    <!-- Quote -->
-                                    <div class="col-lg-6" data-aos="fade-right">
-                                        <figure class="quote-block mb-0">
-                                            <i class="fa-solid fa-quote-left quote-mark quote-mark--open" aria-hidden="true"></i>
-                                            <blockquote class="quote-text text-dark"
-                                                        style="font-family: 'Open Sans', sans-serif; font-weight: 700; line-height: 1.3;">
-                                                @Localizer.GetKey("qt1").Value
-                                            </blockquote>
-                                            <i class="fa-solid fa-quote-right quote-mark quote-mark--close" aria-hidden="true"></i>
-                                            <figcaption class="lead mt-2 mb-0 fw-semibold text-fourth">— Suna, Türkiye</figcaption>
-                                        </figure>
-                                    </div>
-                                    <!-- Portrait -->
-                                    <div class="col-lg-6 text-center" data-aos="fade-left">
-                                        <img class="quote-feature-img img-fluid"
-                                             src="~/img/FirstImageThatGoesForTheIndex.jpeg"
-                                             alt="Suna Koç – Almanca Konuşma Koçu" loading="lazy">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="container">
-                                <div class="quote-socials">
-                                    <span class="quote-socials__label text-fourth fw-semibold">@Localizer.GetKey("FollowUs").Value</span>
-                                    <div class="quote-socials__links">
-                                        <a href="https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg" target="_blank"
-                                           rel="noopener" aria-label="YouTube" class="social-yt">
-                                            <i class="fa-brands fa-youtube"></i>
-                                        </a>
-                                        <a href="https://www.instagram.com/almanca_konus_sprachcoach?igsh=MWMzNzhlcm85Ym05YQ=="
-                                           target="_blank" rel="noopener" aria-label="Instagram" class="social-ig">
-                                            <i class="fa-brands fa-instagram"></i>
-                                        </a>
-                                        <a href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" target="_blank"
-                                           rel="noopener" aria-label="Facebook" class="social-fb">
-                                            <i class="fa-brands fa-facebook"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                    <!-- YouTube Shorts Swiper Section -->
-                    <section class="youtube-shorts-section">
-                        <div class="shorts-header">
-                            <h2>@Localizer.GetKey("ShortsTitle").Value</h2>
-                            <div class="shorts-header-bar"></div>
-                            <p>@Localizer.GetKey("ShortsSubtitle").Value</p>
-                        </div>
-                        <div class="container-fluid px-0">
-                            <div class="swiper swiper-shorts">
-                                <div class="swiper-wrapper">
-                                    <!-- Short 1 -->
-                                    <div class="swiper-slide shorts-slide shorts-tall">
-                                        <div class="shorts-container">
-                                            <span class="shorts-badge">Shorts</span>
-                                            <iframe src="https://www.youtube.com/embed/rc2WQ26x3ME"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen></iframe>
-                                        </div>
-                                    </div>
-                                    <!-- Short 2 -->
-                                    <div class="swiper-slide shorts-slide shorts-short">
-                                        <div class="shorts-container">
-                                            <span class="shorts-badge">Shorts</span>
-                                            <iframe src="https://www.youtube.com/embed/Xr83xGCEA_U"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen></iframe>
-                                        </div>
-                                    </div>
-                                    <!-- Short 3 -->
-                                    <div class="swiper-slide shorts-slide shorts-tall">
-                                        <div class="shorts-container">
-                                            <span class="shorts-badge">Shorts</span>
-                                            <iframe src="https://www.youtube.com/embed/sTQWle9gtzs"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen></iframe>
-                                        </div>
-                                    </div>
-                                    <!-- Short 4 -->
-                                    <div class="swiper-slide shorts-slide shorts-short">
-                                        <div class="shorts-container">
-                                            <span class="shorts-badge">Shorts</span>
-                                            <iframe src="https://www.youtube.com/embed/8qR-ptz53TU"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen></iframe>
-                                        </div>
-                                    </div>
-                                    <!-- Short 5 -->
-                                    <div class="swiper-slide shorts-slide shorts-tall">
-                                        <div class="shorts-container">
-                                            <span class="shorts-badge">Shorts</span>
-                                            <iframe src="https://www.youtube.com/embed/u4ZOGWZ1uZE"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen></iframe>
-                                        </div>
-                                    </div>
-                                    <!-- Short 6 -->
-                                    <div class="swiper-slide shorts-slide shorts-short">
-                                        <div class="shorts-container">
-                                            <span class="shorts-badge">Shorts</span>
-                                            <iframe src="https://www.youtube.com/embed/wbhst8AgHdo"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen></iframe>
-                                        </div>
-                                    </div>
-                                    <!-- Short 7 -->
-                                    <div class="swiper-slide shorts-slide shorts-tall">
-                                        <div class="shorts-container">
-                                            <span class="shorts-badge">Shorts</span>
-                                            <iframe src="https://www.youtube.com/embed/euc6ko6NYDg"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen></iframe>
-                                        </div>
-                                    </div>
-                                    <!-- Short 8 -->
-                                    <div class="swiper-slide shorts-slide shorts-short">
-                                        <div class="shorts-container">
-                                            <span class="shorts-badge">Shorts</span>
-                                            <iframe src="https://www.youtube.com/embed/E4VymzSDsK4"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen></iframe>
-                                        </div>
-                                    </div>
-                                    <!-- Short 9 -->
-                                    <div class="swiper-slide shorts-slide shorts-tall">
-                                        <div class="shorts-container">
-                                            <span class="shorts-badge">Shorts</span>
-                                            <iframe src="https://www.youtube.com/embed/ZD5mekHCQt8"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen></iframe>
-                                        </div>
-                                    </div>
-                                    <!-- Short 10 -->
-                                    <div class="swiper-slide shorts-slide shorts-short">
-                                        <div class="shorts-container">
-                                            <span class="shorts-badge">Shorts</span>
-                                            <iframe src="https://www.youtube.com/embed/GSCndE0gpkE"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen></iframe>
-                                        </div>
-                                    </div>
-                                    <!-- Short 11 -->
-                                    <div class="swiper-slide shorts-slide shorts-tall">
-                                        <div class="shorts-container">
-                                            <span class="shorts-badge">Shorts</span>
-                                            <iframe src="https://www.youtube.com/embed/T__UufkqlcE"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen></iframe>
-                                        </div>
-                                    </div>
-                                    <!-- Short 12 -->
-                                    <div class="swiper-slide shorts-slide shorts-short">
-                                        <div class="shorts-container">
-                                            <span class="shorts-badge">Shorts</span>
-                                            <iframe src="https://www.youtube.com/embed/dvkT1iu88-Q"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen></iframe>
-                                        </div>
-                                    </div>
-                                    <!-- Short 13 -->
-                                    <div class="swiper-slide shorts-slide shorts-tall">
-                                        <div class="shorts-container">
-                                            <span class="shorts-badge">Shorts</span>
-                                            <iframe src="https://www.youtube.com/embed/OG7vm0mAbuk"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                    allowfullscreen></iframe>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Navigation -->
-                                <div class="swiper-button-prev shorts-button-prev"></div>
-                                <div class="swiper-button-next shorts-button-next"></div>
-                                <div class="swiper-pagination"></div>
-                            </div>
-                        </div>
-                    </section>
-                    @{
-                        var levelCodes = new[] { "A1", "A2", "B1", "B2", "C1" };
-                    }
-                    <section class="blog-grid-section pb-5">
-                        <h1 class="display-4 fw-bold text-center text-fourth">@Localizer.GetKey("Kurs").Value</h1>
-                        <div class="container py-5">
-                            <div class="row justify-content-center">
-                                <div class="swiper swiper-levels" style="width:100%;">
-                                    <div class="swiper-wrapper">
-                                        @foreach (var code in levelCodes)
-                                        {
-                                            var title = Localizer.GetKey($"Level_{code}_Title").Value;
-                                            var desc = Localizer.GetKey($"Level_{code}_Desc").Value;
-                                            // Arka plan otomatik oluşturuluyor:
-                                            var bg = $"/img/{code.ToLower()}.jpeg";
-                                            <div class="swiper-slide level-card" style="background-image:url('@bg');" tabindex="0">
-                                                <div class="level-overlay">
-                                                    <h2>@code</h2>
-                                                    <h4>@title</h4>
-                                                    <p>@desc</p>
-                                                    <a href="@(System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de" ? "/pruefungen" : "/sinavlar")?level=@code"
-                                                       class="level-btn">@Localizer.GetKey("TesteBasla").Value</a>
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                    <div class="swiper-pagination"></div>
-                                    <div class="swiper-button-prev"></div>
-                                    <div class="swiper-button-next"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </main>
-                @section Scripts {
-                    <script src="~/lib/gsap/gsap.min.js"></script>
-                    <script src="~/lib/gsap/ScrollTrigger.min.js"></script>
-                    <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js" type="module"></script>
-                    <script type="module" src="~/js/anime.js"></script>
-                    <script>
-                        gsap.registerPlugin(ScrollTrigger); // <-- Register explicitly
-                    </script>
-                    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-                    <script>
-                        AOS.init();
-                    </script>
-                    <script>
-                        document.addEventListener("DOMContentLoaded", function () {
-                            // Initialize Swiper for YouTube Shorts — masonry stagger layout
-                            const shortsSwiper = new Swiper('.swiper-shorts', {
-                                slidesPerView: 'auto',
-                                spaceBetween: 18,
-                                centeredSlides: true,
-                                slideToClickedSlide: true,
-                                loop: true,
-                                watchOverflow: true,
-                                speed: 650,
-                                grabCursor: true,
-                                breakpoints: {
-                                    320: { spaceBetween: 10 },
-                                    600: { spaceBetween: 14 },
-                                    900: { spaceBetween: 18 }
-                                },
-                                navigation: {
-                                    nextEl: ".shorts-button-next",
-                                    prevEl: ".shorts-button-prev"
-                                },
-                                pagination: {
-                                    el: ".swiper-shorts .swiper-pagination",
-                                    type: "fraction"
-                                },
-                                autoplay: {
-                                    delay: 4500,
-                                    pauseOnMouseEnter: true,
-                                    disableOnInteraction: false
-                                },
-                                keyboard: { enabled: true }
-                            });
+                    <h3 class="hp-feature__title">@features[i].Title</h3>
+                    <p class="hp-feature__text">@features[i].Body</p>
+                </article>
+            }
+        </div>
+    </section>
 
-                            // Add a transparent drag layer over each Shorts video so the
-                            // carousel can be dragged left/right with the mouse even over
-                            // the YouTube iframe. The centered slide keeps its layer disabled
-                            // (via CSS) so the active video stays clickable/playable.
-                            document.querySelectorAll('.swiper-shorts .shorts-container').forEach(function (c) {
-                                if (!c.querySelector('.shorts-drag-layer')) {
-                                    var layer = document.createElement('div');
-                                    layer.className = 'shorts-drag-layer';
-                                    c.appendChild(layer);
-                                }
-                            });
+    <!-- Clinical German --------------------------------------------------------- -->
+    <section class="hp-band hp-band--clinic" aria-labelledby="hp-clinic-title">
+        @* 3D scene (speech bubbles, cross, capsule) drawn by home-3d.js; empty without WebGL *@
+        <div class="hp-band__3d" data-clinic-3d aria-hidden="true"></div>
+        <div class="bp-container hp-band__inner">
+            <header class="hp-head reveal">
+                <span class="bp-eyebrow hp-eyebrow--dark"><i class="fa-solid fa-staff-snake" aria-hidden="true"></i>@Key("KlinikAlmanca")</span>
+                <h2 class="hp-head__title" id="hp-clinic-title">@T("Sağlık profesyonelleri için klinik Almanca", "Klinisches Deutsch für Gesundheitsberufe")</h2>
+                <p class="hp-head__lead">@T("Anamnezden hasta devrine, FSP'den bakım dokümantasyonuna: klinikte gerçekten ihtiyaç duyduğunuz Almanca, örnek diyaloglarla.",
+                                           "Von der Anamnese bis zur Übergabe, von der FSP bis zur Pflegedokumentation: das Deutsch, das Sie in der Klinik wirklich brauchen – mit Beispieldialogen.")</p>
+            </header>
+            <div class="hp-clinic">
+                <article class="hp-clinic__card reveal">
+                    <span class="hp-clinic__icon" aria-hidden="true"><i class="fa-solid fa-user-doctor"></i></span>
+                    <h3 class="hp-clinic__title"><a href="@doctorsPath">@Key("FuerAerzte")</a></h3>
+                    <p>@T("FSP hazırlığı, anamnez, hasta sunumu, Arztbrief ve klinik iletişim için kalıp ifadeler.",
+                          "FSP-Vorbereitung, Anamnese, Patientenvorstellung, Arztbrief und Redemittel für die klinische Kommunikation.")</p>
+                    <ul class="hp-clinic__tags" aria-label="@T("Konular", "Themen")">
+                        <li>FSP</li><li>Anamnese</li><li>Patientenvorstellung</li><li>Arztbrief</li>
+                    </ul>
+                    <span class="hp-clinic__more" aria-hidden="true">@T("Keşfet", "Entdecken") <i class="fa-solid fa-arrow-right"></i></span>
+                </article>
+                <article class="hp-clinic__card reveal" style="--bp-delay: 90ms">
+                    <span class="hp-clinic__icon" aria-hidden="true"><i class="fa-solid fa-user-nurse"></i></span>
+                    <h3 class="hp-clinic__title"><a href="@nursesPath">@Key("FuerPflege")</a></h3>
+                    <p>@T("Hasta ile iletişim, hasta devri (Übergabe), bakım dokümantasyonu ve günlük klinik diyaloglar.",
+                          "Pflegekommunikation, Patientenübergabe, Pflegedokumentation und Dialoge aus dem Klinikalltag.")</p>
+                    <ul class="hp-clinic__tags" aria-label="@T("Konular", "Themen")">
+                        <li>Übergabe</li><li>Pflegekommunikation</li><li>Pflegedokumentation</li>
+                    </ul>
+                    <span class="hp-clinic__more" aria-hidden="true">@T("Keşfet", "Entdecken") <i class="fa-solid fa-arrow-right"></i></span>
+                </article>
+            </div>
+        </div>
+    </section>
 
-                            // Initialize Swiper for each advanced blog card media container.
-                            var blogMediaContainers = document.querySelectorAll('.advanced-blog-card__media');
-                            blogMediaContainers.forEach(function (container) {
-                                new Swiper(container, {
-                                    slidesPerView: 1,
-                                    spaceBetween: 10,
-                                    pagination: {
-                                        el: container.querySelector('.advanced-blog-card__pagination'),
-                                        clickable: true
-                                    },
-                                    navigation: {
-                                        nextEl: container.querySelector('.advanced-blog-card__next') || container.parentElement.querySelector('.advanced-blog-card__next'),
-                                        prevEl: container.querySelector('.advanced-blog-card__prev') || container.parentElement.querySelector('.advanced-blog-card__prev')
-                                    },
-                                    loop: true,
-                                    autoplay: {
-                                        delay: 5000,
-                                        disableOnInteraction: false
-                                    }
-                                });
-                            });
-
-                            // Optional: Add GSAP hover animation for advanced blog cards.
-                            gsap.utils.toArray('.advanced-blog-card').forEach(function (card) {
-                                card.addEventListener('mouseenter', function () {
-                                    gsap.to(card, { scale: 1.03, duration: 0.3 });
-                                });
-                                card.addEventListener('mouseleave', function () {
-                                    gsap.to(card, { scale: 1, duration: 0.3 });
-                                });
-                            });
-                        });
-                    </script>
-                    <script>
-                        document.addEventListener("DOMContentLoaded", function () {
-                        var levelsSwiper = new Swiper('.swiper-levels', {
-                        slidesPerView: 1.13,
-                        spaceBetween: 25,
-                        centeredSlides: true,
-                        loop: true,
-                        pagination: {
-                        el: '.swiper-levels .swiper-pagination',
-                        clickable: true,
-                        },
-                        navigation: {
-                        nextEl: '.swiper-levels .swiper-button-next',
-                        prevEl: '.swiper-levels .swiper-button-prev',
-                        },
-                        breakpoints: {
-                        700: { slidesPerView: 2.2, spaceBetween: 35 },
-                        1024: { slidesPerView: 3, spaceBetween: 42 }
+    <!-- Levels ---------------------------------------------------------------- -->
+    <section class="hp-section bp-container" aria-labelledby="hp-levels-title">
+        <header class="hp-head hp-head--split reveal">
+            <div>
+                <span class="bp-eyebrow"><i class="fa-solid fa-chart-line" aria-hidden="true"></i>@T("Seviye testi", "Einstufungstest")</span>
+                <h2 class="hp-head__title" id="hp-levels-title">@Key("Kurs")</h2>
+            </div>
+            <p class="hp-head__lead">@T("Kısa bir testle seviyenizi ölçün, size uygun yerden başlayın.", "Finden Sie mit einem kurzen Test heraus, wo Sie stehen – und starten Sie auf dem passenden Niveau.")</p>
+        </header>
+        <ol class="hp-levels">
+            @for (var i = 0; i < levels.Length; i++)
+            {
+                var code = levels[i];
+                <li class="hp-level reveal" style="--lv: @i; --bp-delay: @(i * 70)ms">
+                    <div class="hp-level__meter" aria-hidden="true">
+                        @for (var b = 0; b < levels.Length; b++)
+                        {
+                            <span class="@(b <= i ? "is-on" : "")"></span>
                         }
-                        });
-                        });
-                    </script>
+                    </div>
+                    <span class="hp-level__code">@code</span>
+                    <h3 class="hp-level__title"><a href="@quizzesPath/@code.ToLowerInvariant()">@Key($"Level_{code}_Title")</a></h3>
+                    <p class="hp-level__text">@Key($"Level_{code}_Desc")</p>
+                    <span class="hp-level__more" aria-hidden="true">@Key("TesteBasla") <i class="fa-solid fa-arrow-right"></i></span>
+                </li>
+            }
+        </ol>
+    </section>
+
+    <!-- Quote ----------------------------------------------------------------- -->
+    <section class="hp-section bp-container" aria-label="@T("Suna Koç'tan bir söz", "Ein Wort von Suna Koç")">
+        <figure class="hp-quote reveal">
+            <div class="hp-quote__media">
+                <img src="~/img/SecondImageGoesForAboutMe.jpeg" alt="" width="1512" height="2016" loading="lazy" decoding="async" />
+            </div>
+            <div class="hp-quote__body">
+                <i class="fa-solid fa-quote-left hp-quote__mark" aria-hidden="true"></i>
+                <blockquote class="hp-quote__text">@Key("qt1")</blockquote>
+                <figcaption class="hp-quote__by">
+                    <strong>Suna Koç</strong>
+                    <span>@T("Almanca konuşma koçu", "Deutsch-Sprechcoach")</span>
+                </figcaption>
+                <div class="hp-quote__social">
+                    <span class="bp-filters__label">@Key("FollowUs")</span>
+                    <a href="https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg" target="_blank" rel="noopener noreferrer" aria-label="YouTube" class="bp-share__btn" style="--brand:#FF0000"><i class="fa-brands fa-youtube" aria-hidden="true"></i></a>
+                    <a href="https://www.instagram.com/almanca_konus_sprachcoach?igsh=MWMzNzhlcm85Ym05YQ==" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="bp-share__btn" style="--brand:#DD2A7B"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a>
+                    <a href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="bp-share__btn" style="--brand:#1877F2"><i class="fa-brands fa-facebook-f" aria-hidden="true"></i></a>
+                </div>
+            </div>
+        </figure>
+    </section>
+
+    <!-- YouTube Shorts ---------------------------------------------------------- -->
+    <section class="hp-band hp-band--shorts" aria-labelledby="hp-shorts-title">
+        <div class="bp-container">
+            <header class="hp-head hp-head--split reveal">
+                <div>
+                    <span class="bp-eyebrow hp-eyebrow--dark"><i class="fa-brands fa-youtube" aria-hidden="true"></i>YouTube</span>
+                    <h2 class="hp-head__title" id="hp-shorts-title">@Key("ShortsTitle")</h2>
+                    <p class="hp-head__lead mb-0">@Key("ShortsSubtitle")</p>
+                </div>
+                <div class="hp-rail-nav">
+                    <button type="button" class="hp-rail-nav__btn" data-rail-prev aria-label="@T("Geri", "Zurück")"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+                    <button type="button" class="hp-rail-nav__btn" data-rail-next aria-label="@T("İleri", "Weiter")"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+                </div>
+            </header>
+        </div>
+        <ul class="hp-shorts" data-rail>
+            @for (var i = 0; i < shorts.Length; i++)
+            {
+                <li class="hp-short">
+                    @* A thumbnail until clicked: 13 YouTube players at once made the page very slow *@
+                    <button type="button" class="hp-short__play" data-yt="@shorts[i]" aria-label="@T("Videoyu oynat", "Video abspielen") (Shorts @(i + 1))">
+                        <img src="https://i.ytimg.com/vi/@shorts[i]/oar2.jpg" alt="" loading="lazy" decoding="async"
+                             onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/@shorts[i]/hqdefault.jpg'" />
+                        <span class="hp-short__badge"><i class="fa-brands fa-youtube" aria-hidden="true"></i>Shorts</span>
+                        <span class="hp-short__icon" aria-hidden="true"><i class="fa-solid fa-play"></i></span>
+                    </button>
+                </li>
+            }
+        </ul>
+        <div class="bp-container hp-shorts__foot">
+            <a class="bp-btn bp-btn--light" href="https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg" target="_blank" rel="noopener noreferrer">
+                <i class="fa-brands fa-youtube" aria-hidden="true"></i>@T("Kanala abone olun", "Kanal abonnieren")
+            </a>
+        </div>
+    </section>
+
+    <!-- Latest posts ------------------------------------------------------------ -->
+    @if (Model.LatestPosts.Count > 0)
+    {
+        <section class="hp-section bp-container" aria-labelledby="hp-posts-title">
+            <header class="hp-head hp-head--split reveal">
+                <div>
+                    <span class="bp-eyebrow"><i class="fa-solid fa-feather-pointed" aria-hidden="true"></i>Blog</span>
+                    <h2 class="hp-head__title" id="hp-posts-title">@T("Blogdan son yazılar", "Neues aus dem Blog")</h2>
+                </div>
+                <a class="bp-btn bp-btn--ghost" href="@blogListPath">@T("Tüm yazılar", "Alle Beiträge") <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            </header>
+            <div class="bp-grid">
+                @for (var i = 0; i < Model.LatestPosts.Count; i++)
+                {
+                    <partial name="_BlogPostCard" model="Model.LatestPosts[i]" view-data='new ViewDataDictionary(ViewData) { ["HeadingTag"] = "h3", ["Delay"] = i * 90 }' />
                 }
+            </div>
+        </section>
+    }
+
+    <!-- Call to action ---------------------------------------------------------- -->
+    <section class="bp-container hp-cta-wrap">
+        <div class="hp-cta reveal">
+            <h2 class="hp-cta__title">@T("Almanca konuşmaya bugün başlayın.", "Fangen Sie heute an, Deutsch zu sprechen.")</h2>
+            <p class="hp-cta__text">@T("Seviyenizi ölçün ya da bize yazın; size en uygun dersi birlikte planlayalım.", "Testen Sie Ihr Niveau oder schreiben Sie uns – gemeinsam planen wir den passenden Unterricht.")</p>
+            <div class="hp-cta__actions">
+                <a class="bp-btn" href="@quizzesPath">@Key("SeviyeniziÖlçün") <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                <a class="bp-btn bp-btn--light" href="@(aboutPath)#contact-form"><i class="fa-regular fa-paper-plane" aria-hidden="true"></i>@T("Bize yazın", "Schreiben Sie uns")</a>
+            </div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/js/blog.js" asp-append-version="true" defer></script>
+    <script src="~/js/home.js" asp-append-version="true" defer></script>
+    <script type="module" src="~/js/home-3d.js" asp-append-version="true"></script>
+}

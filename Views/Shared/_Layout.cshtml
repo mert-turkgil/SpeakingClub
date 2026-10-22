@@ -134,153 +134,13 @@
   <link rel="stylesheet" href="~/css/site.css" />
   <!-- Dark mode (must load last so it overrides the above) -->
   <link rel="stylesheet" href="~/css/dark-mode.css" />
+  <!-- Header, mobile menu and footer -->
+  <link rel="stylesheet" href="~/css/site-chrome.css" asp-append-version="true" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
 
-  <!-- Advanced Social Media Icons CSS -->
-  <style>
-      /* Social Media Icons - Advanced Hover Effect */
-      .example-2 {
-        list-style: none;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 0;
-        padding: 0;
-        margin: 0;
-      }
-
-      .example-2 .icon-content {
-        margin: 0 10px;
-        position: relative;
-      }
-
-      .example-2 .icon-content .tooltip {
-        position: absolute;
-        top: -30px;
-        left: 50%;
-        transform: translateX(-50%);
-        color: #fff;
-        padding: 6px 10px;
-        border-radius: 5px;
-        opacity: 0;
-        visibility: hidden;
-        font-size: 12px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        z-index: 10;
-        white-space: nowrap;
-      }
-
-      .example-2 .icon-content:hover .tooltip {
-        opacity: 1;
-        visibility: visible;
-        top: -50px;
-      }
-
-      .example-2 .icon-content a {
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        color: #4d4d4d;
-        background-color: #fff;
-        transition: all 0.3s ease-in-out;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        text-decoration: none;
-      }
-
-      .example-2 .icon-content a:hover {
-        box-shadow: 3px 2px 45px rgba(0, 0, 0, 0.12);
-        transform: translateY(-3px);
-      }
-
-      .example-2 .icon-content a svg,
-      .example-2 .icon-content a i {
-        position: relative;
-        z-index: 1;
-        width: 30px;
-        height: 30px;
-        transition: all 0.3s ease;
-      }
-
-      .example-2 .icon-content a:hover svg,
-      .example-2 .icon-content a:hover i {
-        color: white;
-      }
-
-      .example-2 .icon-content a .filled {
-        position: absolute;
-        top: auto;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 0;
-        background-color: #000;
-        transition: all 0.3s ease-in-out;
-        z-index: 0;
-      }
-
-      .example-2 .icon-content a:hover .filled {
-        height: 100%;
-      }
-
-      /* Dropdown hover for desktop menu */
-      .navbar-nav .dropdown:hover>.dropdown-menu {
-        display: block;
-      }
-
-      .navbar-nav .dropdown .dropdown-menu {
-        margin-top: 0;
-      }
-
-      /* Facebook Color */
-      .example-2 .icon-content a[data-social="facebook"] .filled,
-      .example-2 .icon-content a[data-social="facebook"]~.tooltip {
-        background-color: #1877f2;
-      }
-
-      /* Instagram Gradient */
-      .example-2 .icon-content a[data-social="instagram"] .filled,
-      .example-2 .icon-content a[data-social="instagram"]~.tooltip {
-        background: linear-gradient(45deg, #405de6, #5b51db, #b33ab4, #c135b4, #e1306c, #fd1f1f);
-      }
-
-      /* YouTube Color */
-      .example-2 .icon-content a[data-social="youtube"] .filled,
-      .example-2 .icon-content a[data-social="youtube"]~.tooltip {
-        background-color: #ff0000;
-      }
-
-      /* Linktree Color */
-      .example-2 .icon-content a[data-social="linktree"] .filled,
-      .example-2 .icon-content a[data-social="linktree"]~.tooltip {
-        background-color: #29AF7D;
-      }
-
-      /* Responsive - Stack on mobile */
-      @@media (max-width: 768px) {
-        .example-2 .icon-content {
-          margin: 0 8px;
-        }
-
-        .example-2 .icon-content a {
-          width: 45px;
-          height: 45px;
-        }
-
-        .example-2 .icon-content a svg {
-          width: 25px;
-          height: 25px;
-        }
-      }
-  </style>
   @await RenderSectionAsync("Css", required: false)
   <style>
       .varela-round-regular {
@@ -299,11 +159,7 @@
     string? Blog = _localization.GetKey("Blog").Value;
     string? About = _localization.GetKey("About").Value;
     string? Sözlük = _localization.GetKey("Sözlük").Value;
-    string? Arztbrief = _localization.GetKey("Arztbrief").Value;
-    string? FSP = _localization.GetKey("FSP").Value;
     string? SeviyeniziÖlçün = _localization.GetKey("SeviyeniziÖlçün").Value;
-    string? Fallbeispiele = _localization.GetKey("Fallbeispiele").Value;
-    string? Praxis = _localization.GetKey("Praxis").Value;
     string? KlinikAlmanca = _localization.GetKey("KlinikAlmanca").Value;
     string? FuerAerzte = _localization.GetKey("FuerAerzte").Value;
     string? FuerPflege = _localization.GetKey("FuerPflege").Value;
@@ -315,13 +171,12 @@
     string? FollowUs = _localization.GetKey("FollowUs").Value;
     string? ContactUs = _localization.GetKey("ContactUs").Value;
     string? FooterDescription = _localization.GetKey("FooterDescription").Value;
-    string? FooterBrand = _localization.GetKey("FooterBrand").Value;
-    string? currentPath = Context.Request.Path;
     string? currentController = ViewContext.RouteData.Values["controller"] as string;
     string? currentAction = ViewContext.RouteData.Values["action"] as string;
 
     // Localized URL paths based on current culture
     bool isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
     string? blogListPath = isGerman ? "/beitraege" : "/yazilar";
     string? quizzesPath = isGerman ? "/pruefungen" : "/sinavlar";
     string? aboutPath = isGerman ? "/ueber-uns" : "/hakkimizda";
@@ -329,105 +184,67 @@
     string? privacyPath = isGerman ? "/datenschutz" : "/gizlilik";
     string? doctorsPath = isGerman ? "/aerztedeutsch" : "/hekim-almancasi";
     string? nursesPath = isGerman ? "/pflegedeutsch" : "/hemsirelik-almancasi";
+    bool isHome = currentController == "Home" && currentAction == "Index";
+    bool isAbout = currentController == "Home" && currentAction == "About";
+    bool isBlog = currentController == "Home" && (currentAction == "Blog" || currentAction == "BlogDetail");
     bool isClinical = currentController == "Home" && (currentAction == "DoctorsGerman" || currentAction == "NursesGerman");
+    string? Current(bool active) => active ? "page" : null;
+
+    // The copyright text in the resources carries a fixed year; keep it current
+    string copyrightText = System.Text.RegularExpressions.Regex.Replace(Copyright ?? "", @"\b20\d{2}\b", DateTime.Now.Year.ToString());
+
+    string? fullName = null;
+    string userInitial = "";
+    if (SignInManager.IsSignedIn(User))
+    {
+      var currentUser = await UserManager.GetUserAsync(User);
+      fullName = $"{currentUser?.FirstName} {currentUser?.LastName}".Trim();
+      userInitial = string.IsNullOrEmpty(fullName) ? "" : fullName.Substring(0, 1).ToUpper();
+    }
+    bool canAdmin = User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root");
   }
-  <header class="sticky-top">
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+  <a class="skip-link" href="#main">@T("İçeriğe geç", "Zum Inhalt springen")</a>
+  <header class="site-header sticky-top">
+    <nav class="navbar navbar-expand-lg site-nav" aria-label="@T("Ana menü", "Hauptmenü")">
       <div class="container-xxl">
         <!-- Brand (Left) -->
-        <a class="navbar-brand varela-round-regular" href="/">
-          <img src="~/img/logo.svg" alt="Logo" width="45" height="45" class="img-thumbnail"> @Logo
+        <a class="navbar-brand site-brand" href="/">
+          <span class="site-brand__logo"><img src="~/img/logo.svg" alt="" width="30" height="30"></span>
+          <span class="site-brand__name varela-round-regular">@Logo</span>
         </a>
-        <!-- Offcanvas Toggler (visible on mobile) -->
-        <button class="btn btn-sm rounded-3 px-3 py-2 navbar-toggler shadow-sm" type="button" data-bs-toggle="offcanvas"
-                data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Menu"
-                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
-          <i class="fa-solid fa-bars"></i>
+        <!-- Off-canvas toggler (mobile) -->
+        <button class="navbar-toggler site-burger" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="@T("Menüyü aç", "Menü öffnen")">
+          <span class="site-burger__bars" aria-hidden="true"><span></span><span></span><span></span></span>
         </button>
-        <style>
-                  .navbar-toggler:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6) !important;
-                  }
-                  /* ---- Klinik Almanca mega-menu (desktop) ---- */
-                  .klinik-megamenu__panel {
-                    border: none;
-                    border-radius: 16px;
-                    box-shadow: 0 18px 50px rgba(0,0,0,.16);
-                    padding: 18px;
-                    margin-top: 8px;
-                  }
-                  .klinik-megamenu__grid {
-                    display: grid;
-                    grid-template-columns: repeat(3, minmax(180px, 1fr));
-                    gap: 10px 22px;
-                  }
-                  .klinik-megamenu__col { display: flex; flex-direction: column; }
-                  .klinik-megamenu__col--tools { border-left: 1px solid rgba(0,0,0,.08); padding-left: 18px; }
-                  .klinik-megamenu__head {
-                    font-weight: 800;
-                    color: #FF9494;
-                    text-decoration: none;
-                    padding: 6px 8px;
-                    margin-bottom: 4px;
-                    border-bottom: 2px solid #FFE3E1;
-                  }
-                  .klinik-megamenu__head:hover { color: #ff7b7b; }
-                  .klinik-megamenu__panel .dropdown-item {
-                    border-radius: 8px;
-                    padding: 7px 10px;
-                    font-size: .93rem;
-                  }
-                  .klinik-megamenu__panel .dropdown-item:hover { background: #FFF1F1; color: #FF9494; }
-                  /* Hover-open on desktop (lg+) */
-                  @@media (min-width: 992px) {
-                    .klinik-megamenu:hover > .klinik-megamenu__panel { display: block; }
-                    .klinik-megamenu__panel { min-width: 620px; }
-                  }
-                  /* ---- Klinik Almanca collapse (offcanvas/mobile) ---- */
-                  .klinik-collapse { padding: 6px 0 6px 8px; }
-                  .klinik-collapse__group { margin-bottom: 10px; }
-                  .klinik-collapse__head {
-                    display: block;
-                    font-weight: 800;
-                    color: #FF9494;
-                    text-decoration: none;
-                    padding: 6px 8px;
-                    border-bottom: 2px solid #FFE3E1;
-                    margin-bottom: 2px;
-                  }
-        </style>
-        <!-- Standard Navbar (visible on large screens) -->
+        <!-- Standard navbar (large screens) -->
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <!-- Nav Links (Center) -->
           <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
             <li class="nav-item d-none d-xxl-block">
-              <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")"
-                 asp-controller="Home" asp-action="Index">
-                <i class="fa-solid fa-house me-1"></i> @Home
+              <a class="nav-link @(isHome ? "active" : "")" aria-current="@Current(isHome)" href="/">
+                <i class="fa-solid fa-house" aria-hidden="true"></i>@Home
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")"
-                 href="@aboutPath">
-                <i class="fa-solid fa-circle-info me-1"></i> @About
+              <a class="nav-link @(isAbout ? "active" : "")" aria-current="@Current(isAbout)" href="@aboutPath">
+                <i class="fa-solid fa-circle-info" aria-hidden="true"></i>@About
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")"
-                 href="@blogListPath">
-                <i class="fa-solid fa-blog me-1"></i> @Blog
+              <a class="nav-link @(isBlog ? "active" : "")" aria-current="@Current(isBlog)" href="@blogListPath">
+                <i class="fa-solid fa-feather-pointed" aria-hidden="true"></i>@Blog
               </a>
             </li>
             <li class="nav-item dropdown klinik-megamenu">
-              <a class="nav-link @(isClinical ? "active" : "")"
-                 href="@doctorsPath" id="klinikDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fa-solid fa-staff-snake me-1"></i> @KlinikAlmanca
+              <a class="nav-link @(isClinical ? "active" : "")" href="@doctorsPath" id="klinikDropdown" role="button"
+                 data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fa-solid fa-staff-snake" aria-hidden="true"></i>@KlinikAlmanca
+                <i class="fa-solid fa-chevron-down site-nav__chev" aria-hidden="true"></i>
               </a>
-              <div class="dropdown-menu rounded klinik-megamenu__panel" aria-labelledby="klinikDropdown">
+              <div class="dropdown-menu klinik-megamenu__panel" aria-labelledby="klinikDropdown">
                 <div class="klinik-megamenu__grid">
                   <div class="klinik-megamenu__col">
-                    <a class="klinik-megamenu__head" href="@doctorsPath"><i class="fa-solid fa-user-doctor me-2"></i>@FuerAerzte</a>
+                    <a class="klinik-megamenu__head" href="@doctorsPath"><i class="fa-solid fa-user-doctor" aria-hidden="true"></i>@FuerAerzte</a>
                     <a class="dropdown-item" href="@(doctorsPath)#anamnese">Anamnese</a>
                     <a class="dropdown-item" href="@(doctorsPath)#patientenvorstellung">Patientenvorstellung</a>
                     <a class="dropdown-item" href="@(doctorsPath)#arztbrief">Arztbrief</a>
@@ -436,7 +253,7 @@
                     <a class="dropdown-item" href="@(doctorsPath)#abkuerzungen">Abkürzungen</a>
                   </div>
                   <div class="klinik-megamenu__col">
-                    <a class="klinik-megamenu__head" href="@nursesPath"><i class="fa-solid fa-user-nurse me-2"></i>@FuerPflege</a>
+                    <a class="klinik-megamenu__head" href="@nursesPath"><i class="fa-solid fa-user-nurse" aria-hidden="true"></i>@FuerPflege</a>
                     <a class="dropdown-item" href="@(nursesPath)#pflegekommunikation">Pflegekommunikation</a>
                     <a class="dropdown-item" href="@(nursesPath)#patientenuebergabe">Patientenübergabe</a>
                     <a class="dropdown-item" href="@(nursesPath)#pflegedokumentation">Pflegedokumentation</a>
@@ -444,336 +261,340 @@
                     <a class="dropdown-item" href="@(nursesPath)#abkuerzungen">Abkürzungen</a>
                   </div>
                   <div class="klinik-megamenu__col klinik-megamenu__col--tools">
-                    <span class="klinik-megamenu__head"><i class="fa-solid fa-toolbox me-2"></i>@ToolsGroup</span>
-                    <a class="dropdown-item" href="@wordsPath"><i class="fa-solid fa-spell-check me-2 text-fourth"></i>@Sözlük</a>
-                    <a class="dropdown-item" href="@quizzesPath"><i class="fa-solid fa-chart-line me-2 text-fourth"></i>@SeviyeniziÖlçün</a>
+                    <span class="klinik-megamenu__head"><i class="fa-solid fa-toolbox" aria-hidden="true"></i>@ToolsGroup</span>
+                    <a class="dropdown-item" href="@wordsPath"><i class="fa-solid fa-spell-check me-2 text-fourth" aria-hidden="true"></i>@Sözlük</a>
+                    <a class="dropdown-item" href="@quizzesPath"><i class="fa-solid fa-chart-line me-2 text-fourth" aria-hidden="true"></i>@SeviyeniziÖlçün</a>
                   </div>
                 </div>
               </div>
             </li>
-                      <li class="nav-item">
-                        <a class="nav-link" href="@(aboutPath)#contact-form">
-                          <i class="fa-solid fa-envelope me-1"></i> @ContactUs
-                        </a>
-                      </li>
-                    </ul>
-                    <!-- Account & Language (Right) -->
-                    <div class="d-flex align-items-center gap-3">
-                      @if (SignInManager.IsSignedIn(User))
-                      {
-                        var currentUser = await UserManager.GetUserAsync(User);
-                        var fullName = $"{currentUser?.FirstName} {currentUser?.LastName}";
+            <li class="nav-item">
+              <a class="nav-link" href="@(aboutPath)#contact-form">
+                <i class="fa-solid fa-envelope" aria-hidden="true"></i>@ContactUs
+              </a>
+            </li>
+          </ul>
+          <!-- Account & language (right) -->
+          <div class="d-flex align-items-center site-nav__actions">
+            @if (fullName != null)
+            {
+              <div class="dropdown">
+                <button class="site-btn dropdown-toggle" type="button" id="userDropdown"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                  <span class="site-avatar" aria-hidden="true">@userInitial</span>@fullName
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                  @if (canAdmin)
+                  {
+                    <li>
+                      <a class="dropdown-item" asp-controller="Admin" asp-action="Index">
+                        <i class="fa-solid fa-gauge" aria-hidden="true"></i> Admin Panel
+                      </a>
+                    </li>
+                  }
+                  <li>
+                    <a class="dropdown-item" asp-controller="Account" asp-action="Account">
+                      <i class="fa-solid fa-user-gear" aria-hidden="true"></i> @T("Hesabım", "Mein Konto")
+                    </a>
+                  </li>
+                  <li>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                      <button type="submit" class="dropdown-item">
+                        <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i> @T("Çıkış yap", "Abmelden")
+                      </button>
+                    </form>
+                  </li>
+                </ul>
+              </div>
+            }
+            else
+            {
+              <a asp-controller="Account" asp-action="Login" class="site-btn" rel="nofollow">
+                <i class="fa-solid fa-user" aria-hidden="true"></i>@Login
+              </a>
+            }
 
-                        <div class="dropdown">
-                          <button class="btn btn-custom bg-fourth dropdown-toggle" type="button" id="userDropdown"
-                                  data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fa-solid fa-user me-1"></i> @fullName
-                          </button>
-                          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            @if (User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root"))
-                            {
-                              <li>
-                                <a class="dropdown-item" asp-controller="Admin" asp-action="Index">
-                                  <i class="fa-solid fa-cog me-2"></i> Admin Panel
-                                </a>
-                              </li>
-                            }
-                            <li>
-                              <a class="dropdown-item" asp-controller="Account" asp-action="Account">
-                                <i class="fa-solid fa-cog me-2"></i> Manage Account
-                              </a>
-                            </li>
-                            <li>
-                              <form asp-controller="Account" asp-action="Logout" method="post">
-                                <button type="submit" class="dropdown-item">
-                                  <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
-                                </button>
-                              </form>
-                            </li>
-                          </ul>
-                        </div>
-                      }
-                      else
-                      {
-                        <a asp-controller="Account" asp-action="Login" class="btn btn-custom bg-fourth">
-                          <i class="fa-solid fa-user me-1"></i> @Login
-                        </a>
-                      }
+            <div class="dropdown">
+              @await Component.InvokeAsync("LanguageSelector")
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+    @if (TempData["ContactSuccess"] != null)
+    {
+      <div class="container mt-3">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="fa fa-check-circle"></i> @TempData["ContactSuccess"]
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </div>
+    }
+    @if (TempData["ContactError"] != null)
+    {
+      <div class="container mt-3">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="fa fa-exclamation-triangle"></i> @TempData["ContactError"]
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </div>
+    }
 
-                      <div class="dropdown">
-                        @await Component.InvokeAsync("LanguageSelector")
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </nav>
-              @if (TempData["ContactSuccess"] != null)
+    <!-- Off-canvas menu (mobile) -->
+    <div class="offcanvas offcanvas-end site-offcanvas" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+      <div class="offcanvas-header">
+        @* Not an <h1>: this menu is on every page, and each page's own title must be its only h1 *@
+        <a class="site-brand varela-round-regular" href="/" id="offcanvasNavbarLabel">
+          <span class="site-brand__logo"><img src="~/img/logo.svg" alt="" width="30" height="30"></span>
+          @Logo
+        </a>
+        <button type="button" class="site-offcanvas__close" data-bs-dismiss="offcanvas" aria-label="@T("Menüyü kapat", "Menü schließen")">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="offcanvas-body">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link @(isHome ? "active" : "")" aria-current="@Current(isHome)" href="/">
+              <i class="fa-solid fa-house" aria-hidden="true"></i>@Home
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link @(isAbout ? "active" : "")" aria-current="@Current(isAbout)" href="@aboutPath">
+              <i class="fa-solid fa-circle-info" aria-hidden="true"></i>@About
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link @(isBlog ? "active" : "")" aria-current="@Current(isBlog)" href="@blogListPath">
+              <i class="fa-solid fa-feather-pointed" aria-hidden="true"></i>@Blog
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link dropdown-toggle @(isClinical ? "active" : "")" data-bs-toggle="collapse"
+               href="#klinikCollapse" role="button" aria-expanded="@(isClinical ? "true" : "false")" aria-controls="klinikCollapse">
+              <i class="fa-solid fa-staff-snake" aria-hidden="true"></i>@KlinikAlmanca
+              <i class="fa-solid fa-chevron-down site-nav__chev" aria-hidden="true"></i>
+            </a>
+            <div class="collapse klinik-collapse @(isClinical ? "show" : "")" id="klinikCollapse">
+              <div class="klinik-collapse__group">
+                <a class="klinik-collapse__head" href="@doctorsPath"><i class="fa-solid fa-user-doctor me-2" aria-hidden="true"></i>@FuerAerzte</a>
+                <a class="dropdown-item" href="@(doctorsPath)#anamnese">Anamnese</a>
+                <a class="dropdown-item" href="@(doctorsPath)#patientenvorstellung">Patientenvorstellung</a>
+                <a class="dropdown-item" href="@(doctorsPath)#arztbrief">Arztbrief</a>
+                <a class="dropdown-item" href="@(doctorsPath)#kommunikation">Klinische Kommunikation</a>
+                <a class="dropdown-item" href="@(doctorsPath)#redemittel">Redemittel</a>
+                <a class="dropdown-item" href="@(doctorsPath)#abkuerzungen">Abkürzungen</a>
+              </div>
+              <div class="klinik-collapse__group">
+                <a class="klinik-collapse__head" href="@nursesPath"><i class="fa-solid fa-user-nurse me-2" aria-hidden="true"></i>@FuerPflege</a>
+                <a class="dropdown-item" href="@(nursesPath)#pflegekommunikation">Pflegekommunikation</a>
+                <a class="dropdown-item" href="@(nursesPath)#patientenuebergabe">Patientenübergabe</a>
+                <a class="dropdown-item" href="@(nursesPath)#pflegedokumentation">Pflegedokumentation</a>
+                <a class="dropdown-item" href="@(nursesPath)#redemittel">Redemittel</a>
+                <a class="dropdown-item" href="@(nursesPath)#abkuerzungen">Abkürzungen</a>
+              </div>
+              <div class="klinik-collapse__group">
+                <span class="klinik-collapse__head"><i class="fa-solid fa-toolbox me-2" aria-hidden="true"></i>@ToolsGroup</span>
+                <a class="dropdown-item" href="@wordsPath"><i class="fa-solid fa-spell-check me-2 text-fourth" aria-hidden="true"></i>@Sözlük</a>
+                <a class="dropdown-item" href="@quizzesPath"><i class="fa-solid fa-chart-line me-2 text-fourth" aria-hidden="true"></i>@SeviyeniziÖlçün</a>
+              </div>
+            </div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="@(aboutPath)#contact-form">
+              <i class="fa-solid fa-envelope" aria-hidden="true"></i>@ContactUs
+            </a>
+          </li>
+        </ul>
+        @if (fullName != null)
+        {
+          <div class="dropdown w-100">
+            <button class="site-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <span class="site-avatar" aria-hidden="true">@userInitial</span>@fullName
+            </button>
+            <ul class="dropdown-menu w-100">
+              @if (canAdmin)
               {
-                <div class="container mt-3">
-                  <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="fa fa-check-circle"></i> @TempData["ContactSuccess"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                  </div>
-                </div>
+                <li>
+                  <a class="dropdown-item" asp-controller="Admin" asp-action="Index">
+                    <i class="fa-solid fa-gauge me-2" aria-hidden="true"></i> Admin Panel
+                  </a>
+                </li>
               }
-              @if (TempData["ContactError"] != null)
-              {
-                <div class="container mt-3">
-                  <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fa fa-exclamation-triangle"></i> @TempData["ContactError"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                  </div>
-                </div>
-              }
-
-              <!-- Offcanvas for Mobile Menu -->
-              <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-                <div class="offcanvas-header">
-                  @* Not an <h1>: this menu is on every page, and each page's own title must be its only h1 *@
-                  <div class="offcanvas-title h1 varela-round-regular" id="offcanvasNavbarLabel">
-                    <img src="~/img/logo.svg" alt="Logo" class="img-thumbnail w-50 d-block">
-                    @Logo
-                  </div>
-                  <button type="button" class="btn btn-icon" data-bs-dismiss="offcanvas" aria-label="Close"
-                          style="background: none; border: none; font-size: 1.5rem;">
-                    <i class="fa-solid fa-arrow-left-long text-dark"></i>
+              <li>
+                <a class="dropdown-item" asp-controller="Account" asp-action="Account">
+                  <i class="fa-solid fa-user-gear me-2" aria-hidden="true"></i> @T("Hesabım", "Mein Konto")
+                </a>
+              </li>
+              <li>
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                  <button type="submit" class="dropdown-item">
+                    <i class="fa-solid fa-arrow-right-from-bracket me-2" aria-hidden="true"></i> @T("Çıkış yap", "Abmelden")
                   </button>
-                </div>
-                <div class="offcanvas-body">
-                  <!-- Offcanvas Nav Links -->
-                  <ul class="navbar-nav mb-3">
-                    <li class="nav-item">
-                      <a class="nav-link @(currentController == "Home" && currentAction == "Index" ? "active" : "")"
-                         asp-controller="Home" asp-action="Index">
-                        <i class="fa-solid fa-house me-1"></i> @Home
-                      </a>
-                    </li>
-                    <li class="nav-item">
-                      <a class="nav-link @(currentController == "Home" && currentAction == "About" ? "active" : "")"
-                         href="@aboutPath">
-                        <i class="fa-solid fa-circle-info me-1"></i> @About
-                      </a>
-                    </li>
-                    <li class="nav-item">
-                      <a class="nav-link @(currentController == "Home" && currentAction == "Blog" ? "active" : "")"
-                         href="@blogListPath">
-                        <i class="fa-solid fa-blog me-1"></i> @Blog
-                      </a>
-                    </li>
-                    <li class="nav-item">
-                      <a class="nav-link dropdown-toggle @(isClinical ? "active" : "")" data-bs-toggle="collapse"
-                         href="#klinikCollapse" role="button" aria-expanded="false" aria-controls="klinikCollapse">
-                        <i class="fa-solid fa-staff-snake me-1"></i> @KlinikAlmanca
-                      </a>
-                      <div class="collapse klinik-collapse" id="klinikCollapse">
-                        <div class="klinik-collapse__group">
-                          <a class="klinik-collapse__head" href="@doctorsPath"><i class="fa-solid fa-user-doctor me-2"></i>@FuerAerzte</a>
-                          <a class="dropdown-item" href="@(doctorsPath)#anamnese">Anamnese</a>
-                          <a class="dropdown-item" href="@(doctorsPath)#patientenvorstellung">Patientenvorstellung</a>
-                          <a class="dropdown-item" href="@(doctorsPath)#arztbrief">Arztbrief</a>
-                          <a class="dropdown-item" href="@(doctorsPath)#kommunikation">Klinische Kommunikation</a>
-                          <a class="dropdown-item" href="@(doctorsPath)#redemittel">Redemittel</a>
-                          <a class="dropdown-item" href="@(doctorsPath)#abkuerzungen">Abkürzungen</a>
-                        </div>
-                        <div class="klinik-collapse__group">
-                          <a class="klinik-collapse__head" href="@nursesPath"><i class="fa-solid fa-user-nurse me-2"></i>@FuerPflege</a>
-                          <a class="dropdown-item" href="@(nursesPath)#pflegekommunikation">Pflegekommunikation</a>
-                          <a class="dropdown-item" href="@(nursesPath)#patientenuebergabe">Patientenübergabe</a>
-                          <a class="dropdown-item" href="@(nursesPath)#pflegedokumentation">Pflegedokumentation</a>
-                          <a class="dropdown-item" href="@(nursesPath)#redemittel">Redemittel</a>
-                          <a class="dropdown-item" href="@(nursesPath)#abkuerzungen">Abkürzungen</a>
-                        </div>
-                        <div class="klinik-collapse__group">
-                          <span class="klinik-collapse__head"><i class="fa-solid fa-toolbox me-2"></i>@ToolsGroup</span>
-                          <a class="dropdown-item" href="@wordsPath"><i class="fa-solid fa-spell-check me-2 text-fourth"></i>@Sözlük</a>
-                          <a class="dropdown-item" href="@quizzesPath"><i class="fa-solid fa-chart-line me-2 text-fourth"></i>@SeviyeniziÖlçün</a>
-                        </div>
-                      </div>
-                    </li>
-                              <li class="nav-item">
-                                <a class="nav-link" href="@(aboutPath)#contact-form">
-                                  <i class="fa-solid fa-envelope me-1"></i> @ContactUs
-                                </a>
-                              </li>
-                            </ul>
-                            @if (SignInManager.IsSignedIn(User))
-                            {
-                              var currentUser = await UserManager.GetUserAsync(User);
-                              var fullName = $"{currentUser?.FirstName} {currentUser?.LastName}";
-
-                              <div class="dropdown w-100">
-                                <button class="btn btn-custom bg-fourth dropdown-toggle w-100 mb-2" type="button" data-bs-toggle="dropdown">
-                                  <i class="fa-solid fa-user me-1"></i> @fullName
-                                </button>
-                                <ul class="dropdown-menu w-100">
-                                  @if (User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root"))
-                                  {
-                                    <li>
-                                      <a class="dropdown-item" asp-controller="Account" asp-action="Account">
-                                        <i class="fa-solid fa-cog me-2"></i> Account
-                                      </a>
-                                    </li>
-                                  }
-                                  <li>
-                                    <form asp-controller="Account" asp-action="Logout" method="post" class="dropdown-item">
-                                      <button type="submit" class="btn btn-link p-0 m-0 text-decoration-none text-dark">
-                                        <i class="fa-solid fa-sign-out-alt me-2"></i> Logout
-                                      </button>
-                                    </form>
-                                  </li>
-                                </ul>
-                              </div>
-                            }
-                            else
-                            {
-                              <a asp-controller="Account" asp-action="Login" class="btn btn-custom bg-fourth w-100 mb-2">
-                                <i class="fa-solid fa-user me-1"></i> @Login
-                              </a>
-                            }
-                            <div class="dropdown w-100">
-                              @await Component.InvokeAsync("LanguageSelector")
-                            </div>
-                            <div class="d-flex align-items-center gap-2 mt-4">
-                              <div class="toggleWrapper">
-                                <input class="input js-theme-toggle" id="dn-offcanvas" type="checkbox" aria-label="@ThemeToggle" />
-                                <label class="toggle" for="dn-offcanvas" title="@ThemeToggle">
-                                  <span class="toggle__handler">
-                                    <span class="crater crater--1"></span>
-                                    <span class="crater crater--2"></span>
-                                    <span class="crater crater--3"></span>
-                                  </span>
-                                  <span class="star star--1"></span>
-                                  <span class="star star--2"></span>
-                                  <span class="star star--3"></span>
-                                  <span class="star star--4"></span>
-                                  <span class="star star--5"></span>
-                                  <span class="star star--6"></span>
-                                </label>
-                              </div>
-                              <span class="theme-toggle-label">@ThemeToggle</span>
-                            </div>
-                          </div>
-                        </div>
-                      </header>
+                </form>
+              </li>
+            </ul>
+          </div>
+        }
+        else
+        {
+          <a asp-controller="Account" asp-action="Login" class="site-btn" rel="nofollow">
+            <i class="fa-solid fa-user" aria-hidden="true"></i>@Login
+          </a>
+        }
+        <div class="dropdown w-100">
+          @await Component.InvokeAsync("LanguageSelector")
+        </div>
+        <div class="site-offcanvas__theme">
+          <span>@ThemeToggle</span>
+          <div class="toggleWrapper">
+            <input class="input js-theme-toggle" id="dn-offcanvas" type="checkbox" aria-label="@ThemeToggle" />
+            <label class="toggle" for="dn-offcanvas" title="@ThemeToggle">
+              <span class="toggle__handler">
+                <span class="crater crater--1"></span>
+                <span class="crater crater--2"></span>
+                <span class="crater crater--3"></span>
+              </span>
+              <span class="star star--1"></span>
+              <span class="star star--2"></span>
+              <span class="star star--3"></span>
+              <span class="star star--4"></span>
+              <span class="star star--5"></span>
+              <span class="star star--6"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
 
                       <div style="height: max-content;" id="mainContent" class="m-0">
-                        <main role="main" class="bg-first">
+                        <main role="main" id="main" class="bg-first" tabindex="-1">
                           @RenderBody()
                         </main>
                       </div>
-                      <footer class="py-4">
-                        <div class="container">
-                          <div class="row">
-                            <!-- Footer Brand and Description -->
-                            <div class="col-md-4 mb-4">
-                              <a href="#" class="d-flex align-items-center mb-2 text-dark text-decoration-none">
-                                <img src="~/img/footer_logo.png" alt="AKK Logo" style="height:40px;" class="me-2" />
-                                <span class="fs-5 varela-round-regular">@Logo</span>
-                              </a>
-                              <p class="text-muted">
-                                @FooterDescription
-                              </p>
+                      <footer class="site-footer">
+                        <div class="site-footer__sheet">
+                          <div class="container-xxl">
+                            <div class="site-footer__grid">
+                              <!-- Brand, description, social -->
+                              <div class="site-footer__brand">
+                                <a href="/" class="site-footer__logo">
+                                  <img src="~/img/footer_logo.png" alt="" width="48" height="40" />
+                                  <span class="varela-round-regular">@Logo</span>
+                                </a>
+                                <p class="site-footer__text">@FooterDescription</p>
+                                <h2 class="site-footer__title">@FollowUs</h2>
+                                <ul class="site-social">
+                                  <li>
+                                    <a href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" aria-label="Facebook" title="Facebook" data-social="facebook"
+                                       target="_blank" rel="noopener noreferrer">
+                                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.166 1.791.166v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z" />
+                                      </svg>
+                                    </a>
+                                  </li>
+                                  <li>
+                                    <a href="https://www.instagram.com/almanca_konus_/" aria-label="Instagram" title="Instagram" data-social="instagram"
+                                       target="_blank" rel="noopener noreferrer">
+                                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334" />
+                                      </svg>
+                                    </a>
+                                  </li>
+                                  <li>
+                                    <a href="https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg" aria-label="YouTube" title="YouTube" data-social="youtube"
+                                       target="_blank" rel="noopener noreferrer">
+                                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.01 2.01 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.01 2.01 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31 31 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.01 2.01 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A100 100 0 0 1 7.858 2zM6.4 5.209v4.818l4.157-2.408z" />
+                                      </svg>
+                                    </a>
+                                  </li>
+                                  <li>
+                                    <a href="https://linktr.ee/almancakonus.info" aria-label="Linktree" title="Linktree" data-social="linktree"
+                                       target="_blank" rel="noopener noreferrer">
+                                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 640 640" aria-hidden="true">
+                                        <path d="M112 237.4L237.8 237.4L148.4 152L197.9 101L283.1 188.8L283.1 64L357 64L357 188.8L442.2 101.2L491.6 152L402.2 237.2L527.9 237.2L527.9 307.7L401.5 307.7L491.5 395.3L442.2 445.1L320 322.1L197.8 445.1L148.3 395.5L238.3 307.9L111.9 307.9L111.9 237.4zM282.9 408.8L356.8 408.8L356.8 576L282.9 576L282.9 408.8z" />
+                                      </svg>
+                                    </a>
+                                  </li>
+                                </ul>
+                              </div>
+
+                              <!-- Explore -->
+                              <nav aria-labelledby="footer-explore">
+                                <h2 class="site-footer__title" id="footer-explore">@T("Keşfet", "Entdecken")</h2>
+                                <ul class="site-footer__links">
+                                  <li><a class="site-footer__link" href="/">@Home</a></li>
+                                  <li><a class="site-footer__link" href="@aboutPath">@About</a></li>
+                                  <li><a class="site-footer__link" href="@blogListPath">@Blog</a></li>
+                                  <li><a class="site-footer__link" href="@wordsPath">@Sözlük</a></li>
+                                  <li><a class="site-footer__link" href="@quizzesPath">@SeviyeniziÖlçün</a></li>
+                                </ul>
+                              </nav>
+
+                              <!-- Clinical German -->
+                              <nav aria-labelledby="footer-clinical">
+                                <h2 class="site-footer__title" id="footer-clinical">@KlinikAlmanca</h2>
+                                <ul class="site-footer__links">
+                                  <li><a class="site-footer__link" href="@doctorsPath">@FuerAerzte</a></li>
+                                  <li><a class="site-footer__link" href="@(doctorsPath)#anamnese">Anamnese</a></li>
+                                  <li><a class="site-footer__link" href="@(doctorsPath)#arztbrief">Arztbrief</a></li>
+                                  <li><a class="site-footer__link" href="@nursesPath">@FuerPflege</a></li>
+                                  <li><a class="site-footer__link" href="@(nursesPath)#patientenuebergabe">Patientenübergabe</a></li>
+                                </ul>
+                              </nav>
+
+                              <!-- Contact -->
+                              <div>
+                                <h2 class="site-footer__title">@ContactUs</h2>
+                                <ul class="site-footer__contact">
+                                  <li>
+                                    <span class="site-footer__icon" aria-hidden="true"><i class="fa-solid fa-envelope"></i></span>
+                                    <a href="mailto:almancakonus.info@gmail.com"><span class="visually-hidden">E-mail: </span>almancakonus.info@gmail.com</a>
+                                  </li>
+                                  <li>
+                                    <span class="site-footer__icon" aria-hidden="true"><i class="fa-solid fa-phone"></i></span>
+                                    <a href="tel:+491603866222"><span class="visually-hidden">Telefon: </span>+49 160 3866222</a>
+                                  </li>
+                                  <li>
+                                    <span class="site-footer__icon" aria-hidden="true"><i class="fa-solid fa-location-dot"></i></span>
+                                    <span><span class="visually-hidden">@T("Adres", "Adresse"): </span>@T("İstanbul, Türkiye", "Istanbul, Türkei")</span>
+                                  </li>
+                                </ul>
+                                <a class="site-btn site-footer__cta" href="@(aboutPath)#contact-form">
+                                  <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>@T("Bize yazın", "Schreiben Sie uns")
+                                </a>
+                              </div>
                             </div>
-                            <!-- Contact Information -->
-                            <div class="col-md-4 mb-4">
-                              <h5 class="fw-bold">@ContactUs</h5>
-                              <ul class="list-unstyled">
-                                <li class="contact-item text-truncate">
-                                  Email: <a href="mailto:almancakonus.info@gmail.com">almancakonus.info@gmail.com</a>
+
+                            <div class="site-footer__bottom">
+                              <span>@copyrightText</span>
+                              <ul class="site-footer__bottom-links">
+                                <li><a href="@privacyPath">@T("Gizlilik", "Datenschutz")</a></li>
+                                <li><a href="/sitemap.xml"><i class="fa-solid fa-sitemap me-1" aria-hidden="true"></i>Sitemap</a></li>
+                                <li><a href="/robots.txt"><i class="fa-solid fa-robot me-1" aria-hidden="true"></i>Robots.txt</a></li>
+                                <li class="site-footer__theme">
+                                  <span>@ThemeToggle</span>
+                                  <div class="toggleWrapper">
+                                    <input class="input js-theme-toggle" id="dn-footer" type="checkbox" aria-label="@ThemeToggle" />
+                                    <label class="toggle" for="dn-footer" title="@ThemeToggle">
+                                      <span class="toggle__handler">
+                                        <span class="crater crater--1"></span>
+                                        <span class="crater crater--2"></span>
+                                        <span class="crater crater--3"></span>
+                                      </span>
+                                      <span class="star star--1"></span>
+                                      <span class="star star--2"></span>
+                                      <span class="star star--3"></span>
+                                      <span class="star star--4"></span>
+                                      <span class="star star--5"></span>
+                                      <span class="star star--6"></span>
+                                    </label>
+                                  </div>
                                 </li>
-                                <li class="contact-item text-truncate">
-                                  Phone: <a href="tel:+49 1603866222">+49 1603866222</a>
-                                </li>
-                                <li>Address: Istanbul, Turkey</li>
                               </ul>
                             </div>
-                            <!-- Social Media Links -->
-                            <div class="col-md-4 mb-4">
-                              <h5 class="fw-bold text-center">@FollowUs</h5>
-                              <ul class="example-2">
-                                <li class="icon-content">
-                                  <a href="https://www.facebook.com/AlmancaKonusmaKulubu.Suna/" aria-label="Facebook" data-social="facebook"
-                                     target="_blank">
-                                    <div class="filled"></div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                         class="bi bi-facebook" viewBox="0 0 16 16" xml:space="preserve">
-                                      <path
-                                      d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.166 1.791.166v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"
-                                      fill="currentColor"></path>
-                                    </svg>
-                                  </a>
-                                  <div class="tooltip">Facebook</div>
-                                </li>
-                                <li class="icon-content">
-                                  <a href="https://www.instagram.com/almanca_konus_/" aria-label="Instagram" data-social="instagram"
-                                     target="_blank">
-                                    <div class="filled"></div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                         class="bi bi-instagram" viewBox="0 0 16 16" xml:space="preserve">
-                                      <path
-                                      d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"
-                                      fill="currentColor"></path>
-                                    </svg>
-                                  </a>
-                                  <div class="tooltip">Instagram</div>
-                                </li>
-                                <li class="icon-content">
-                                  <a href="https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg" aria-label="Youtube"
-                                     data-social="youtube" target="_blank">
-                                    <div class="filled"></div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-youtube"
-                                         viewBox="0 0 16 16" xml:space="preserve">
-                                      <path
-                                      d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.01 2.01 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.01 2.01 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31 31 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.01 2.01 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A100 100 0 0 1 7.858 2zM6.4 5.209v4.818l4.157-2.408z"
-                                      fill="currentColor"></path>
-                                    </svg>
-                                  </a>
-                                  <div class="tooltip">Youtube</div>
-                                </li>
-                                <li class="icon-content">
-                                  <a href="https://linktr.ee/almancakonus.info" aria-label="Linktree" data-social="linktree"
-                                     target="_blank">
-                                    <div class="filled"></div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" fill="currentColor" height="16"
-                                         viewBox="0 0 640 640">
-                                      <path
-                                      d="M112 237.4L237.8 237.4L148.4 152L197.9 101L283.1 188.8L283.1 64L357 64L357 188.8L442.2 101.2L491.6 152L402.2 237.2L527.9 237.2L527.9 307.7L401.5 307.7L491.5 395.3L442.2 445.1L320 322.1L197.8 445.1L148.3 395.5L238.3 307.9L111.9 307.9L111.9 237.4zM282.9 408.8L356.8 408.8L356.8 576L282.9 576L282.9 408.8z"
-                                      fill="currentColor" />
-                                    </svg>
-                                  </a>
-                                  <div class="tooltip">Linktree</div>
-                                </li>
-                              </ul>
-                            </div>
-                            @* Links For the llm and sitemap links *@
-                            <div class="col-12 mb-4">
-                              <h6 class="text-muted mb-2">Site Resources:</h6>
-                              <ul class="list-unstyled text-muted small d-flex gap-3">
-                                <li><a href="/sitemap.xml" class="text-decoration-none text-muted" target="_blank"><i class="fa-solid fa-sitemap me-1"></i>XML Sitemap</a></li>
-                                <li><a href="/robots.txt" class="text-decoration-none text-muted" target="_blank"><i class="fa-solid fa-robot me-1"></i>Robots.txt</a></li>
-                              </ul>
-                            </div>
-                          </div>
-                          <div class="d-none d-md-flex justify-content-center mb-3">
-                            <div class="toggleWrapper theme-toggle-row">
-                              <input class="input js-theme-toggle" id="dn-footer" type="checkbox" aria-label="@ThemeToggle" />
-                              <label class="toggle" for="dn-footer" title="@ThemeToggle">
-                                <span class="toggle__handler">
-                                  <span class="crater crater--1"></span>
-                                  <span class="crater crater--2"></span>
-                                  <span class="crater crater--3"></span>
-                                </span>
-                                <span class="star star--1"></span>
-                                <span class="star star--2"></span>
-                                <span class="star star--3"></span>
-                                <span class="star star--4"></span>
-                                <span class="star star--5"></span>
-                                <span class="star star--6"></span>
-                              </label>
-                            </div>
-                          </div>
-                          <div class="text-center varela-round-regular text-muted">
-                            @Copyright
                           </div>
                         </div>
                       </footer>
@@ -803,6 +624,20 @@
                               apply(this.checked ? 'dark' : 'light');
                             });
                           });
+                        })();
+                      </script>
+
+                      <!-- Header gets a soft shadow and condenses once the page scrolls -->
+                      <script>
+                        (function () {
+                          var header = document.querySelector('.site-header');
+                          if (!header) return;
+                          var ticking = false;
+                          function update() { ticking = false; header.classList.toggle('is-scrolled', window.scrollY > 8); }
+                          window.addEventListener('scroll', function () {
+                            if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
+                          }, { passive: true });
+                          update();
                         })();
                       </script>
 
