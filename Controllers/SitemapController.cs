@@ -1,10 +1,7 @@
-// ============================================================================
-// UPDATED SITEMAP CONTROLLER - Replace your existing SitemapController.cs
-// ============================================================================
-
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SpeakingClub.Data;
+using SpeakingClub.Services;
 
 namespace SpeakingClub.Controllers
 {
@@ -20,7 +18,22 @@ namespace SpeakingClub.Controllers
     {
         private readonly SpeakingClubContext _context;
         private readonly ILogger<SitemapController> _logger;
-        private const string SITE_URL = "https://almanca-konus.com"; // Update with your domain
+        private const string SITE_URL = SeoHelper.SiteUrl;
+
+        private static readonly XNamespace Ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
+        private static readonly XNamespace NsXhtml = "http://www.w3.org/1999/xhtml";
+
+        // Pages that exist as a Turkish/German pair: (Turkish path, German path, priority, changefreq).
+        private static readonly (string Tr, string De, string Priority, string ChangeFreq)[] LocalizedPages =
+        {
+            ("/yazilar",              "/beitraege",     "0.9", "daily"),
+            ("/hekim-almancasi",      "/aerztedeutsch", "0.8", "monthly"),
+            ("/hemsirelik-almancasi", "/pflegedeutsch", "0.8", "monthly"),
+            ("/sinavlar",             "/pruefungen",    "0.8", "weekly"),
+            ("/sozluk",               "/woerterbuch",   "0.7", "weekly"),
+            ("/hakkimizda",           "/ueber-uns",     "0.6", "monthly"),
+            ("/gizlilik",             "/datenschutz",   "0.2", "yearly"),
+        };
 
         public SitemapController(ILogger<SitemapController> logger, SpeakingClubContext context)
         {
@@ -30,317 +43,173 @@ namespace SpeakingClub.Controllers
 
         [HttpGet]
         [Route("sitemap.xml")]
-        [Route("Sitemap")]
         [ResponseCache(Duration = 3600)] // Cache for 1 hour
         public async Task<IActionResult> Index()
         {
             try
             {
-                _logger.LogInformation("Generating sitemap...");
                 var urls = new List<XElement>();
-                var ns = XNamespace.Get("http://www.sitemaps.org/schemas/sitemap/0.9");
-                var nsXhtml = XNamespace.Get("http://www.w3.org/1999/xhtml");
 
-                // Homepage with hreflang
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/", SITE_URL + "/", SITE_URL + "/", "1.0", "daily"));
-                
-                // Static pages with localized alternates (Turkish versions)
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/hakkimizda", SITE_URL + "/hakkimizda", SITE_URL + "/ueber-uns", "0.8", "monthly"));
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/gizlilik", SITE_URL + "/gizlilik", SITE_URL + "/datenschutz", "0.3", "yearly"));
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/sozluk", SITE_URL + "/sozluk", SITE_URL + "/woerterbuch", "0.9", "weekly"));
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/yazilar", SITE_URL + "/yazilar", SITE_URL + "/beitraege", "0.9", "daily"));
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/sinavlar", SITE_URL + "/sinavlar", SITE_URL + "/pruefungen", "0.9", "weekly"));
+                // The home page has a single URL (its language follows the visitor), so it has no alternates.
+                urls.Add(CreateUrl(SITE_URL + "/", null, "1.0", "daily"));
 
-                // Static pages with localized alternates (German versions - reciprocal hreflang)
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/ueber-uns", SITE_URL + "/hakkimizda", SITE_URL + "/ueber-uns", "0.8", "monthly"));
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/datenschutz", SITE_URL + "/gizlilik", SITE_URL + "/datenschutz", "0.3", "yearly"));
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/woerterbuch", SITE_URL + "/sozluk", SITE_URL + "/woerterbuch", "0.9", "weekly"));
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/beitraege", SITE_URL + "/yazilar", SITE_URL + "/beitraege", "0.9", "daily"));
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/pruefungen", SITE_URL + "/sinavlar", SITE_URL + "/pruefungen", "0.9", "weekly"));
+                foreach (var page in LocalizedPages)
+                {
+                    var alternates = new Dictionary<string, string>
+                    {
+                        ["tr"] = SITE_URL + page.Tr,
+                        ["de"] = SITE_URL + page.De
+                    };
+                    urls.Add(CreateUrl(SITE_URL + page.Tr, null, page.Priority, page.ChangeFreq, alternates));
+                    urls.Add(CreateUrl(SITE_URL + page.De, null, page.Priority, page.ChangeFreq, alternates));
+                }
 
-                // Clinical German pages (Turkish canonical + reciprocal German)
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/hekim-almancasi", SITE_URL + "/hekim-almancasi", SITE_URL + "/aerztedeutsch", "0.8", "monthly"));
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/aerztedeutsch", SITE_URL + "/hekim-almancasi", SITE_URL + "/aerztedeutsch", "0.8", "monthly"));
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/hemsirelik-almancasi", SITE_URL + "/hemsirelik-almancasi", SITE_URL + "/pflegedeutsch", "0.8", "monthly"));
-                urls.Add(CreateLocalizedUrl(SITE_URL + "/pflegedeutsch", SITE_URL + "/hemsirelik-almancasi", SITE_URL + "/pflegedeutsch", "0.8", "monthly"));
-
-                _logger.LogInformation($"Added {urls.Count} static pages");
-
-                // Dynamic: Blog posts with multilingual support
-                // Only select fields needed for sitemap (avoid loading full Content)
+                // Only the fields the sitemap needs (no Content).
                 var blogs = await _context.Blogs
-                    .Include(b => b.Translations)
                     .Where(b => b.IsPublished && !b.NoIndex)
                     .OrderByDescending(b => b.LastModified ?? b.Date)
                     .Select(b => new
                     {
                         b.Slug,
+                        b.Url,
                         b.Date,
                         b.LastModified,
                         b.ViewCount,
                         b.isHome,
-                        Translations = b.Translations.Select(t => new { t.LanguageCode, t.Slug }).ToList()
+                        Translations = b.Translations
+                            .Select(t => new { t.LanguageCode, t.Slug, t.LastModified })
+                            .ToList()
                     })
                     .ToListAsync();
 
-                _logger.LogInformation($"Found {blogs.Count} blog posts");
-
                 foreach (var blog in blogs)
                 {
-                    // Determine change frequency based on recency
-                    var lastModified = blog.LastModified ?? blog.Date;
-                    var daysSinceModified = (DateTime.UtcNow - lastModified).TotalDays;
-                    var changefreq = daysSinceModified < 7 ? "daily" : daysSinceModified < 90 ? "weekly" : daysSinceModified < 365 ? "monthly" : "yearly";
+                    var tr = blog.Translations.FirstOrDefault(t => t.LanguageCode == "tr");
+                    var de = blog.Translations.FirstOrDefault(t => t.LanguageCode == "de");
+                    var baseSlug = FirstNonEmpty(blog.Slug, blog.Url);
 
-                    // Determine priority
-                    var score = 0.5;
-                    if (blog.isHome) score += 0.2;
-                    if (blog.ViewCount > 1000) score += 0.15;
-                    else if (blog.ViewCount > 500) score += 0.1;
-                    else if (blog.ViewCount > 100) score += 0.05;
-                    var daysSincePublished = (DateTime.UtcNow - blog.Date).TotalDays;
-                    if (daysSincePublished < 7) score += 0.15;
-                    else if (daysSincePublished < 30) score += 0.1;
-                    else if (daysSincePublished < 90) score += 0.05;
-                    var priority = Math.Min(score, 1.0).ToString("0.0", CultureInfo.InvariantCulture);
-                    
-                    // Get translations for hreflang
-                    var trSlug = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "tr")?.Slug ?? blog.Slug;
-                    var deSlug = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "de")?.Slug ?? blog.Slug;
-                    
-                    // Use Turkish slug as canonical loc (yazilar is the Turkish path)
-                    var blogUrl = $"{SITE_URL}/yazilar/{trSlug}";
-                    
-                    // Create URL with localized alternates
-                    var urlElement = CreateUrlWithAlternates(
-                        blogUrl,
-                        lastmod: blog.LastModified ?? blog.Date,
-                        priority: priority,
-                        changefreq: changefreq
-                    );
-                    
-                    // Add Turkish version
-                    urlElement.Add(new XElement(nsXhtml + "link",
-                        new XAttribute("rel", "alternate"),
-                        new XAttribute("hreflang", "tr"),
-                        new XAttribute("href", $"{SITE_URL}/yazilar/{trSlug}")
-                    ));
-                    
-                    // Add German version
-                    urlElement.Add(new XElement(nsXhtml + "link",
-                        new XAttribute("rel", "alternate"),
-                        new XAttribute("hreflang", "de"),
-                        new XAttribute("href", $"{SITE_URL}/beitraege/{deSlug}")
-                    ));
-                    
-                    // Add x-default
-                    urlElement.Add(new XElement(nsXhtml + "link",
-                        new XAttribute("rel", "alternate"),
-                        new XAttribute("hreflang", "x-default"),
-                        new XAttribute("href", blogUrl)
-                    ));
-                    
-                    urls.Add(urlElement);
-                    
-                    // Also add German URL entry with reciprocal hreflang alternates
-                    var blogUrlDe = $"{SITE_URL}/beitraege/{deSlug}";
-                    var urlElementDe = CreateUrlWithAlternates(
-                        blogUrlDe,
-                        lastmod: blog.LastModified ?? blog.Date,
-                        priority: priority,
-                        changefreq: changefreq
-                    );
-                    
-                    urlElementDe.Add(new XElement(nsXhtml + "link",
-                        new XAttribute("rel", "alternate"),
-                        new XAttribute("hreflang", "tr"),
-                        new XAttribute("href", $"{SITE_URL}/yazilar/{trSlug}")
-                    ));
-                    urlElementDe.Add(new XElement(nsXhtml + "link",
-                        new XAttribute("rel", "alternate"),
-                        new XAttribute("hreflang", "de"),
-                        new XAttribute("href", blogUrlDe)
-                    ));
-                    urlElementDe.Add(new XElement(nsXhtml + "link",
-                        new XAttribute("rel", "alternate"),
-                        new XAttribute("hreflang", "x-default"),
-                        new XAttribute("href", blogUrl)
-                    ));
-                    
-                    urls.Add(urlElementDe);
+                    // A language gets a URL only when the post exists in it: a German URL that showed the
+                    // Turkish text would be a duplicate. Posts without translations are served from the
+                    // base fields under the Turkish URL. Same rules as HomeController.BlogDetail.
+                    var trSlug = tr != null ? FirstNonEmpty(tr.Slug, baseSlug) : de == null ? baseSlug : null;
+                    var deSlug = de != null ? FirstNonEmpty(de.Slug, baseSlug) : null;
+
+                    var alternates = new Dictionary<string, string>();
+                    if (!string.IsNullOrEmpty(trSlug)) alternates["tr"] = $"{SITE_URL}/yazilar/{trSlug}";
+                    if (!string.IsNullOrEmpty(deSlug)) alternates["de"] = $"{SITE_URL}/beitraege/{deSlug}";
+                    if (alternates.Count == 0) continue;
+
+                    var lastmod = new[] { blog.LastModified, tr?.LastModified, de?.LastModified, blog.Date }
+                        .Where(d => d.HasValue)
+                        .Max();
+                    var changefreq = DetermineChangeFrequency(lastmod ?? blog.Date);
+                    var priority = DeterminePriority(blog.Date, blog.ViewCount, blog.isHome);
+
+                    // Hreflang only makes sense when both versions exist.
+                    var hreflang = alternates.Count > 1 ? alternates : null;
+                    foreach (var loc in alternates.Values)
+                    {
+                        urls.Add(CreateUrl(loc, lastmod, priority, changefreq, hreflang));
+                    }
                 }
 
-                _logger.LogInformation($"Total URLs in sitemap: {urls.Count}");
+                _logger.LogInformation("Sitemap generated with {Count} URLs ({Blogs} blog posts)", urls.Count, blogs.Count);
 
-                // NOTE: Quiz listing pages (/sinavlar, /pruefungen) are already included 
-                // in the static pages section above. No need for per-quiz entries since 
-                // quizzes don't have individual detail pages.
-
-                // Create XML sitemap
                 var sitemap = new XDocument(
                     new XDeclaration("1.0", "utf-8", null),
                     new XProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"/sitemap.xsl\""),
-                    new XElement(ns + "urlset",
-                        new XAttribute(XNamespace.Xmlns + "xhtml", nsXhtml),
+                    new XElement(Ns + "urlset",
+                        new XAttribute(XNamespace.Xmlns + "xhtml", NsXhtml),
                         urls
                     )
                 );
 
-                // Return as raw bytes with correct content type
                 using var ms = new MemoryStream();
                 using (var writer = new StreamWriter(ms, new UTF8Encoding(false), leaveOpen: true))
                 {
                     sitemap.Save(writer);
                 }
-                _logger.LogInformation($"Generated sitemap XML ({ms.Length} bytes)");
-                return File(ms.ToArray(), "text/xml");
+                return File(ms.ToArray(), "application/xml");
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
+                // A 500 makes Google retry later; a 200 with an error body would be read as an empty sitemap.
                 _logger.LogError(ex, "Error generating sitemap");
-                return Content($"Error: {ex.Message}\n{ex.StackTrace}", "text/plain");
+                return StatusCode(500);
             }
         }
 
         /// <summary>
-        /// Creates a URL element for the sitemap with all SEO attributes
+        /// Creates a sitemap &lt;url&gt; element. When <paramref name="alternates"/> is given, adds
+        /// xhtml:link hreflang entries for every language version plus x-default (the Turkish one).
         /// </summary>
-        private XElement CreateUrl(string loc, DateTime? lastmod = null, string priority = "0.5", string changefreq = "monthly")
+        private static XElement CreateUrl(string loc, DateTime? lastmod, string priority, string changefreq,
+            IReadOnlyDictionary<string, string>? alternates = null)
         {
-            XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
-            
-            var url = new XElement(ns + "url",
-                new XElement(ns + "loc", loc),
-                new XElement(ns + "changefreq", changefreq),
-                new XElement(ns + "priority", priority)
-            );
-            
+            var url = new XElement(Ns + "url", new XElement(Ns + "loc", loc));
+
             if (lastmod.HasValue)
             {
-                url.Add(new XElement(ns + "lastmod", lastmod.Value.ToString("yyyy-MM-ddTHH:mm:ss+00:00", CultureInfo.InvariantCulture)));
+                url.Add(new XElement(Ns + "lastmod", lastmod.Value.ToString("yyyy-MM-ddTHH:mm:ss+00:00", CultureInfo.InvariantCulture)));
             }
-            
-            return url;
-        }
+            url.Add(new XElement(Ns + "changefreq", changefreq));
+            url.Add(new XElement(Ns + "priority", priority));
 
-        /// <summary>
-        /// Creates a URL element with localized hreflang alternates for static pages
-        /// </summary>
-        private XElement CreateLocalizedUrl(string loc, string trHref, string deHref, string priority = "0.5", string changefreq = "monthly")
-        {
-            XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
-            XNamespace nsXhtml = "http://www.w3.org/1999/xhtml";
-
-            var url = new XElement(ns + "url",
-                new XElement(ns + "loc", loc),
-                new XElement(ns + "changefreq", changefreq),
-                new XElement(ns + "priority", priority)
-            );
-            
-            url.Add(new XElement(nsXhtml + "link",
-                new XAttribute("rel", "alternate"),
-                new XAttribute("hreflang", "tr"),
-                new XAttribute("href", trHref)
-            ));
-            url.Add(new XElement(nsXhtml + "link",
-                new XAttribute("rel", "alternate"),
-                new XAttribute("hreflang", "de"),
-                new XAttribute("href", deHref)
-            ));
-            url.Add(new XElement(nsXhtml + "link",
-                new XAttribute("rel", "alternate"),
-                new XAttribute("hreflang", "x-default"),
-                new XAttribute("href", loc)
-            ));
-
-            return url;
-        }
-
-        /// <summary>
-        /// Creates a URL element with support for alternate language links
-        /// </summary>
-        private XElement CreateUrlWithAlternates(string loc, DateTime? lastmod = null, string priority = "0.5", string changefreq = "monthly")
-        {
-            XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
-            
-            var url = new XElement(ns + "url",
-                new XElement(ns + "loc", loc),
-                new XElement(ns + "changefreq", changefreq),
-                new XElement(ns + "priority", priority)
-            );
-            
-            if (lastmod.HasValue)
+            if (alternates != null)
             {
-                url.Add(new XElement(ns + "lastmod", lastmod.Value.ToString("yyyy-MM-ddTHH:mm:ss+00:00", CultureInfo.InvariantCulture)));
+                foreach (var (lang, href) in alternates)
+                {
+                    url.Add(HreflangLink(lang, href));
+                }
+                url.Add(HreflangLink("x-default", alternates.TryGetValue("tr", out var tr) ? tr : alternates.Values.First()));
             }
-            
+
             return url;
         }
 
+        private static XElement HreflangLink(string hreflang, string href) =>
+            new XElement(NsXhtml + "link",
+                new XAttribute("rel", "alternate"),
+                new XAttribute("hreflang", hreflang),
+                new XAttribute("href", href));
+
+        private static string FirstNonEmpty(params string?[] values) =>
+            values.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v)) ?? string.Empty;
+
         /// <summary>
-        /// Determines change frequency based on blog age and activity
+        /// Determines change frequency based on how recently the post changed
         /// </summary>
-        private string DetermineChangeFrequency(SpeakingClub.Entity.Blog blog)
+        private static string DetermineChangeFrequency(DateTime lastModified)
         {
-            var lastModified = blog.LastModified ?? blog.Date;
             var daysSinceModified = (DateTime.UtcNow - lastModified).TotalDays;
-            
-            // Very recent posts change frequently
-            if (daysSinceModified < 7)
-                return "daily";
-            
-            // Recent posts with high engagement
-            if (daysSinceModified < 30 && blog.ViewCount > 100)
-                return "weekly";
-            
-            // Active posts
-            if (daysSinceModified < 90)
-                return "weekly";
-            
-            // Older posts
-            if (daysSinceModified < 365)
-                return "monthly";
-            
-            // Very old posts
+            if (daysSinceModified < 7) return "daily";
+            if (daysSinceModified < 90) return "weekly";
+            if (daysSinceModified < 365) return "monthly";
             return "yearly";
         }
 
         /// <summary>
-        /// Determines priority based on blog importance
+        /// Determines priority based on blog importance (home page feature, popularity, recency)
         /// </summary>
-        private string DeterminePriority(SpeakingClub.Entity.Blog blog)
+        private static string DeterminePriority(DateTime published, int viewCount, bool isHome)
         {
-            var score = 0.5; // Base priority
-            
-            // Home page posts get higher priority
-            if (blog.isHome)
-                score += 0.2;
-            
-            // Popular posts (high view count) get higher priority
-            if (blog.ViewCount > 1000)
-                score += 0.15;
-            else if (blog.ViewCount > 500)
-                score += 0.1;
-            else if (blog.ViewCount > 100)
-                score += 0.05;
-            
-            // Recent posts get higher priority
-            var daysSincePublished = (DateTime.UtcNow - blog.Date).TotalDays;
-            if (daysSincePublished < 7)
-                score += 0.15;
-            else if (daysSincePublished < 30)
-                score += 0.1;
-            else if (daysSincePublished < 90)
-                score += 0.05;
-            
-            // Cap at 1.0
-            score = Math.Min(score, 1.0);
-            
-            return score.ToString("0.0", CultureInfo.InvariantCulture);
+            var score = 0.5;
+            if (isHome) score += 0.2;
+
+            if (viewCount > 1000) score += 0.15;
+            else if (viewCount > 500) score += 0.1;
+            else if (viewCount > 100) score += 0.05;
+
+            var daysSincePublished = (DateTime.UtcNow - published).TotalDays;
+            if (daysSincePublished < 7) score += 0.15;
+            else if (daysSincePublished < 30) score += 0.1;
+            else if (daysSincePublished < 90) score += 0.05;
+
+            return Math.Min(score, 1.0).ToString("0.0", CultureInfo.InvariantCulture);
         }
 
         /// <summary>
-        /// Generates robots.txt content
+        /// robots.txt. Paths are case-sensitive for crawlers, so both spellings of the MVC areas are listed.
         /// </summary>
         [HttpGet("/robots.txt")]
         [ResponseCache(Duration = 86400)] // Cache for 24 hours
@@ -349,29 +218,27 @@ namespace SpeakingClub.Controllers
             var sb = new StringBuilder();
             sb.AppendLine("User-agent: *");
             sb.AppendLine("Allow: /");
-            sb.AppendLine("");
-            sb.AppendLine("# Sitemaps");
-            sb.AppendLine($"Sitemap: {SITE_URL}/sitemap.xml");
-            sb.AppendLine("");
-            sb.AppendLine("# Block admin areas");
+            sb.AppendLine();
+            sb.AppendLine("# Admin and account pages");
+            sb.AppendLine("Disallow: /Admin/");
             sb.AppendLine("Disallow: /admin/");
+            sb.AppendLine("Disallow: /Account/");
             sb.AppendLine("Disallow: /account/");
+            sb.AppendLine("Disallow: /QuizMonitor/");
+            sb.AppendLine("Disallow: /quizMonitorHub");
+            sb.AppendLine();
+            sb.AppendLine("# Endpoints that only redirect or return data");
+            sb.AppendLine("Disallow: /Home/SetLanguage");
+            sb.AppendLine("Disallow: /download/");
             sb.AppendLine("Disallow: /api/");
-            sb.AppendLine("");
-            sb.AppendLine("# Block temp files");
+            sb.AppendLine();
+            sb.AppendLine("# Temporary files");
             sb.AppendLine("Disallow: /temp/");
             sb.AppendLine("Disallow: /uploads/temp/");
-            sb.AppendLine("");
-            sb.AppendLine("# Crawl delay (low so search engines index quickly)");
-            sb.AppendLine("Crawl-delay: 1");
+            sb.AppendLine();
+            sb.AppendLine($"Sitemap: {SITE_URL}/sitemap.xml");
 
             return Content(sb.ToString(), "text/plain", Encoding.UTF8);
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View("Error!");
         }
     }
 }

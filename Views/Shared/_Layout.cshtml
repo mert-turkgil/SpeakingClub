@@ -30,9 +30,9 @@
   <meta name="keywords"
         content="@(ViewData["Keywords"] ?? "German learning, Almanca öğren, German language, quiz, dictionary, speaking club")" />
   <meta name="author" content="Suna Türkgil" />
-  <meta name="robots" content="index, follow" />
+  <meta name="robots" content="@(ViewData["Robots"] ?? "index, follow, max-image-preview:large")" />
   <meta name="language" content="@System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName" />
-  <link rel="canonical" href="@(ViewData["Canonical"] ?? "https://almanca-konus.com" + Context.Request.Path)" />
+  <link rel="canonical" href="@(ViewData["Canonical"] ?? SeoHelper.SiteUrl + Context.Request.Path)" />
 
   <!-- Hreflang Alternate Language Links -->
   @if (ViewData["HreflangTr"] != null)
@@ -46,27 +46,27 @@
   @if (ViewData["HreflangTr"] != null || ViewData["HreflangDe"] != null)
   {
     <link rel="alternate" hreflang="x-default"
-          href="@(ViewData["HreflangTr"] ?? ViewData["Canonical"] ?? "https://almanca-konus.com" + Context.Request.Path)" />
+          href="@(ViewData["HreflangTr"] ?? ViewData["Canonical"] ?? SeoHelper.SiteUrl + Context.Request.Path)" />
   }
 
   <!-- Open Graph Meta Tags (Facebook, LinkedIn, WhatsApp) -->
   <meta property="og:type" content="@(ViewData["OgType"] ?? "website")" />
-  <meta property="og:site_name" content="almanca-konus" />
-  <meta property="og:title" content="@(ViewData["Title"] ?? "almanca-konus - Learn German Online")" />
+  <meta property="og:site_name" content="Almanca Konuş" />
+  <meta property="og:title" content="@(ViewData["OgTitle"] ?? ViewData["Title"] ?? "almanca-konus - Learn German Online")" />
   <meta property="og:description"
-        content="@(ViewData["Description"] ?? "Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
-  <meta property="og:url" content="@(ViewData["Canonical"] ?? "https://almanca-konus.com" + Context.Request.Path)" />
-  <meta property="og:image" content="@(ViewData["OgImage"] ?? "https://almanca-konus.com/img/header_logo.png")" />
+        content="@(ViewData["OgDescription"] ?? ViewData["Description"] ?? "Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
+  <meta property="og:url" content="@(ViewData["Canonical"] ?? SeoHelper.SiteUrl + Context.Request.Path)" />
+  <meta property="og:image" content="@(ViewData["OgImage"] ?? SeoHelper.SiteUrl + "/img/header_logo.png")" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:locale" content="@System.Globalization.CultureInfo.CurrentCulture.Name.Replace("-", "_")" />
 
   <!-- Twitter Card Meta Tags -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="@(ViewData["Title"] ?? "almanca-konus - Learn German Online")" />
+  <meta name="twitter:title" content="@(ViewData["OgTitle"] ?? ViewData["Title"] ?? "almanca-konus - Learn German Online")" />
   <meta name="twitter:description"
-        content="@(ViewData["Description"] ?? "Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
-  <meta name="twitter:image" content="@(ViewData["OgImage"] ?? "https://almanca-konus.com/img/header_logo.png")" />
+        content="@(ViewData["OgDescription"] ?? ViewData["Description"] ?? "Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
+  <meta name="twitter:image" content="@(ViewData["OgImage"] ?? SeoHelper.SiteUrl + "/img/header_logo.png")" />
   <!-- <meta name="twitter:site" content="@@yourtwitterhandle" /> -->
   <!-- <meta name="twitter:creator" content="@@yourtwitterhandle" /> -->
 
@@ -90,8 +90,8 @@
                                                           "@@type": "EducationalOrganization",
                                                           "name": "almanca-konus",
                                                           "description": "Interactive German language learning platform",
-                                                          "url": "https://almanca-konus.com",
-                                                          "logo": "https://almanca-konus.com/img/header_logo.png",
+                                                          "url": "@SeoHelper.SiteUrl/",
+                                                          "logo": "@SeoHelper.SiteUrl/img/header_logo.png",
                                                           "sameAs": [
                                                               "https://www.facebook.com/AlmancaKonusmaKulubu.Suna/",
                                                               "https://www.instagram.com/almanca_konusma_kulubu_",
@@ -446,7 +446,7 @@
                   <div class="klinik-megamenu__col klinik-megamenu__col--tools">
                     <span class="klinik-megamenu__head"><i class="fa-solid fa-toolbox me-2"></i>@ToolsGroup</span>
                     <a class="dropdown-item" href="@wordsPath"><i class="fa-solid fa-spell-check me-2 text-fourth"></i>@Sözlük</a>
-                    <a class="dropdown-item" asp-controller="Account" asp-action="Quizzes"><i class="fa-solid fa-chart-line me-2 text-fourth"></i>@SeviyeniziÖlçün</a>
+                    <a class="dropdown-item" href="@quizzesPath"><i class="fa-solid fa-chart-line me-2 text-fourth"></i>@SeviyeniziÖlçün</a>
                   </div>
                 </div>
               </div>
@@ -529,10 +529,11 @@
               <!-- Offcanvas for Mobile Menu -->
               <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
                 <div class="offcanvas-header">
-                  <h1 class="offcanvas-title varela-round-regular" id="offcanvasNavbarLabel">
+                  @* Not an <h1>: this menu is on every page, and each page's own title must be its only h1 *@
+                  <div class="offcanvas-title h1 varela-round-regular" id="offcanvasNavbarLabel">
                     <img src="~/img/logo.svg" alt="Logo" class="img-thumbnail w-50 d-block">
                     @Logo
-                  </h1>
+                  </div>
                   <button type="button" class="btn btn-icon" data-bs-dismiss="offcanvas" aria-label="Close"
                           style="background: none; border: none; font-size: 1.5rem;">
                     <i class="fa-solid fa-arrow-left-long text-dark"></i>
@@ -585,7 +586,7 @@
                         <div class="klinik-collapse__group">
                           <span class="klinik-collapse__head"><i class="fa-solid fa-toolbox me-2"></i>@ToolsGroup</span>
                           <a class="dropdown-item" href="@wordsPath"><i class="fa-solid fa-spell-check me-2 text-fourth"></i>@Sözlük</a>
-                          <a class="dropdown-item" asp-controller="Account" asp-action="Quizzes"><i class="fa-solid fa-chart-line me-2 text-fourth"></i>@SeviyeniziÖlçün</a>
+                          <a class="dropdown-item" href="@quizzesPath"><i class="fa-solid fa-chart-line me-2 text-fourth"></i>@SeviyeniziÖlçün</a>
                         </div>
                       </div>
                     </li>
@@ -748,7 +749,7 @@
                             <div class="col-12 mb-4">
                               <h6 class="text-muted mb-2">Site Resources:</h6>
                               <ul class="list-unstyled text-muted small d-flex gap-3">
-                                <li><a href="/Sitemap" class="text-decoration-none text-muted" target="_blank"><i class="fa-solid fa-sitemap me-1"></i>XML Sitemap</a></li>
+                                <li><a href="/sitemap.xml" class="text-decoration-none text-muted" target="_blank"><i class="fa-solid fa-sitemap me-1"></i>XML Sitemap</a></li>
                                 <li><a href="/robots.txt" class="text-decoration-none text-muted" target="_blank"><i class="fa-solid fa-robot me-1"></i>Robots.txt</a></li>
                               </ul>
                             </div>

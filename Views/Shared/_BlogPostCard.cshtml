@@ -1,0 +1,43 @@
+@model SpeakingClub.Models.BlogCardModel
+@{
+    // ViewData: "Featured" (bool) = the large first card of the list, "HeadingTag" = h2 (list) or h3 (read next),
+    // "Delay" = stagger for the reveal animation in ms.
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var featured = ViewData["Featured"] as bool? ?? false;
+    var headingTag = ViewData["HeadingTag"] as string ?? "h2";
+    var delay = ViewData["Delay"] as int? ?? 0;
+    var hasImage = !string.IsNullOrEmpty(Model.Image);
+}
+<article class="post-card @(featured ? "post-card--featured" : "") reveal" style="--bp-delay: @(delay)ms">
+    <div class="post-card__media @(hasImage ? "" : "is-empty")">
+        @if (hasImage)
+        {
+            <img src="@Model.Image" alt="" loading="@(featured ? "eager" : "lazy")" decoding="async"
+                 fetchpriority="@(featured ? "high" : null)" />
+        }
+        @if (!string.IsNullOrEmpty(Model.CategoryName))
+        {
+            <span class="post-card__badge">@Model.CategoryName</span>
+        }
+    </div>
+    <div class="post-card__body">
+        <div class="bp-meta">
+            <time datetime="@Model.Date.ToString("yyyy-MM-dd")">@Model.Date.ToString("d MMMM yyyy")</time>
+            <span><i class="fa-regular fa-clock" aria-hidden="true"></i>@string.Format(T("{0} dk okuma", "{0} Min. Lesezeit"), Model.ReadingMinutes)</span>
+        </div>
+        @if (headingTag == "h3")
+        {
+            <h3 class="post-card__title"><a href="@Model.Href">@Model.Title</a></h3>
+        }
+        else
+        {
+            <h2 class="post-card__title"><a href="@Model.Href">@Model.Title</a></h2>
+        }
+        @if (!string.IsNullOrEmpty(Model.Excerpt))
+        {
+            <p class="post-card__excerpt">@Model.Excerpt</p>
+        }
+        <span class="post-card__more" aria-hidden="true">@T("Devamını oku", "Weiterlesen") <i class="fa-solid fa-arrow-right"></i></span>
+    </div>
+</article>

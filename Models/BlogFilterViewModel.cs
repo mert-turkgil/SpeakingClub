@@ -18,8 +18,11 @@ namespace SpeakingClub.Models
         public int TotalBlogs { get; set; }
 
         // Data
-        public List<SpeakingClub.Entity.Blog> Blogs { get; set; } = new List<SpeakingClub.Entity.Blog>();
+        public List<BlogCardModel> Posts { get; set; } = new List<BlogCardModel>();
         public List<string> Categories { get; set; } = new List<string>();
+
+        // Localized path of the blog list (/yazilar or /beitraege)
+        public string BlogListPath { get; set; }
 
         // UI Text Labels
         public string BlogList_Title { get; set; }
@@ -27,9 +30,9 @@ namespace SpeakingClub.Models
         public string BlogList_SearchLabel { get; set; }
         public string BlogList_AllCategories { get; set; }
         public string BlogList_TagLabel { get; set; }           // New: label for tag filter
-        public string BlogList_TagPlaceholder { get; set; }     // New: placeholder for tag filter
-        public string BlogList_ApplyFiltersButton { get; set; }
-        public string BlogList_NoPostsMessage { get; set; }
         public string BlogList_ReadMore { get; set; }
+
+        public bool IsFiltered =>
+            !string.IsNullOrWhiteSpace(Category) || !string.IsNullOrWhiteSpace(Tag) || !string.IsNullOrWhiteSpace(SearchTerm);
     }
 }

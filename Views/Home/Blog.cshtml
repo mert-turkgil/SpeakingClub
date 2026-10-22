@@ -1,413 +1,224 @@
 @model SpeakingClub.Models.BlogFilterViewModel
-@inject LanguageService Localizer
-
 @{
-    ViewData["Title"] = Model.BlogList_Title;
-    
-    // Localized URL paths based on current culture
+    // Title, description, canonical, robots and hreflang come from HomeController.Blog.
     var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
-    var blogListPath = isGerman ? "/beitraege" : "/yazilar";
-    
-    // Build JSON-LD structured data for blog listing
-    var blogItems = Model.Blogs?.Select(b => new {
-        type = "BlogPosting",
-        headline = b.Title,
-        image = !string.IsNullOrEmpty(b.Image) ? $"https://almanca-konus.com{b.Image}" : "https://almanca-konus.com/img/header_logo.png",
-        datePublished = b.Date.ToString("yyyy-MM-dd"),
-        author = new {
-            type = "Person",
-            name = b.Author ?? "SpeakingClub"
-        },
-        publisher = new {
-            type = "Organization",
-            name = "Almanca Konuşma Kulübü",
-            logo = new {
-                type = "ImageObject",
-                url = "https://almanca-konus.com/img/header_logo.png"
-            }
-        },
-        description = b.Content.Length > 160 ? System.Text.RegularExpressions.Regex.Replace(b.Content.Substring(0, 160), "<.*?>", "") : System.Text.RegularExpressions.Regex.Replace(b.Content, "<.*?>", ""),
-        url = $"https://almanca-konus.com{blogListPath}/{b.Url}"
-    }).ToList();
-    
-    var structuredData = new {
-        context = "https://schema.org",
-        type = "Blog",
-        name = Model.BlogList_Title,
-        description = Model.BlogList_Description,
-        url = $"https://almanca-konus.com{blogListPath}",
-        blogPost = blogItems
-    };
+    string T(string tr, string de) => isGerman ? de : tr;
+
+    // List URL with only the filters that are set, so every filter combination has one URL
+    string ListUrl(string? category = null, string? tag = null, string? search = null, int page = 1)
+    {
+        var query = new List<string>();
+        if (!string.IsNullOrWhiteSpace(category)) query.Add("category=" + Uri.EscapeDataString(category));
+        if (!string.IsNullOrWhiteSpace(tag)) query.Add("tag=" + Uri.EscapeDataString(tag));
+        if (!string.IsNullOrWhiteSpace(search)) query.Add("searchTerm=" + Uri.EscapeDataString(search));
+        if (page > 1) query.Add("page=" + page);
+        return Model.BlogListPath + (query.Count > 0 ? "?" + string.Join("&", query) : "");
+    }
+
+    var showFeatured = !Model.IsFiltered && Model.CurrentPage == 1 && Model.Posts.Count > 0;
+    var featured = showFeatured ? Model.Posts[0] : null;
+    var gridPosts = showFeatured ? Model.Posts.Skip(1).ToList() : Model.Posts;
+
+    // Pages to show: first, last and the two around the current one; null = gap
+    var pages = new List<int?>();
+    for (var p = 1; p <= Model.TotalPages; p++)
+    {
+        if (p == 1 || p == Model.TotalPages || Math.Abs(p - Model.CurrentPage) <= 1)
+            pages.Add(p);
+        else if (pages.Count > 0 && pages[^1] != null)
+            pages.Add(null);
+    }
+
+    // Blog + its posts as structured data (unfiltered pages only)
+    string? schemaJson = null;
+    if (!Model.IsFiltered && Model.Posts.Count > 0)
+    {
+        var schema = new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "Blog",
+            ["name"] = T("Almanca Konuş Blog", "Almanca Konuş Blog"),
+            ["description"] = Model.BlogList_Description,
+            ["url"] = SeoHelper.SiteUrl + Model.BlogListPath,
+            ["inLanguage"] = isGerman ? "de" : "tr",
+            ["blogPost"] = Model.Posts.Select(p => new Dictionary<string, object?>
+            {
+                ["@type"] = "BlogPosting",
+                ["headline"] = p.Title,
+                ["url"] = SeoHelper.SiteUrl + p.Href,
+                ["datePublished"] = p.Date.ToString("yyyy-MM-dd"),
+                ["image"] = string.IsNullOrEmpty(p.Image) ? null : SeoHelper.SiteUrl + p.Image,
+                ["author"] = string.IsNullOrEmpty(p.Author) ? null : new Dictionary<string, object?> { ["@type"] = "Person", ["name"] = p.Author }
+            }).ToList()
+        };
+        schemaJson = System.Text.Json.JsonSerializer.Serialize(schema, new System.Text.Json.JsonSerializerOptions
+        {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All),
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        });
+    }
 }
 
 @section Css {
-    <!-- JSON-LD Structured Data for SEO -->
-    <script type="application/ld+json">
-        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(structuredData, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }))
-    </script>
-    
-    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
-    <style>
-        :root {
-            --color-lightest: #FFF5E4;
-            --color-light:    #FFE3E1;
-            --color-medium:   #FFD1D1;
-            --color-accent:   #FF9494;
-        }
-        
-        /* Hero Section */
-        .blog-hero {
-            background: linear-gradient(135deg, var(--color-lightest) 0%, var(--color-light) 100%);
-            position: relative;
-            overflow: hidden;
-        }
-        .blog-hero::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 60%;
-            height: 150%;
-            background: radial-gradient(circle, var(--color-accent) 0%, transparent 70%);
-            opacity: 0.1;
-        }
-        
-        /* Filter Sidebar */
-        .filter-card {
-            background: white;
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            position: sticky;
-            top: 100px;
-        }
-        .filter-card .form-label {
-            font-weight: 600;
-            color: #333;
-        }
-        .filter-card .form-select,
-        .filter-card .form-control {
-            border-radius: 10px;
-            border: 2px solid var(--color-light);
-            padding: 10px 15px;
-        }
-        .filter-card .form-select:focus,
-        .filter-card .form-control:focus {
-            border-color: var(--color-accent);
-            box-shadow: 0 0 0 3px rgba(255,148,148,0.2);
-        }
-        .filter-card .btn-check:checked + .btn-outline-success {
-            background-color: var(--color-accent);
-            border-color: var(--color-accent);
-        }
-        .filter-card .btn-outline-success {
-            color: var(--color-accent);
-            border-color: var(--color-accent);
-            border-radius: 20px;
-            margin: 2px;
-        }
-        .filter-card .btn-outline-success:hover {
-            background-color: var(--color-accent);
-            color: white;
-        }
-        
-        /* Blog Cards */
-        .blog-card {
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            border: none;
-            border-radius: 20px;
-            overflow: hidden;
-            background: white;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-        }
-        .blog-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(255,148,148,0.25);
-        }
-        .blog-card .card-img-wrapper {
-            position: relative;
-            overflow: hidden;
-        }
-        .blog-card img {
-            object-fit: cover;
-            height: 220px;
-            width: 100%;
-            transition: transform 0.5s ease;
-        }
-        .blog-card:hover img {
-            transform: scale(1.1);
-        }
-        .blog-card .card-img-overlay-custom {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0,0,0,0.7));
-            padding: 20px;
-        }
-        .blog-card .card-body {
-            padding: 1.5rem;
-        }
-        .blog-title {
-            font-size: 1.15rem;
-            font-weight: 700;
-            margin: 0 0 10px 0;
-            line-height: 1.4;
-        }
-        .blog-title a {
-            color: #333;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-        .blog-title a:hover {
-            color: var(--color-accent);
-        }
-        .blog-meta {
-            font-size: 0.85rem;
-            color: #888;
-            display: flex;
-            gap: 15px;
-            margin-bottom: 12px;
-        }
-        .blog-meta i {
-            color: var(--color-accent);
-        }
-        .blog-content {
-            font-size: 0.95rem;
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 15px;
-        }
-        .btn-read-more {
-            background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-medium) 100%);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            padding: 8px 20px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        .btn-read-more:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(255,148,148,0.4);
-            color: white;
-        }
-        
-        /* Pagination */
-        .pagination .page-link {
-            border: none;
-            border-radius: 10px;
-            margin: 0 3px;
-            color: var(--color-accent);
-            font-weight: 600;
-        }
-        .pagination .page-item.active .page-link {
-            background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-medium) 100%);
-            border: none;
-        }
-        .pagination .page-link:hover {
-            background-color: var(--color-light);
-        }
-        
-        /* Empty State */
-        .empty-state {
-            background: var(--color-lightest);
-            border-radius: 20px;
-            padding: 4rem 2rem;
-        }
-        .empty-state i {
-            font-size: 4rem;
-            color: var(--color-medium);
-        }
-    </style>
+    <script>document.documentElement.classList.add('bp-js');</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@@0,9..144,600;1,9..144,600&display=swap" />
+    <link rel="stylesheet" href="~/css/blog.css" asp-append-version="true" />
+    @if (schemaJson != null)
+    {
+        <script type="application/ld+json">@Html.Raw(schemaJson)</script>
+    }
 }
 
-<!-- Blog Header Section -->
-<section class="py-5 blog-hero text-center" data-aos="fade-down">
-    <div class="container position-relative">
-        <h1 class="display-4 fw-bold mb-3" style="color: var(--color-accent);">@Model.BlogList_Title</h1>
-        <p class="lead text-muted mb-0" style="max-width: 600px; margin: 0 auto;">@Model.BlogList_Description</p>
-        <p class="small text-muted mt-2">Showing <strong>@Model.TotalBlogs</strong> posts</p>
-    </div>
-</section>
-
-<!-- Main Content Section -->
-<div class="container my-5">
-    <div class="row">
-        <!-- Filter Section -->
-        <div class="col-lg-3 col-md-4 mb-4" data-aos="fade-right">
-            <div class="filter-card">
-                <h4 class="fw-bold mb-4" style="color: var(--color-accent);">
-                    <i class="bi bi-funnel me-2"></i>@Model.BlogList_SearchLabel
-                </h4>
-                <form method="get" action="@blogListPath">
-                    <!-- Category Filter -->
-                    <div class="mb-4">
-                        <label for="category" class="form-label">@Model.BlogList_AllCategories</label>
-                        <select class="form-select" id="category" name="category">
-                            @foreach (var cat in Model.Categories)
-                            {
-                                <option value="@cat" selected="@(cat == Model.Category ? "selected" : null)">@cat</option>
-                            }
-                        </select>
-                    </div>
-
-                    <!-- Tag Filter as Toggle Buttons -->
-                    <div class="mb-4">
-                        <label class="form-label">@Model.BlogList_TagLabel</label>
-                        <div class="d-flex flex-wrap">
-                            @if(Model.AvailableTags == null || !Model.AvailableTags.Any())
-                            {
-                                <span class="text-muted small">Keine Tags verfügbar</span>
-                            }
-                            else
-                            {
-                                @foreach (var tag in Model.AvailableTags)
-                                {
-                                    <input type="radio" class="btn-check" name="tag" id="tag_@tag" value="@tag" autocomplete="off" @(tag == Model.Tag ? "checked" : "")>
-                                    <label class="btn btn-outline-success btn-sm" for="tag_@tag">@tag</label>
-                                }
-                            }
-                        </div>
-                    </div>
-
-                    <!-- Search Filter -->
-                    <div class="mb-4">
-                        <label for="searchTerm" class="form-label">@Model.BlogList_SearchLabel</label>
-                        <div class="position-relative">
-                            <input type="text" class="form-control" id="searchTerm" name="searchTerm" value="@Model.SearchTerm" placeholder="@Model.BlogList_SearchLabel" />
-                        </div>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <button type="submit" class="btn w-100 py-2" style="background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-medium) 100%); color: white; border-radius: 10px; font-weight: 600;">
-                        <i class="bi bi-search me-2"></i>@Model.BlogList_ApplyFiltersButton
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Blog Content Section -->
-        <div class="col-lg-9 col-md-8">
-            <div class="row g-4">
-                @if (Model.Blogs != null && Model.Blogs.Any())
+<div class="blog-page blog-index">
+    <header class="bp-hero">
+        <div class="bp-container">
+            <span class="bp-eyebrow bp-enter"><i class="fa-solid fa-feather-pointed" aria-hidden="true"></i>@Model.BlogList_Title</span>
+            <h1 class="bp-hero__title bp-enter" style="--bp-delay: 80ms">
+                @if (isGerman)
                 {
-                    foreach (var blog in Model.Blogs)
-                    {
-                        <div class="col-md-6 col-lg-4" data-aos="fade-up">
-                            <div class="card blog-card h-100">
-                                <!-- Blog Image -->
-                                <div class="card-img-wrapper">
-                                    <img src="@(string.IsNullOrEmpty(blog.Image) ? "/img/footer_logo.png" : blog.Image)"
-                                         alt="@blog.Title"
-                                         class="card-img-top"
-                                         onerror="this.onerror=null;this.src='/img/footer_logo.png';" />
-                                </div>
-
-                                <!-- Blog Body -->
-                                <div class="card-body d-flex flex-column">
-                                    <div class="blog-meta">
-                                        <span><i class="bi bi-calendar3 me-1"></i> @blog.Date.ToString("dd MMM yyyy")</span>
-                                        <span><i class="bi bi-person me-1"></i> @blog.Author</span>
-                                    </div>
-                                    <h5 class="blog-title">
-                                        <a href="@blogListPath/@blog.Url">
-                                            @blog.Title
-                                        </a>
-                                    </h5>
-                                    <div class="blog-content flex-grow-1">
-                                        @if (blog.Content.Length > 100)
-                                        {
-                                            @Html.Raw(SpeakingClub.Services.HtmlUtility.GetExcerpt(blog.Content))
-                                        }
-                                        else
-                                        {
-                                            @Html.Raw(blog.Content)
-                                        }
-                                    </div>
-                                    <a href="@blogListPath/@blog.Url" class="btn btn-read-more align-self-start mt-auto">
-                                        @Model.BlogList_ReadMore <i class="bi bi-arrow-right ms-1"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    }
+                    <text>Blog zum <em>Deutschlernen</em></text>
                 }
                 else
                 {
-                    <div class="col-12">
-                        <div class="empty-state text-center">
-                            <i class="bi bi-journal-x mb-3"></i>
-                            <h4 class="text-muted">@Model.BlogList_NoPostsMessage</h4>
-                        </div>
-                    </div>
+                    <text>Almanca Öğrenme <em>Blogu</em></text>
                 }
-            </div>
+            </h1>
+            @if (!string.IsNullOrWhiteSpace(Model.BlogList_Description))
+            {
+                <p class="bp-hero__lead bp-enter" style="--bp-delay: 160ms">@Model.BlogList_Description</p>
+            }
 
-            <!-- Pagination -->
-            <div class="row mt-5">
-                <div class="col-12 d-flex justify-content-center">
-                    <nav aria-label="Blog Pagination">
-                        <ul class="pagination">
-                            @for (var i = 1; i <= Model.TotalPages; i++)
+            <form class="bp-search bp-enter" style="--bp-delay: 240ms" method="get" action="@Model.BlogListPath" role="search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <label for="blog-search" class="bp-sr-only">@Model.BlogList_SearchLabel</label>
+                <input id="blog-search" type="search" name="searchTerm" value="@Model.SearchTerm"
+                       placeholder="@T("Yazılarda ara…", "Beiträge durchsuchen…")" autocomplete="off" />
+                @if (!string.IsNullOrWhiteSpace(Model.Category))
+                {
+                    <input type="hidden" name="category" value="@Model.Category" />
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Tag))
+                {
+                    <input type="hidden" name="tag" value="@Model.Tag" />
+                }
+                <button type="submit" class="bp-btn">@Model.BlogList_SearchLabel</button>
+            </form>
+
+            @if (Model.Categories.Count > 0 || Model.AvailableTags.Count > 0)
+            {
+                <nav class="bp-filters bp-enter" style="--bp-delay: 320ms" aria-label="@T("Yazıları filtrele", "Beiträge filtern")">
+                    @if (Model.Categories.Count > 0)
+                    {
+                        <span class="bp-filters__label">@Model.BlogList_AllCategories</span>
+                        <ul class="bp-chips">
+                            <li><a class="bp-chip @(string.IsNullOrWhiteSpace(Model.Category) ? "is-active" : "")"
+                                   href="@ListUrl(null, Model.Tag, Model.SearchTerm)">@T("Tümü", "Alle")</a></li>
+                            @foreach (var category in Model.Categories)
                             {
-                                <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
-                                    <a class="page-link" href="@(blogListPath)?page=@(i)&category=@(Model.Category)&tag=@(Model.Tag)&searchTerm=@(Model.SearchTerm)">@i</a>
-                                </li>
+                                var active = string.Equals(category, Model.Category, StringComparison.OrdinalIgnoreCase);
+                                <li><a class="bp-chip @(active ? "is-active" : "")" aria-current="@(active ? "true" : null)"
+                                       href="@ListUrl(active ? null : category, Model.Tag, Model.SearchTerm)">@category</a></li>
                             }
                         </ul>
-                    </nav>
-                </div>
-            </div>
+                    }
+                    @if (Model.AvailableTags.Count > 0)
+                    {
+                        <span class="bp-filters__label">@Model.BlogList_TagLabel</span>
+                        <ul class="bp-chips">
+                            @foreach (var tag in Model.AvailableTags)
+                            {
+                                var active = string.Equals(tag, Model.Tag, StringComparison.OrdinalIgnoreCase);
+                                <li><a class="bp-chip @(active ? "is-active" : "")" aria-current="@(active ? "true" : null)"
+                                       href="@ListUrl(Model.Category, active ? null : tag, Model.SearchTerm)"><i class="fa-solid fa-hashtag" aria-hidden="true"></i>@tag</a></li>
+                            }
+                        </ul>
+                    }
+                </nav>
+            }
         </div>
-    </div>
+    </header>
+
+    <section class="bp-container" aria-label="@T("Yazılar", "Beiträge")">
+        <div class="bp-results">
+            @if (Model.IsFiltered)
+            {
+                <span>@Html.Raw(string.Format(T("<strong>{0}</strong> yazı bulundu", "<strong>{0}</strong> Beiträge gefunden"), Model.TotalBlogs))</span>
+                <a href="@Model.BlogListPath"><i class="fa-solid fa-xmark me-1" aria-hidden="true"></i>@T("Filtreleri temizle", "Filter zurücksetzen")</a>
+            }
+            else
+            {
+                <span>@Html.Raw(string.Format(T("Toplam <strong>{0}</strong> yazı", "Insgesamt <strong>{0}</strong> Beiträge"), Model.TotalBlogs))</span>
+                @if (Model.TotalPages > 1)
+                {
+                    <span>@string.Format(T("Sayfa {0} / {1}", "Seite {0} von {1}"), Model.CurrentPage, Model.TotalPages)</span>
+                }
+            }
+        </div>
+
+        @if (Model.Posts.Count == 0)
+        {
+            <div class="bp-empty reveal">
+                <i class="fa-solid fa-book-open-reader" aria-hidden="true"></i>
+                <h2>@T("Aradığınız yazıyı bulamadık", "Keine passenden Beiträge gefunden")</h2>
+                <p class="mb-4">@T("Farklı bir kelime deneyin ya da tüm yazılara göz atın.", "Versuchen Sie ein anderes Wort oder sehen Sie sich alle Beiträge an.")</p>
+                <a class="bp-btn" href="@Model.BlogListPath">@T("Tüm yazılar", "Alle Beiträge") <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            </div>
+        }
+        else
+        {
+            @if (featured != null)
+            {
+                <div class="bp-featured">
+                    <partial name="_BlogPostCard" model="featured" view-data='new ViewDataDictionary(ViewData) { ["Featured"] = true, ["HeadingTag"] = "h2" }' />
+                </div>
+            }
+
+            @if (gridPosts.Count > 0)
+            {
+                <div class="bp-grid">
+                    @for (var i = 0; i < gridPosts.Count; i++)
+                    {
+                        <partial name="_BlogPostCard" model="gridPosts[i]" view-data='new ViewDataDictionary(ViewData) { ["HeadingTag"] = "h2", ["Delay"] = (i % 3) * 90 }' />
+                    }
+                </div>
+            }
+
+            @if (Model.TotalPages > 1)
+            {
+                <nav aria-label="@T("Sayfalar", "Seiten")">
+                    <ul class="bp-pagination">
+                        @if (Model.CurrentPage > 1)
+                        {
+                            <li><a href="@ListUrl(Model.Category, Model.Tag, Model.SearchTerm, Model.CurrentPage - 1)" rel="prev"
+                                   aria-label="@T("Önceki sayfa", "Vorherige Seite")"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></a></li>
+                        }
+                        @foreach (var p in pages)
+                        {
+                            if (p == null)
+                            {
+                                <li><span aria-hidden="true">…</span></li>
+                            }
+                            else if (p == Model.CurrentPage)
+                            {
+                                <li><span aria-current="page">@p</span></li>
+                            }
+                            else
+                            {
+                                <li><a href="@ListUrl(Model.Category, Model.Tag, Model.SearchTerm, p.Value)">@p</a></li>
+                            }
+                        }
+                        @if (Model.CurrentPage < Model.TotalPages)
+                        {
+                            <li><a href="@ListUrl(Model.Category, Model.Tag, Model.SearchTerm, Model.CurrentPage + 1)" rel="next"
+                                   aria-label="@T("Sonraki sayfa", "Nächste Seite")"><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+    </section>
 </div>
 
 @section Scripts {
-    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-    <script>
-        AOS.init({
-            duration: 1000,
-            once: true
-        });
-    </script>
-            <!-- GSAP -->
-    <script src="~/lib/gsap/gsap.min.js"></script>
-    <script src="~/lib/gsap/ScrollTrigger.min.js"></script>
-    <script>
-    gsap.registerPlugin(ScrollTrigger); // <-- Register explicitly
-    </script>
-            <script>
-        var swiper = new Swiper('.blog-card .swiper', {
-            loop: true,
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-            navigation: {
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
-            },
-        });
-
-        gsap.from('.blog-card', {
-            opacity: 0,
-            y: 30,
-            duration: 0.8,
-            ease: "power2.out",
-            scrollTrigger: {
-                trigger: '.blog-card',
-                start: "top 90%"
-            }
-        });
-
-        document.querySelectorAll('.blog-card').forEach(card => {
-            card.addEventListener('mouseenter', () => {
-                gsap.to(card, { scale: 1.03, duration: 0.3 });
-            });
-            card.addEventListener('mouseleave', () => {
-                gsap.to(card, { scale: 1, duration: 0.3 });
-            });
-        });
-    </script>
+    <script src="~/js/blog.js" asp-append-version="true" defer></script>
 }

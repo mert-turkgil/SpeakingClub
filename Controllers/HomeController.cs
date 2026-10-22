@@ -71,13 +71,88 @@ namespace SpeakingClub.Controllers
             ViewData["Description"] = description;
             ViewData["Keywords"] = keywords;
             if (canonicalPath != null)
-                ViewData["Canonical"] = "https://almanca-konus.com" + canonicalPath;
+                ViewData["Canonical"] = AbsoluteUrl(canonicalPath);
             if (ogImage != null)
                 ViewData["OgImage"] = ogImage;
-            
-            // Set hreflang alternates
-            ViewData["HreflangTr"] = ViewData["HreflangTr"];
-            ViewData["HreflangDe"] = ViewData["HreflangDe"];
+        }
+
+        // Helper: absolute URL on the canonical (www) host
+        private static string AbsoluteUrl(string path) => SeoHelper.SiteUrl + path;
+
+        // Helper: hreflang alternates for a page that exists in Turkish and German
+        private void SetHreflang(string trPath, string dePath)
+        {
+            ViewData["HreflangTr"] = AbsoluteUrl(trPath);
+            ViewData["HreflangDe"] = AbsoluteUrl(dePath);
+        }
+
+        // Helper: 301 any alias of a page (/blog, /about, /Home/Blog, the other language's slug, …) to the one
+        // URL the page is canonical at, keeping the query string. Null when the request is already there.
+        // Serving the same page under several URLs is what filled Search Console with "alternate page" entries.
+        private IActionResult? RedirectToCanonical(string canonicalPath)
+        {
+            var requestPath = Request.Path.Value ?? "/";
+            if (requestPath.Length > 1)
+                requestPath = requestPath.TrimEnd('/');
+            if (string.Equals(requestPath, canonicalPath, StringComparison.OrdinalIgnoreCase))
+                return null;
+            return RedirectPermanent(canonicalPath + Request.QueryString);
+        }
+
+        private static string FirstNonEmpty(params string?[] values) =>
+            values.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v)) ?? string.Empty;
+
+        // Helper: image path usable from any page. A bare file name ("cover.jpg") would resolve relative to
+        // /yazilar/slug and 404, so site paths always get a leading slash.
+        private static string ImagePath(string? image)
+        {
+            if (string.IsNullOrWhiteSpace(image))
+                return string.Empty;
+            image = image.Trim();
+            return image.StartsWith("/") || image.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                   image.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+                ? image
+                : "/" + image;
+        }
+
+        // Helper: the URL paths a post exists at. A language has a URL only when the post is translated into it;
+        // a post without translations is served from its base fields at the Turkish URL. (SitemapController
+        // lists the same URLs.)
+        private static (string? TrPath, string? DePath) BlogPaths(SpeakingClub.Entity.Blog blog, string? requestedSlug = null)
+        {
+            var tr = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "tr");
+            var de = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "de");
+            var baseSlug = FirstNonEmpty(blog.Slug, blog.Url, requestedSlug);
+            var trSlug = tr != null ? FirstNonEmpty(tr.Slug, baseSlug) : de == null ? baseSlug : null;
+            var deSlug = de != null ? FirstNonEmpty(de.Slug, baseSlug) : null;
+            return (string.IsNullOrEmpty(trSlug) ? null : $"/yazilar/{trSlug}",
+                    string.IsNullOrEmpty(deSlug) ? null : $"/beitraege/{deSlug}");
+        }
+
+        // Helper: a post as a card in the current language (falls back to the language it exists in)
+        private BlogCardModel BuildBlogCard(SpeakingClub.Entity.Blog blog)
+        {
+            var isGerman = IsGerman();
+            var (trPath, dePath) = BlogPaths(blog);
+            var translation = blog.Translations?.FirstOrDefault(t => t.LanguageCode == (isGerman ? "de" : "tr"))
+                              ?? blog.Translations?.FirstOrDefault();
+            var content = FirstNonEmpty(translation?.Content, blog.Content);
+            var description = translation != null ? translation.Description : blog.Description;
+
+            return new BlogCardModel
+            {
+                BlogId = blog.BlogId,
+                Title = FirstNonEmpty(translation?.Title, blog.Title),
+                Excerpt = !string.IsNullOrWhiteSpace(description)
+                    ? HtmlUtility.GetExcerpt(description, 170)
+                    : HtmlUtility.GetExcerpt(content, 170),
+                Href = (isGerman ? dePath ?? trPath : trPath ?? dePath) ?? "/",
+                Image = ImagePath(blog.Image),
+                Author = blog.Author ?? string.Empty,
+                CategoryName = blog.Category?.Name,
+                Date = blog.Date,
+                ReadingMinutes = HtmlUtility.ReadingMinutes(content)
+            };
         }
 
         #region SetLanguage
@@ -166,8 +241,13 @@ namespace SpeakingClub.Controllers
 
         #region Anasayfa
         [HttpGet("")]
+        [HttpGet("Home")]
+        [HttpGet("Home/Index")]
         public async Task<IActionResult> Index()
         {
+            if (RedirectToCanonical("/") is { } redirect)
+                return redirect;
+
             if (IsGerman())
             {
                 SetSeoData(
@@ -184,8 +264,7 @@ namespace SpeakingClub.Controllers
                     "almanca öğren, almanca konuşma, almanca kulüp, almanca quiz, almanca sözlük, online almanca",
                     "/");
             }
-            ViewData["HreflangTr"] = "https://almanca-konus.com/";
-            ViewData["HreflangDe"] = "https://almanca-konus.com/";
+            // No hreflang: the home page has one URL for both languages (an alternate pointing to itself is ignored).
 
             var entityBlogs = await _unitOfWork.Blogs.GetPublishedAsync();
             var selectedBlogs = entityBlogs.Where(b => b.isHome == true).ToList();
@@ -230,8 +309,12 @@ namespace SpeakingClub.Controllers
         [HttpGet("privacy")]
         [HttpGet("gizlilik")]
         [HttpGet("datenschutz")]
+        [HttpGet("Home/Privacy")]
         public IActionResult Privacy()
         {
+            if (RedirectToCanonical(GetLocalizedPath("/gizlilik", "/datenschutz", "/gizlilik")) is { } redirect)
+                return redirect;
+
             if (IsGerman())
             {
                 SetSeoData(
@@ -248,8 +331,7 @@ namespace SpeakingClub.Controllers
                     "gizlilik, kişisel veri, KVKK",
                     "/gizlilik");
             }
-            ViewData["HreflangTr"] = "https://almanca-konus.com/gizlilik";
-            ViewData["HreflangDe"] = "https://almanca-konus.com/datenschutz";
+            SetHreflang("/gizlilik", "/datenschutz");
             return View();
         }
         #endregion
@@ -275,8 +357,7 @@ namespace SpeakingClub.Controllers
                     "hekimler için almanca, FSP, Fachsprachprüfung, anamnez, Arztbrief, hasta sunumu, klinik iletişim, tıbbi kısaltmalar, Redemittel",
                     "/hekim-almancasi");
             }
-            ViewData["HreflangTr"] = "https://almanca-konus.com/hekim-almancasi";
-            ViewData["HreflangDe"] = "https://almanca-konus.com/aerztedeutsch";
+            SetHreflang("/hekim-almancasi", "/aerztedeutsch");
             return View();
         }
         #endregion
@@ -302,8 +383,7 @@ namespace SpeakingClub.Controllers
                     "hemşirelik almancası, hemşireler için almanca, hasta devri, Pflegekommunikation, Pflegedokumentation, tıbbi kısaltmalar, Redemittel",
                     "/hemsirelik-almancasi");
             }
-            ViewData["HreflangTr"] = "https://almanca-konus.com/hemsirelik-almancasi";
-            ViewData["HreflangDe"] = "https://almanca-konus.com/pflegedeutsch";
+            SetHreflang("/hemsirelik-almancasi", "/pflegedeutsch");
             return View();
         }
         #endregion
@@ -312,8 +392,12 @@ namespace SpeakingClub.Controllers
         [HttpGet("about")]
         [HttpGet("hakkimizda")]
         [HttpGet("ueber-uns")]
+        [HttpGet("Home/About")]
         public IActionResult About()
         {
+            if (RedirectToCanonical(GetLocalizedPath("/hakkimizda", "/ueber-uns", "/hakkimizda")) is { } redirect)
+                return redirect;
+
             ViewBag.TurnstileSiteKey = _configuration["Turnstile:SiteKey"];
             ViewBag.CKEditorLicenseKey = _configuration["License:CKEditor"];
             
@@ -333,8 +417,7 @@ namespace SpeakingClub.Controllers
                     "hakkımızda, iletişim, almanca öğren, dil okulu, ekip",
                     "/hakkimizda");
             }
-            ViewData["HreflangTr"] = "https://almanca-konus.com/hakkimizda";
-            ViewData["HreflangDe"] = "https://almanca-konus.com/ueber-uns";
+            SetHreflang("/hakkimizda", "/ueber-uns");
             var model = CreateAboutPageViewModel();
             return View(model);
         }
@@ -596,10 +679,22 @@ namespace SpeakingClub.Controllers
         [HttpGet("blog")]
         [HttpGet("yazilar")]
         [HttpGet("beitraege")]
+        [HttpGet("Home/Blog")]
         public async Task<IActionResult> Blog(string category, string tag, string searchTerm, int page = 1)
         {
+            var isGerman = IsGerman();
+            var blogListPath = isGerman ? "/beitraege" : "/yazilar";
+            if (RedirectToCanonical(blogListPath) is { } redirect)
+                return redirect;
+
+            // Older list pages linked "All Categories" as a category filter
+            if (category == "All Categories")
+                category = null!;
+            if (page < 1)
+                page = 1;
+
             // SEO metadata for blog listing
-            if (IsGerman())
+            if (isGerman)
             {
                 SetSeoData(
                     "Blog & Artikel | Almanca Konuşma Kulübü",
@@ -615,77 +710,47 @@ namespace SpeakingClub.Controllers
                     "blog, almanca öğren, yazılar, gramer, kelime, ipuçları, almanca kursu",
                     "/yazilar");
             }
-            ViewData["HreflangTr"] = "https://almanca-konus.com/yazilar";
-            ViewData["HreflangDe"] = "https://almanca-konus.com/beitraege";
 
-            // Retrieve all blogs from the database and convert to IQueryable for filtering.
-            var entityBlogs = await _unitOfWork.Blogs.GetPublishedAsync();
-            var blogsQuery = entityBlogs.AsQueryable();
+            var entityBlogs = (await _unitOfWork.Blogs.GetPublishedAsync()).ToList();
+            IEnumerable<SpeakingClub.Entity.Blog> blogsQuery = entityBlogs;
 
             // Filter by category if provided.
-            if (!string.IsNullOrEmpty(category) && category != "All Categories")
+            if (!string.IsNullOrWhiteSpace(category))
             {
-                blogsQuery = blogsQuery.Where(b => b.Category != null && b.Category.Name == category);
+                blogsQuery = blogsQuery.Where(b => b.Category != null && string.Equals(b.Category.Name, category, StringComparison.OrdinalIgnoreCase));
             }
 
             // Filter by tag if provided.
-            if (!string.IsNullOrEmpty(tag))
+            if (!string.IsNullOrWhiteSpace(tag))
             {
-                blogsQuery = blogsQuery.Where(b => b.Tags.Any(t => t.Name.ToLower().Contains(tag.ToLower())));
+                blogsQuery = blogsQuery.Where(b => b.Tags.Any(t => string.Equals(t.Name, tag, StringComparison.OrdinalIgnoreCase)));
             }
 
-            // Filter by search term on title or content.
-            if (!string.IsNullOrEmpty(searchTerm))
+            // Search the title, description and text of the post in every language (case-insensitive).
+            if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                blogsQuery = blogsQuery.Where(b => b.Title.Contains(searchTerm) || b.Content.Contains(searchTerm));
+                var term = searchTerm.Trim();
+                bool Has(string? text) => !string.IsNullOrEmpty(text) && text.Contains(term, StringComparison.CurrentCultureIgnoreCase);
+                blogsQuery = blogsQuery.Where(b =>
+                    Has(b.Title) || Has(b.Description) || Has(HtmlUtility.StripHtml(b.Content)) ||
+                    (b.Translations?.Any(t => Has(t.Title) || Has(t.Description) || Has(HtmlUtility.StripHtml(t.Content))) ?? false));
             }
+
+            var matching = blogsQuery.OrderByDescending(b => b.Date).ToList();
 
             // Paging logic.
             int pageSize = 9;
-            int totalBlogs = blogsQuery.Count();
+            int totalBlogs = matching.Count;
             int totalPages = (int)Math.Ceiling(totalBlogs / (double)pageSize);
+            if (page > 1 && page > totalPages)
+                return NotFound();
 
-            var blogs = blogsQuery
-                .OrderByDescending(b => b.Date)
+            var posts = matching
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
-            // Get current culture code (e.g.,   "tr", etc.)
-            var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
-            var langCode = currentCulture.Substring(0, 2).ToLower();
-
-            // Update each blog with its translated Title, Content, and Slug if available.
-            foreach (var blog in blogs)
-            {
-                var translation = _unitOfWork.BlogTranslations
-                    .GetByBlogAndLanguageAsync(blog.BlogId, langCode).Result;
-                blog.Title = translation?.Title ?? blog.Title;
-                blog.Content = translation?.Content ?? blog.Content;
-                // Use translated slug for localized URLs
-                var translatedSlug = translation?.Slug;
-                if (!string.IsNullOrEmpty(translatedSlug))
-                {
-                    blog.Url = translatedSlug;
-                    blog.Slug = translatedSlug;
-                }
-                else if (!string.IsNullOrEmpty(blog.Slug))
-                {
-                    blog.Url = blog.Slug;
-                }
-            }
-            // Get the list of categories.
-            var categoriesFromRepo = await _unitOfWork.Categories.GetAllAsync();
-            var categoryNames = categoriesFromRepo.Select(c => c.Name).ToList();
-            categoryNames.Insert(0, "All Categories");
-
-            // Get the list of available tags from all blogs (distinct)
-            var availableTags = entityBlogs
-                .SelectMany(b => b.Tags.Select(t => t.Name))
-                .Distinct()
-                .OrderBy(t => t)
+                .Select(BuildBlogCard)
                 .ToList();
 
-            // Build the view model.
             var model = new BlogFilterViewModel
             {
                 Category = category,
@@ -694,21 +759,45 @@ namespace SpeakingClub.Controllers
                 CurrentPage = page,
                 TotalPages = totalPages,
                 TotalBlogs = totalBlogs,
-                Blogs = blogs, // Blogs are of type SpeakingClub.Entity.Blog
-                Categories = categoryNames,
-                AvailableTags = availableTags,
+                Posts = posts,
+                BlogListPath = blogListPath,
+                // Only categories and tags that have published posts
+                Categories = entityBlogs
+                    .Where(b => b.Category != null)
+                    .Select(b => b.Category.Name)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(c => c)
+                    .ToList(),
+                AvailableTags = entityBlogs
+                    .SelectMany(b => b.Tags.Select(t => t.Name))
+                    .GroupBy(t => t, StringComparer.OrdinalIgnoreCase)
+                    .OrderByDescending(g => g.Count())
+                    .ThenBy(g => g.Key)
+                    .Select(g => g.Key)
+                    .ToList(),
 
-                // UI text labels (static or from configuration)
+                // UI text labels
                 BlogList_Title = _localization.GetKey("Blog").Value,
                 BlogList_Description = _localization.GetKey("BlogDesc").Value,
                 BlogList_SearchLabel = _localization.GetKey("Search").Value,
                 BlogList_AllCategories = _localization.GetKey("CategoryLabel").Value,
-                BlogList_TagLabel = _localization.GetKey("Tag").Value,              // New label for tag filter
-                BlogList_TagPlaceholder = "Select a tag", // Optional placeholder text
-                BlogList_ApplyFiltersButton = _localization.GetKey("Search").Value,
-                BlogList_NoPostsMessage = "No posts found.",
+                BlogList_TagLabel = _localization.GetKey("Tag").Value,
                 BlogList_ReadMore = _localization.GetKey("ReadMore").Value,
             };
+
+            // Filtered and searched lists are not indexed (endless URL variants of the same posts), but their links
+            // are followed. Page 2+ is its own canonical so Google keeps reaching the older posts.
+            var pageQuery = page > 1 ? $"?page={page}" : string.Empty;
+            if (model.IsFiltered)
+            {
+                ViewData["Robots"] = "noindex, follow";
+            }
+            else if (page > 1)
+            {
+                ViewData["Canonical"] = AbsoluteUrl(blogListPath + pageQuery);
+                ViewData["Title"] = $"{ViewData["Title"]} – {(isGerman ? "Seite" : "Sayfa")} {page}";
+            }
+            SetHreflang("/yazilar" + pageQuery, "/beitraege" + pageQuery);
 
             return View(model);
         }
@@ -716,6 +805,7 @@ namespace SpeakingClub.Controllers
         [HttpGet("blog/{url}")]
         [HttpGet("yazilar/{url}")]
         [HttpGet("beitraege/{url}")]
+        [HttpGet("Home/BlogDetail/{url}")]
         public async Task<IActionResult> BlogDetail(string url)
         {
             try
@@ -724,71 +814,136 @@ namespace SpeakingClub.Controllers
 
                 // Search by base Url, Slug, or translated Slug
                 var blog = await _unitOfWork.Blogs.GetByUrlAsync(url);
-                
+
                 if (blog == null)
                 {
                     _logger.LogWarning("Blog with slug {url} not found.", url);
                     return NotFound();
                 }
 
-                if (!blog.IsPublished && !User.IsInRole("Root") && !User.IsInRole("Admin") && !User.IsInRole("Teacher"))
+                var canPreview = User.IsInRole("Root") || User.IsInRole("Admin") || User.IsInRole("Teacher");
+                if (!blog.IsPublished && !canPreview)
                 {
                     return NotFound();
                 }
 
-                var currentCulture = CultureInfo.CurrentCulture.Name;
-                var langCode = currentCulture.Substring(0, 2).ToLower();
-                var translation = await _unitOfWork.BlogTranslations
-                    .GetByBlogAndLanguageAsync(blog.BlogId, langCode);
-                blog.Title = translation?.Title ?? blog.Title;
-                blog.Content = translation?.Content ?? blog.Content;
+                var isGerman = IsGerman();
+                var langCode = isGerman ? "de" : "tr";
 
-                // SEO metadata from translation or blog defaults
-                var metaTitle = translation?.MetaTitle ?? translation?.Title ?? blog.Title;
-                var metaDesc = translation?.MetaDescription ?? translation?.Description ?? blog.Description ?? "";
-                var metaKeywords = translation?.MetaKeywords ?? "";
-                var ogTitle = translation?.OgTitle ?? metaTitle;
-                var ogDesc = translation?.OgDescription ?? metaDesc;
-                var blogSlug = translation?.Slug ?? blog.Slug ?? url;
+                // One URL per language version. /blog/x, /Home/BlogDetail/x, the other language's slug and a
+                // language the post isn't translated into all 301 to it.
+                var (trPath, dePath) = BlogPaths(blog, url);
+                var canonicalPath = (isGerman ? dePath : trPath) ?? trPath ?? dePath!;
+                if (RedirectToCanonical(canonicalPath) is { } redirect)
+                    return redirect;
 
-                var canonicalPath = IsGerman() ? $"/beitraege/{blogSlug}" : $"/yazilar/{blogSlug}";
-                SetSeoData(metaTitle, metaDesc, metaKeywords, canonicalPath);
+                // Read the translation into locals. The entity itself is tracked and saved below (view count),
+                // so assigning the translated text to it would overwrite the post's base fields.
+                var translation = blog.Translations?.FirstOrDefault(t => t.LanguageCode == langCode);
+                var title = FirstNonEmpty(translation?.Title, blog.Title);
+                var rawContent = FirstNonEmpty(translation?.Content, blog.Content);
+                var lead = translation != null ? translation.Description : blog.Description;
+
+                var metaTitle = translation != null
+                    ? FirstNonEmpty(translation.MetaTitle, translation.Title, blog.Title)
+                    : FirstNonEmpty(blog.MetaTitle, blog.Title);
+                var metaDesc = translation != null
+                    ? FirstNonEmpty(translation.MetaDescription, translation.Description)
+                    : FirstNonEmpty(blog.MetaDescription, blog.Description);
+                if (string.IsNullOrWhiteSpace(metaDesc))
+                    metaDesc = HtmlUtility.GetExcerpt(rawContent, 160);
+                var tagNames = blog.Tags?.Select(t => t.Name).ToList() ?? new List<string>();
+                var metaKeywords = FirstNonEmpty(translation != null ? translation.MetaKeywords : blog.MetaKeywords, string.Join(", ", tagNames));
+
+                // Brand suffix unless the editor already wrote a full "… | …" title
+                var pageTitle = metaTitle.Contains('|') ? metaTitle : $"{metaTitle} | Almanca Konuş";
+                SetSeoData(pageTitle, metaDesc, metaKeywords, canonicalPath);
+                ViewData["OgTitle"] = FirstNonEmpty(translation != null ? translation.OgTitle : blog.OgTitle, metaTitle);
+                ViewData["OgDescription"] = FirstNonEmpty(translation != null ? translation.OgDescription : blog.OgDescription, metaDesc);
                 ViewData["OgType"] = "article";
-                ViewData["OgImage"] = !string.IsNullOrEmpty(blog.Image) ? $"https://almanca-konus.com{blog.Image}" : null;
+                var image = ImagePath(blog.Image);
+                var imageUrl = image.StartsWith("/") ? AbsoluteUrl(image) : FirstNonEmpty(image, AbsoluteUrl("/img/header_logo.png"));
+                if (!string.IsNullOrEmpty(image))
+                    ViewData["OgImage"] = imageUrl;
 
-                // Hreflang for blog detail
-                var trTranslation = await _unitOfWork.BlogTranslations.GetByBlogAndLanguageAsync(blog.BlogId, "tr");
-                var deTranslation = await _unitOfWork.BlogTranslations.GetByBlogAndLanguageAsync(blog.BlogId, "de");
-                var trSlug = trTranslation?.Slug ?? blog.Slug ?? url;
-                var deSlug = deTranslation?.Slug ?? blog.Slug ?? url;
-                ViewData["HreflangTr"] = $"https://almanca-konus.com/yazilar/{trSlug}";
-                ViewData["HreflangDe"] = $"https://almanca-konus.com/beitraege/{deSlug}";
+                if (!blog.IsPublished)
+                    ViewData["Robots"] = "noindex, nofollow";
+                else if (blog.NoIndex || blog.NoFollow)
+                    ViewData["Robots"] = $"{(blog.NoIndex ? "noindex" : "index")}, {(blog.NoFollow ? "nofollow" : "follow")}";
 
-                // Article Schema.org structured data
-                ViewData["ArticleSchema"] = $@"<script type=""application/ld+json"">
-                {{
-                    ""@context"": ""https://schema.org"",
-                    ""@type"": ""Article"",
-                    ""headline"": ""{System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(metaTitle)}"",
-                    ""description"": ""{System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(metaDesc)}"",
-                    ""author"": {{
-                        ""@type"": ""Person"",
-                        ""name"": ""{blog.Author ?? "Suna Türkgil"}""
-                    }},
-                    ""datePublished"": ""{blog.Date:yyyy-MM-ddTHH:mm:ssZ}"",
-                    ""dateModified"": ""{(blog.LastModified ?? blog.Date):yyyy-MM-ddTHH:mm:ssZ}"",
-                    ""image"": ""{(string.IsNullOrEmpty(blog.Image) ? "https://almanca-konus.com/img/header_logo.png" : $"https://almanca-konus.com{blog.Image}")}"",
-                    ""publisher"": {{
-                        ""@type"": ""Organization"",
-                        ""name"": ""Almanca Konuşma Kulübü"",
-                        ""logo"": {{
-                            ""@type"": ""ImageObject"",
-                            ""url"": ""https://almanca-konus.com/img/header_logo.png""
-                        }}
-                    }},
-                    ""mainEntityOfPage"": ""https://almanca-konus.com{canonicalPath}""
-                }}
-                </script>";
+                // Hreflang only when the post exists in both languages
+                if (trPath != null && dePath != null)
+                    SetHreflang(trPath, dePath);
+
+                var tableOfContents = new List<TocItem>();
+                var content = HtmlUtility.PrepareArticleHtml(ConvertHttpToHttps(rawContent), tableOfContents);
+                var canonicalUrl = AbsoluteUrl(canonicalPath);
+                var blogListPath = isGerman ? "/beitraege" : "/yazilar";
+                var datePublished = blog.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                var lastModified = new[] { blog.LastModified, translation?.LastModified }.Max();
+                var dateModified = lastModified.HasValue && lastModified.Value > blog.Date
+                    ? lastModified.Value.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)
+                    : datePublished;
+
+                // BlogPosting + BreadcrumbList structured data. Serialized (not concatenated) so quotes, line
+                // breaks and "</script>" in a title cannot break the JSON or the page.
+                var schema = new Dictionary<string, object?>
+                {
+                    ["@context"] = "https://schema.org",
+                    ["@graph"] = new object[]
+                    {
+                        new Dictionary<string, object?>
+                        {
+                            ["@type"] = "BlogPosting",
+                            ["@id"] = canonicalUrl + "#article",
+                            ["mainEntityOfPage"] = canonicalUrl,
+                            ["url"] = canonicalUrl,
+                            ["headline"] = title.Length > 110 ? title[..110] : title,
+                            ["description"] = metaDesc,
+                            ["image"] = imageUrl,
+                            ["datePublished"] = datePublished,
+                            ["dateModified"] = dateModified,
+                            ["inLanguage"] = langCode,
+                            ["wordCount"] = HtmlUtility.StripHtml(rawContent).Split(' ', StringSplitOptions.RemoveEmptyEntries).Length,
+                            ["articleSection"] = blog.Category?.Name,
+                            ["keywords"] = tagNames.Count > 0 ? string.Join(", ", tagNames) : null,
+                            ["author"] = new Dictionary<string, object?>
+                            {
+                                ["@type"] = "Person",
+                                ["name"] = FirstNonEmpty(blog.Author, "Suna Türkgil"),
+                                ["url"] = AbsoluteUrl(isGerman ? "/ueber-uns" : "/hakkimizda")
+                            },
+                            ["publisher"] = new Dictionary<string, object?>
+                            {
+                                ["@type"] = "Organization",
+                                ["name"] = "Almanca Konuşma Kulübü",
+                                ["url"] = SeoHelper.SiteUrl + "/",
+                                ["logo"] = new Dictionary<string, object?>
+                                {
+                                    ["@type"] = "ImageObject",
+                                    ["url"] = AbsoluteUrl("/img/header_logo.png")
+                                }
+                            }
+                        },
+                        new Dictionary<string, object?>
+                        {
+                            ["@type"] = "BreadcrumbList",
+                            ["itemListElement"] = new object[]
+                            {
+                                BreadcrumbItem(1, isGerman ? "Startseite" : "Ana Sayfa", SeoHelper.SiteUrl + "/"),
+                                BreadcrumbItem(2, "Blog", AbsoluteUrl(blogListPath)),
+                                BreadcrumbItem(3, title, canonicalUrl)
+                            }
+                        }
+                    }
+                };
+                var schemaJson = System.Text.Json.JsonSerializer.Serialize(schema, new System.Text.Json.JsonSerializerOptions
+                {
+                    // Keeps ç, ş, ü readable while still escaping <, >, & and quotes
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All),
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                });
+                ViewData["ArticleSchema"] = $"<script type=\"application/ld+json\">{schemaJson}</script>";
 
                 // Increment view count and persist
                 try
@@ -801,21 +956,49 @@ namespace SpeakingClub.Controllers
                     _logger.LogWarning(saveEx, "Failed to increment view count for blog {BlogId}", blog.BlogId);
                 }
 
+                // Read-next: posts sharing tags (and the category) first, then the newest. Internal links like these
+                // are how Google finds and values the older posts.
+                var tagIds = blog.Tags?.Select(t => t.TagId).ToHashSet() ?? new HashSet<int>();
+                var relatedPosts = (await _unitOfWork.Blogs.GetPublishedAsync())
+                    .Where(b => b.BlogId != blog.BlogId && !b.NoIndex)
+                    .Select(b => new
+                    {
+                        Blog = b,
+                        Score = b.Tags.Count(t => tagIds.Contains(t.TagId)) * 2
+                                + (blog.CategoryId != null && b.CategoryId == blog.CategoryId ? 1 : 0)
+                    })
+                    .OrderByDescending(x => x.Score)
+                    .ThenByDescending(x => x.Blog.Date)
+                    .Take(3)
+                    .Select(x => BuildBlogCard(x.Blog))
+                    .ToList();
+
                 // Create the view model.
                 var viewModel = new BlogDetailViewModel
                 {
                     BlogId = blog.BlogId,
-                    Title = blog.Title,
-                    Content = ConvertHttpToHttps(blog.Content ?? ""),
+                    Title = title,
+                    Description = lead ?? string.Empty,
+                    Content = content,
+                    Url = canonicalPath,
+                    CanonicalUrl = canonicalUrl,
+                    BlogListPath = blogListPath,
                     Date = blog.Date,
+                    LastModified = lastModified,
                     RawMaps = blog.RawMaps,
                     RawYT = blog.RawYT,
-                    Author = blog.Author??"Unknown",
-                    Image = blog.Image,
+                    Author = blog.Author ?? string.Empty,
+                    Image = image,
+                    CategoryId = blog.CategoryId,
+                    Category = blog.Category,
                     Tags = blog.Tags?.ToList() ?? new List<Tag>(),
                     Quizzes = blog.Quiz,
                     ViewCount = blog.ViewCount,
-                    Files = blog.Files?.OrderBy(f => f.SortOrder).ToList() ?? new List<BlogFile>()
+                    ReadingMinutes = HtmlUtility.ReadingMinutes(rawContent),
+                    ContentLanguage = langCode,
+                    TableOfContents = tableOfContents,
+                    Files = blog.Files?.OrderBy(f => f.SortOrder).ToList() ?? new List<BlogFile>(),
+                    RelatedPosts = relatedPosts
                 };
 
                 // Load the selected question directly by its stored ID (includes answers).
@@ -833,6 +1016,14 @@ namespace SpeakingClub.Controllers
                 return RedirectToAction("Index");
             }
         }
+
+        private static Dictionary<string, object?> BreadcrumbItem(int position, string name, string item) => new()
+        {
+            ["@type"] = "ListItem",
+            ["position"] = position,
+            ["name"] = name,
+            ["item"] = item
+        };
 
         [HttpGet("download/{fileId:int}")]
         public async Task<IActionResult> DownloadBlogFile(int fileId)
@@ -902,8 +1093,12 @@ namespace SpeakingClub.Controllers
         [HttpGet("words")]
         [HttpGet("sozluk")]
         [HttpGet("woerterbuch")]
+        [HttpGet("Home/Words")]
         public async Task<IActionResult> Words(string searchTerm)
         {
+            if (RedirectToCanonical(GetLocalizedPath("/sozluk", "/woerterbuch", "/sozluk")) is { } redirect)
+                return redirect;
+
             ViewBag.TurnstileSiteKey = _configuration["Turnstile:SiteKey"];
             var currentCulture = CultureInfo.CurrentCulture.Name;
             var langCode = currentCulture.Substring(0, 2).ToLower();
@@ -925,8 +1120,7 @@ namespace SpeakingClub.Controllers
                     "sözlük, almanca, tanım, telaffuz, eş anlamlı, çeviri",
                     "/sozluk");
             }
-            ViewData["HreflangTr"] = "https://almanca-konus.com/sozluk";
-            ViewData["HreflangDe"] = "https://almanca-konus.com/woerterbuch";
+            SetHreflang("/sozluk", "/woerterbuch");
 
             var model = new WordViewModel
             {
@@ -1018,6 +1212,10 @@ namespace SpeakingClub.Controllers
         [HttpGet("pruefungen/{level}")]
         public async Task<IActionResult> Quizzes(string? level)
         {
+            var levelPath = level != null ? $"/{level.ToLower()}" : "";
+            if (RedirectToCanonical(GetLocalizedPath("/sinavlar", "/pruefungen", "/sinavlar") + levelPath) is { } redirect)
+                return redirect;
+
             // SEO metadata for quizzes
             if (IsGerman())
             {
@@ -1037,17 +1235,16 @@ namespace SpeakingClub.Controllers
                     "almanca quiz, sınav, almanca test, A1, A2, B1, B2, C1, gramer quiz, kelime quiz",
                     "/sinavlar" + (level != null ? $"/{level.ToLower()}" : ""));
             }
-            ViewData["HreflangTr"] = "https://almanca-konus.com/sinavlar" + (level != null ? $"/{level.ToLower()}" : "");
-            ViewData["HreflangDe"] = "https://almanca-konus.com/pruefungen" + (level != null ? $"/{level.ToLower()}" : "");
-            
-            // Quiz Schema.org structured data
+            SetHreflang("/sinavlar" + levelPath, "/pruefungen" + levelPath);
+
+            // Quiz Schema.org structured data ("@@" is Razor escaping only; in C# it produced an invalid "@@context" key)
             ViewData["ArticleSchema"] = $@"<script type=""application/ld+json"">
             {{
-                ""@@context"": ""https://schema.org"",
-                ""@@type"": ""ItemList"",
+                ""@context"": ""https://schema.org"",
+                ""@type"": ""ItemList"",
                 ""name"": ""{(IsGerman() ? "Deutsch-Prüfungen" : "Almanca Sınavlar")}"",
                 ""description"": ""{(IsGerman() ? "Interaktive Deutsch-Quizze" : "Almanca interaktif sınavlar")}"",
-                ""url"": ""https://almanca-konus.com{(IsGerman() ? "/pruefungen" : "/sinavlar")}""
+                ""url"": ""{AbsoluteUrl(IsGerman() ? "/pruefungen" : "/sinavlar")}""
             }}
             </script>";
 

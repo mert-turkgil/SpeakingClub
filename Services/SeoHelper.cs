@@ -10,6 +10,13 @@ namespace SpeakingClub.Services
     public static class SeoHelper
     {
         /// <summary>
+        /// The one public origin of the site. Cloudflare 301-redirects almanca-konus.com to www, so every
+        /// canonical, hreflang, sitemap and structured-data URL must use the www host — a canonical that
+        /// points at a redirect makes Google drop both URLs from the index.
+        /// </summary>
+        public const string SiteUrl = "https://www.almanca-konus.com";
+
+        /// <summary>
         /// Generates JSON-LD structured data for a blog article
         /// Uncomment and use this when blog is ready
         /// </summary>
@@ -27,7 +34,7 @@ namespace SpeakingClub.Services
         ""@type"": ""BlogPosting"",
         ""headline"": ""{EscapeJson(blog.Title)}"",
         ""description"": ""{EscapeJson(description)}"",
-        ""image"": ""https://almanca-konus.com{blog.Image}"",
+        ""image"": ""{SiteUrl}{blog.Image}"",
         ""datePublished"": ""{blog.Date:yyyy-MM-ddTHH:mm:ssZ}"",
         ""dateModified"": ""{blog.Date:yyyy-MM-ddTHH:mm:ssZ}"",
         ""author"": {{
@@ -39,12 +46,12 @@ namespace SpeakingClub.Services
             ""name"": ""SpeakingClub"",
             ""logo"": {{
                 ""@type"": ""ImageObject"",
-                ""url"": ""https://almanca-konus.com/img/header_logo.png""
+                ""url"": ""{SiteUrl}/img/header_logo.png""
             }}
         }},
         ""mainEntityOfPage"": {{
             ""@type"": ""WebPage"",
-            ""@id"": ""https://almanca-konus.com/Home/BlogDetail/{blog.Url}""
+            ""@id"": ""{SiteUrl}/yazilar/{blog.Slug}""
         }}
     }}
     </script>";
@@ -66,7 +73,7 @@ namespace SpeakingClub.Services
             ""@type"": ""ListItem"",
             ""position"": {i + 1},
             ""name"": ""{EscapeJson(breadcrumbs[i].name)}"",
-            ""item"": ""https://almanca-konus.com{breadcrumbs[i].url}""
+            ""item"": ""{SiteUrl}{breadcrumbs[i].url}""
         }}");
             }
 

@@ -1,7 +1,7 @@
 ﻿@model IndexModel
 @inject LanguageService Localizer
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] ??= "Almanca Konuşma Kulübü"; // the controller sets the SEO title
 }
 @section Css {
     <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />

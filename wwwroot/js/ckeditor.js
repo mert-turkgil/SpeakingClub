@@ -106,9 +106,6 @@ window.CKEditorManager = (function() {
     // Get license key
     const LICENSE_KEY = document.querySelector('meta[name="ck-license-key"]')?.getAttribute('content') || 'GPL';
 
-    // Default content for empty editors
-    const DEFAULT_CONTENT = '<h2>Start writing your content here! 🚀</h2><p>You can add images, format text, create tables, and more...</p>';
-
     // ========================================================================
     // CUSTOM UPLOAD ADAPTER
     // ========================================================================
@@ -440,12 +437,9 @@ window.CKEditorManager = (function() {
         return ClassicEditor
             .create(element, editorConfig)
             .then(editor => {
-                // Set initial data
-                const content = initialContent && initialContent.trim() !== '' 
-                    ? initialContent 
-                    : DEFAULT_CONTENT;
-                    
-                editor.setData(content);
+                // Set initial data. An empty editor stays empty and shows the placeholder: sample text set
+                // here as real data used to get saved into posts ("You can add images, format text…").
+                editor.setData(initialContent || '');
 
                 // Store editor instance
                 editors[storageKey] = editor;

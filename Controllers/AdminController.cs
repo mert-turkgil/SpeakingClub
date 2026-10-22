@@ -850,7 +850,7 @@ namespace SpeakingClub.Controllers
                     FocusKeyphrase = model.FocusKeyphrase ?? string.Empty,
                     CanonicalUrl = !string.IsNullOrEmpty(model.CanonicalUrl) 
                         ? model.CanonicalUrl 
-                        : $"https://almanca-konus.com/blog/{slug}",
+                        : $"{SeoHelper.SiteUrl}/yazilar/{slug}",
                     NoIndex = model.NoIndex,
                     NoFollow = model.NoFollow,
                     
@@ -876,7 +876,7 @@ namespace SpeakingClub.Controllers
                 if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
                     blog.Image = await SaveBlogCoverImageAsync(model.ImageFile);
-                    blog.OgImage = $"https://almanca-konus.com{blog.Image}";
+                    blog.OgImage = $"{SeoHelper.SiteUrl}{blog.Image}";
                 }
 
                 // Save blog first to get ID
@@ -1135,7 +1135,7 @@ namespace SpeakingClub.Controllers
                 blog.FocusKeyphrase = model.FocusKeyphrase ?? string.Empty;
                 blog.CanonicalUrl = !string.IsNullOrEmpty(model.CanonicalUrl) 
                     ? model.CanonicalUrl 
-                    : $"https://almanca-konus.com/blog/{newSlug}";
+                    : $"{SeoHelper.SiteUrl}/yazilar/{newSlug}";
                 blog.NoIndex = model.NoIndex;
                 blog.NoFollow = model.NoFollow;
                 blog.OgTitle = model.OgTitle ?? model.Title;
@@ -1164,11 +1164,11 @@ namespace SpeakingClub.Controllers
                     }
                     
                     blog.Image = await SaveBlogCoverImageAsync(model.ImageFile);
-                    blog.OgImage = $"https://almanca-konus.com{blog.Image}";
+                    blog.OgImage = $"{SeoHelper.SiteUrl}{blog.Image}";
                 }
                 else if (!string.IsNullOrEmpty(blog.Image))
                 {
-                    blog.OgImage = $"https://almanca-konus.com{blog.Image}";
+                    blog.OgImage = $"{SeoHelper.SiteUrl}{blog.Image}";
                 }
 
                 // Update category
