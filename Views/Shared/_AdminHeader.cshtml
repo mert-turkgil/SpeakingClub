@@ -1,0 +1,52 @@
+@model SpeakingClub.Models.AdminHeader
+@* Top of an admin page: title, one-line explanation, the main button and the "How do I…?" guide *@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+}
+<header class="adm-head">
+    <div class="adm-head__text">
+        @if (!string.IsNullOrEmpty(Model.ParentTitle))
+        {
+            <a class="adm-head__eyebrow" href="@Model.ParentHref"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>@Model.ParentTitle</a>
+        }
+        <h1>@Model.Title</h1>
+        <p>@Model.Lead</p>
+    </div>
+    @if (!string.IsNullOrEmpty(Model.ActionHref))
+    {
+        <div class="adm-head__actions">
+            <a class="adm-btn adm-btn--primary adm-btn--lg" href="@Model.ActionHref">
+                <i class="@Model.ActionIcon" aria-hidden="true"></i>@Model.ActionLabel
+            </a>
+        </div>
+    }
+</header>
+
+@if (Model.Guide != null)
+{
+    <details class="adm-guide" data-guide="@Model.SectionKey" open>
+        <summary>
+            <span class="adm-guide__icon" aria-hidden="true"><i class="fa-solid fa-lightbulb"></i></span>
+            <span class="adm-guide__title">
+                <small>@T("Nasıl yapılır?", "Wie geht das?")</small>
+                @Model.Guide.Title
+            </span>
+            <span class="adm-guide__toggle">
+                <span class="is-closed">@T("Göster", "Anzeigen")</span><span class="is-open">@T("Gizle", "Ausblenden")</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </span>
+        </summary>
+        <div class="adm-guide__body">
+            <ol class="adm-steps">
+                @foreach (var step in Model.Guide.Steps)
+                {
+                    <li><span>@Html.Raw(step)</span></li>
+                }
+            </ol>
+            @if (!string.IsNullOrEmpty(Model.Guide.Tip))
+            {
+                <p class="adm-tip"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>@Html.Raw(Model.Guide.Tip)</span></p>
+            }
+        </div>
+    </details>
+}

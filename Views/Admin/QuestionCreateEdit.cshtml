@@ -1,392 +1,213 @@
 @model QuestionEditViewModel
+@*
+    Admin → Sorular → Yeni / Düzenle. Answers A–D (more can be added); empty rows are skipped on save.
+    The "correct" tick of an added answer posted "on" instead of "true" before, so a new correct answer could
+    never be saved. Every tick now posts "true", with a hidden "false" after it for unticked rows.
+*@
 @{
-    ViewData["Title"] = Model.QuestionId == 0 ? "Create Question" : "Edit Question";
-    bool isEdit = Model.QuestionId != 0;
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var isEdit = Model.QuestionId != 0;
+    var section = AdminNav.Find("questions", isGerman)!;
+    ViewData["Title"] = isEdit ? T("Soruyu düzenle", "Frage bearbeiten") : T("Yeni soru", "Neue Frage");
+    ViewData["AdminSection"] = section.Key;
+    const string letters = "ABCDEFGHIJ";
+    var answersError = ViewData.ModelState.TryGetValue("Answers", out var answersEntry) && answersEntry.Errors.Count > 0;
 }
 @section Css {
-    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.3.1/ckeditor5.css">
-    <style>
-        .answer-row .input-group-text {
-            min-width: 110px;
-        }
-        .img-thumbnail, .audio-thumbnail {
-            max-width: 150px; max-height: 130px;
-        }
-        .form-label > i { margin-right: 6px; }
-        .ck-editor__editable {
-            min-height: 150px;
-        }
-        .answer-item {
-            background: #f8f9fa;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        .answer-item:hover {
-            background: #e9ecef;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .answer-item.correct-answer {
-            background: #d4edda;
-            border-left: 4px solid #28a745;
-        }
-        .media-section {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.css" />
 }
-<section class="container mt-0 pt-5 pb-5 bg-first">
-<div class="row justify-content-center">
-    <div class="col-xl-11">
-        <div class="card shadow-lg border-0">
-            <div class="card-header bg-primary text-white py-3">
-                <h2 class="mb-0 fw-bold">
-                    <i class="fas fa-question-circle"></i>
-                    @(isEdit ? "Edit" : "Create") Question
-                </h2>
-            </div>
-            <div class="card-body p-4">
 
-<form asp-action="@(isEdit ? "QuestionEdit" : "QuestionCreate")"
-      asp-route-id="@(isEdit ? Model.QuestionId : null)"
-      enctype="multipart/form-data" method="post" class="needs-validation" novalidate autocomplete="off" id="questionForm">
+@{
+    var adminHeader = new AdminHeader("question-form", isEdit ? T("Soruyu düzenle", "Frage bearbeiten") : T("Yeni soru", "Neue Frage"),
+    T("Soruyu yazın, sınavını seçin, cevapları girin ve doğru olanı işaretleyin.", "Frage schreiben, Prüfung wählen, Antworten eintragen und die richtige markieren."),
+    ParentTitle: section.Title, ParentHref: Url.Action(section.Action), Guide: isEdit ? null : section.Guide);
+}
+<partial name="_AdminHeader" model="adminHeader" />
+
+<form method="post" asp-action="@(isEdit ? "QuestionEdit" : "QuestionCreate")" asp-route-id="@(isEdit ? Model.QuestionId : null)"
+      enctype="multipart/form-data" class="adm-form" autocomplete="off" data-dirty-guard data-loading id="questionForm">
     @if (isEdit)
     {
         <input type="hidden" asp-for="QuestionId" />
     }
-    <div class="row g-4">
-        <div class="col-lg-7">
-            <!-- Question Text with CKEditor -->
-            <div class="mb-4">
-                <label asp-for="QuestionText" class="form-label fw-semibold fs-5">
-                    <i class="fas fa-pen"></i> Question Text <span class="text-danger">*</span>
-                </label>
-                <textarea asp-for="QuestionText" id="QuestionTextEditor" class="form-control" rows="4"></textarea>
-                <span asp-validation-for="QuestionText" class="text-danger"></span>
-                <small class="text-muted">Use the rich text editor to format your question. You can add bold, italic, lists, etc.</small>
+    <div class="adm-form__main">
+        <partial name="_AdminErrors" />
+        <section class="adm-panel" style="--i:0">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num">1</span>
+                <div><h2>@T("Soru", "Frage")</h2></div>
             </div>
-            <!-- Quiz Selection -->
-            <div class="mb-4">
-                <label asp-for="QuizId" class="form-label fw-semibold fs-5">
-                    <i class="fas fa-book"></i> Assign to Quiz <span class="text-danger">*</span>
-                </label>
-                <select asp-for="QuizId" asp-items="Model.AvailableQuizzes"
-                        class="form-select form-select-lg" required>
-                    <option value="">-- Select a Quiz --</option>
-                </select>
-                <span asp-validation-for="QuizId" class="text-danger"></span>
-                <small class="text-muted">Choose which quiz this question belongs to</small>
-            </div>
-
-            <!-- Media Section -->
-            <div class="media-section mb-4">
-                <h5 class="mb-3"><i class="fas fa-photo-video"></i> Media Attachments <small class="text-muted">(Optional)</small></h5>
-                <p class="text-muted small mb-3">Add images, audio, or video to enhance your question. All media is optional.</p>
-                
-                <div class="row g-3">
-                    <!-- Image Upload -->
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold"><i class="fas fa-image"></i> Image</label>
-                        <input type="file" asp-for="ImageFile" accept="image/*" class="form-control" id="imageUpload" />
-                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+            <div class="adm-panel__body">
+                <div class="adm-field">
+                    <label for="QuizId">@T("Hangi sınavın sorusu?", "Zu welcher Prüfung gehört die Frage?") <span class="adm-req">@T("Zorunlu", "Pflicht")</span></label>
+                    <select id="QuizId" name="QuizId" class="form-select @(ViewData.ModelState.TryGetValue("QuizId", out var qe) && qe.Errors.Count > 0 ? "input-validation-error" : "")">
+                        <option value="0">@T("— Bir sınav seçin —", "— Prüfung wählen —")</option>
+                        @foreach (var quiz in Model.AvailableQuizzes ?? Enumerable.Empty<SelectListItem>())
                         {
-                            <div class="mt-2">
-                                <img src="@Model.ImageUrl" class="img-thumbnail" />
-                                <small class="text-muted d-block">Current Image</small>
-                            </div>
+                            <option value="@quiz.Value" selected="@(quiz.Value == Model.QuizId.ToString() ? "selected" : null)">@quiz.Text</option>
                         }
-                        <div id="imagePreview" class="mt-2"></div>
-                    </div>
-
-                    <!-- Audio Upload -->
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold"><i class="fas fa-music"></i> Audio</label>
-                        <input type="file" asp-for="AudioFile" accept="audio/*" class="form-control" id="audioUpload" />
-                        @if (!string.IsNullOrEmpty(Model.AudioUrl))
-                        {
-                            <div class="mt-2">
-                                <audio controls src="@Model.AudioUrl" class="w-100"></audio>
-                                <small class="text-muted d-block">Current Audio</small>
-                            </div>
-                        }
-                        <div id="audioPreview" class="mt-2"></div>
-                    </div>
-
-                    <!-- Video URL -->
-                    <div class="col-md-4">
-                        <label asp-for="VideoUrl" class="form-label fw-semibold"><i class="fab fa-youtube"></i> Video URL</label>
-                        <input asp-for="VideoUrl" class="form-control" placeholder="YouTube URL..." />
-                        <span asp-validation-for="VideoUrl" class="text-danger"></span>
-                        @if (!string.IsNullOrEmpty(Model.VideoUrl))
-                        {
-                            <div class="mt-2">
-                                <iframe width="100%" height="120" src="@Model.VideoUrl" frameborder="0" allowfullscreen></iframe>
-                                <small class="text-muted d-block">Current Video</small>
-                            </div>
-                        }
-                    </div>
+                    </select>
+                    @Html.ValidationMessage("QuizId")
+                </div>
+                <div class="adm-field adm-mini">
+                    <label for="QuestionText">@T("Soru metni", "Fragetext") <span class="adm-req">@T("Zorunlu", "Pflicht")</span></label>
+                    <textarea id="QuestionText" name="QuestionText" data-editor="mini" class="adm-input" placeholder="@T("ör. Wie ___ du? (heißen)", "z. B. Wie ___ du? (heißen)")"
+                              data-val="true" data-val-required="@T("Lütfen soruyu yazın.", "Bitte schreiben Sie die Frage.")">@Model.QuestionText</textarea>
+                    @Html.ValidationMessage("QuestionText")
                 </div>
             </div>
-        </div>
-        
-        <!-- Answers Section -->
-        <div class="col-lg-5">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="fas fa-list-ol"></i> Answer Options</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info mb-3">
-                        <i class="fas fa-info-circle"></i> <strong>Note:</strong> At least one answer must be marked as correct. You can have multiple correct answers.
-                    </div>
-                    
-                    <div id="answers-list">
-                        @for (int i = 0; i < Model.Answers.Count; i++)
-                        {
-                            <div class="answer-item mb-3 p-3" data-index="@i">
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <span class="badge bg-secondary">Answer @(i + 1)</span>
-                                    <div class="form-check form-switch ms-auto">
-                                        <input type="checkbox" asp-for="@Model.Answers[i].IsCorrect"
-                                               name="Answers[@i].IsCorrect" class="form-check-input correct-checkbox" 
-                                               role="switch" id="correct_@i" />
-                                        <label class="form-check-label" for="correct_@i">
-                                            <i class="fas fa-check-circle text-success"></i> Correct Answer
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="input-group">
-                                    <input asp-for="@Model.Answers[i].AnswerText" name="Answers[@i].AnswerText"
-                                           class="form-control answer-text" placeholder="Enter answer text..." required maxlength="200" />
-                                    <button type="button" class="btn btn-outline-danger btn-remove-answer"
-                                            title="Remove Answer" onclick="removeAnswer(this)">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                    <input type="hidden" asp-for="@Model.Answers[i].AnswerId" name="Answers[@i].AnswerId" />
-                                </div>
-                            </div>
-                        }
-                    </div>
-                    
-                    <button type="button" id="add-answer" class="btn btn-success w-100">
-                        <i class="fas fa-plus-circle"></i> Add New Answer
-                    </button>
+        </section>
+
+        <section class="adm-panel" style="--i:1">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num">2</span>
+                <div>
+                    <h2>@T("Cevaplar", "Antworten")</h2>
+                    <p>@T("Her satıra bir cevap yazın ve doğru olanın yanındaki kutuyu işaretleyin. Boş bıraktığınız satırlar kaydedilmez.", "Eine Antwort pro Zeile; markieren Sie die richtige. Leere Zeilen werden nicht gespeichert.")</p>
                 </div>
             </div>
-        </div>
+            <div class="adm-panel__body">
+                @if (answersError)
+                {
+                    <div class="adm-alert adm-alert--error" style="padding:0.6rem 0.9rem"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>@Html.ValidationMessage("Answers")</div>
+                }
+                <div class="adm-answers" data-answers>
+                    @for (var i = 0; i < Model.Answers.Count; i++)
+                    {
+                        var answer = Model.Answers[i];
+                        var correct = answer.IsCorrect == "true";
+                        <div class="adm-answer @(correct ? "is-correct" : "")" data-answer>
+                            <span class="adm-answer__letter" data-letter>@letters[Math.Min(i, letters.Length - 1)]</span>
+                            <input type="hidden" name="Answers[@i].AnswerId" value="@answer.AnswerId" />
+                            <input type="text" name="Answers[@i].AnswerText" value="@answer.AnswerText" class="form-control" maxlength="200"
+                                   placeholder="@T("Cevap", "Antwort") @letters[Math.Min(i, letters.Length - 1)]" aria-label="@T("Cevap", "Antwort") @letters[Math.Min(i, letters.Length - 1)]" />
+                            <label class="adm-answer__ok">
+                                <input type="checkbox" name="Answers[@i].IsCorrect" value="true" @(correct ? "checked" : "") data-correct />
+                                <input type="hidden" name="Answers[@i].IsCorrect" value="false" />
+                                @T("Doğru cevap", "Richtige Antwort")
+                            </label>
+                            <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm adm-btn--icon" data-remove-answer aria-label="@T("Bu cevabı kaldır", "Diese Antwort entfernen")"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                        </div>
+                    }
+                </div>
+                <div>
+                    <button type="button" class="adm-btn adm-btn--soft" data-add-answer><i class="fa-solid fa-plus" aria-hidden="true"></i>@T("Cevap ekle", "Antwort hinzufügen")</button>
+                </div>
+            </div>
+        </section>
     </div>
-    
-    <hr class="my-4">
-    
-    <div class="d-flex justify-content-between align-items-center mt-4">
-        <a asp-controller="Admin" asp-route-scrollTo="QuestionsManagement" asp-action="Index" 
-           class="btn btn-outline-secondary btn-lg px-4">
-            <i class="fas fa-times"></i> Cancel
-        </a>
-        <button type="submit" class="btn btn-primary btn-lg px-5 shadow" id="submitBtn">
-            <i class="fas fa-save"></i> @(isEdit ? "Update Question" : "Create Question")
-        </button>
-    </div>
+
+    <aside class="adm-form__aside">
+        <section class="adm-panel" style="--i:2">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num">3</span>
+                <div>
+                    <h2>@T("Resim, ses veya video", "Bild, Audio oder Video")</h2>
+                    <p>@T("Tamamen isteğe bağlı.", "Ganz freiwillig.")</p>
+                </div>
+            </div>
+            <div class="adm-panel__body">
+                <div class="adm-field">
+                    <span class="adm-label"><i class="fa-regular fa-image" aria-hidden="true"></i>@T("Resim", "Bild")</span>
+                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                    {
+                        <div class="adm-current"><img src="@Model.ImageUrl" alt="" /><small>@T("Şu anki resim. Yenisini seçerseniz yerini alır.", "Aktuelles Bild. Ein neues ersetzt es.")</small></div>
+                    }
+                    <label class="adm-drop" style="min-height:110px">
+                        <input type="file" name="ImageFile" accept=".jpg,.jpeg,.png,.gif" data-max-mb="5" />
+                        <span class="adm-drop__empty"><strong>@T("Resim seç", "Bild wählen")</strong><small>JPG, PNG, GIF · 5 MB</small></span>
+                        <span class="adm-drop__preview"></span>
+                    </label>
+                    @Html.ValidationMessage("ImageFile")
+                </div>
+                <div class="adm-field">
+                    <span class="adm-label"><i class="fa-solid fa-volume-high" aria-hidden="true"></i>@T("Ses dosyası", "Audiodatei")</span>
+                    @if (!string.IsNullOrEmpty(Model.AudioUrl))
+                    {
+                        <div class="adm-current"><audio controls src="@Model.AudioUrl" style="width:100%"></audio><small>@T("Şu anki ses dosyası", "Aktuelle Audiodatei")</small></div>
+                    }
+                    <label class="adm-drop" style="min-height:110px">
+                        <input type="file" name="AudioFile" accept=".mp3,.wav,.ogg,.m4a" data-max-mb="10" />
+                        <span class="adm-drop__empty"><strong>@T("Ses dosyası seç", "Audiodatei wählen")</strong><small>MP3, WAV, OGG, M4A · 10 MB</small></span>
+                        <span class="adm-drop__preview"></span>
+                    </label>
+                    @Html.ValidationMessage("AudioFile")
+                </div>
+                <div class="adm-field">
+                    <label for="VideoUrl"><i class="fa-brands fa-youtube" aria-hidden="true"></i>@T("YouTube bağlantısı", "YouTube-Link")</label>
+                    <input id="VideoUrl" name="VideoUrl" value="@Model.VideoUrl" class="adm-input" placeholder="https://www.youtube.com/watch?v=…" />
+                    <p class="adm-hint">@T("Videonun adres çubuğundaki bağlantısını yapıştırmanız yeterli.", "Fügen Sie einfach den Link aus der Adresszeile des Videos ein.")</p>
+                </div>
+            </div>
+        </section>
+        <div class="adm-savebar" style="margin-top:0">
+            <a class="adm-btn adm-btn--ghost" href="@Url.Action(section.Action)">@T("Vazgeç", "Abbrechen")</a>
+            <button type="submit" class="adm-btn adm-btn--primary" style="flex:1"><i class="fa-solid fa-check" aria-hidden="true"></i>@T("Soruyu kaydet", "Frage speichern")</button>
+        </div>
+    </aside>
 </form>
 
-            </div>
-        </div>
+<template id="answer-template">
+    <div class="adm-answer" data-answer>
+        <span class="adm-answer__letter" data-letter></span>
+        <input type="hidden" data-name="AnswerId" value="0" />
+        <input type="text" data-name="AnswerText" class="form-control" maxlength="200" />
+        <label class="adm-answer__ok">
+            <input type="checkbox" data-name="IsCorrect" value="true" data-correct />
+            <input type="hidden" data-name="IsCorrect" value="false" />
+            @T("Doğru cevap", "Richtige Antwort")
+        </label>
+        <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm adm-btn--icon" data-remove-answer aria-label="@T("Bu cevabı kaldır", "Diese Antwort entfernen")"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
     </div>
-</div>
-</section>
+</template>
+
 @section Scripts {
-    <script src="https://cdn.ckeditor.com/ckeditor5/43.3.1/ckeditor5.umd.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.umd.js"></script>
     <script>
-        let questionEditor;
-        const {
-            ClassicEditor,
-            Essentials,
-            Bold,
-            Italic,
-            Underline,
-            Strikethrough,
-            Paragraph,
-            Heading,
-            List,
-            Link,
-            BlockQuote,
-            Alignment,
-            Font,
-            Highlight,
-            CodeBlock,
-            Code
-        } = CKEDITOR;
-
-        // Initialize CKEditor for Question Text
-        ClassicEditor
-            .create(document.querySelector('#QuestionTextEditor'), {
-                plugins: [
-                    Essentials, Bold, Italic, Underline, Strikethrough,
-                    Paragraph, Heading, List, Link, BlockQuote,
-                    Alignment, Font, Highlight, CodeBlock, Code
-                ],
-                toolbar: {
-                    items: [
-                        'heading', '|',
-                        'bold', 'italic', 'underline', 'strikethrough', '|',
-                        'link', 'bulletedList', 'numberedList', '|',
-                        'alignment', 'highlight', '|',
-                        'code', 'codeBlock', 'blockQuote', '|',
-                        'undo', 'redo'
-                    ]
-                },
-                heading: {
-                    options: [
-                        { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
-                        { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
-                        { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' }
-                    ]
-                }
-            })
-            .then(editor => {
-                questionEditor = editor;
-            })
-            .catch(error => {});
-
-        // Dynamic Add/Remove for Answers
-        function removeAnswer(btn) {
-            const answerCount = $('#answers-list .answer-item').length;
-            if (answerCount <= 1) {
-                alert('You must have at least one answer!');
-                return;
-            }
-            $(btn).closest('.answer-item').fadeOut(300, function() {
-                $(this).remove();
-                reindexAnswers();
-                updateAnswerBadges();
-            });
-        }
-
-        function reindexAnswers() {
-            $('#answers-list .answer-item').each(function (idx) {
-                $(this).attr('data-index', idx);
-                $(this).find('input, select, textarea').each(function () {
-                    let name = $(this).attr('name');
-                    let id = $(this).attr('id');
-                    if (name) {
-                        let newName = name.replace(/\[\d+\]/, '[' + idx + ']');
-                        $(this).attr('name', newName);
-                    }
-                    if (id) {
-                        let newId = id.replace(/_\d+/, '_' + idx);
-                        $(this).attr('id', newId);
-                        // Update label for attribute
-                        $(this).closest('.answer-item').find('label[for="' + id + '"]').attr('for', newId);
-                    }
+        // Answers: add / remove rows, keep the A, B, C… letters and the Answers[i] names in order
+        (function () {
+            const list = document.querySelector('[data-answers]');
+            const template = document.getElementById('answer-template');
+            const letters = 'ABCDEFGHIJ';
+            const word = @Json.Serialize(T("Cevap", "Antwort"));
+            function renumber() {
+                list.querySelectorAll('[data-answer]').forEach((row, i) => {
+                    const letter = letters[Math.min(i, letters.length - 1)];
+                    row.querySelector('[data-letter]').textContent = letter;
+                    row.querySelectorAll('input').forEach((input) => {
+                        const field = input.dataset.name || input.name.replace(/^Answers\[\d+\]\./, '');
+                        input.dataset.name = field;
+                        input.name = 'Answers[' + i + '].' + field;
+                    });
+                    const text = row.querySelector('input[type="text"]');
+                    text.placeholder = word + ' ' + letter;
+                    text.setAttribute('aria-label', word + ' ' + letter);
                 });
+            }
+            document.querySelector('[data-add-answer]').addEventListener('click', () => {
+                if (list.children.length >= letters.length) return;
+                list.appendChild(template.content.firstElementChild.cloneNode(true));
+                renumber();
+                list.lastElementChild.querySelector('input[type="text"]').focus();
+                window.admMarkDirty?.(list.closest('form'));
             });
-        }
-
-        function updateAnswerBadges() {
-            $('#answers-list .answer-item').each(function(idx) {
-                $(this).find('.badge').text('Answer ' + (idx + 1));
-            });
-        }
-
-        $('#add-answer').click(function () {
-            var idx = $('#answers-list .answer-item').length;
-            var answerHtml = `
-            <div class="answer-item mb-3 p-3 animate__animated animate__fadeIn" data-index="${idx}">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <span class="badge bg-secondary">Answer ${idx + 1}</span>
-                    <div class="form-check form-switch ms-auto">
-                        <input type="checkbox" name="Answers[${idx}].IsCorrect" class="form-check-input correct-checkbox" 
-                               role="switch" id="correct_${idx}" />
-                        <label class="form-check-label" for="correct_${idx}">
-                            <i class="fas fa-check-circle text-success"></i> Correct Answer
-                        </label>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <input name="Answers[${idx}].AnswerText" class="form-control answer-text" 
-                           placeholder="Enter answer text..." required maxlength="200" />
-                    <button type="button" class="btn btn-outline-danger btn-remove-answer" 
-                            title="Remove Answer" onclick="removeAnswer(this)">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                    <input type="hidden" name="Answers[${idx}].AnswerId" value="0" />
-                </div>
-            </div>`;
-            $('#answers-list').append(answerHtml);
-        });
-
-        // Highlight correct answers
-        $(document).on('change', '.correct-checkbox', function() {
-            const answerItem = $(this).closest('.answer-item');
-            if ($(this).is(':checked')) {
-                answerItem.addClass('correct-answer');
-            } else {
-                answerItem.removeClass('correct-answer');
-            }
-        });
-
-        // Form validation before submit
-        $('#questionForm').on('submit', function(e) {
-            // Sync CKEditor content to textarea
-            if (questionEditor) {
-                $('#QuestionTextEditor').val(questionEditor.getData());
-            }
-
-            // Check if at least one answer is marked as correct
-            const hasCorrectAnswer = $('.correct-checkbox:checked').length > 0;
-            if (!hasCorrectAnswer) {
-                e.preventDefault();
-                alert('⚠️ Please mark at least one answer as correct!');
-                return false;
-            }
-
-            // Check if all answers have text
-            let hasEmptyAnswer = false;
-            $('.answer-text').each(function() {
-                if ($(this).val().trim() === '') {
-                    hasEmptyAnswer = true;
+            list.addEventListener('click', (e) => {
+                const remove = e.target.closest('[data-remove-answer]');
+                if (!remove) return;
+                if (list.children.length <= 2) {
+                    remove.closest('[data-answer]').querySelectorAll('input[type="text"]').forEach((i) => { i.value = ''; });
+                    return;
                 }
+                remove.closest('[data-answer]').remove();
+                renumber();
+                window.admMarkDirty?.(list.closest('form'));
             });
-            if (hasEmptyAnswer) {
-                e.preventDefault();
-                alert('⚠️ Please fill in all answer fields or remove empty answers!');
-                return false;
-            }
-
-            // Disable submit button to prevent double submission
-            $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
-        });
-
-        // Image preview
-        $('#imageUpload').change(function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    $('#imagePreview').html(`<img src="${e.target.result}" class="img-thumbnail mt-2" style="max-width: 150px;">`);
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Audio preview
-        $('#audioUpload').change(function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const url = URL.createObjectURL(file);
-                $('#audioPreview').html(`<audio controls class="w-100 mt-2"><source src="${url}" type="${file.type}"></audio>`);
-            }
-        });
-
-        $(document).ready(function () {
-            // Initialize correct answer highlighting
-            $('.correct-checkbox:checked').each(function() {
-                $(this).closest('.answer-item').addClass('correct-answer');
+            list.addEventListener('change', (e) => {
+                if (e.target.matches('[data-correct]')) e.target.closest('[data-answer]').classList.toggle('is-correct', e.target.checked);
             });
-            
-            $('form').addClass('animate__animated animate__fadeIn');
-        });
+            renumber();
+        })();
     </script>
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

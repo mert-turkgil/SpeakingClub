@@ -54,7 +54,7 @@ namespace SpeakingClub.Controllers
                 SubmissionId = s.QuizSubmissionId,
                 UserName = userDict.ContainsKey(s.UserId) 
                     ? userDict[s.UserId].FirstName + " " + userDict[s.UserId].LastName
-                    : "Unknown",
+                    : (System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de" ? "Gelöschtes Konto" : "Silinmiş hesap"),
                 QuizTitle = s.Quiz?.Title,
                 Score = s.Score,
                 MaxScore = 100,

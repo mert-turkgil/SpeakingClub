@@ -1,270 +1,193 @@
+@model SpeakingClub.Models.AdminDashboardViewModel
+@*
+    Admin home: a greeting, the numbers at a glance, big "what would you like to do?" shortcuts,
+    this week's exams, the latest posts and anything that needs attention.
+*@
 @{
-    Layout = "_Layout";
-    ViewData["Title"] = "Admin";
-}
-@section Css{
-    <!-- Try CDN first, fallback to local if unavailable -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" 
-          onerror="this.onerror=null;this.href='/css/dataTables.bootstrap5.min.css'">
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" 
-          onerror="this.onerror=null;this.href='/css/responsive.bootstrap5.min.css'">
-    <style>
-    mark {
-    background-color: yellow;
-    color: black;
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    ViewData["Title"] = T("Ana sayfa", "Übersicht");
+    ViewData["AdminSection"] = "dashboard";
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
+    var hour = DateTime.Now.Hour;
+    var greeting = hour < 12 ? T("Günaydın", "Guten Morgen") : hour < 18 ? T("İyi günler", "Guten Tag") : T("İyi akşamlar", "Guten Abend");
+    string ScoreClass(int score) => score >= 70 ? "is-good" : score >= 50 ? "is-mid" : "is-low";
+    var tiles = new List<(string Icon, string Title, string Text, string Href, string Tone)>
+    {
+        ("fa-solid fa-feather-pointed", T("Yeni blog yazısı yaz", "Neuen Blogbeitrag schreiben"), T("Bir makale, duyuru ya da ders notu paylaşın.", "Einen Artikel, eine Ankündigung oder Unterrichtsnotizen teilen."), Url.Action("BlogCreate", "Admin")!, ""),
+        ("fa-solid fa-clipboard-check", T("Yeni sınav hazırla", "Neue Prüfung erstellen"), T("Sorular ve cevaplarla bir seviye testi oluşturun.", "Einen Einstufungstest mit Fragen und Antworten anlegen."), Url.Action("QuizCreate", "Admin")!, "tone-blue"),
+        ("fa-solid fa-circle-question", T("Bir sınava soru ekle", "Einer Prüfung eine Frage hinzufügen"), T("Var olan bir sınava tek bir soru ekleyin.", "Einer bestehenden Prüfung eine einzelne Frage hinzufügen."), Url.Action("QuestionCreate", "Admin")!, "tone-amber"),
+        ("fa-solid fa-spell-check", T("Kelime ekle", "Wort hinzufügen"), T("Sözlüğe yeni bir kelime ve anlamını ekleyin.", "Dem Wörterbuch ein neues Wort mit Bedeutung hinzufügen."), Url.Action("WordCreate", "Admin")!, "tone-green"),
+        ("fa-solid fa-chart-column", T("Sınav sonuçlarına bak", "Prüfungsergebnisse ansehen"), T("Öğrencilerin puanlarını ve ihlalleri görün.", "Punkte und Regelverstöße der Lernenden ansehen."), Url.Action("Index", "QuizMonitor")!, "tone-blue"),
+        ("fa-solid fa-images", T("Ana sayfa slaytını değiştir", "Startseiten-Slider ändern"), T("Ana sayfanın üstündeki büyük görselleri yönetin.", "Die großen Bilder oben auf der Startseite verwalten."), Url.Action("Slides", "Admin")!, "")
+    };
+    if (Model.IsAdmin)
+    {
+        tiles.Add(("fa-solid fa-language", T("Sitedeki bir yazıyı değiştir", "Einen Text der Website ändern"), T("Hakkımda paragrafları, düğme yazıları gibi sabit metinler.", "Feste Texte wie Über-mich-Absätze oder Schaltflächen."), Url.Action("Texts", "Admin")!, "tone-amber"));
+        tiles.Add(("fa-solid fa-user-plus", T("Kullanıcı ekle ya da bul", "Benutzer anlegen oder finden"), T("Öğrenci veya öğretmen hesaplarını yönetin.", "Konten von Lernenden und Lehrkräften verwalten."), Url.Action("Users", "Admin")!, "tone-green"));
     }
-    </style>
 }
-@if (User.IsInRole("Admin") || User.IsInRole("Root"))
-{
-<section class="container-xxl mt-4">
-    <a href="@Url.Action("DownloadLogs", "Admin")" class="btn btn-outline-primary">
-        <i class="fa-solid fa-download me-1"></i> View Download Logs
+
+<section class="adm-hello">
+    <span class="adm-hello__date"><i class="fa-regular fa-calendar" aria-hidden="true"></i>@DateTime.Now.ToString("dddd, d MMMM yyyy", culture)</span>
+    <h1>@greeting@(string.IsNullOrWhiteSpace(Model.FirstName) ? "" : ", " + Model.FirstName)!</h1>
+    <p>@T("Bugün ne yapmak istersiniz? Aşağıdaki büyük düğmelerden birine basmanız yeterli. Her sayfada, ne yapacağınızı adım adım anlatan sarı bir yardım kutusu bulunur.",
+          "Was möchten Sie heute tun? Klicken Sie einfach auf eine der großen Schaltflächen unten. Auf jeder Seite erklärt ein gelber Hilfekasten Schritt für Schritt, was zu tun ist.")</p>
+</section>
+
+<div class="adm-stats">
+    <a class="adm-stat" style="--i:0" href="@Url.Action("Blogs", "Admin")">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-feather-pointed"></i></span>
+        <span>
+            <span class="adm-stat__num">@Model.BlogCount</span>
+            <span class="adm-stat__label">@T("blog yazısı", "Blogbeiträge")</span>
+            @if (Model.DraftBlogCount > 0)
+            {
+                <span class="adm-stat__note">@T($"{Model.DraftBlogCount} taslak", $"{Model.DraftBlogCount} Entwürfe")</span>
+            }
+        </span>
     </a>
-</section>
+    <a class="adm-stat tone-blue" style="--i:1" href="@Url.Action("Quizzes", "Admin")">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-clipboard-check"></i></span>
+        <span>
+            <span class="adm-stat__num">@Model.QuizCount</span>
+            <span class="adm-stat__label">@T($"sınav · {Model.QuestionCount} soru", $"Prüfungen · {Model.QuestionCount} Fragen")</span>
+        </span>
+    </a>
+    <a class="adm-stat tone-green" style="--i:2" href="@Url.Action("Index", "QuizMonitor")">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-pen-to-square"></i></span>
+        <span>
+            <span class="adm-stat__num">@Model.SubmissionsThisWeek</span>
+            <span class="adm-stat__label">@T("sınav çözüldü (7 gün)", "Prüfungen abgelegt (7 Tage)")</span>
+            @if (Model.AverageScoreThisWeek.HasValue)
+            {
+                <span class="adm-stat__note" style="color: var(--a-green)">@T($"ortalama {Model.AverageScoreThisWeek} puan", $"Ø {Model.AverageScoreThisWeek} Punkte")</span>
+            }
+        </span>
+    </a>
+    <a class="adm-stat tone-amber" style="--i:3" href="@Url.Action("Words", "Admin")">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-spell-check"></i></span>
+        <span>
+            <span class="adm-stat__num">@Model.WordCount</span>
+            <span class="adm-stat__label">@T("kelime", "Wörter")</span>
+        </span>
+    </a>
+    @if (Model.IsAdmin)
+    {
+        <a class="adm-stat tone-blue" style="--i:4" href="@Url.Action("Users", "Admin")">
+            <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-user-group"></i></span>
+            <span>
+                <span class="adm-stat__num">@Model.UserCount</span>
+                <span class="adm-stat__label">@T("kayıtlı kullanıcı", "registrierte Benutzer")</span>
+            </span>
+        </a>
+    }
+</div>
 
-<section id="RoleManagement" class="container-xxl">
-    <div class="card shadow mt-4">
-        <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0"><i class="fas fa-tv"></i> Role Managment</h3>
-        </div>
-        <div class="card-body">
-            <!-- Invoke the User Management ViewComponent -->
-            @await Component.InvokeAsync("RoleManagement")
-        </div>
-    </div>
-</section>
-
-<section id="UserManagement" class="container-xxl">
-    <div class="card shadow mt-4">
-        <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0"><i class="fas fa-tv"></i> User Management</h3>
-        </div>
-        <div class="card-body">
-            <!-- Invoke the User Management ViewComponent -->
-            @await Component.InvokeAsync("UserManagement")
-        </div>
-    </div>
-</section>
-
-<section class="container-xxl" id="ResourceManagement">
-    <div class="card shadow mt-4">
-        <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0"><i class="fa-solid fa-passport"></i>Resource Managment</h3>
-        </div>
-        <div class="card-body">
-            <!-- Invoke the User Management ViewComponent -->
-            @await Component.InvokeAsync("ResourceManagement", new { resourceLang = Context.Request.Query["resourceLang"].ToString() })
-        </div>
-    </div>
-</section>
-<hr/>
-}
-@if (User.IsInRole("Admin") || User.IsInRole("Root")||User.IsInRole("Teacher"))
+@if (Model.QuizzesWithoutQuestions.Any() || Model.DraftBlogCount > 0)
 {
-    <section id="WordsManagement" class="container-xxl">
-    <div class="card shadow my-3">
-        <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0"> <i class="fa-solid fa-square-check"></i> Words Pronunciation Etc.</h3>
-        </div>
-        <div class="card-body">
-            @await Component.InvokeAsync("WordList")
-        </div>
-    </div>
-    </section>
-    <section id="QuizzesManagement" class="container-xxl">
-    <div class="card shadow my-3">
-        <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0"> <i class="fa-solid fa-clipboard-question"></i> Quizzes List</h3>
-        </div>
-        <div class="card-body">
-            @await Component.InvokeAsync("GenericList", new { entityType = "Quizzes" })
-        </div>
-    </div>
-    </section>
-    <section id="BlogManagement" class="container-xxl">
-    <div class="card shadow my-3">
-        <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0"> <i class="fa-solid fa-blog"></i> Blog List</h3>
-        </div>
-        <div class="card-body">
-            @await Component.InvokeAsync("GenericList", new { entityType = "Blogs" })
-        </div>
-    </div>
-    </section>
-    <section id="CategoryManagement" class="container-xxl">
-    <div class="card shadow my-3">
-        <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0"> <i class="fa-solid fa-layer-group"></i> Category List</h3>
-        </div>
-        <div class="card-body">
-            @await Component.InvokeAsync("GenericList", new { entityType = "Categories" })
-        </div>
-    </div>
-    </section>
-    <section id="TagManagement" class="container-xxl">
-    <div class="card shadow my-3">
-        <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0"> <i class="fa-solid fa-hashtag"></i> Tag List</h3>
-        </div>
-        <div class="card-body">
-            @await Component.InvokeAsync("GenericList", new { entityType = "Tags" })
-        </div>
-    </div>
-    </section>
-    <section id="QuestionsManagement" class="container-xxl">
-    <div class="card shadow my-3">
-        <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0"> <i class="fa-solid fa-person-circle-question"></i> Questions List</h3>
-        </div>
-        <div class="card-body">
-            @await Component.InvokeAsync("GenericList", new { entityType = "questions" })
-        </div>
-    </div>
-    </section>
-    <section id="SlideListManagement" class="container-xxl">
-    <div class="card shadow my-3">
-        <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0"> <i class="fa-solid fa-image"></i> Slide List</h3>
-        </div>
-        <div class="card-body">
-            @await Component.InvokeAsync("GenericList", new { entityType = "slides" })
-        </div>
-    </div>
-    </section>
-}
-
-@section Scripts{
-    <script>
-        $(window).on('load', function () {
-            const urlParams = new URLSearchParams(window.location.search);
-            const scrollToId = urlParams.get('scrollTo');
-            if (scrollToId) {
-                const target = document.getElementById(scrollToId);
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    <div class="adm-alert adm-alert--warn" role="note">
+        <i class="fa-solid fa-bell" aria-hidden="true"></i>
+        <div>
+            <strong>@T("Göz atmanız gerekenler", "Bitte ansehen")</strong>
+            <ul>
+                @foreach (var quiz in Model.QuizzesWithoutQuestions)
+                {
+                    <li>@T("Bu sınavda henüz soru yok, öğrenciler çözemez:", "Diese Prüfung hat noch keine Fragen und kann nicht abgelegt werden:") <a href="@Url.Action("QuizEdit", "Admin", new { id = quiz.QuizId })">@quiz.Title</a></li>
                 }
-            }
-        });
-    </script>
-
-    <script>
-        $(document).ready(function () {
-            // Handle "Change" button click
-            $(".edit-btn").on("click", function () {
-                const key = $(this).data("key");
-                const value = $(this).data("value");
-                const comment = $(this).data("comment");
-                const lang = $("#langSelect").val();
-
-                $("#translationKey").val(key);
-                $("#translationValue").val(value);
-                $("#translationComment").val(comment);
-                $("#translationLang").val(lang);
-
-                $("#editTranslationModal").modal("show");
-            });
-
-            // Handle form submit (AJAX)
-            $("#editTranslationForm").on("submit", function (e) {
-                e.preventDefault();
-
-                $.ajax({
-                    url: '@Url.Action("EditTranslation", "Admin")',
-                    type: "POST",
-                    data: $(this).serialize(),
-                    success: function (res) {
-                        if (res.success) {
-                            alert(res.message + "\n\nNote: Changes are now live! Resource cache has been cleared automatically.");
-                            location.reload(); // reload table to see updates
-                        } else {
-                            alert("Error: " + res.message);
-                        }
-                    },
-                    error: function () {
-                        alert("Something went wrong.");
-                    }
-                });
-            });
-        });
-    </script>
-    <script>
-    $(document).ready(function () {
-        // Check if mark plugin is loaded
-        console.log("mark plugin:", typeof $.fn.mark);
-
-        // Initialize DataTable
-        var table = $('#localizationTable').DataTable({
-            language: { search: "Search in table:" },
-            responsive: true
-        });
-
-        // Highlight search terms
-        table.on('draw', function () {
-            var body = $(table.table().body());
-            body.unmark(); // remove previous highlights
-            var searchTerm = table.search();
-            if (searchTerm) {
-                body.mark(searchTerm, {
-                    "separateWordSearch": true
-                });
-            }
-        });
-
-        // Language selector
-        $("#langSelect").change(function () {
-            window.location.href = `?resourceLang=${this.value}`;
-        });
-    });
-    </script>
-    <script>
-        $(document).ready(function() {
-            $('#QuestionList').DataTable();
-            $('#QuizList').DataTable();
-            $('#TagList').DataTable();
-            $('#WordList').DataTable();
-            $('#CategoryList').DataTable();
-            $('#carouselTable').DataTable();
-            $('#BlogList').DataTable();
-            // Users Table
-            $('#usersTable').DataTable({
-                responsive: {
-                    details: {
-                        type: 'column',
-                        target: 'tr'
-                    }
-                },
-                lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
-                order: [],
-                paging: true,
-                searching: true,
-                autoWidth: false,
-                columnDefs: [
-                    { responsivePriority: 1, targets: 1 }, // Email
-                    { responsivePriority: 2, targets: 2 }, // Actions
-                    { responsivePriority: 3, targets: 0 }  // ID
-                ]
-            });
-
-            // Roles Table
-            $('#rolesTable').DataTable({
-                responsive: {
-                    details: {
-                        type: 'column',
-                        target: 'tr'
-                    }
-                },
-                lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
-                order: [],
-                paging: true,
-                searching: true,
-                autoWidth: false,
-                columnDefs: [
-                    { responsivePriority: 1, targets: 0 }, // Name
-                    { responsivePriority: 2, targets: 2 }, // Action
-                    { responsivePriority: 3, targets: 1 }  // ID
-                ]
-            });
-        });
-    </script>
+                @if (Model.DraftBlogCount > 0)
+                {
+                    <li>@T($"{Model.DraftBlogCount} blog yazısı taslak olarak bekliyor, sitede görünmüyor.", $"{Model.DraftBlogCount} Blogbeiträge sind Entwürfe und auf der Website nicht sichtbar.") <a href="@Url.Action("Blogs", "Admin")">@T("Yazılara git", "Zu den Beiträgen")</a></li>
+                }
+            </ul>
+        </div>
+    </div>
 }
+
+<div class="adm-section-title">
+    <h2>@T("Ne yapmak istiyorsunuz?", "Was möchten Sie tun?")</h2>
+    <p>@T("Bir kutuya basın, sizi doğru sayfaya götürelim.", "Klicken Sie auf einen Kasten – wir bringen Sie zur richtigen Seite.")</p>
+</div>
+<div class="adm-quick">
+    @for (var i = 0; i < tiles.Count; i++)
+    {
+        var tile = tiles[i];
+        <a class="adm-tile @tile.Tone" style="--i:@i" href="@tile.Href">
+            <span class="adm-tile__icon" aria-hidden="true"><i class="@tile.Icon"></i></span>
+            <strong>@tile.Title</strong>
+            <span>@tile.Text</span>
+            <span class="adm-tile__go">@T("Başla", "Los geht's")<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
+        </a>
+    }
+</div>
+
+<div class="adm-grid-2">
+    <section class="adm-card">
+        <div class="adm-card__head">
+            <h2><i class="fa-solid fa-chart-column me-2" style="color: var(--a-blue)" aria-hidden="true"></i>@T("Son sınav sonuçları", "Neueste Prüfungsergebnisse")</h2>
+            <a href="@Url.Action("Index", "QuizMonitor")">@T("Tümü", "Alle")<i class="fa-solid fa-arrow-right ms-1" aria-hidden="true"></i></a>
+        </div>
+        @if (Model.RecentSubmissions.Any())
+        {
+            <ul class="adm-list">
+                @foreach (var s in Model.RecentSubmissions)
+                {
+                    <li>
+                        <span class="adm-avatar" aria-hidden="true">@string.Concat(s.StudentName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpper(p[0])))</span>
+                        <span class="adm-list__main">
+                            <strong>@s.StudentName</strong>
+                            <small>@s.QuizTitle · @s.Date.ToString("d MMM, HH:mm", culture)@(s.EndReason == "violations" ? " · " + T("kural ihlaliyle bitti", "wegen Verstößen beendet") : s.EndReason == "timeout" ? " · " + T("süre doldu", "Zeit abgelaufen") : "")</small>
+                        </span>
+                        <span class="adm-score @ScoreClass(s.Score)">@s.Score</span>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="adm-hint">@T("Son 30 günde çözülmüş sınav yok.", "In den letzten 30 Tagen wurde keine Prüfung abgelegt.")</p>
+        }
+    </section>
+
+    <section class="adm-card">
+        <div class="adm-card__head">
+            <h2><i class="fa-solid fa-feather-pointed me-2" style="color: var(--a-coral-deep)" aria-hidden="true"></i>@T("Son yazılar", "Neueste Beiträge")</h2>
+            <a href="@Url.Action("Blogs", "Admin")">@T("Tümü", "Alle")<i class="fa-solid fa-arrow-right ms-1" aria-hidden="true"></i></a>
+        </div>
+        @if (Model.RecentBlogs.Any())
+        {
+            <ul class="adm-list">
+                @foreach (var b in Model.RecentBlogs)
+                {
+                    <li>
+                        @if (!string.IsNullOrEmpty(b.Image))
+                        {
+                            <img class="adm-list__thumb" src="@b.Image" alt="" loading="lazy" />
+                        }
+                        else
+                        {
+                            <span class="adm-list__thumb" aria-hidden="true"><i class="fa-regular fa-image"></i></span>
+                        }
+                        <span class="adm-list__main">
+                            <strong>@b.Title</strong>
+                            <small>@b.Date.ToString("d MMMM yyyy", culture)</small>
+                        </span>
+                        @if (b.IsPublished)
+                        {
+                            <span class="adm-badge adm-badge--green">@T("Yayında", "Online")</span>
+                        }
+                        else
+                        {
+                            <span class="adm-badge adm-badge--amber">@T("Taslak", "Entwurf")</span>
+                        }
+                        <a class="adm-btn adm-btn--ghost adm-btn--icon adm-btn--sm" href="@Url.Action("BlogEdit", "Admin", new { id = b.BlogId })" aria-label="@T("Düzenle", "Bearbeiten"): @b.Title"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="adm-hint">@T("Henüz yazı yok.", "Noch keine Beiträge.")</p>
+        }
+    </section>
+</div>

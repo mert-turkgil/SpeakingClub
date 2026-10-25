@@ -41,11 +41,83 @@ namespace SpeakingClub.Controllers
             _userManager = userManager;
             _logger = logger;
         }
+        private static bool IsGerman => System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+        private static string T(string tr, string de) => IsGerman ? de : tr;
+
+        #region Dashboard and section pages
+        // Home of the panel: counts, this week's exams, recent posts and what needs a look.
+        // ?scrollTo=…Management (links into the old single-page panel) jumps to that section's page.
         [HttpGet("")]
-        public IActionResult Index()
+        public async Task<IActionResult> Index(string? scrollTo)
         {
-            return View();
+            var legacy = AdminNav.FromLegacyAnchor(scrollTo);
+            if (legacy != null)
+            {
+                var section = AdminNav.Find(legacy, false)!;
+                return RedirectToAction(section.Action);
+            }
+
+            var me = await _userManager.GetUserAsync(User);
+            var isAdmin = User.IsInRole("Admin") || User.IsInRole("Root");
+            var blogs = (await _unitOfWork.Blogs.GetAllAsync()).ToList();
+            var quizzes = (await _unitOfWork.Quizzes.GetAllAsync()).ToList();
+            var weekAgo = DateTime.Now.AddDays(-7);
+            var monthAgo = DateTime.Now.AddDays(-30);
+            var recent = (await _unitOfWork.QuizSubmissions.GetAllAsync(s => s.SubmissionDate >= monthAgo))
+                .OrderByDescending(s => s.SubmissionDate)
+                .ToList();
+            var thisWeek = recent.Where(s => s.SubmissionDate >= weekAgo).ToList();
+
+            var latest = recent.Take(6).ToList();
+            var studentIds = latest.Select(s => s.UserId).Distinct().ToList();
+            var students = _userManager.Users.Where(u => studentIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.FirstName, u.LastName, u.Email })
+                .ToList()
+                .ToDictionary(u => u.Id);
+            var quizTitles = quizzes.ToDictionary(q => q.Id, q => q.Title ?? string.Empty);
+
+            var model = new AdminDashboardViewModel
+            {
+                FirstName = me?.FirstName ?? string.Empty,
+                IsAdmin = isAdmin,
+                BlogCount = blogs.Count,
+                DraftBlogCount = blogs.Count(b => !b.IsPublished),
+                QuizCount = quizzes.Count,
+                QuestionCount = quizzes.Sum(q => q.Questions?.Count ?? 0),
+                WordCount = (await _unitOfWork.Words.GetAllAsync()).Count(),
+                SlideCount = (await _unitOfWork.Slides.GetAllAsync()).Count(),
+                UserCount = isAdmin ? _userManager.Users.Count() : 0,
+                SubmissionsThisWeek = thisWeek.Count,
+                AverageScoreThisWeek = thisWeek.Count > 0 ? (int)Math.Round(thisWeek.Average(s => s.Score)) : null,
+                RecentSubmissions = latest.Select(s =>
+                {
+                    var name = students.TryGetValue(s.UserId, out var u)
+                        ? string.Join(' ', new[] { u.FirstName, u.LastName }.Where(p => !string.IsNullOrWhiteSpace(p)))
+                        : string.Empty;
+                    if (string.IsNullOrWhiteSpace(name)) name = u?.Email ?? T("Bilinmeyen öğrenci", "Unbekannt");
+                    return new AdminRecentSubmission(s.QuizSubmissionId, name,
+                        quizTitles.TryGetValue(s.QuizId, out var title) ? title : "—", s.Score, s.SubmissionDate, s.EndReason);
+                }).ToList(),
+                RecentBlogs = blogs.OrderByDescending(b => b.Date).Take(4)
+                    .Select(b => new AdminRecentBlog(b.BlogId, b.Title, b.Date, b.IsPublished, b.Image)).ToList(),
+                QuizzesWithoutQuestions = quizzes.Where(q => (q.Questions?.Count ?? 0) == 0)
+                    .Select(q => new AdminQuizNotice(q.Id, q.Title ?? string.Empty)).ToList()
+            };
+            return View(model);
         }
+
+        // One page per section; Views/Admin/Section.cshtml renders the header, the guide and the list.
+        [HttpGet("Blogs")] public IActionResult Blogs() => View("Section", "blogs");
+        [HttpGet("Quizzes")] public IActionResult Quizzes() => View("Section", "quizzes");
+        [HttpGet("Questions")] public IActionResult Questions() => View("Section", "questions");
+        [HttpGet("Words")] public IActionResult Words() => View("Section", "words");
+        [HttpGet("Slides")] public IActionResult Slides() => View("Section", "slides");
+        [HttpGet("Categories")] public IActionResult Categories() => View("Section", "categories");
+        [HttpGet("Tags")] public IActionResult Tags() => View("Section", "tags");
+        [HttpGet("Users"), Authorize(Roles = "Admin,Root")] public IActionResult Users() => View("Section", "users");
+        [HttpGet("Roles"), Authorize(Roles = "Admin,Root")] public IActionResult Roles() => View("Section", "roles");
+        [HttpGet("Texts"), Authorize(Roles = "Admin,Root")] public IActionResult Texts() => View("Section", "texts");
+        #endregion
 
         // HomeController.cs (Updated methods)
         #region Hesap
@@ -61,21 +133,30 @@ namespace SpeakingClub.Controllers
                 Email = "",
                 Password = "",
                 ConfirmPassword = "",
-                AllRoles = _roleManager.Roles.Select(r => r.Name!).ToList(),
-                EmailConfirmed = false,
-                LockoutEnabled = false
+                AllRoles = AssignableRoles(),
+                SelectedRoles = new List<string> { "User" },
+                EmailConfirmed = true
             };
             return View(model);
         }
 
-        [HttpPost]
+        // The route was missing here, so the form posted to /Admin and never reached this action.
+        [HttpPost("UserCreate")]
         [Authorize(Roles = "Admin,Root")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UserCreate(UserCreateModel model)
         {
+            // Only Root may hand out the Root and Admin roles; an Admin could otherwise create a Root account.
+            var forbidden = (model.SelectedRoles ?? new List<string>()).Except(AssignableRoles()).ToList();
+            if (forbidden.Any())
+            {
+                ModelState.AddModelError(nameof(model.SelectedRoles), T(
+                    $"Bu rolleri yalnızca Root verebilir: {string.Join(", ", forbidden)}",
+                    $"Diese Rollen kann nur Root vergeben: {string.Join(", ", forbidden)}"));
+            }
             if (!ModelState.IsValid)
             {
-                model.AllRoles = _roleManager.Roles.Select(r => r.Name!).ToList();
+                model.AllRoles = AssignableRoles();
                 return View(model);
             }
 
@@ -87,8 +168,9 @@ namespace SpeakingClub.Controllers
                 Email = model.Email,
                 UserName = model.UserName,
                 EmailConfirmed = model.EmailConfirmed,
-                LockoutEnabled = model.LockoutEnabled,
-                LockoutEnd = model.LockoutEnabled ? model.LockoutEnd : null
+                // Lockout after repeated wrong passwords stays on for every account (Identity's default);
+                // locking someone out on purpose is done from the edit page.
+                LockoutEnabled = true
             };
 
             var createResult = await _userManager.CreateAsync(user, model.Password);
@@ -99,7 +181,7 @@ namespace SpeakingClub.Controllers
                 {
                     ModelState.AddModelError("", error.Description);
                 }
-                model.AllRoles = _roleManager.Roles.Select(r => r.Name!).ToList();
+                model.AllRoles = AssignableRoles();
                 return View(model);
             }
 
@@ -112,13 +194,20 @@ namespace SpeakingClub.Controllers
                     {
                         ModelState.AddModelError("", error.Description);
                     }
-                    model.AllRoles = _roleManager.Roles.Select(r => r.Name!).ToList();
+                    model.AllRoles = AssignableRoles();
                     return View(model);
                 }
             }
 
-            TempData["SuccessMessage"] = "User created successfully!";
-            return RedirectToAction("Index"); // Adjust to your needs
+            TempData["SuccessMessage"] = T("Kullanıcı oluşturuldu.", "Der Benutzer wurde angelegt.");
+            return RedirectToAction(nameof(Users));
+        }
+
+        // Roles the signed-in user may give to someone: everything for Root, everything but Root and Admin otherwise.
+        private List<string> AssignableRoles()
+        {
+            var all = _roleManager.Roles.Select(r => r.Name!).ToList();
+            return User.IsInRole("Root") ? all : all.Where(r => r != "Root" && r != "Admin").ToList();
         }
         [Authorize(Roles = "Admin,Root")]
         [HttpPost("UserDelete")]
@@ -129,16 +218,16 @@ namespace SpeakingClub.Controllers
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                TempData["ErrorMessage"] = "User not found.";
-                return RedirectToAction("Index");
+                TempData["ErrorMessage"] = T("Kullanıcı bulunamadı.", "Benutzer nicht gefunden.");
+                return RedirectToAction(nameof(Users));
             }
 
             // Get the current logged-in user
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
             {
-                TempData["ErrorMessage"] = "Current user not found.";
-                return RedirectToAction("Index");
+                TempData["ErrorMessage"] = T("Oturumunuz bulunamadı. Lütfen yeniden giriş yapın.", "Ihre Sitzung wurde nicht gefunden. Bitte melden Sie sich erneut an.");
+                return RedirectToAction(nameof(Users));
             }
 
             // Check if the target user is the Root user
@@ -151,31 +240,31 @@ namespace SpeakingClub.Controllers
             if (isTargetRoot || (isTargetAdmin && !User.IsInRole("Root")))
             {
                 TempData["ErrorMessage"] = isTargetRoot
-                    ? "You cannot delete the Root user."
-                    : "Only Root users can delete Admin users.";
-                return RedirectToAction("Index");
+                    ? T("Root kullanıcısı silinemez.", "Der Root-Benutzer kann nicht gelöscht werden.")
+                    : T("Admin kullanıcılarını yalnızca Root silebilir.", "Admin-Benutzer kann nur Root löschen.");
+                return RedirectToAction(nameof(Users));
             }
 
             // Additional protection: Don't allow users to delete themselves
             if (user.Id == currentUser.Id)
             {
-                TempData["ErrorMessage"] = "You cannot delete your own account.";
-                return RedirectToAction("Index");
+                TempData["ErrorMessage"] = T("Kendi hesabınızı buradan silemezsiniz.", "Ihr eigenes Konto können Sie hier nicht löschen.");
+                return RedirectToAction(nameof(Users));
             }
 
             // Proceed to delete the user
             var result = await _userManager.DeleteAsync(user);
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = "User deleted successfully.";
+                TempData["SuccessMessage"] = T("Kullanıcı silindi.", "Der Benutzer wurde gelöscht.");
             }
             else
             {
-                TempData["ErrorMessage"] = "Error occurred while deleting the user: " +
+                TempData["ErrorMessage"] = T("Kullanıcı silinemedi: ", "Der Benutzer konnte nicht gelöscht werden: ") +
                     string.Join(", ", result.Errors.Select(e => e.Description));
             }
 
-            return RedirectToAction("Index");
+            return RedirectToAction(nameof(Users));
         }
 
         // Edit User Method (GET)
@@ -186,15 +275,15 @@ namespace SpeakingClub.Controllers
             var user = await _userManager.FindByIdAsync(id);
             if (user == null)
             {
-                TempData["ErrorMessage"] = "User not found.";
-                return RedirectToAction("Account");
+                TempData["ErrorMessage"] = T("Kullanıcı bulunamadı.", "Benutzer nicht gefunden.");
+                return RedirectToAction(nameof(Users));
             }
 
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
             {
-                TempData["ErrorMessage"] = "Current user not found.";
-                return RedirectToAction("Account");
+                TempData["ErrorMessage"] = T("Oturumunuz bulunamadı. Lütfen yeniden giriş yapın.", "Ihre Sitzung wurde nicht gefunden. Bitte melden Sie sich erneut an.");
+                return RedirectToAction(nameof(Users));
             }
 
             // Check roles
@@ -206,14 +295,14 @@ namespace SpeakingClub.Controllers
             // Security checks
             if (isTargetRoot && !isCurrentRoot)
             {
-                TempData["ErrorMessage"] = "Only Root can edit Root users.";
-                return RedirectToAction("Account");
+                TempData["ErrorMessage"] = T("Root kullanıcısını yalnızca Root düzenleyebilir.", "Den Root-Benutzer kann nur Root bearbeiten.");
+                return RedirectToAction(nameof(Users));
             }
 
             if (isTargetAdmin && !isCurrentRoot)
             {
-                TempData["ErrorMessage"] = "Only Root can edit Admin users.";
-                return RedirectToAction("Account");
+                TempData["ErrorMessage"] = T("Admin kullanıcılarını yalnızca Root düzenleyebilir.", "Admin-Benutzer kann nur Root bearbeiten.");
+                return RedirectToAction(nameof(Users));
             }
 
             // Prevent self-editing of critical fields
@@ -228,11 +317,13 @@ namespace SpeakingClub.Controllers
                 Email = user.Email!,
                 UserName = user.UserName!,
                 EmailConfirmed = user.EmailConfirmed,
-                Lockout = user.LockoutEnabled && user.LockoutEnd > DateTimeOffset.UtcNow,
+                Lockout = user.LockoutEnd > DateTimeOffset.UtcNow,
                 SelectedRoles = (await _userManager.GetRolesAsync(user)).ToList(),
                 AllRoles = _roleManager.Roles.Select(r => r.Name!).ToList(),
-                IsSelf = isSelf  // Add this to disable certain fields in view for self-editing
+                IsSelf = isSelf,
+                IsRootUser = isTargetRoot
             };
+            ViewBag.AssignableRoles = AssignableRoles();
 
             return View(model);
         }
@@ -243,24 +334,36 @@ namespace SpeakingClub.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UserEdit(UserEditModel model)
         {
+            // IsSelf/IsRootUser/AllRoles are display-only and not posted back; rebuild them for a redisplay.
+            async Task<IActionResult> Redisplay()
+            {
+                var target = await _userManager.FindByIdAsync(model.UserId);
+                model.AllRoles = _roleManager.Roles.Select(r => r.Name!).ToList();
+                model.IsSelf = target != null && target.Id == _userManager.GetUserId(User);
+                model.IsRootUser = target != null && await _userManager.IsInRoleAsync(target, "Root");
+                if (model.IsSelf || model.IsRootUser)
+                    model.SelectedRoles = target == null ? new List<string>() : (await _userManager.GetRolesAsync(target)).ToList();
+                ViewBag.AssignableRoles = AssignableRoles();
+                return View(model);
+            }
+
             if (!ModelState.IsValid)
             {
-                model.AllRoles = _roleManager.Roles.Select(r => r.Name!).ToList();
-                return View(model);
+                return await Redisplay();
             }
 
             var user = await _userManager.FindByIdAsync(model.UserId);
             if (user == null)
             {
-                TempData["ErrorMessage"] = "User not found.";
-                return RedirectToAction("Account");
+                TempData["ErrorMessage"] = T("Kullanıcı bulunamadı.", "Benutzer nicht gefunden.");
+                return RedirectToAction(nameof(Users));
             }
 
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null)
             {
-                TempData["ErrorMessage"] = "Current user not found.";
-                return RedirectToAction("Account");
+                TempData["ErrorMessage"] = T("Oturumunuz bulunamadı. Lütfen yeniden giriş yapın.", "Ihre Sitzung wurde nicht gefunden. Bitte melden Sie sich erneut an.");
+                return RedirectToAction(nameof(Users));
             }
 
             // Check roles
@@ -272,14 +375,14 @@ namespace SpeakingClub.Controllers
             // Security checks
             if (isTargetRoot && !isCurrentRoot)
             {
-                TempData["ErrorMessage"] = "Only Root can edit Root users.";
-                return RedirectToAction("Account");
+                TempData["ErrorMessage"] = T("Root kullanıcısını yalnızca Root düzenleyebilir.", "Den Root-Benutzer kann nur Root bearbeiten.");
+                return RedirectToAction(nameof(Users));
             }
 
             if (isTargetAdmin && !isCurrentRoot)
             {
-                TempData["ErrorMessage"] = "Only Root can edit Admin users.";
-                return RedirectToAction("Account");
+                TempData["ErrorMessage"] = T("Admin kullanıcılarını yalnızca Root düzenleyebilir.", "Admin-Benutzer kann nur Root bearbeiten.");
+                return RedirectToAction(nameof(Users));
             }
 
             // Prevent self-editing of critical fields
@@ -298,33 +401,37 @@ namespace SpeakingClub.Controllers
                 user.EmailConfirmed = model.EmailConfirmed;
             }
 
-            // Lockout settings (only for non-self and non-root users)
+            // Locking (only for other, non-root users). LockoutEnabled stays on: it is what makes Identity lock an
+            // account after repeated wrong passwords. It used to be switched off for every unlocked account.
             if (!isSelf && !isTargetRoot)
             {
-                user.LockoutEnabled = model.Lockout;
+                user.LockoutEnabled = true;
                 user.LockoutEnd = model.Lockout ? DateTimeOffset.MaxValue : null;
+                if (!model.Lockout) user.AccessFailedCount = 0;
             }
 
             var updateResult = await _userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
             {
                 AddErrors(updateResult);
-                model.AllRoles = _roleManager.Roles.Select(r => r.Name!).ToList();
-                return View(model);
+                return await Redisplay();
             }
 
-            // Role management (only for non-self and non-root users)
+            // Roles (only for other, non-root users). Only the roles the signed-in user may assign are changed:
+            // an Admin can neither give someone Root/Admin nor take it away.
             if (!isSelf && !isTargetRoot)
             {
+                var assignable = AssignableRoles();
+                var wanted = (model.SelectedRoles ?? new List<string>()).Intersect(assignable).ToList();
                 var currentRoles = await _userManager.GetRolesAsync(user);
-                var rolesToRemove = currentRoles.Except(model.SelectedRoles ?? new List<string>());
-                var rolesToAdd = (model.SelectedRoles ?? new List<string>()).Except(currentRoles);
+                var rolesToRemove = currentRoles.Intersect(assignable).Except(wanted).ToList();
+                var rolesToAdd = wanted.Except(currentRoles).ToList();
 
-                await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
-                await _userManager.AddToRolesAsync(user, rolesToAdd);
+                if (rolesToRemove.Any()) await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
+                if (rolesToAdd.Any()) await _userManager.AddToRolesAsync(user, rolesToAdd);
             }
 
-            // Password reset (only for non-self edits)
+            // Password reset (only for non-self edits; your own password is changed under "Hesabım")
             if (!isSelf && !string.IsNullOrWhiteSpace(model.Password))
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
@@ -332,13 +439,12 @@ namespace SpeakingClub.Controllers
                 if (!passwordResult.Succeeded)
                 {
                     AddErrors(passwordResult);
-                    model.AllRoles = _roleManager.Roles.Select(r => r.Name!).ToList();
-                    return View(model);
+                    return await Redisplay();
                 }
             }
 
-            TempData["SuccessMessage"] = "User updated successfully!";
-            return RedirectToAction("Account");
+            TempData["SuccessMessage"] = T("Kullanıcı bilgileri kaydedildi.", "Die Benutzerdaten wurden gespeichert.");
+            return RedirectToAction(nameof(Users));
         }
 
         private void AddErrors(IdentityResult result)
@@ -352,8 +458,14 @@ namespace SpeakingClub.Controllers
         #endregion
 
         #region  Roles
+        // Role pages had only the controller-wide authorisation, so a Teacher could create, rename and delete
+        // roles. They are Admin/Root only now, and the roles the code relies on can't be renamed or deleted.
+        private static readonly string[] SystemRoles = { "Root", "Admin", "Teacher", "User" };
+        private static bool IsSystemRole(string? name) => SystemRoles.Contains(name, StringComparer.OrdinalIgnoreCase);
+
         // GET: Role Create
         [HttpGet("RoleCreate")]
+        [Authorize(Roles = "Admin,Root")]
         public IActionResult RoleCreate()
         {
             return View();
@@ -361,6 +473,7 @@ namespace SpeakingClub.Controllers
 
         // POST: Role Create
         [HttpPost("RoleCreate")]
+        [Authorize(Roles = "Admin,Root")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RoleCreate(RoleCreateModel model)
         {
@@ -374,8 +487,8 @@ namespace SpeakingClub.Controllers
 
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = $"Role '{model.Name}' created successfully!";
-                return RedirectToAction("Index");
+                TempData["SuccessMessage"] = T($"“{model.Name}” rolü oluşturuldu.", $"Die Rolle „{model.Name}“ wurde angelegt.");
+                return RedirectToAction(nameof(Roles));
             }
 
             foreach (var error in result.Errors)
@@ -388,13 +501,20 @@ namespace SpeakingClub.Controllers
 
         // GET: Role Edit
         [HttpGet("RoleEdit/{id}")]
+        [Authorize(Roles = "Admin,Root")]
         public async Task<IActionResult> RoleEdit(string id)
         {
             var role = await _roleManager.FindByIdAsync(id);
             if (role == null)
             {
-                TempData["ErrorMessage"] = "Role not found";
-                return RedirectToAction("Index");
+                TempData["ErrorMessage"] = T("Rol bulunamadı.", "Rolle nicht gefunden.");
+                return RedirectToAction(nameof(Roles));
+            }
+            if (IsSystemRole(role.Name))
+            {
+                TempData["ErrorMessage"] = T($"“{role.Name}” sitenin çalışması için gerekli bir rol; adı değiştirilemez.",
+                                             $"„{role.Name}“ wird für die Website gebraucht und kann nicht umbenannt werden.");
+                return RedirectToAction(nameof(Roles));
             }
 
             var model = new RoleEditModel
@@ -408,6 +528,7 @@ namespace SpeakingClub.Controllers
 
         // POST: Role Edit
         [HttpPost("RoleEdit/{id}")]
+        [Authorize(Roles = "Admin,Root")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RoleEdit(RoleEditModel model)
         {
@@ -419,8 +540,14 @@ namespace SpeakingClub.Controllers
             var role = await _roleManager.FindByIdAsync(model.Id);
             if (role == null)
             {
-                TempData["ErrorMessage"] = "Role not found";
-                return RedirectToAction("Index");
+                TempData["ErrorMessage"] = T("Rol bulunamadı.", "Rolle nicht gefunden.");
+                return RedirectToAction(nameof(Roles));
+            }
+            if (IsSystemRole(role.Name) || IsSystemRole(model.Name))
+            {
+                TempData["ErrorMessage"] = T("Root, Admin, Teacher ve User rolleri sitenin çalışması için gereklidir; bu adlar değiştirilemez.",
+                                             "Die Rollen Root, Admin, Teacher und User braucht die Website; diese Namen können nicht geändert werden.");
+                return RedirectToAction(nameof(Roles));
             }
 
             role.Name = model.Name;
@@ -428,8 +555,8 @@ namespace SpeakingClub.Controllers
 
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = $"Role '{model.Name}' updated successfully!";
-                return RedirectToAction("Index");
+                TempData["SuccessMessage"] = T($"“{model.Name}” rolü kaydedildi.", $"Die Rolle „{model.Name}“ wurde gespeichert.");
+                return RedirectToAction(nameof(Roles));
             }
 
             foreach (var error in result.Errors)
@@ -442,49 +569,59 @@ namespace SpeakingClub.Controllers
 
         // POST: Role Delete
         [HttpPost("RoleDelete")]
+        [Authorize(Roles = "Admin,Root")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RoleDelete(string id)
         {
             var role = await _roleManager.FindByIdAsync(id);
             if (role == null)
             {
-                TempData["ErrorMessage"] = "Role not found";
-                return RedirectToAction("Index");
+                TempData["ErrorMessage"] = T("Rol bulunamadı.", "Rolle nicht gefunden.");
+                return RedirectToAction(nameof(Roles));
             }
 
-            // Prevent deletion of essential roles
-            if (role.Name == "Root" || role.Name == "Admin")
+            // Teacher and User were deletable before, which would have locked every teacher out of the panel.
+            if (IsSystemRole(role.Name))
             {
-                TempData["ErrorMessage"] = $"Cannot delete system role '{role.Name}'";
-                return RedirectToAction("Index");
+                TempData["ErrorMessage"] = T($"“{role.Name}” sitenin çalışması için gerekli bir rol; silinemez.",
+                                             $"„{role.Name}“ wird für die Website gebraucht und kann nicht gelöscht werden.");
+                return RedirectToAction(nameof(Roles));
             }
 
             var result = await _roleManager.DeleteAsync(role);
             if (result.Succeeded)
             {
-                TempData["SuccessMessage"] = $"Role '{role.Name}' deleted successfully!";
+                TempData["SuccessMessage"] = T($"“{role.Name}” rolü silindi.", $"Die Rolle „{role.Name}“ wurde gelöscht.");
             }
             else
             {
-                TempData["ErrorMessage"] = $"Error deleting role '{role.Name}'";
+                TempData["ErrorMessage"] = T($"“{role.Name}” rolü silinemedi.", $"Die Rolle „{role.Name}“ konnte nicht gelöscht werden.");
             }
 
-            return RedirectToAction("Index");
+            return RedirectToAction(nameof(Roles));
         }
         #endregion
 
         #region Services
+        private static readonly string[] TextLanguages = { "tr-TR", "de-DE" };
+
+        // Saves one text of the site (a key in Resources/SharedResource.<lang>.resx). Admin/Root only (the page
+        // never was open to teachers, the endpoint was). `lang` must be one of the two resource files, and the
+        // developer comment is only changed when one is sent — the editor doesn't send it.
         [HttpPost("EditTranslation")]
+        [Authorize(Roles = "Admin,Root")]
         [ValidateAntiForgeryToken]
-        public IActionResult EditTranslation(string name, string value, string comment, string lang)
+        public IActionResult EditTranslation(string name, string value, string? comment, string lang)
         {
             if (string.IsNullOrEmpty(name))
-                return Json(new { success = false, message = "Translation key is required." });
+                return Json(new { success = false, message = T("Metin anahtarı eksik.", "Der Textschlüssel fehlt.") });
+            if (!TextLanguages.Contains(lang))
+                return Json(new { success = false, message = T("Bilinmeyen dil.", "Unbekannte Sprache.") });
 
             var resxPath = GetResxPath(lang);
 
             if (!System.IO.File.Exists(resxPath))
-                return Json(new { success = false, message = "Localization file not found." });
+                return Json(new { success = false, message = T("Metin dosyası bulunamadı.", "Die Textdatei wurde nicht gefunden.") });
 
             var resxFile = XDocument.Load(resxPath);
 
@@ -504,30 +641,36 @@ namespace SpeakingClub.Controllers
                     dataElement.Add(new XElement("value", value ?? string.Empty));
                 }
 
-                var commentElement = dataElement.Element("comment");
-                if (commentElement != null)
+                if (comment != null)
                 {
-                    commentElement.Value = comment ?? string.Empty;
-                }
-                else
-                {
-                    dataElement.Add(new XElement("comment", comment ?? string.Empty));
+                    var commentElement = dataElement.Element("comment");
+                    if (commentElement != null)
+                    {
+                        commentElement.Value = comment;
+                    }
+                    else if (comment.Length > 0)
+                    {
+                        dataElement.Add(new XElement("comment", comment));
+                    }
                 }
 
                 resxFile.Save(resxPath);
-                
+
                 // Clear the resource cache so changes take effect immediately
                 _dynamicResourceService.ReloadResources();
-                
-                return Json(new { success = true, message = "Translation updated successfully." });
+
+                return Json(new { success = true, message = T("Metin kaydedildi.", "Der Text wurde gespeichert.") });
             }
 
-            return Json(new { success = false, message = "Translation key not found." });
+            return Json(new { success = false, message = T("Bu metin bulunamadı.", "Dieser Text wurde nicht gefunden.") });
         }
+
+        // Same folder the text list reads from (ResourceManagementViewComponent). This used the process's
+        // current directory, which under IIS isn't always the app folder.
         private string GetResxPath(string lang)
         {
             var fileName = $"SharedResource.{lang}.resx";
-            return Path.Combine(Directory.GetCurrentDirectory(), "Resources", fileName);
+            return Path.Combine(_env.ContentRootPath, "Resources", fileName);
         }
 
         #endregion
@@ -562,6 +705,9 @@ namespace SpeakingClub.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TagEdit(TagEditViewModel model)
         {
+            // Names are unique, ignoring case ("a1" and "A1" were two different tags)
+            if ((await _unitOfWork.Tags.GetAllAsync()).Any(t => t.TagId != model.TagId && string.Equals(t.Name?.Trim(), model.Name?.Trim(), StringComparison.OrdinalIgnoreCase)))
+                ModelState.AddModelError(nameof(model.Name), T("Bu adda bir etiket zaten var.", "Ein Schlagwort mit diesem Namen gibt es schon."));
             if (!ModelState.IsValid)
             {
                 // Re-populate selection lists if validation fails
@@ -589,8 +735,8 @@ namespace SpeakingClub.Controllers
             _unitOfWork.Tags.Update(tag);
             await _unitOfWork.SaveAsync();
 
-            TempData["SuccessMessage"] = "Tag updated successfully!";
-            return RedirectToAction("Index");
+            TempData["SuccessMessage"] = T("Etiket kaydedildi.", "Das Schlagwort wurde gespeichert.");
+            return RedirectToAction(nameof(Tags));
         }
 
 
@@ -601,8 +747,8 @@ namespace SpeakingClub.Controllers
             var tag = await _unitOfWork.Tags.GetByIdAsync(id);
             if (tag == null)
             {
-                TempData["ErrorMessage"] = "Tag not found.";
-                return RedirectToAction("Index");
+                TempData["ErrorMessage"] = T("Etiket bulunamadı.", "Schlagwort nicht gefunden.");
+                return RedirectToAction(nameof(Tags));
             }
 
             // Remove tag associations with blogs and quizzes
@@ -614,8 +760,8 @@ namespace SpeakingClub.Controllers
             _unitOfWork.Tags.Remove(tag);
             await _unitOfWork.SaveAsync();
 
-            TempData["SuccessMessage"] = "Tag deleted successfully!";
-            return RedirectToAction("Index"); // or TagList
+            TempData["SuccessMessage"] = T("Etiket silindi.", "Das Schlagwort wurde gelöscht.");
+            return RedirectToAction(nameof(Tags)); // or TagList
         }
 
 
@@ -636,18 +782,18 @@ namespace SpeakingClub.Controllers
             var tag = new Tag { Name = model.Name };
 
             // Optionally check for duplicates
-            var exists = (await _unitOfWork.Tags.GetAllAsync()).Any(t => t.Name == model.Name);
+            var exists = (await _unitOfWork.Tags.GetAllAsync()).Any(t => string.Equals(t.Name?.Trim(), model.Name?.Trim(), StringComparison.OrdinalIgnoreCase));
             if (exists)
             {
-                ModelState.AddModelError("Name", "This tag already exists.");
+                ModelState.AddModelError("Name", T("Bu adda bir etiket zaten var.", "Ein Schlagwort mit diesem Namen gibt es schon."));
                 return View(model);
             }
 
             await _unitOfWork.Tags.AddAsync(tag);
             await _unitOfWork.SaveAsync();
 
-            TempData["SuccessMessage"] = "Tag created successfully!";
-            return RedirectToAction("Index"); // Or TagList if you have a list page
+            TempData["SuccessMessage"] = T("Etiket oluşturuldu.", "Das Schlagwort wurde angelegt.");
+            return RedirectToAction(nameof(Tags)); // Or TagList if you have a list page
         }
 
         #endregion
@@ -679,6 +825,8 @@ namespace SpeakingClub.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CategoryEdit(CategoryEditViewModel model)
         {
+            if ((await _unitOfWork.Categories.GetAllAsync()).Any(c => c.CategoryId != model.CategoryId && string.Equals(c.Name?.Trim(), model.Name?.Trim(), StringComparison.OrdinalIgnoreCase)))
+                ModelState.AddModelError(nameof(model.Name), T("Bu adda bir kategori zaten var.", "Eine Kategorie mit diesem Namen gibt es schon."));
             if (!ModelState.IsValid)
             {
                 // Repopulate selections if validation fails
@@ -706,8 +854,8 @@ namespace SpeakingClub.Controllers
             _unitOfWork.Categories.Update(category);
             await _unitOfWork.SaveAsync();
 
-            TempData["SuccessMessage"] = "Category updated successfully!";
-            return RedirectToAction("Index");
+            TempData["SuccessMessage"] = T("Kategori kaydedildi.", "Die Kategorie wurde gespeichert.");
+            return RedirectToAction(nameof(Categories));
         }
 
         [HttpGet("CategoryCreate")]
@@ -728,6 +876,8 @@ namespace SpeakingClub.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CategoryCreate(CategoryCreateViewModel model)
         {
+            if ((await _unitOfWork.Categories.GetAllAsync()).Any(c => string.Equals(c.Name?.Trim(), model.Name?.Trim(), StringComparison.OrdinalIgnoreCase)))
+                ModelState.AddModelError(nameof(model.Name), T("Bu adda bir kategori zaten var.", "Eine Kategorie mit diesem Namen gibt es schon."));
             if (!ModelState.IsValid)
             {
                 model.AvailableBlogs = (await _unitOfWork.Blogs.GetAllAsync())
@@ -752,8 +902,8 @@ namespace SpeakingClub.Controllers
             await _unitOfWork.Categories.AddAsync(category);
             await _unitOfWork.SaveAsync();
 
-            TempData["SuccessMessage"] = "Category created successfully!";
-            return RedirectToAction("Index");
+            TempData["SuccessMessage"] = T("Kategori oluşturuldu.", "Die Kategorie wurde angelegt.");
+            return RedirectToAction(nameof(Categories));
         }
 
         [HttpPost("CategoryDelete/{id}")]
@@ -763,8 +913,8 @@ namespace SpeakingClub.Controllers
             var category = await _unitOfWork.Categories.GetByIdAsync(id);
             if (category == null)
             {
-                TempData["ErrorMessage"] = "Category not found.";
-                return RedirectToAction("Index");
+                TempData["ErrorMessage"] = T("Kategori bulunamadı.", "Kategorie nicht gefunden.");
+                return RedirectToAction(nameof(Categories));
             }
 
             // Remove associations (optional: depends on cascade behavior)
@@ -777,8 +927,8 @@ namespace SpeakingClub.Controllers
             _unitOfWork.Categories.Remove(category);
             await _unitOfWork.SaveAsync();
 
-            TempData["SuccessMessage"] = "Category deleted successfully!";
-            return RedirectToAction("Index");
+            TempData["SuccessMessage"] = T("Kategori silindi. İçindeki yazılar ve sınavlar duruyor, sadece kategorisiz kaldılar.", "Die Kategorie wurde gelöscht. Ihre Beiträge und Prüfungen bleiben erhalten, nur ohne Kategorie.");
+            return RedirectToAction(nameof(Categories));
         }
 
 
@@ -876,7 +1026,16 @@ namespace SpeakingClub.Controllers
                 if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
                     blog.Image = await SaveBlogCoverImageAsync(model.ImageFile);
-                    blog.OgImage = $"{SeoHelper.SiteUrl}{blog.Image}";
+                    if (blog.Image != null)
+                    {
+                        blog.OgImage = $"{SeoHelper.SiteUrl}{blog.Image}";
+                    }
+                    else
+                    {
+                        // An unsupported file used to give the post the bare site address as its share image
+                        TempData["WarningMessage"] = T("Kapak resmi kullanılamadı (JPG, PNG, GIF veya WEBP olmalı). Yazıyı düzenleyip yeni bir resim seçebilirsiniz.",
+                                                       "Das Titelbild wurde nicht angenommen (JPG, PNG, GIF oder WEBP). Sie können beim Bearbeiten ein neues wählen.");
+                    }
                 }
 
                 // Save blog first to get ID
@@ -888,9 +1047,10 @@ namespace SpeakingClub.Controllers
                 blog.Content = await ProcessAndMoveImagesAsync(blog.Content, blog.BlogId, mainImageTracker);
 
                 // Handle category
-                if (model.SelectedCategoryIds != null && model.SelectedCategoryIds.Any())
+                // One category per post; the form's "no category" choice posts 0
+                if (model.SelectedCategoryIds != null && model.SelectedCategoryIds.Any(id => id > 0))
                 {
-                    blog.CategoryId = model.SelectedCategoryIds.First();
+                    blog.CategoryId = model.SelectedCategoryIds.First(id => id > 0);
                 }
 
                 // Handle tags
@@ -915,16 +1075,16 @@ namespace SpeakingClub.Controllers
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();
 
-                TempData["SuccessMessage"] = "Blog created successfully!";
+                TempData["SuccessMessage"] = T("Yazı kaydedildi.", "Der Beitrag wurde gespeichert.");
                 _logger.LogInformation("Blog {BlogId} '{Title}' created successfully", blog.BlogId, blog.Title);
                 
-                return RedirectToAction("Index", new { scrollTo = "BlogManagement" });
+                return RedirectToAction(nameof(Blogs));
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error creating blog");
-                ModelState.AddModelError("", $"An error occurred while saving: {ex.Message}");
+                ModelState.AddModelError("", T($"Kaydederken bir hata oluştu: {ex.Message}", $"Beim Speichern ist ein Fehler aufgetreten: {ex.Message}"));
                 
                 ViewBag.Categories = (await _unitOfWork.Categories.GetAllAsync())
                     .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
@@ -942,8 +1102,8 @@ namespace SpeakingClub.Controllers
             var blog = await _unitOfWork.Blogs.GetAsync(id);
             if (blog == null)
             {
-                TempData["ErrorMessage"] = "Blog not found.";
-                return RedirectToAction("Index");
+                TempData["ErrorMessage"] = T("Yazı bulunamadı.", "Beitrag nicht gefunden.");
+                return RedirectToAction(nameof(Blogs));
             }
 
             // Load translations
@@ -1043,7 +1203,7 @@ namespace SpeakingClub.Controllers
             {
                 var questions = (await _unitOfWork.Questions.GetQuestionsByQuizIdAsync(selectedQuizId.Value)).ToList();
                 ViewBag.Questions = questions
-                    .Select(q => new SelectListItem(q.QuestionText, q.Id.ToString(), model.SelectedQuestionId.HasValue && q.Id == model.SelectedQuestionId.Value))
+                    .Select(q => new SelectListItem(HtmlUtility.StripHtml(q.QuestionText ?? string.Empty), q.Id.ToString(), model.SelectedQuestionId.HasValue && q.Id == model.SelectedQuestionId.Value))
                     .ToList();
             }
             else
@@ -1076,7 +1236,7 @@ namespace SpeakingClub.Controllers
                     {
                         var questions = (await _unitOfWork.Questions.GetQuestionsByQuizIdAsync(currentQuestion.QuizId)).ToList();
                         ViewBag.Questions = questions
-                            .Select(q => new SelectListItem(q.QuestionText, q.Id.ToString(), q.Id == model.SelectedQuestionId.Value))
+                            .Select(q => new SelectListItem(HtmlUtility.StripHtml(q.QuestionText ?? string.Empty), q.Id.ToString(), q.Id == model.SelectedQuestionId.Value))
                             .ToList();
                     }
                     else
@@ -1114,8 +1274,8 @@ namespace SpeakingClub.Controllers
                 var blog = await _unitOfWork.Blogs.GetAsync(model.BlogId);
                 if (blog == null)
                 {
-                    TempData["ErrorMessage"] = "Blog not found.";
-                    return RedirectToAction("Index");
+                    TempData["ErrorMessage"] = T("Yazı bulunamadı.", "Beitrag nicht gefunden.");
+                    return RedirectToAction(nameof(Blogs));
                 }
 
                 // Generate/validate slug
@@ -1155,26 +1315,34 @@ namespace SpeakingClub.Controllers
                 var mainImageTracker = new BlogImageTracker();
                 blog.Content = await ProcessAndMoveImagesAsync(blog.Content, blog.BlogId, mainImageTracker);
 
-                // Handle cover image update
+                // Cover image. The old file used to be deleted before the new one was saved: an unsupported file
+                // (a phone's HEIC photo, say) left the post with no cover at all, and since images are stored once
+                // per content, a cover shared with another post disappeared from that post too.
+                string? replacedCover = null;
                 if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
-                    if (!string.IsNullOrEmpty(blog.Image))
+                    var newCover = await SaveBlogCoverImageAsync(model.ImageFile);
+                    if (newCover != null)
                     {
-                        await DeleteBlogFileAsync(blog.Image);
+                        if (!string.IsNullOrEmpty(blog.Image) && blog.Image != newCover) replacedCover = blog.Image;
+                        blog.Image = newCover;
                     }
-                    
-                    blog.Image = await SaveBlogCoverImageAsync(model.ImageFile);
-                    blog.OgImage = $"{SeoHelper.SiteUrl}{blog.Image}";
+                    else
+                    {
+                        TempData["WarningMessage"] = T("Yeni kapak resmi kullanılamadı (JPG, PNG, GIF veya WEBP olmalı); eski resim duruyor.",
+                                                       "Das neue Titelbild wurde nicht angenommen (JPG, PNG, GIF oder WEBP); das alte bleibt.");
+                    }
                 }
-                else if (!string.IsNullOrEmpty(blog.Image))
+                if (!string.IsNullOrEmpty(blog.Image))
                 {
                     blog.OgImage = $"{SeoHelper.SiteUrl}{blog.Image}";
                 }
 
                 // Update category
-                if (model.SelectedCategoryIds != null && model.SelectedCategoryIds.Any())
+                // One category per post; the form's "no category" choice posts 0
+                if (model.SelectedCategoryIds != null && model.SelectedCategoryIds.Any(id => id > 0))
                 {
-                    blog.CategoryId = model.SelectedCategoryIds.First();
+                    blog.CategoryId = model.SelectedCategoryIds.First(id => id > 0);
                 }
                 else
                 {
@@ -1214,16 +1382,21 @@ namespace SpeakingClub.Controllers
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();
 
-                TempData["SuccessMessage"] = "Blog updated successfully!";
+                if (replacedCover != null && !await IsBlogImageInUseAsync(replacedCover))
+                {
+                    await DeleteBlogFileAsync(replacedCover);
+                }
+
+                TempData["SuccessMessage"] = T("Yazıdaki değişiklikler kaydedildi.", "Die Änderungen am Beitrag wurden gespeichert.");
                 _logger.LogInformation("Blog {BlogId} updated successfully", blog.BlogId);
                 
-                return RedirectToAction("Index", new { scrollTo = "BlogManagement" });
+                return RedirectToAction(nameof(Blogs));
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error updating blog {BlogId}", model.BlogId);
-                ModelState.AddModelError("", $"An error occurred while saving: {ex.Message}");
+                ModelState.AddModelError("", T($"Kaydederken bir hata oluştu: {ex.Message}", $"Beim Speichern ist ein Fehler aufgetreten: {ex.Message}"));
                 
                 ViewBag.Categories = (await _unitOfWork.Categories.GetAllAsync())
                     .Select(c => new SelectListItem(c.Name, c.CategoryId.ToString()));
@@ -1263,41 +1436,63 @@ namespace SpeakingClub.Controllers
                 var blog = await _unitOfWork.Blogs.GetAsync(id);
                 if (blog == null)
                 {
-                    TempData["ErrorMessage"] = "Blog not found.";
-                    return RedirectToAction("Index");
+                    TempData["ErrorMessage"] = T("Yazı bulunamadı.", "Beitrag nicht gefunden.");
+                    return RedirectToAction(nameof(Blogs));
                 }
 
                 _logger.LogInformation("Deleting blog {BlogId} - {Title}", blog.BlogId, blog.Title);
 
-                // Delete cover image
-                if (!string.IsNullOrEmpty(blog.Image))
-                {
-                    await DeleteBlogFileAsync(blog.Image);
-                }
-
                 // Delete translations
-                var translations = await _unitOfWork.BlogTranslations.GetAllAsync(bt => bt.BlogId == blog.BlogId);
+                var translations = (await _unitOfWork.BlogTranslations.GetAllAsync(bt => bt.BlogId == blog.BlogId)).ToList();
                 foreach (var translation in translations)
                 {
                     _unitOfWork.BlogTranslations.Remove(translation);
                 }
 
-                // Remove blog
+                // Images the post uses (cover + inline, all languages); deleted below if nothing else uses them
+                var images = new HashSet<string>();
+                if (!string.IsNullOrEmpty(blog.Image)) images.Add(blog.Image);
+                foreach (var html in translations.Select(t => t.Content).Append(blog.Content))
+                {
+                    foreach (Match match in Regex.Matches(html ?? string.Empty, @"/blog/(?:img|gif)/[^""'\s)?#]+"))
+                    {
+                        images.Add(match.Value);
+                    }
+                }
+
+                // Remove blog (its attachment rows go with it: BlogFiles cascade)
                 _unitOfWork.Blogs.Remove(blog);
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();
 
-                TempData["SuccessMessage"] = $"Blog '{blog.Title}' deleted successfully!";
+                // Files only after the database delete went through. The cover used to be deleted first, so a
+                // failed delete left the post without its picture, and shared images vanished from other posts;
+                // attachments were never removed from disk.
+                foreach (var image in images)
+                {
+                    if (!await IsBlogImageInUseAsync(image)) await DeleteBlogFileAsync(image);
+                }
+                try
+                {
+                    var attachmentDir = Path.Combine(_env.WebRootPath, "blog", "files", blog.BlogId.ToString());
+                    if (Directory.Exists(attachmentDir)) Directory.Delete(attachmentDir, recursive: true);
+                }
+                catch (Exception fileEx)
+                {
+                    _logger.LogWarning(fileEx, "Could not delete the attachment folder of blog {BlogId}", blog.BlogId);
+                }
+
+                TempData["SuccessMessage"] = T($"“{blog.Title}” yazısı silindi.", $"Der Beitrag „{blog.Title}“ wurde gelöscht.");
                 _logger.LogInformation("Blog {BlogId} deleted successfully", blog.BlogId);
                 
-                return RedirectToAction("Index", new { scrollTo = "BlogManagement" });
+                return RedirectToAction(nameof(Blogs));
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error deleting blog {BlogId}", id);
-                TempData["ErrorMessage"] = $"Error deleting blog: {ex.Message}";
-                return RedirectToAction("Index");
+                TempData["ErrorMessage"] = T($"Yazı silinemedi: {ex.Message}", $"Der Beitrag konnte nicht gelöscht werden: {ex.Message}");
+                return RedirectToAction(nameof(Blogs));
             }
         }
 
@@ -1344,10 +1539,11 @@ namespace SpeakingClub.Controllers
                 return Json(new List<object>());
 
             var questions = await _unitOfWork.Questions.GetQuestionsByQuizIdAsync(quizId);
+            // Question text is editor HTML; the dropdown showed the tags ("<p>…</p>")
             var result = questions.Select(q => new
             {
                 questionId = q.Id,
-                questionText = q.QuestionText
+                questionText = HtmlUtility.StripHtml(q.QuestionText ?? string.Empty).Trim()
             });
             return Json(result);
         }
@@ -1369,7 +1565,10 @@ namespace SpeakingClub.Controllers
                 .Replace("ö", "o")
                 .Replace("ş", "s")
                 .Replace("ü", "u")
-                .Replace("İ", "i");
+                .Replace("İ", "i")
+                // German letters were dropped ("Straße" became "strae")
+                .Replace("ä", "a")
+                .Replace("ß", "ss");
             
             // Replace spaces with hyphens
             slug = Regex.Replace(slug, @"\s+", "-");
@@ -1846,6 +2045,17 @@ namespace SpeakingClub.Controllers
         }
 
         /// <summary>
+        /// Cover and inline images are named by their content hash, so two posts can share one file. Before one is
+        /// deleted, check that no post and no translation still uses it.
+        /// </summary>
+        private async Task<bool> IsBlogImageInUseAsync(string relativePath)
+        {
+            if ((await _unitOfWork.Blogs.GetAllAsync(b => b.Image == relativePath || b.Content.Contains(relativePath))).Any())
+                return true;
+            return (await _unitOfWork.BlogTranslations.GetAllAsync(t => t.Content.Contains(relativePath))).Any();
+        }
+
+        /// <summary>
         /// Deletes a blog file (image or other asset)
         /// </summary>
         private async Task DeleteBlogFileAsync(string relativePath)
@@ -2160,13 +2370,13 @@ namespace SpeakingClub.Controllers
                 TempData["SuccessMessage"] = $"Cleanup complete. Deleted {deletedCount} orphaned images.";
                 _logger.LogInformation("Orphaned image cleanup complete. Deleted {Count} files", deletedCount);
                 
-                return RedirectToAction("Index");
+                return RedirectToAction(nameof(Blogs));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during orphaned image cleanup");
                 TempData["ErrorMessage"] = "Error during cleanup: " + ex.Message;
-                return RedirectToAction("Index");
+                return RedirectToAction(nameof(Blogs));
             }
         }
 
@@ -2668,12 +2878,12 @@ namespace SpeakingClub.Controllers
                     await _unitOfWork.Words.AddAsync(word);
                     await _unitOfWork.SaveAsync();
 
-                    TempData["SuccessMessage"] = "Word created successfully!";
-                    return RedirectToAction("Index");
+                    TempData["SuccessMessage"] = T("Kelime kaydedildi.", "Das Wort wurde gespeichert.");
+                    return RedirectToAction(nameof(Words));
                 }
                 catch (Exception ex)
                 {
-                    ModelState.AddModelError("", $"Error creating word: {ex.Message}");
+                    ModelState.AddModelError("", T($"Kelime kaydedilemedi: {ex.Message}", $"Das Wort konnte nicht gespeichert werden: {ex.Message}"));
                 }
             }
 
@@ -2699,8 +2909,8 @@ namespace SpeakingClub.Controllers
 
                 if (word == null)
                 {
-                    TempData["ErrorMessage"] = "Word not found";
-                    return RedirectToAction("Index");
+                    TempData["ErrorMessage"] = T("Kelime bulunamadı.", "Wort nicht gefunden.");
+                    return RedirectToAction(nameof(Words));
                 }
 
                 // Remove any quiz relationships first
@@ -2716,13 +2926,13 @@ namespace SpeakingClub.Controllers
                 _unitOfWork.Words.Remove(word);
                 await _unitOfWork.SaveAsync();
 
-                TempData["SuccessMessage"] = $"Word '{word.Term}' deleted successfully";
-                return RedirectToAction("Index");
+                TempData["SuccessMessage"] = T($"“{word.Term}” kelimesi silindi.", $"Das Wort „{word.Term}“ wurde gelöscht.");
+                return RedirectToAction(nameof(Words));
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"Error deleting word: {ex.Message}";
-                return RedirectToAction("Index");
+                TempData["ErrorMessage"] = T($"Kelime silinemedi: {ex.Message}", $"Das Wort konnte nicht gelöscht werden: {ex.Message}");
+                return RedirectToAction(nameof(Words));
             }
         }
 
@@ -2796,12 +3006,12 @@ namespace SpeakingClub.Controllers
                     _unitOfWork.Words.Update(word);
                     await _unitOfWork.SaveAsync();
 
-                    TempData["SuccessMessage"] = "Word updated successfully!";
-                    return RedirectToAction("Index");
+                    TempData["SuccessMessage"] = T("Kelimedeki değişiklikler kaydedildi.", "Die Änderungen am Wort wurden gespeichert.");
+                    return RedirectToAction(nameof(Words));
                 }
                 catch (Exception ex)
                 {
-                    ModelState.AddModelError("", $"Error updating word: {ex.Message}");
+                    ModelState.AddModelError("", T($"Kelime kaydedilemedi: {ex.Message}", $"Das Wort konnte nicht gespeichert werden: {ex.Message}"));
                 }
             }
 
@@ -2819,10 +3029,28 @@ namespace SpeakingClub.Controllers
         #endregion
 
         #region Quiz
+        // Student answers point at answer options. Removing an option (or its question) used to delete those
+        // answers as well, which quietly rewrote old results. They stay now and only lose the link to the option
+        // that is gone; the stored scores don't change.
+        private async Task DetachResponsesAsync(List<int> answerIds)
+        {
+            if (answerIds.Count == 0) return;
+            var responses = await _unitOfWork.QuizResponses.GetAllAsync(r => r.QuizAnswerId != null && answerIds.Contains(r.QuizAnswerId.Value));
+            foreach (var response in responses)
+            {
+                response.QuizAnswerId = null;
+                response.QuizAnswer = null!;
+            }
+        }
+
+        // A quiz is deleted with its questions, its students' results and its media files.
+        // The old "delete the quiz, keep the questions" option could not work: Question.QuizId is a required
+        // foreign key, so setting it to 0 either failed the save or deleted the questions anyway. The submissions
+        // were also loaded without their responses, so a quiz that students had taken couldn't be deleted at all.
         [HttpPost("QuizDelete/{id}")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Root,Admin,Teacher")]
-        public async Task<IActionResult> QuizDelete(int id, bool deleteQuestions = false)
+        public async Task<IActionResult> QuizDelete(int id)
         {
             using var transaction = await _unitOfWork.BeginTransactionAsync();
             try
@@ -2830,78 +3058,58 @@ namespace SpeakingClub.Controllers
                 var quiz = await _unitOfWork.Quizzes.GetByIdAsync(id);
                 if (quiz == null)
                 {
-                    TempData["ErrorMessage"] = "Quiz not found!";
-                    return RedirectToAction("Index");
+                    TempData["ErrorMessage"] = T("Sınav bulunamadı.", "Prüfung nicht gefunden.");
+                    return RedirectToAction(nameof(Quizzes));
                 }
 
-                // Delete quiz media files (audio/video)
-                DeleteQuizMediaFiles(quiz);
-
-                // Remove related quiz submissions & responses
-                var submissions = (await _unitOfWork.QuizSubmissions.GetAllAsync())
-                    .Where(qs => qs.QuizId == id)
-                    .ToList();
-                foreach (var submission in submissions)
+                var submissions = (await _unitOfWork.QuizSubmissions.GetAllAsync(s => s.QuizId == id)).ToList();
+                var submissionIds = submissions.Select(s => s.QuizSubmissionId).ToList();
+                if (submissionIds.Count > 0)
                 {
-                    // Remove responses first
-                    foreach (var response in submission.QuizResponses.ToList())
+                    foreach (var response in await _unitOfWork.QuizResponses.GetAllAsync(r => submissionIds.Contains(r.QuizSubmissionId)))
                     {
                         _unitOfWork.QuizResponses.Remove(response);
                     }
+                }
+                foreach (var submission in submissions)
+                {
                     _unitOfWork.QuizSubmissions.Remove(submission);
                 }
 
-                // Remove word and tag relationships if needed
+                var questions = quiz.Questions.ToList();
+                await DetachResponsesAsync(questions.SelectMany(q => q.Answers ?? new List<Entity.QuizAnswer>()).Select(a => a.Id).ToList());
+
                 quiz.Words?.Clear();
                 quiz.Tags?.Clear();
-
-                if (deleteQuestions)
+                foreach (var question in questions)
                 {
-                    // User chose to delete questions and their files
-                    foreach (var question in quiz.Questions.ToList())
+                    foreach (var answer in (question.Answers ?? new List<Entity.QuizAnswer>()).ToList())
                     {
-                        // Delete question media files (images, audio, videos)
-                        DeleteQuestionMediaFiles(question);
-
-                        // First, remove all answers associated with the question
-                        foreach (var answer in question.Answers.ToList())
-                        {
-                            _unitOfWork.GenericRepository<Entity.QuizAnswer>().Remove(answer);
-                        }
-                        // Now, remove the question itself using the generic repository
-                        _unitOfWork.GenericRepository<Entity.Question>().Remove(question);
+                        _unitOfWork.GenericRepository<Entity.QuizAnswer>().Remove(answer);
                     }
-                    _logger.LogInformation("Deleted quiz {QuizId} with {QuestionCount} questions and their files", id, quiz.Questions.Count);
+                    _unitOfWork.GenericRepository<Entity.Question>().Remove(question);
                 }
-                else
-                {
-                    // User chose NOT to delete questions - unlink them from quiz
-                    foreach (var question in quiz.Questions.ToList())
-                    {
-                        question.QuizId = 0;
-                        question.Quiz = null;
-                        _unitOfWork.GenericRepository<Entity.Question>().Update(question);
-                    }
-                    _logger.LogInformation("Deleted quiz {QuizId} but preserved {QuestionCount} questions", id, quiz.Questions.Count);
-                }
-
-                // Remove the quiz itself
                 _unitOfWork.Quizzes.Remove(quiz);
 
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();
 
-                TempData["SuccessMessage"] = deleteQuestions 
-                    ? "Quiz and associated questions deleted successfully!" 
-                    : "Quiz deleted successfully! Questions have been preserved.";
+                // Files go only once the database delete has gone through.
+                DeleteQuizMediaFiles(quiz);
+                foreach (var question in questions)
+                {
+                    DeleteQuestionMediaFiles(question);
+                }
+                _logger.LogInformation("Deleted quiz {QuizId} with {QuestionCount} questions and {SubmissionCount} submissions", id, questions.Count, submissions.Count);
+                TempData["SuccessMessage"] = T($"“{quiz.Title}” sınavı silindi.", $"Die Prüfung „{quiz.Title}“ wurde gelöscht.");
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error deleting quiz {QuizId}", id);
-                TempData["ErrorMessage"] = $"Error deleting quiz: {ex.Message}";
+                TempData["ErrorMessage"] = T($"Sınav silinemedi: {ex.Message}", $"Die Prüfung konnte nicht gelöscht werden: {ex.Message}");
             }
-            return RedirectToAction("Index", new { scrollTo = "QuizzesManagement" });
+            return RedirectToAction(nameof(Quizzes));
         }
 
 
@@ -3019,6 +3227,8 @@ namespace SpeakingClub.Controllers
                 finalTeacherName = user.UserName;
             }
 
+            CleanAndValidateNewQuizQuestions(model);
+
             if (ModelState.IsValid)
             {
                 using var transaction = await _unitOfWork.BeginTransactionAsync();
@@ -3097,13 +3307,13 @@ namespace SpeakingClub.Controllers
                     await _unitOfWork.SaveAsync();
                     await transaction.CommitAsync();
 
-                    TempData["SuccessMessage"] = "Quiz created successfully!";
-                    return RedirectToAction("Index");
+                    TempData["SuccessMessage"] = T("Sınav kaydedildi.", "Die Prüfung wurde gespeichert.");
+                    return RedirectToAction(nameof(Quizzes));
                 }
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
-                    ModelState.AddModelError("", $"Error creating quiz: {ex.Message}");
+                    ModelState.AddModelError("", T($"Sınav kaydedilemedi: {ex.Message}", $"Die Prüfung konnte nicht gespeichert werden: {ex.Message}"));
                 }
             }
 
@@ -3296,6 +3506,7 @@ namespace SpeakingClub.Controllers
                 model.Categories = await RepopulateCategories();
                 model.Tags = await RepopulateTags();
                 model.Words = await RepopulateWords();
+                await RepopulateTeacherAsync(model);
                 return View(model);
             }
 
@@ -3390,16 +3601,17 @@ namespace SpeakingClub.Controllers
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();
 
-                TempData["SuccessMessage"] = "Quiz updated successfully!";
-                return RedirectToAction("Index");
+                TempData["SuccessMessage"] = T("Sınavdaki değişiklikler kaydedildi.", "Die Änderungen an der Prüfung wurden gespeichert.");
+                return RedirectToAction(nameof(Quizzes));
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                ModelState.AddModelError("", $"Error updating quiz: {ex.Message}");
+                ModelState.AddModelError("", T($"Sınav kaydedilemedi: {ex.Message}", $"Die Prüfung konnte nicht gespeichert werden: {ex.Message}"));
                 model.Categories = await RepopulateCategories();
                 model.Tags = await RepopulateTags();
                 model.Words = await RepopulateWords();
+                await RepopulateTeacherAsync(model);
                 return View(model);
             }
         }
@@ -3606,15 +3818,8 @@ namespace SpeakingClub.Controllers
                 {
                     foreach (var a in question.Answers.ToList())
                     {
-                        // CRITICAL: Delete all QuizResponses that reference this answer BEFORE deleting the answer
-                        var responsesToDelete = (await _unitOfWork.QuizResponses.GetAllAsync())
-                            .Where(r => r.QuizAnswerId == a.Id)
-                            .ToList();
-                        
-                        foreach (var response in responsesToDelete)
-                        {
-                            _unitOfWork.QuizResponses.Remove(response);
-                        }
+                        // Students' answers that chose this option stay; they only lose the link (see DetachResponsesAsync)
+                        await DetachResponsesAsync(new List<int> { a.Id });
 
                         question.Answers.Remove(a);
                         _unitOfWork.GenericRepository<Entity.QuizAnswer>().Remove(a);
@@ -3693,16 +3898,8 @@ namespace SpeakingClub.Controllers
 
                 foreach (var answer in answersToRemove)
                 {
-                    // CRITICAL: Delete all QuizResponses that reference this answer BEFORE deleting the answer
-                    // This prevents foreign key constraint violations
-                    var responsesToDelete = (await _unitOfWork.QuizResponses.GetAllAsync())
-                        .Where(r => r.QuizAnswerId == answer.Id)
-                        .ToList();
-                    
-                    foreach (var response in responsesToDelete)
-                    {
-                        _unitOfWork.QuizResponses.Remove(response);
-                    }
+                    // Students' answers that chose this option stay; they only lose the link (see DetachResponsesAsync)
+                    await DetachResponsesAsync(new List<int> { answer.Id });
 
                     // Remove from parent collection first to avoid reattachment by change tracker
                     if (question.Answers != null && question.Answers.Contains(answer))
@@ -3757,8 +3954,43 @@ namespace SpeakingClub.Controllers
             }
         }
 
+        // Questions of a new quiz as the form posts them: completely empty cards and empty answer rows are
+        // dropped, and each remaining question needs a text, two answers and a correct one. This page used
+        // to save whatever came in, so a question without a correct answer could never be answered right.
+        private void CleanAndValidateNewQuizQuestions(QuizCreateViewModel model)
+        {
+            model.Questions = (model.Questions ?? new List<QuestionViewModel>())
+                .Where(q => !string.IsNullOrWhiteSpace(q.QuestionText)
+                         || (q.Answers?.Any(a => !string.IsNullOrWhiteSpace(a.AnswerText)) ?? false)
+                         || q.ImageFile != null || q.AudioFile != null || !string.IsNullOrWhiteSpace(q.VideoUrl))
+                .ToList();
+            // Errors were recorded against the posted positions; check again against the cleaned list
+            foreach (var key in ModelState.Keys.Where(k => k.StartsWith("Questions[")).ToList())
+            {
+                ModelState.Remove(key);
+            }
+            for (var i = 0; i < model.Questions.Count; i++)
+            {
+                var question = model.Questions[i];
+                question.Answers = (question.Answers ?? new List<AnswerViewModel>()).Where(a => !string.IsNullOrWhiteSpace(a.AnswerText)).ToList();
+                if (string.IsNullOrWhiteSpace(question.QuestionText))
+                    ModelState.AddModelError($"Questions[{i}].QuestionText", T($"Soru {i + 1}: soru metni boş.", $"Frage {i + 1}: Der Fragetext fehlt."));
+                if (question.Answers.Count < 2)
+                    ModelState.AddModelError($"Questions[{i}].Answers", T($"Soru {i + 1}: en az iki cevap yazın.", $"Frage {i + 1}: Schreiben Sie mindestens zwei Antworten."));
+                else if (!question.Answers.Any(a => a.IsCorrect))
+                    ModelState.AddModelError($"Questions[{i}].Answers", T($"Soru {i + 1}: doğru cevabı işaretleyin.", $"Frage {i + 1}: Markieren Sie die richtige Antwort."));
+            }
+        }
+
         private void ValidateQuestions(QuizEditViewModel model)
         {
+            // [ValidateAtLeastOneCorrectAnswer] also fires for empty question cards, which are simply skipped
+            // on save; the checks below replace its errors.
+            foreach (var key in ModelState.Keys.Where(k => System.Text.RegularExpressions.Regex.IsMatch(k, @"^Questions\[\d+\]\.Answers$")).ToList())
+            {
+                ModelState.Remove(key);
+            }
+
             // Helper to check if a question is empty
             bool IsEmptyQuestion(QuestionEditViewModel qm) =>
                 string.IsNullOrWhiteSpace(qm.QuestionText)
@@ -3779,14 +4011,14 @@ namespace SpeakingClub.Controllers
                 // Non-empty question must have question text
                 if (string.IsNullOrWhiteSpace(question.QuestionText))
                 {
-                    ModelState.AddModelError($"Questions[{i}].QuestionText", "Question text is required for non-empty questions.");
+                    ModelState.AddModelError($"Questions[{i}].QuestionText", T($"Soru {i + 1}: soru metni boş.", $"Frage {i + 1}: Der Fragetext fehlt."));
                 }
 
                 // Check that at least one answer has text
                 bool hasAnyAnswerText = question.Answers != null && question.Answers.Any(a => !string.IsNullOrWhiteSpace(a.AnswerText));
                 if (!hasAnyAnswerText)
                 {
-                    ModelState.AddModelError($"Questions[{i}].Answers", "At least one answer is required for each question.");
+                    ModelState.AddModelError($"Questions[{i}].Answers", T($"Soru {i + 1}: en az bir cevap yazın.", $"Frage {i + 1}: Schreiben Sie mindestens eine Antwort."));
                 }
 
                 // Validate individual answers that are not empty
@@ -3811,10 +4043,34 @@ namespace SpeakingClub.Controllers
                                           question.Answers.Any(a => !string.IsNullOrWhiteSpace(a.AnswerText) && a.IsCorrect == "true");
                     if (!hasCorrectAnswer)
                     {
-                        ModelState.AddModelError($"Questions[{i}].Answers", "At least one answer must be marked as correct.");
+                        ModelState.AddModelError($"Questions[{i}].Answers", T($"Soru {i + 1}: doğru cevabı işaretleyin.", $"Frage {i + 1}: Markieren Sie die richtige Antwort."));
                     }
                 }
             }
+        }
+
+        // The quiz edit page lost its teacher list (and the teacher's name) whenever it was shown again after an
+        // error, leaving an empty dropdown.
+        private async Task RepopulateTeacherAsync(QuizEditViewModel model)
+        {
+            var teachers = new List<User>();
+            foreach (var user in _userManager.Users.ToList())
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                if (roles.Any(r => r == "Root" || r == "Admin" || r == "Teacher")) teachers.Add(user);
+            }
+            model.TeacherOptions = teachers.Select(u => new SelectListItem
+            {
+                Value = u.UserName ?? u.Id,
+                Text = (!string.IsNullOrWhiteSpace(u.FirstName) || !string.IsNullOrWhiteSpace(u.LastName))
+                    ? string.Join(' ', new[] { u.FirstName, u.LastName }.Where(s => !string.IsNullOrWhiteSpace(s)))
+                    : (u.UserName ?? u.Email ?? "(unknown)")
+            }).ToList();
+            var current = model.IsAnonymous ? null : teachers.FirstOrDefault(t => t.UserName == model.TeacherId);
+            model.TeacherName = model.IsAnonymous
+                ? T("Anonim", "Anonym")
+                : current == null ? (model.TeacherId ?? string.Empty)
+                : string.Join(' ', new[] { current.FirstName, current.LastName }.Where(s => !string.IsNullOrWhiteSpace(s)));
         }
 
         private async Task<IEnumerable<SelectListItem>> RepopulateCategories()
@@ -3852,14 +4108,14 @@ namespace SpeakingClub.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["ErrorMessage"] = "Please fix the validation errors.";
+                TempData["ErrorMessage"] = T("Lütfen işaretli alanları düzeltin.", "Bitte korrigieren Sie die markierten Felder.");
                 return View(model);
             }
 
             // Validate that at least one image is provided
             if (model.CarouselImage == null)
             {
-                ModelState.AddModelError("CarouselImage", "Primary image is required.");
+                ModelState.AddModelError("CarouselImage", T("Lütfen bir görsel seçin.", "Bitte wählen Sie ein Bild."));
                 return View(model);
             }
 
@@ -3895,20 +4151,26 @@ namespace SpeakingClub.Controllers
 
                 if (carouselId <= 0)
                 {
-                    TempData["ErrorMessage"] = "An error occurred while creating the carousel.";
+                    TempData["ErrorMessage"] = T("Slayt kaydedilemedi. Lütfen tekrar deneyin.", "Das Slider-Bild konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.");
                     return View(model);
                 }
 
-                // Save translations using the valid ID
+                // Save translations using the valid ID. The form's Turkish texts are the Turkish translation too.
+                model.TranslationsTR = new CarouselTranslation
+                {
+                    Title = model.CarouselTitle,
+                    Description = model.CarouselDescription,
+                    LinkText = model.CarouselLinkText
+                };
                 SaveAllTranslations(_manageResourceService, carouselId, model);
 
-                TempData["SuccessMessage"] = "Carousel created successfully!";
-                return RedirectToAction("Index", new { scrollTo = "SlideListManagement" });
+                TempData["SuccessMessage"] = T("Slayt eklendi.", "Das Slider-Bild wurde hinzugefügt.");
+                return RedirectToAction(nameof(Slides));
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Failed to create carousel. Exception: {ex.Message}");
-                TempData["ErrorMessage"] = "An error occurred while creating the carousel.";
+                TempData["ErrorMessage"] = T("Slayt kaydedilemedi. Lütfen tekrar deneyin.", "Das Slider-Bild konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.");
                 return View(model);
             }
         }
@@ -3962,6 +4224,10 @@ namespace SpeakingClub.Controllers
                 CarouselDescriptionDE = GetTranslation($"Carousel_{carousel.SlideId}_Description", "de-DE", carousel.CarouselDescription),
                 CarouselLinkTextDE = GetTranslation($"Carousel_{carousel.SlideId}_LinkText", "de-DE", carousel.CarouselLinkText)
             };
+            // The form has one set of Turkish texts: what the Turkish site shows (the translation, else the base text)
+            model.CarouselTitle = model.CarouselTitleTR;
+            model.CarouselDescription = model.CarouselDescriptionTR;
+            model.CarouselLinkText = model.CarouselLinkTextTR;
 
             Console.WriteLine("[INFO] Loaded carousel and translations successfully.");
             return View(model);
@@ -3993,8 +4259,8 @@ namespace SpeakingClub.Controllers
             var carousel = await _unitOfWork.Slides.GetByIdAsync(model.CarouselId);
             if (carousel == null)
             {
-                TempData["ErrorMessage"] = "Carousel not found.";
-                return RedirectToAction("Index", new { scrollTo = "SlideListManagement" });
+                TempData["ErrorMessage"] = T("Slayt bulunamadı.", "Slider-Bild nicht gefunden.");
+                return RedirectToAction(nameof(Slides));
             }
 
             try
@@ -4045,7 +4311,10 @@ namespace SpeakingClub.Controllers
                     }
                 }
 
-                // Update translations
+                // Update translations. The Turkish texts of the form are both the base text and the Turkish translation.
+                model.CarouselTitleTR = model.CarouselTitle;
+                model.CarouselDescriptionTR = model.CarouselDescription;
+                model.CarouselLinkTextTR = model.CarouselLinkText;
                 UpdateCarouselTranslations(carousel.SlideId, model);
 
                 // Log before save
@@ -4060,13 +4329,13 @@ namespace SpeakingClub.Controllers
                 
                 _logger.LogInformation($"[CarouselEdit] After SaveAsync - Changes committed to database");
                 
-                TempData["SuccessMessage"] = "Carousel updated successfully!";
-                return RedirectToAction("Index", new { scrollTo = "SlideListManagement" });
+                TempData["SuccessMessage"] = T("Slayttaki değişiklikler kaydedildi.", "Die Änderungen am Slider-Bild wurden gespeichert.");
+                return RedirectToAction(nameof(Slides));
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Failed to update carousel. Exception: {ex.Message}");
-                TempData["ErrorMessage"] = "An error occurred while updating the carousel.";
+                TempData["ErrorMessage"] = T("Slayt kaydedilemedi. Lütfen tekrar deneyin.", "Das Slider-Bild konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.");
                 return View(model);
             }
         }
@@ -4079,8 +4348,8 @@ namespace SpeakingClub.Controllers
             var carousel = await _unitOfWork.Slides.GetByIdAsync(id);
             if (carousel == null)
             {
-                TempData["ErrorMessage"] = "Carousel not found.";
-                return RedirectToAction("Index", new { scrollTo = "SlideListManagement" });
+                TempData["ErrorMessage"] = T("Slayt bulunamadı.", "Slider-Bild nicht gefunden.");
+                return RedirectToAction(nameof(Slides));
             }
 
             try
@@ -4097,15 +4366,15 @@ namespace SpeakingClub.Controllers
                 await _unitOfWork.Slides.DeleteAsync(id);
                 await _unitOfWork.SaveAsync();
 
-                TempData["SuccessMessage"] = "Carousel deleted successfully!";
+                TempData["SuccessMessage"] = T("Slayt silindi.", "Das Slider-Bild wurde gelöscht.");
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Failed to delete carousel with ID {id}. Exception: {ex.Message}");
-                TempData["ErrorMessage"] = "An error occurred while deleting the carousel.";
+                TempData["ErrorMessage"] = T("Slayt silinemedi.", "Das Slider-Bild konnte nicht gelöscht werden.");
             }
 
-            return RedirectToAction("Index", new { scrollTo = "SlideListManagement" });
+            return RedirectToAction(nameof(Slides));
         }
 
         #region Carousel Helper Methods
@@ -4121,14 +4390,14 @@ namespace SpeakingClub.Controllers
 
             if (!allowedExtensions.Contains(fileExtension))
             {
-                ModelState.AddModelError("", $"{imageName} image must be a valid image format (jpg, jpeg, png, gif, webp).");
+                ModelState.AddModelError("", T("Görsel JPG, PNG, GIF veya WEBP olmalı.", "Das Bild muss JPG, PNG, GIF oder WEBP sein."));
                 return null;
             }
 
             // Validate file size (max 5MB)
             if (file.Length > 5 * 1024 * 1024)
             {
-                ModelState.AddModelError("", $"{imageName} image must be less than 5MB.");
+                ModelState.AddModelError("", T("Görsel en fazla 5 MB olabilir.", "Das Bild darf höchstens 5 MB groß sein."));
                 return null;
             }
 
@@ -4178,24 +4447,71 @@ namespace SpeakingClub.Controllers
         #endregion
 
         #region Question Management
-        // GET: Question Create
-        [HttpGet("QuestionCreate")]
-        public async Task<IActionResult> QuestionCreate()
+        // Create, edit and delete each said "done" without ever calling SaveAsync, so nothing reached the
+        // database. They save now, check that the question belongs to a real quiz, and keep students' old
+        // answers when options disappear (DetachResponsesAsync).
+        private async Task<IEnumerable<SelectListItem>> QuizOptionsAsync(int selectedId = 0) =>
+            (await _unitOfWork.Quizzes.GetAllAsync()).OrderBy(q => q.Title)
+                .Select(q => new SelectListItem(q.Title, q.Id.ToString(), q.Id == selectedId))
+                .ToList();
+
+        // Shared checks: question text, a quiz that exists, at least two answers and one of them correct.
+        // Answer rows left empty are dropped instead of being refused.
+        private async Task ValidateQuestionAsync(QuestionEditViewModel model)
         {
-            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
+            model.Answers = (model.Answers ?? new List<AnswerEditViewModel>())
+                .Where(a => !string.IsNullOrWhiteSpace(a.AnswerText))
+                .ToList();
+            foreach (var answer in model.Answers)
+            {
+                answer.IsCorrect = answer.IsCorrect is "true" or "True" or "on" ? "true" : "false";
+            }
+            ModelState.Remove(nameof(model.Answers));
+
+            if (string.IsNullOrWhiteSpace(HtmlUtility.StripHtml(model.QuestionText ?? string.Empty)))
+                ModelState.AddModelError(nameof(model.QuestionText), T("Lütfen soruyu yazın.", "Bitte schreiben Sie die Frage."));
+            if (model.QuizId <= 0 || await _unitOfWork.Quizzes.GetByIdAsync(model.QuizId) == null)
+                ModelState.AddModelError(nameof(model.QuizId), T("Lütfen sorunun ait olduğu sınavı seçin.", "Bitte wählen Sie die Prüfung, zu der die Frage gehört."));
+            if (model.Answers.Count < 2)
+                ModelState.AddModelError(nameof(model.Answers), T("En az iki cevap yazın.", "Schreiben Sie mindestens zwei Antworten."));
+            else if (!model.Answers.Any(a => a.IsCorrect == "true"))
+                ModelState.AddModelError(nameof(model.Answers), T("En az bir cevabı “Doğru cevap” olarak işaretleyin.", "Markieren Sie mindestens eine Antwort als „Richtige Antwort“."));
+        }
+
+        private async Task<IActionResult> QuestionFormAsync(QuestionEditViewModel model)
+        {
+            model.AvailableQuizzes = await QuizOptionsAsync(model.QuizId);
+            while (model.Answers.Count < 2) model.Answers.Add(new AnswerEditViewModel());
+            return View("QuestionCreateEdit", model);
+        }
+
+        // Uploads a question image/audio. Ok is false (with a form error) when the file isn't accepted.
+        private async Task<(bool Ok, string? Url)> UploadQuestionMediaAsync(IFormFile? file, bool audio)
+        {
+            if (file == null || file.Length == 0) return (true, null);
+            var url = audio ? await ProcessQuizAudioUpload(file) : await ProcessQuizImageUpload(file);
+            if (url == null)
+            {
+                ModelState.AddModelError(audio ? nameof(QuestionEditViewModel.AudioFile) : nameof(QuestionEditViewModel.ImageFile), audio
+                    ? T("Ses dosyası yüklenemedi. MP3, WAV, OGG veya M4A, en fazla 10 MB olmalı.", "Die Audiodatei wurde nicht angenommen: MP3, WAV, OGG oder M4A, höchstens 10 MB.")
+                    : T("Resim yüklenemedi. JPG, PNG veya GIF, en fazla 5 MB olmalı.", "Das Bild wurde nicht angenommen: JPG, PNG oder GIF, höchstens 5 MB."));
+                return (false, null);
+            }
+            return (true, url);
+        }
+
+        // GET: Question Create (?quizId= preselects the quiz, e.g. from a quiz's page)
+        [HttpGet("QuestionCreate")]
+        public async Task<IActionResult> QuestionCreate(int? quizId)
+        {
             var model = new QuestionEditViewModel
             {
                 QuestionId = 0,
-                AvailableQuizzes = quizzes.Select(q => new SelectListItem
-                {
-                    Value = q.Id.ToString(),
-                    Text = q.Title
-                }),
-                Answers = new List<AnswerEditViewModel>
-                {
-                    new AnswerEditViewModel { AnswerId = 0, AnswerText = "", IsCorrect = "false" }
-                }
+                QuizId = quizId ?? 0,
+                // Four rows to start with (the exam shows A–D); rows left empty aren't saved
+                Answers = Enumerable.Range(0, 4).Select(_ => new AnswerEditViewModel()).ToList()
             };
+            model.AvailableQuizzes = await QuizOptionsAsync(model.QuizId);
             return View("QuestionCreateEdit", model);
         }
 
@@ -4204,62 +4520,39 @@ namespace SpeakingClub.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> QuestionCreate(QuestionEditViewModel model)
         {
+            await ValidateQuestionAsync(model);
             if (!ModelState.IsValid)
             {
-                var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-                model.AvailableQuizzes = quizzes.Select(q => new SelectListItem
-                {
-                    Value = q.Id.ToString(),
-                    Text = q.Title
-                });
-                return View("QuestionCreateEdit", model);
+                return await QuestionFormAsync(model);
             }
 
-            // Check if at least one answer is correct
-            if (!model.Answers.Any(a => a.IsCorrect == "true"))
+            var image = await UploadQuestionMediaAsync(model.ImageFile, audio: false);
+            var audioFile = await UploadQuestionMediaAsync(model.AudioFile, audio: true);
+            if (!image.Ok || !audioFile.Ok)
             {
-                ModelState.AddModelError("", "At least one answer must be marked as correct.");
-                var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-                model.AvailableQuizzes = quizzes.Select(q => new SelectListItem
-                {
-                    Value = q.Id.ToString(),
-                    Text = q.Title
-                });
-                return View("QuestionCreateEdit", model);
+                DeleteQuizMediaFile(image.Url);
+                DeleteQuizMediaFile(audioFile.Url);
+                return await QuestionFormAsync(model);
             }
 
-            // Upload media files if provided
-            string? imageUrl = null;
-            string? audioUrl = null;
-
-            if (model.ImageFile != null)
-            {
-                imageUrl = await ProcessQuizImageUpload(model.ImageFile);
-            }
-
-            if (model.AudioFile != null)
-            {
-                audioUrl = await ProcessQuizAudioUpload(model.AudioFile);
-            }
-
-            // Create the question entity
             var question = new Entity.Question
             {
-                QuestionText = model.QuestionText ?? string.Empty,
-                ImageUrl = imageUrl,
-                AudioUrl = audioUrl,
-                VideoUrl = model.VideoUrl,
+                QuestionText = model.QuestionText,
+                ImageUrl = image.Url,
+                AudioUrl = audioFile.Url,
+                VideoUrl = string.IsNullOrWhiteSpace(model.VideoUrl) ? null : model.VideoUrl.Trim(),
                 QuizId = model.QuizId,
                 Answers = model.Answers.Select(a => new Entity.QuizAnswer
                 {
-                    AnswerText = a.AnswerText,
+                    AnswerText = a.AnswerText.Trim(),
                     IsCorrect = a.IsCorrect == "true"
                 }).ToList()
             };
 
             await _unitOfWork.Questions.AddAsync(question);
-            TempData["SuccessMessage"] = "Question created successfully!";
-            return RedirectToAction("Index", new { scrollTo = "QuestionsManagement" });
+            await _unitOfWork.SaveAsync();
+            TempData["SuccessMessage"] = T("Soru kaydedildi.", "Die Frage wurde gespeichert.");
+            return RedirectToAction(nameof(Questions));
         }
 
         // GET: Question Edit
@@ -4269,10 +4562,10 @@ namespace SpeakingClub.Controllers
             var question = await _unitOfWork.Questions.GetByIdAsync(id);
             if (question == null)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = T("Soru bulunamadı.", "Frage nicht gefunden.");
+                return RedirectToAction(nameof(Questions));
             }
 
-            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
             var model = new QuestionEditViewModel
             {
                 QuestionId = question.Id,
@@ -4281,12 +4574,6 @@ namespace SpeakingClub.Controllers
                 AudioUrl = question.AudioUrl,
                 VideoUrl = question.VideoUrl,
                 QuizId = question.QuizId,
-                AvailableQuizzes = quizzes.Select(q => new SelectListItem
-                {
-                    Value = q.Id.ToString(),
-                    Text = q.Title,
-                    Selected = q.Id == question.QuizId
-                }),
                 Answers = question.Answers.Select(a => new AnswerEditViewModel
                 {
                     AnswerId = a.Id,
@@ -4294,8 +4581,7 @@ namespace SpeakingClub.Controllers
                     IsCorrect = a.IsCorrect ? "true" : "false"
                 }).ToList()
             };
-
-            return View("QuestionCreateEdit", model);
+            return await QuestionFormAsync(model);
         }
 
         // POST: Question Edit
@@ -4308,98 +4594,85 @@ namespace SpeakingClub.Controllers
                 return BadRequest();
             }
 
-            if (!ModelState.IsValid)
-            {
-                var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-                model.AvailableQuizzes = quizzes.Select(q => new SelectListItem
-                {
-                    Value = q.Id.ToString(),
-                    Text = q.Title
-                });
-                return View("QuestionCreateEdit", model);
-            }
-
-            // Check if at least one answer is correct
-            if (!model.Answers.Any(a => a.IsCorrect == "true"))
-            {
-                ModelState.AddModelError("", "At least one answer must be marked as correct.");
-                var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-                model.AvailableQuizzes = quizzes.Select(q => new SelectListItem
-                {
-                    Value = q.Id.ToString(),
-                    Text = q.Title
-                });
-                return View("QuestionCreateEdit", model);
-            }
-
             var question = await _unitOfWork.Questions.GetByIdAsync(id);
             if (question == null)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = T("Soru bulunamadı.", "Frage nicht gefunden.");
+                return RedirectToAction(nameof(Questions));
             }
 
-            // Upload new media files if provided
-            if (model.ImageFile != null)
+            // The current media is shown again if the form comes back with an error
+            model.ImageUrl = question.ImageUrl;
+            model.AudioUrl = question.AudioUrl;
+
+            await ValidateQuestionAsync(model);
+            if (!ModelState.IsValid)
             {
-                // Delete old image if exists
-                if (!string.IsNullOrEmpty(question.ImageUrl))
-                {
-                    DeleteQuizMediaFile(question.ImageUrl);
-                }
-                question.ImageUrl = await ProcessQuizImageUpload(model.ImageFile);
+                return await QuestionFormAsync(model);
             }
 
-            if (model.AudioFile != null)
+            var image = await UploadQuestionMediaAsync(model.ImageFile, audio: false);
+            var audioFile = await UploadQuestionMediaAsync(model.AudioFile, audio: true);
+            if (!image.Ok || !audioFile.Ok)
             {
-                // Delete old audio if exists
-                if (!string.IsNullOrEmpty(question.AudioUrl))
-                {
-                    DeleteQuizMediaFile(question.AudioUrl);
-                }
-                question.AudioUrl = await ProcessQuizAudioUpload(model.AudioFile);
+                DeleteQuizMediaFile(image.Url);
+                DeleteQuizMediaFile(audioFile.Url);
+                return await QuestionFormAsync(model);
             }
 
-            // Update question properties
-            question.QuestionText = model.QuestionText ?? string.Empty;
-            question.VideoUrl = model.VideoUrl;
+            var replacedFiles = new List<string?>();
+            if (image.Url != null)
+            {
+                replacedFiles.Add(question.ImageUrl);
+                question.ImageUrl = image.Url;
+            }
+            if (audioFile.Url != null)
+            {
+                replacedFiles.Add(question.AudioUrl);
+                question.AudioUrl = audioFile.Url;
+            }
+
+            question.QuestionText = model.QuestionText;
+            question.VideoUrl = string.IsNullOrWhiteSpace(model.VideoUrl) ? null : model.VideoUrl.Trim();
             question.QuizId = model.QuizId;
 
-            // Update answers
-            // Remove old answers that are not in the model
-            var answersToRemove = question.Answers
-                .Where(a => !model.Answers.Any(ma => ma.AnswerId == a.Id))
-                .ToList();
-
-            foreach (var answer in answersToRemove)
+            // Answers removed in the form
+            var keptIds = model.Answers.Where(a => a.AnswerId > 0).Select(a => a.AnswerId).ToHashSet();
+            var removed = question.Answers.Where(a => !keptIds.Contains(a.Id)).ToList();
+            await DetachResponsesAsync(removed.Select(a => a.Id).ToList());
+            foreach (var answer in removed)
             {
                 question.Answers.Remove(answer);
+                _unitOfWork.GenericRepository<Entity.QuizAnswer>().Remove(answer);
             }
 
-            // Update or add answers
+            // Changed and new answers
             foreach (var answerModel in model.Answers)
             {
-                var existingAnswer = question.Answers.FirstOrDefault(a => a.Id == answerModel.AnswerId);
-                if (existingAnswer != null)
+                var existing = answerModel.AnswerId > 0 ? question.Answers.FirstOrDefault(a => a.Id == answerModel.AnswerId) : null;
+                if (existing != null)
                 {
-                    // Update existing answer
-                    existingAnswer.AnswerText = answerModel.AnswerText;
-                    existingAnswer.IsCorrect = answerModel.IsCorrect == "true";
+                    existing.AnswerText = answerModel.AnswerText.Trim();
+                    existing.IsCorrect = answerModel.IsCorrect == "true";
                 }
                 else
                 {
-                    // Add new answer
                     question.Answers.Add(new Entity.QuizAnswer
                     {
-                        AnswerText = answerModel.AnswerText,
+                        AnswerText = answerModel.AnswerText.Trim(),
                         IsCorrect = answerModel.IsCorrect == "true",
                         QuestionId = question.Id
                     });
                 }
             }
 
-            _unitOfWork.Questions.Update(question);
-            TempData["SuccessMessage"] = "Question updated successfully!";
-            return RedirectToAction("Index", new { scrollTo = "QuestionsManagement" });
+            await _unitOfWork.SaveAsync();
+            foreach (var file in replacedFiles)
+            {
+                DeleteQuizMediaFile(file);
+            }
+            TempData["SuccessMessage"] = T("Sorudaki değişiklikler kaydedildi.", "Die Änderungen an der Frage wurden gespeichert.");
+            return RedirectToAction(nameof(Questions));
         }
 
         // POST: Question Delete
@@ -4410,24 +4683,23 @@ namespace SpeakingClub.Controllers
             var question = await _unitOfWork.Questions.GetByIdAsync(id);
             if (question == null)
             {
-                TempData["ErrorMessage"] = "Question not found.";
-                return RedirectToAction("Index", new { scrollTo = "QuestionsManagement" });
+                TempData["ErrorMessage"] = T("Soru bulunamadı.", "Frage nicht gefunden.");
+                return RedirectToAction(nameof(Questions));
             }
 
-            // Delete associated media files
-            if (!string.IsNullOrEmpty(question.ImageUrl))
+            await DetachResponsesAsync(question.Answers.Select(a => a.Id).ToList());
+            foreach (var answer in question.Answers.ToList())
             {
-                DeleteQuizMediaFile(question.ImageUrl);
+                _unitOfWork.GenericRepository<Entity.QuizAnswer>().Remove(answer);
             }
-            if (!string.IsNullOrEmpty(question.AudioUrl))
-            {
-                DeleteQuizMediaFile(question.AudioUrl);
-            }
-
-            // Delete the question (answers will be cascade deleted if configured)
             _unitOfWork.Questions.Remove(question);
-            TempData["SuccessMessage"] = "Question deleted successfully!";
-            return RedirectToAction("Index", new { scrollTo = "QuestionsManagement" });
+            await _unitOfWork.SaveAsync();
+
+            // Files only once the question is gone from the database
+            DeleteQuizMediaFile(question.ImageUrl, "question image");
+            DeleteQuizMediaFile(question.AudioUrl, "question audio");
+            TempData["SuccessMessage"] = T("Soru silindi.", "Die Frage wurde gelöscht.");
+            return RedirectToAction(nameof(Questions));
         }
         #endregion
 
@@ -4617,11 +4889,11 @@ namespace SpeakingClub.Controllers
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                var term = searchTerm.ToLower();
+                var term = searchTerm.Trim();
                 query = query.Where(l =>
-                    l.UserEmail.ToLower().Contains(term) ||
-                    l.UserFullName.ToLower().Contains(term) ||
-                    l.FileName.ToLower().Contains(term));
+                    (l.UserEmail ?? string.Empty).Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
+                    (l.UserFullName ?? string.Empty).Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
+                    (l.FileName ?? string.Empty).Contains(term, StringComparison.CurrentCultureIgnoreCase));
             }
 
             query = sortBy switch
@@ -4634,10 +4906,13 @@ namespace SpeakingClub.Controllers
 
             const int pageSize = 50;
             var totalItems = query.Count();
+            var totalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
+            page = Math.Clamp(page, 1, totalPages);   // ?page=0 or a page past the end threw / showed nothing
             var items = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
             ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalItems;
             ViewBag.SearchTerm = searchTerm;
             ViewBag.SortBy = sortBy;
 

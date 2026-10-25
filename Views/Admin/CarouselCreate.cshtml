@@ -1,265 +1,124 @@
 @model SpeakingClub.Models.CarouselViewModel
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var section = AdminNav.Find("slides", isGerman)!;
+    ViewData["Title"] = T("Yeni slayt", "Neues Slider-Bild");
+    ViewData["AdminSection"] = section.Key;
+}
 
 @{
-    ViewData["Title"] = "Create Carousel";
+    var adminHeader = new AdminHeader("slide-form", T("Yeni slayt", "Neues Slider-Bild"),
+    T("Ana sayfanın en üstünde kayan büyük görsellerden biri.", "Eines der großen Bilder oben auf der Startseite."),
+    ParentTitle: section.Title, ParentHref: Url.Action(section.Action), Guide: section.Guide);
 }
+<partial name="_AdminHeader" model="adminHeader" />
 
-@section Css {
-    <style>
-        .preview-container {
-            margin-top: 15px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 2px dashed #dee2e6;
-        }
-        .preview-container img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 5px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .image-info {
-            font-size: 0.875rem;
-            color: #6c757d;
-            margin-top: 8px;
-        }
-        .form-section {
-            background: #fff;
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        .form-section h4 {
-            color: #0d6efd;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #0d6efd;
-        }
-        .link-preview {
-            background: #e7f3ff;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-    </style>
-}
-
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-xl-10">
-            <div class="card shadow-lg border-0">
-                <div class="card-header bg-primary text-white py-3">
-                    <h2 class="mb-0 fw-bold">
-                        <i class="fas fa-image"></i> Create New Carousel Slide
-                    </h2>
-                </div>
-                <div class="card-body p-4">
-                    <form asp-action="CarouselCreate" asp-controller="Admin" method="post" enctype="multipart/form-data" id="carouselForm">
-                        
-                        <!-- General Information -->
-                        <div class="form-section">
-                            <h4><i class="fas fa-info-circle"></i> General Information</h4>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label asp-for="CarouselTitle" class="form-label fw-semibold">
-                                        Title <span class="text-danger">*</span>
-                                    </label>
-                                    <input asp-for="CarouselTitle" class="form-control" placeholder="Enter slide title" required />
-                                    <span asp-validation-for="CarouselTitle" class="text-danger"></span>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label asp-for="CarouselLinkText" class="form-label fw-semibold">
-                                        Button Text
-                                    </label>
-                                    <input asp-for="CarouselLinkText" class="form-control" placeholder="e.g., Learn More" />
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label asp-for="CarouselDescription" class="form-label fw-semibold">
-                                    Description <span class="text-danger">*</span>
-                                </label>
-                                <textarea asp-for="CarouselDescription" class="form-control" rows="3" placeholder="Enter slide description" required></textarea>
-                                <span asp-validation-for="CarouselDescription" class="text-danger"></span>
-                            </div>
-                            <div class="mb-3">
-                                <label asp-for="CarouselLink" class="form-label fw-semibold">
-                                    Link / Action
-                                </label>
-                                <input asp-for="CarouselLink" class="form-control" placeholder="e.g., Blog, Contact, About, Index, Privacy" />
-                                <small class="text-muted">
-                                    <i class="fas fa-info-circle"></i> Enter an action name (e.g., "Blog", "Index") or leave empty
-                                </small>
-                                <div class="link-preview mt-2" id="linkPreview" style="display:none;">
-                                    <strong>Link will navigate to:</strong> <span id="linkPreviewText"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Image Uploads -->
-                        <div class="form-section">
-                            <h4><i class="fas fa-images"></i> Images</h4>
-                            <p class="text-muted">
-                                <i class="fas fa-lightbulb"></i> Upload images in different sizes for responsive design. Primary image is required.
-                            </p>
-
-                            <!-- Primary Image -->
-                            <div class="mb-4">
-                                <label asp-for="CarouselImage" class="form-label fw-semibold">
-                                    Primary Image <span class="text-danger">*</span>
-                                </label>
-                                <input asp-for="CarouselImage" type="file" class="form-control" accept="image/*" required id="primaryImage" />
-                                <span asp-validation-for="CarouselImage" class="text-danger"></span>
-                                <small class="text-muted">Recommended: High quality image for large screens</small>
-                                <div id="primaryPreview" class="preview-container" style="display:none;">
-                                    <img id="primaryImg" src="" alt="Preview" />
-                                    <div class="image-info" id="primaryInfo"></div>
-                                </div>
-                            </div>
-
-                            <!-- 600w Image -->
-                            <div class="mb-4">
-                                <label asp-for="CarouselImage600w" class="form-label fw-semibold">
-                                    600w Image (Optional)
-                                </label>
-                                <input asp-for="CarouselImage600w" type="file" class="form-control" accept="image/*" id="image600w" />
-                                <small class="text-muted">Recommended: For mobile devices</small>
-                                <div id="preview600w" class="preview-container" style="display:none;">
-                                    <img id="img600w" src="" alt="Preview 600w" />
-                                    <div class="image-info" id="info600w"></div>
-                                </div>
-                            </div>
-
-                            <!-- 1200w Image -->
-                            <div class="mb-4">
-                                <label asp-for="CarouselImage1200w" class="form-label fw-semibold">
-                                    1200w Image (Optional)
-                                </label>
-                                <input asp-for="CarouselImage1200w" type="file" class="form-control" accept="image/*" id="image1200w" />
-                                <small class="text-muted">Recommended: For tablets and medium screens</small>
-                                <div id="preview1200w" class="preview-container" style="display:none;">
-                                    <img id="img1200w" src="" alt="Preview 1200w" />
-                                    <div class="image-info" id="info1200w"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Translations -->
-                        <div class="form-section">
-                            <h4><i class="fas fa-language"></i> Translations</h4>
-                            
-                            <div class="row">
-                                <!-- Turkish -->
-                                <div class="col-md-6">
-                                    <h5 class="text-danger"><i class="fas fa-flag"></i> Turkish (TR)</h5>
-                                    <div class="mb-3">
-                                        <label class="form-label">Title (Turkish)</label>
-                                        <input asp-for="TranslationsTR.Title" class="form-control" placeholder="Başlık" />
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Description (Turkish)</label>
-                                        <textarea asp-for="TranslationsTR.Description" class="form-control" rows="2" placeholder="Açıklama"></textarea>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Button Text (Turkish)</label>
-                                        <input asp-for="TranslationsTR.LinkText" class="form-control" placeholder="Daha Fazla" />
-                                    </div>
-                                </div>
-
-                                <!-- German -->
-                                <div class="col-md-6">
-                                    <h5 class="text-warning"><i class="fas fa-flag"></i> German (DE)</h5>
-                                    <div class="mb-3">
-                                        <label class="form-label">Title (German)</label>
-                                        <input asp-for="TranslationsDE.Title" class="form-control" placeholder="Titel" />
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Description (German)</label>
-                                        <textarea asp-for="TranslationsDE.Description" class="form-control" rows="2" placeholder="Beschreibung"></textarea>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Button Text (German)</label>
-                                        <input asp-for="TranslationsDE.LinkText" class="form-control" placeholder="Mehr erfahren" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Buttons -->
-                        <div class="d-flex justify-content-between mt-4">
-                            <a asp-controller="Admin" asp-action="Index" asp-route-scrollTo="SlideListManagement" 
-                               class="btn btn-outline-secondary btn-lg px-4">
-                                <i class="fas fa-times"></i> Cancel
-                            </a>
-                            <button type="submit" class="btn btn-primary btn-lg px-5 shadow" id="submitBtn">
-                                <i class="fas fa-save"></i> Create Carousel
-                            </button>
-                        </div>
-                    </form>
+<form method="post" asp-action="CarouselCreate" enctype="multipart/form-data" class="adm-form" data-dirty-guard data-loading>
+    <div class="adm-form__main">
+        <partial name="_AdminErrors" />
+        <section class="adm-panel" style="--i:0">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num">1</span>
+                <div>
+                    <h2>@T("Türkçe metinler", "Türkische Texte")</h2>
+                    <p>@T("Sitenin Türkçe halinde görünür.", "Erscheinen auf der türkischen Website.")</p>
                 </div>
             </div>
-        </div>
+            <div class="adm-panel__body">
+                <div class="adm-field">
+                    <label asp-for="CarouselTitle">@T("Başlık", "Titel") <span class="adm-req">@T("Zorunlu", "Pflicht")</span></label>
+                    <input asp-for="CarouselTitle" class="adm-input" maxlength="100" data-val-required="@T("Lütfen bir başlık yazın.", "Bitte einen Titel eingeben.")" />
+                    <span class="adm-count" data-count-for="CarouselTitle" data-max="100"></span>
+                    <span asp-validation-for="CarouselTitle"></span>
+                </div>
+                <div class="adm-field">
+                    <label asp-for="CarouselDescription">@T("Kısa açıklama", "Kurzbeschreibung") <span class="adm-opt">@T("isteğe bağlı", "freiwillig")</span></label>
+                    <textarea asp-for="CarouselDescription" class="adm-input" rows="3" maxlength="500"></textarea>
+                    <span class="adm-count" data-count-for="CarouselDescription" data-max="500"></span>
+                </div>
+                <div class="adm-row">
+                    <div class="adm-field">
+                        <label asp-for="CarouselLinkText">@T("Düğme yazısı", "Text der Schaltfläche") <span class="adm-opt">@T("isteğe bağlı", "freiwillig")</span></label>
+                        <input asp-for="CarouselLinkText" class="adm-input" maxlength="100" placeholder="@T("ör. Hemen başla", "z. B. Jetzt starten")" />
+                        <p class="adm-hint">@T("Boş bırakırsanız düğme gösterilmez.", "Leer = keine Schaltfläche.")</p>
+                    </div>
+                    <div class="adm-field">
+                        <label for="CarouselLink">@T("Düğme nereye gitsin?", "Wohin führt die Schaltfläche?")</label>
+                        <partial name="_SlideLinkPicker" model="(nameof(Model.CarouselLink), Model.CarouselLink)" />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="adm-panel" style="--i:1">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num">2</span>
+                <div>
+                    <h2>@T("Almanca metinler", "Deutsche Texte")</h2>
+                    <p>@T("Sitenin Almanca halinde görünür. Boş bırakırsanız Türkçesi gösterilir.", "Erscheinen auf der deutschen Website. Leer = der türkische Text wird gezeigt.")</p>
+                </div>
+            </div>
+            <div class="adm-panel__body">
+                <div class="adm-field">
+                    <label for="TranslationsDE_Title">@T("Başlık (Almanca)", "Titel (Deutsch)")</label>
+                    <input id="TranslationsDE_Title" name="TranslationsDE.Title" value="@Model.TranslationsDE?.Title" class="adm-input" maxlength="100" lang="de" />
+                </div>
+                <div class="adm-field">
+                    <label for="TranslationsDE_Description">@T("Kısa açıklama (Almanca)", "Kurzbeschreibung (Deutsch)")</label>
+                    <textarea id="TranslationsDE_Description" name="TranslationsDE.Description" class="adm-input" rows="3" maxlength="500" lang="de">@Model.TranslationsDE?.Description</textarea>
+                </div>
+                <div class="adm-field">
+                    <label for="TranslationsDE_LinkText">@T("Düğme yazısı (Almanca)", "Text der Schaltfläche (Deutsch)")</label>
+                    <input id="TranslationsDE_LinkText" name="TranslationsDE.LinkText" value="@Model.TranslationsDE?.LinkText" class="adm-input" maxlength="100" lang="de" />
+                </div>
+            </div>
+        </section>
     </div>
-</div>
+
+    <aside class="adm-form__aside">
+        <section class="adm-panel" style="--i:2">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num">3</span>
+                <div>
+                    <h2>@T("Görsel", "Bild")</h2>
+                    <p>@T("Geniş, yatay bir fotoğraf seçin (en az 1600 piksel genişlik). JPG, PNG veya WEBP, en fazla 5 MB.", "Wählen Sie ein breites Querformat (mind. 1600 Pixel breit). JPG, PNG oder WEBP, höchstens 5 MB.")</p>
+                </div>
+            </div>
+            <div class="adm-panel__body">
+                <label class="adm-drop">
+                    <input type="file" asp-for="CarouselImage" accept="image/*" data-max-mb="5" />
+                    <span class="adm-drop__empty">
+                        <span class="adm-drop__icon"><i class="fa-solid fa-image" aria-hidden="true"></i></span>
+                        <strong>@T("Görsel seçmek için tıklayın", "Zum Auswählen klicken")</strong>
+                        <small>@T("ya da dosyayı buraya sürükleyin", "oder Datei hierher ziehen")</small>
+                    </span>
+                    <span class="adm-drop__preview"></span>
+                </label>
+                <span asp-validation-for="CarouselImage"></span>
+                <details class="adm-details">
+                    <summary><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i>@T("Telefon ve tablet için ayrı görsel", "Eigene Bilder für Handy und Tablet") <small>@T("isteğe bağlı", "freiwillig")</small></summary>
+                    <div class="adm-details__body">
+                        <p class="adm-hint">@T("Genelde gerekmez. Telefonda görselin farklı bir kesimini göstermek isterseniz kullanın.", "Meist nicht nötig. Nutzen Sie es, wenn das Handy einen anderen Bildausschnitt zeigen soll.")</p>
+                        <div class="adm-field">
+                            <label asp-for="CarouselImage600w">@T("Telefon (600 px)", "Handy (600 px)")</label>
+                            <input type="file" asp-for="CarouselImage600w" class="form-control" accept="image/*" />
+                        </div>
+                        <div class="adm-field">
+                            <label asp-for="CarouselImage1200w">@T("Tablet (1200 px)", "Tablet (1200 px)")</label>
+                            <input type="file" asp-for="CarouselImage1200w" class="form-control" accept="image/*" />
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </section>
+        <div class="adm-savebar" style="margin-top:0">
+            <a class="adm-btn adm-btn--ghost" href="@Url.Action(section.Action)">@T("Vazgeç", "Abbrechen")</a>
+            <button type="submit" class="adm-btn adm-btn--primary" style="flex:1"><i class="fa-solid fa-check" aria-hidden="true"></i>@T("Slaytı kaydet", "Bild speichern")</button>
+        </div>
+    </aside>
+</form>
 
 @section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Image preview function
-            function setupImagePreview(inputId, previewId, imgId, infoId) {
-                $(`#${inputId}`).on('change', function(e) {
-                    const file = e.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            $(`#${previewId}`).show();
-                            $(`#${imgId}`).attr('src', e.target.result);
-                            
-                            const img = new Image();
-                            img.onload = function() {
-                                const sizeKB = (file.size / 1024).toFixed(2);
-                                $(`#${infoId}`).html(`
-                                    <strong>File:</strong> ${file.name}<br>
-                                    <strong>Size:</strong> ${sizeKB} KB<br>
-                                    <strong>Dimensions:</strong> ${img.width} x ${img.height}px
-                                `);
-                            };
-                            img.src = e.target.result;
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                });
-            }
-
-            // Setup previews for all images
-            setupImagePreview('primaryImage', 'primaryPreview', 'primaryImg', 'primaryInfo');
-            setupImagePreview('image600w', 'preview600w', 'img600w', 'info600w');
-            setupImagePreview('image1200w', 'preview1200w', 'img1200w', 'info1200w');
-
-            // Link preview
-            $('input[name="CarouselLink"]').on('input', function() {
-                const link = $(this).val().trim();
-                if (link) {
-                    $('#linkPreview').show();
-                    $('#linkPreviewText').text(`Home/${link}`);
-                } else {
-                    $('#linkPreview').hide();
-                }
-            });
-
-            // Form validation
-            $('#carouselForm').on('submit', function(e) {
-                const primaryImage = $('#primaryImage')[0].files.length;
-                if (primaryImage === 0) {
-                    e.preventDefault();
-                    alert('Please upload a primary image.');
-                    return false;
-                }
-                
-                $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating...');
-            });
-        });
-    </script>
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
 }

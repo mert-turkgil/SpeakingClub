@@ -1,125 +1,105 @@
-@model IEnumerable<SpeakingClub.Entity.Question>
-        <a class="btn btn-outline-success nav-item m-auto my-3 w-100" 
-            asp-controller="Admin" 
-            asp-action="QuestionCreate">
-                Create Question
-            </a> 
-<div class="table-responsive">
-<table id="QuestionList" class="table table-bordered table-hover align-middle display responsive nowrap" style="width:100%">
-    <thead class="table-dark">
-        <tr>
-            <th>ID</th>
-            <th>Quiz</th>
-            <th>Content</th>
-            <th>Type</th>
-            <th>Answers</th>
-            <th style="width:140px"></th>
-        </tr>
-    </thead>
-    <tbody>
-    @foreach (var q in Model)
-    {
-        var mediaType = !string.IsNullOrWhiteSpace(q.VideoUrl) ? "Video"
-                     : !string.IsNullOrWhiteSpace(q.AudioUrl) ? "Audio"
-                     : !string.IsNullOrWhiteSpace(q.ImageUrl) ? "Image"
-                     : !string.IsNullOrWhiteSpace(q.QuestionText) ? "Text" : "Unknown";
-        <tr>
-            <td class="text-center">@q.Id</td>
-            <td>@q.Quiz?.Title</td>
-            <td>
-                @if (!string.IsNullOrWhiteSpace(q.VideoUrl) && (q.VideoUrl.Contains("youtube.com") || q.VideoUrl.Contains("youtu.be")))
+@using SpeakingClub.Services
+@model List<SpeakingClub.Entity.Question>
+@*
+    Admin → Sorular. The question text is editor HTML, so it is shown as plain text here; media shows as
+    small icons instead of one embedded YouTube player per row.
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var quizzes = Model.Where(q => q.Quiz != null).Select(q => q.Quiz).DistinctBy(q => q.Id).OrderBy(q => q.Title).ToList();
+    const string letters = "ABCDEFGHIJ";
+}
+
+@if (!Model.Any())
+{
+    <div class="adm-empty">
+        <span class="adm-empty__icon" aria-hidden="true"><i class="fa-solid fa-circle-question"></i></span>
+        <h2>@T("Henüz soru yok", "Noch keine Fragen")</h2>
+        <p>@T("Sorular bir sınava aittir. Bir soru eklemek için aşağıdaki düğmeye basın ve sınavını seçin.", "Fragen gehören zu einer Prüfung. Klicken Sie unten und wählen Sie die Prüfung.")</p>
+        <a class="adm-btn adm-btn--primary adm-btn--lg" href="@Url.Action("QuestionCreate", "Admin")"><i class="fa-solid fa-plus" aria-hidden="true"></i>@T("İlk soruyu ekle", "Erste Frage hinzufügen")</a>
+    </div>
+}
+else
+{
+    <div data-list data-page-size="25">
+        <div class="adm-toolbar">
+            <label class="adm-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" data-list-search placeholder="@T("Soru veya cevap metninde arayın…", "In Fragen und Antworten suchen…")" aria-label="@T("Sorularda ara", "Fragen durchsuchen")" />
+                <button type="button" aria-label="@T("Aramayı temizle", "Suche löschen")"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </label>
+            <select class="form-select" data-list-filter="quiz" aria-label="@T("Sınava göre göster", "Nach Prüfung filtern")" style="width:auto; max-width: 100%">
+                <option value="">@T("Tüm sınavlar", "Alle Prüfungen")</option>
+                @foreach (var quiz in quizzes)
                 {
-                    <iframe width="180" height="100" src="@GetYouTubeEmbedUrl(q.VideoUrl ?? "")" frameborder="0" allowfullscreen></iframe>
-                    <div class="small text-muted mt-1">YouTube</div>
+                    <option value="@quiz.Id">@quiz.Title</option>
                 }
-                else if (!string.IsNullOrWhiteSpace(q.VideoUrl))
-                {
-                    <video controls width="180" height="100">
-                        <source src="@q.VideoUrl" type="video/mp4" />
-                        Your browser does not support the video tag.
-                    </video>
-                    <div class="small text-muted mt-1">Video</div>
-                }
-                else if (!string.IsNullOrWhiteSpace(q.AudioUrl))
-                {
-                    <audio controls style="width:140px;">
-                        <source src="@q.AudioUrl" type="audio/mpeg" />
-                        Your browser does not support the audio tag.
-                    </audio>
-                    <div class="small text-muted mt-1">Audio</div>
-                }
-                else if (!string.IsNullOrWhiteSpace(q.ImageUrl))
-                {
-                    <img src="@q.ImageUrl" style="max-width:90px; max-height:60px;" alt="Question Image" />
-                    <div class="small text-muted mt-1">Image</div>
-                }
-                else if (!string.IsNullOrWhiteSpace(q.QuestionText))
-                {
-                    <div style="max-width:260px;word-break:break-word;">@q.QuestionText</div>
-                    <div class="small text-muted mt-1">Text</div>
-                }
-                else
-                {
-                    <span class="text-muted">No content</span>
-                }
-            </td>
-            <td>@mediaType</td>
-            <td>
-                <ul class="mb-0 ps-3">
-                    @if (q.Answers != null)
+            </select>
+            <span class="adm-toolbar__count" data-list-count></span>
+        </div>
+
+        <div class="adm-table-wrap">
+            <table class="adm-table">
+                <thead>
+                    <tr>
+                        <th data-sort>@T("Soru", "Frage")</th>
+                        <th data-sort>@T("Sınav", "Prüfung")</th>
+                        <th>@T("Cevaplar", "Antworten")</th>
+                        <th class="is-actions"><span class="adm-sr">@T("İşlemler", "Aktionen")</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var q in Model)
                     {
-                        foreach (var a in q.Answers)
-                        {
-                            <li>
-                                @a.AnswerText
-                                @if (a.IsCorrect)
-                                {
-                                    <span class="badge bg-success ms-2">Correct</span>
-                                }
-                            </li>
-                        }
+                        var text = HtmlUtility.StripHtml(q.QuestionText ?? string.Empty).Trim();
+                        var answers = q.Answers?.ToList() ?? new List<SpeakingClub.Entity.QuizAnswer>();
+                        var correct = answers.Count(a => a.IsCorrect);
+                        <tr data-quiz="@q.QuizId">
+                            <td class="is-primary" data-label="@T("Soru", "Frage")">
+                                <div class="adm-cell-title">
+                                    <span>
+                                        <strong class="adm-clamp-2">@(string.IsNullOrEmpty(text) ? T("(metin yok)", "(kein Text)") : text)</strong>
+                                        <small>
+                                            #@q.Id
+                                            @if (!string.IsNullOrWhiteSpace(q.ImageUrl)) { <span title="@T("Resimli", "Mit Bild")"> · <i class="fa-regular fa-image" aria-hidden="true"></i> @T("resim", "Bild")</span> }
+                                            @if (!string.IsNullOrWhiteSpace(q.AudioUrl)) { <span title="@T("Sesli", "Mit Audio")"> · <i class="fa-solid fa-volume-high" aria-hidden="true"></i> @T("ses", "Audio")</span> }
+                                            @if (!string.IsNullOrWhiteSpace(q.VideoUrl)) { <span title="@T("Videolu", "Mit Video")"> · <i class="fa-brands fa-youtube" aria-hidden="true"></i> @T("video", "Video")</span> }
+                                        </small>
+                                    </span>
+                                </div>
+                            </td>
+                            <td data-label="@T("Sınav", "Prüfung")">@(q.Quiz?.Title ?? "—")</td>
+                            <td data-label="@T("Cevaplar", "Antworten")">
+                                <span class="adm-chips">
+                                    @for (var i = 0; i < answers.Count; i++)
+                                    {
+                                        var a = answers[i];
+                                        <span class="adm-badge @(a.IsCorrect ? "adm-badge--green" : "adm-badge--plain")" title="@a.AnswerText">@(i < letters.Length ? letters[i] : '?') · @(a.AnswerText?.Length > 18 ? a.AnswerText.Substring(0, 17) + "…" : a.AnswerText)</span>
+                                    }
+                                    @if (correct == 0)
+                                    {
+                                        <span class="adm-badge adm-badge--red">@T("Doğru cevap yok!", "Keine richtige Antwort!")</span>
+                                    }
+                                </span>
+                            </td>
+                            <td class="is-actions">
+                                <div class="adm-row-actions">
+                                    <a class="adm-btn adm-btn--sm" href="@Url.Action("QuestionEdit", "Admin", new { id = q.Id })"><i class="fa-solid fa-pen" aria-hidden="true"></i>@T("Düzenle", "Bearbeiten")</a>
+                                    <form method="post" asp-controller="Admin" asp-action="QuestionDelete" asp-route-id="@q.Id"
+                                          data-confirm="@T("Bu soru silinsin mi?", "Diese Frage löschen?")"
+                                          data-confirm-text="@T($"Soru, cevapları ve dosyalarıyla birlikte “{q.Quiz?.Title}” sınavından kalıcı olarak silinecek.", $"Die Frage wird mit ihren Antworten und Dateien endgültig aus „{q.Quiz?.Title}“ gelöscht.")"
+                                          data-confirm-note="@T("Öğrencilerin daha önce aldığı puanlar değişmez.", "Die bisherigen Punktzahlen der Lernenden bleiben gleich.")">
+                                        <button type="submit" class="adm-btn adm-btn--danger adm-btn--sm adm-btn--icon" title="@T("Sil", "Löschen")" aria-label="@T("Sil", "Löschen") #@q.Id"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
                     }
-                </ul>
-            </td>
-            <td>
-                <a asp-controller="Admin" asp-action="QuestionEdit" asp-route-id="@q.Id" class="btn btn-sm btn-primary mb-1">Edit</a>
-                <form asp-controller="Admin" asp-action="QuestionDelete" asp-route-id="@q.Id" method="post" class="d-inline">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this question?')">Delete</button>
-                </form>
-            </td>
-        </tr>
-    }
-    </tbody>
-</table>
-</div>
-
-@functions{
-    public static string GetYouTubeEmbedUrl(string? url)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-            return "";
-
-        string? videoId = null;
-        try
-        {
-            if (url.Contains("embed"))
-                return url;
-            if (url.Contains("youtube.com"))
-            {
-                var uri = new Uri(url);
-                var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-                videoId = query["v"];
-            }
-            else if (url.Contains("youtu.be"))
-            {
-                var uri = new Uri(url);
-                videoId = uri.AbsolutePath.Trim('/');
-            }
-            if (!string.IsNullOrWhiteSpace(videoId))
-                return $"https://www.youtube.com/embed/{videoId}";
-        }
-        catch { }
-        return url;
-    }
+                </tbody>
+            </table>
+            <p class="adm-noresult">@T("Aramanıza uyan soru bulunamadı.", "Keine Frage passt zu Ihrer Suche.")</p>
+            <div class="adm-more"><button type="button" class="adm-btn adm-btn--sm" data-list-more hidden><i class="fa-solid fa-chevron-down" aria-hidden="true"></i><span></span></button></div>
+        </div>
+    </div>
 }

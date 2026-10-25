@@ -110,6 +110,25 @@
         });
     }
 
+    // Brand panel balloons lean toward the pointer (auth.css turns --auth-px/--auth-py into motion)
+    const brand = root.querySelector('.auth__brand');
+    if (brand && !reduceMotion && window.matchMedia('(hover: hover)').matches) {
+        let frame = 0;
+        brand.addEventListener('pointermove', (e) => {
+            if (frame) return;
+            frame = requestAnimationFrame(() => {
+                frame = 0;
+                const box = brand.getBoundingClientRect();
+                brand.style.setProperty('--auth-px', (((e.clientX - box.left) / box.width) * 2 - 1).toFixed(3));
+                brand.style.setProperty('--auth-py', (((e.clientY - box.top) / box.height) * 2 - 1).toFixed(3));
+            });
+        });
+        brand.addEventListener('pointerleave', () => {
+            brand.style.setProperty('--auth-px', '0');
+            brand.style.setProperty('--auth-py', '0');
+        });
+    }
+
     // Cloudflare Turnstile, rendered in the site's current theme
     window.onloadTurnstileAuth = function () {
         const box = document.getElementById('turnstile-widget');

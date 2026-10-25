@@ -1,58 +1,124 @@
 @using SpeakingClub.Entity
-@model IEnumerable<Blog>
-@if (Model.Any())
+@model List<Blog>
+@*
+    Admin → Blog yazıları. Searchable, sortable list; status filter; edit / view / delete per row.
+    (The "create" button used to appear only when posts already existed, so the first post couldn't be added.)
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
+    string Img(string? image) => string.IsNullOrWhiteSpace(image) ? "" : image.StartsWith("/") || image.StartsWith("http") ? image : "/" + image;
+    string? PublicUrl(Blog b)
+    {
+        var tr = b.Translations?.FirstOrDefault(t => t.LanguageCode == "tr");
+        var de = b.Translations?.FirstOrDefault(t => t.LanguageCode == "de");
+        var baseSlug = !string.IsNullOrWhiteSpace(b.Slug) ? b.Slug : b.Url;
+        if (tr != null || de == null) return string.IsNullOrWhiteSpace(tr?.Slug ?? baseSlug) ? null : "/yazilar/" + (string.IsNullOrWhiteSpace(tr?.Slug) ? baseSlug : tr!.Slug);
+        return "/beitraege/" + (string.IsNullOrWhiteSpace(de.Slug) ? baseSlug : de.Slug);
+    }
+}
+
+@if (!Model.Any())
 {
-    <a class="btn btn-outline-success nav-item m-auto w-100" 
-        asp-controller="Admin" 
-            asp-action="BlogCreate">
-                Create Blog
-            </a> 
-    <div class="table-responsive">
-        <table id="BlogList" class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Date</th>
-                    <th>Home</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>@item.Title</td>
-                        <td>@item.Author</td>
-                        <td>@item.Date.ToString("d")</td>
-                        <td>@(item.isHome ? "Yes" : "No")</td>
-                        <td>
-                            @if (item.IsPublished)
-                            {
-                                <span class="badge bg-success">Published</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">Unpublished</span>
-                            }
-                        </td>
-                        <td>
-                            <a asp-action="BlogEdit" asp-controller="Admin" asp-route-id="@item.BlogId" 
-                               class="btn btn-sm btn-warning">Edit</a>
-                            <form asp-action="BlogDelete" method="post" class="d-inline">
-                                <input type="hidden" name="id" value="@item.BlogId" />
-                                <button type="submit" class="btn btn-sm btn-danger" 
-                                        onclick="return confirm('Delete this blog?')">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div class="adm-empty">
+        <span class="adm-empty__icon" aria-hidden="true"><i class="fa-solid fa-feather-pointed"></i></span>
+        <h2>@T("Henüz blog yazısı yok", "Noch keine Blogbeiträge")</h2>
+        <p>@T("İlk yazınızı eklemek için aşağıdaki düğmeye basın. Yazı kaydedilir kaydedilmez sitede görünür.", "Klicken Sie unten, um Ihren ersten Beitrag zu schreiben. Er erscheint gleich nach dem Speichern auf der Website.")</p>
+        <a class="adm-btn adm-btn--primary adm-btn--lg" href="@Url.Action("BlogCreate", "Admin")"><i class="fa-solid fa-plus" aria-hidden="true"></i>@T("İlk yazıyı ekle", "Ersten Beitrag schreiben")</a>
     </div>
 }
 else
 {
-    <div class="alert alert-info">No blogs found</div>
+    <div data-list data-page-size="20">
+        <div class="adm-toolbar">
+            <label class="adm-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" data-list-search placeholder="@T("Başlık, yazar veya kategoriye göre arayın…", "Nach Titel, Autor oder Kategorie suchen…")" aria-label="@T("Yazılarda ara", "Beiträge durchsuchen")" />
+                <button type="button" aria-label="@T("Aramayı temizle", "Suche löschen")"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </label>
+            <select class="form-select" data-list-filter="status" aria-label="@T("Duruma göre göster", "Nach Status filtern")" style="width:auto">
+                <option value="">@T("Tüm yazılar", "Alle Beiträge")</option>
+                <option value="published">@T("Yalnızca yayında olanlar", "Nur veröffentlichte")</option>
+                <option value="draft">@T("Yalnızca taslaklar", "Nur Entwürfe")</option>
+                <option value="home">@T("Ana sayfada gösterilenler", "Auf der Startseite")</option>
+            </select>
+            <span class="adm-toolbar__count" data-list-count></span>
+        </div>
+
+        <div class="adm-table-wrap">
+            <table class="adm-table">
+                <thead>
+                    <tr>
+                        <th data-sort>@T("Yazı", "Beitrag")</th>
+                        <th data-sort>@T("Kategori", "Kategorie")</th>
+                        <th data-sort="num">@T("Tarih", "Datum")</th>
+                        <th>@T("Durum", "Status")</th>
+                        <th class="is-actions"><span class="adm-sr">@T("İşlemler", "Aktionen")</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var blog in Model)
+                    {
+                        var url = blog.IsPublished ? PublicUrl(blog) : null;
+                        var languages = blog.Translations?.Select(t => t.LanguageCode.ToUpperInvariant()).OrderByDescending(l => l).ToList() ?? new List<string>();
+                        <tr data-status="@(blog.IsPublished ? "published" : "draft")@(blog.isHome ? " home" : "")">
+                            <td class="is-primary" data-label="@T("Yazı", "Beitrag")">
+                                <div class="adm-cell-title">
+                                    @if (!string.IsNullOrEmpty(blog.Image))
+                                    {
+                                        <img class="adm-thumb" src="@Img(blog.Image)" alt="" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <span class="adm-thumb adm-thumb--empty" aria-hidden="true"><i class="fa-regular fa-image"></i></span>
+                                    }
+                                    <span>
+                                        <strong class="adm-clamp-2">@blog.Title</strong>
+                                        <small>@blog.Author@(languages.Any() ? " · " + string.Join(" / ", languages) : "")</small>
+                                    </span>
+                                </div>
+                            </td>
+                            <td data-label="@T("Kategori", "Kategorie")">@(blog.Category?.Name ?? "—")</td>
+                            <td data-label="@T("Tarih", "Datum")" data-value="@blog.Date.ToString("yyyyMMddHHmm")">@blog.Date.ToString("d MMM yyyy", culture)</td>
+                            <td data-label="@T("Durum", "Status")">
+                                <span class="adm-chips">
+                                    @if (blog.IsPublished)
+                                    {
+                                        <span class="adm-badge adm-badge--green">@T("Yayında", "Online")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="adm-badge adm-badge--amber">@T("Taslak", "Entwurf")</span>
+                                    }
+                                    @if (blog.isHome)
+                                    {
+                                        <span class="adm-badge adm-badge--coral">@T("Ana sayfada", "Startseite")</span>
+                                    }
+                                </span>
+                            </td>
+                            <td class="is-actions">
+                                <div class="adm-row-actions">
+                                    @if (url != null)
+                                    {
+                                        <a class="adm-btn adm-btn--ghost adm-btn--sm adm-btn--icon" href="@url" target="_blank" rel="noopener" title="@T("Sitede gör", "Auf der Website ansehen")" aria-label="@T("Sitede gör", "Auf der Website ansehen"): @blog.Title"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+                                    }
+                                    <a class="adm-btn adm-btn--sm" href="@Url.Action("BlogEdit", "Admin", new { id = blog.BlogId })"><i class="fa-solid fa-pen" aria-hidden="true"></i>@T("Düzenle", "Bearbeiten")</a>
+                                    <form method="post" asp-controller="Admin" asp-action="BlogDelete"
+                                          data-confirm="@T("Bu yazı silinsin mi?", "Diesen Beitrag löschen?")"
+                                          data-confirm-text="@T($"“{blog.Title}” yazısı, çevirileri ve ekli dosyalarıyla birlikte kalıcı olarak silinecek.", $"„{blog.Title}“ wird mit Übersetzungen und angehängten Dateien endgültig gelöscht.")"
+                                          data-confirm-note="@T("İpucu: Yazıyı sadece gizlemek istiyorsanız silmek yerine düzenleyip “Yayında” anahtarını kapatın.", "Tipp: Wenn Sie den Beitrag nur verbergen möchten, bearbeiten Sie ihn und schalten Sie „Veröffentlicht“ aus.")">
+                                        <input type="hidden" name="id" value="@blog.BlogId" />
+                                        <button type="submit" class="adm-btn adm-btn--danger adm-btn--sm adm-btn--icon" title="@T("Sil", "Löschen")" aria-label="@T("Sil", "Löschen"): @blog.Title"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <p class="adm-noresult">@T("Aramanıza uyan yazı bulunamadı.", "Kein Beitrag passt zu Ihrer Suche.")</p>
+            <div class="adm-more"><button type="button" class="adm-btn adm-btn--sm" data-list-more hidden><i class="fa-solid fa-chevron-down" aria-hidden="true"></i><span></span></button></div>
+        </div>
+    </div>
 }

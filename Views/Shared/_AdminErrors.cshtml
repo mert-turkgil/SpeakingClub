@@ -1,0 +1,15 @@
+@* Error summary at the top of an admin form, shown only after a failed save *@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+}
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="adm-alert adm-alert--error" role="alert">
+        <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+        <div>
+            <strong>@T("Kaydedilemedi. Lütfen şunları düzeltip tekrar deneyin:", "Nicht gespeichert. Bitte korrigieren Sie Folgendes und versuchen Sie es erneut:")</strong>
+            <div asp-validation-summary="All"></div>
+        </div>
+    </div>
+}

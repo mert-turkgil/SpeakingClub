@@ -1,0 +1,461 @@
+@model SpeakingClub.Models.BlogFormModel
+@*
+    The blog post form, shared by BlogCreate and BlogEdit (they were two drifting copies: the edit page lost
+    the post's time of day because it used a date-only field, and categories were tick boxes although a post
+    can only have one).
+    Tabs follow the order of writing a post; the side panel keeps a live checklist and the save button.
+    Behaviour: wwwroot/js/admin-blog.js (+ admin.js for tabs, counters, previews).
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var edit = Model as BlogEditModel;
+    var isEdit = edit != null;
+    var categories = ViewBag.Categories as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+    var tags = ViewBag.Tags as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+    var quizzes = ViewBag.Quizzes as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+    var questions = ViewBag.Questions as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+    var selectedCategory = Model.SelectedCategoryIds?.FirstOrDefault(id => id > 0) ?? 0;
+    var selectedTags = Model.SelectedTagIds ?? new List<int>();
+    var cover = edit?.CoverImageUrl;
+    string Img(string? image) => string.IsNullOrWhiteSpace(image) ? "" : image.StartsWith("/") || image.StartsWith("http") ? image : "/" + image;
+    string FileIcon(string ext) => ext.TrimStart('.').ToLowerInvariant() switch { "pdf" => "fa-file-pdf", "doc" or "docx" => "fa-file-word", "xls" or "xlsx" => "fa-file-excel", "ppt" or "pptx" => "fa-file-powerpoint", _ => "fa-file" };
+}
+
+<form method="post" asp-action="@(isEdit ? "BlogEdit" : "BlogCreate")" asp-route-id="@(edit?.BlogId)" enctype="multipart/form-data"
+      class="adm-form" id="blogForm" autocomplete="off" data-dirty-guard data-loading
+      data-questions-url="@Url.Action("GetQuizQuestions", "Admin")" data-file-delete-url="@Url.Action("BlogFileDelete", "Admin")"
+      data-site-url="@SeoHelper.SiteUrl" data-has-cover="@(string.IsNullOrEmpty(cover) ? "false" : "true")">
+    @if (edit != null)
+    {
+        <input type="hidden" name="BlogId" value="@edit.BlogId" />
+    }
+    <input type="hidden" name="Url" value="@Model.Url" />
+
+    <div class="adm-form__main">
+        <partial name="_AdminErrors" />
+
+        <div class="adm-tabs" role="tablist" data-tabs aria-label="@T("Yazının bölümleri", "Bereiche des Beitrags")">
+            <button type="button" role="tab" id="tab-basic" aria-controls="panel-basic"><span class="adm-tab__step">1</span>@T("Temel bilgiler", "Grunddaten")</button>
+            <button type="button" role="tab" id="tab-content" aria-controls="panel-content"><span class="adm-tab__step">2</span>@T("Yazı", "Text")</button>
+            <button type="button" role="tab" id="tab-media" aria-controls="panel-media"><span class="adm-tab__step">3</span>@T("Görseller ve dosyalar", "Bilder & Dateien")</button>
+            <button type="button" role="tab" id="tab-lang" aria-controls="panel-lang"><span class="adm-tab__step">4</span>@T("Türkçe / Almanca", "Türkisch / Deutsch")</button>
+            <button type="button" role="tab" id="tab-seo" aria-controls="panel-seo"><span class="adm-tab__step">5</span>@T("Google ve paylaşım", "Google & Teilen")</button>
+        </div>
+
+        @* ---------------- 1. Basics ---------------- *@
+        <div class="adm-tabpanel" id="panel-basic" role="tabpanel" aria-labelledby="tab-basic">
+            <section class="adm-panel">
+                <div class="adm-panel__head">
+                    <span class="adm-panel__num">1</span>
+                    <div>
+                        <h2>@T("Başlık ve özet", "Titel und Zusammenfassung")</h2>
+                        <p>@T("Yazı listesinde ve Google'da ilk görünen bilgiler.", "Das sehen Leser zuerst – in der Beitragsliste und bei Google.")</p>
+                    </div>
+                </div>
+                <div class="adm-panel__body">
+                    <div class="adm-field">
+                        <label asp-for="Title">@T("Başlık", "Titel") <span class="adm-req">@T("Zorunlu", "Pflicht")</span></label>
+                        <input asp-for="Title" class="adm-input adm-input--lg" maxlength="200" placeholder="@T("ör. Almanca konuşurken en sık yapılan 10 hata", "z. B. Die 10 häufigsten Fehler beim Deutschsprechen")"
+                               data-val-required="@T("Lütfen bir başlık yazın.", "Bitte einen Titel eingeben.")" data-val-maxlength="@T("Başlık en fazla 200 karakter olabilir.", "Höchstens 200 Zeichen.")" />
+                        <span class="adm-count" data-count-for="Title" data-max="70"></span>
+                        <span asp-validation-for="Title"></span>
+                        <p class="adm-hint"><i class="fa-solid fa-lightbulb" aria-hidden="true"></i>@T("Kısa ve merak uyandıran bir başlık seçin. 70 karakterden kısa başlıklar Google'da tam görünür.", "Kurz und neugierig machend. Titel unter 70 Zeichen zeigt Google vollständig.")</p>
+                    </div>
+                    <div class="adm-field">
+                        <label asp-for="Description">@T("Kısa özet", "Kurze Zusammenfassung") <span class="adm-opt">@T("önerilir", "empfohlen")</span></label>
+                        <textarea asp-for="Description" class="adm-input" rows="3" maxlength="250" placeholder="@T("Yazının konusunu bir iki cümleyle anlatın…", "Worum geht es? Ein, zwei Sätze…")"></textarea>
+                        <span class="adm-count" data-count-for="Description" data-max="250"></span>
+                        <p class="adm-hint">@T("Yazı kartlarında başlığın altında görünür.", "Erscheint auf den Beitragskarten unter dem Titel.")</p>
+                    </div>
+                    <div class="adm-row">
+                        <div class="adm-field">
+                            <label asp-for="Author">@T("Yazar", "Autor") <span class="adm-req">@T("Zorunlu", "Pflicht")</span></label>
+                            <input asp-for="Author" class="adm-input" maxlength="100" data-val-required="@T("Lütfen yazarın adını yazın.", "Bitte den Namen des Autors eingeben.")" />
+                            <span asp-validation-for="Author"></span>
+                        </div>
+                        <div class="adm-field">
+                            <label asp-for="Date">@T("Yayın tarihi", "Veröffentlichungsdatum")</label>
+                            <input asp-for="Date" type="datetime-local" class="adm-input" />
+                            <p class="adm-hint">@T("Yazılar bu tarihe göre sıralanır.", "Beiträge werden nach diesem Datum sortiert.")</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="adm-panel">
+                <div class="adm-panel__head">
+                    <span class="adm-panel__num">2</span>
+                    <div>
+                        <h2>@T("Kategori ve etiketler", "Kategorie und Schlagwörter")</h2>
+                        <p>@T("Okurların benzer yazıları bulmasını sağlar.", "Helfen Lesern, ähnliche Beiträge zu finden.")</p>
+                    </div>
+                </div>
+                <div class="adm-panel__body">
+                    <fieldset class="adm-field">
+                        <legend class="adm-label">@T("Kategori", "Kategorie") <span class="adm-opt">@T("bir tane seçin", "eine wählen")</span></legend>
+                        <div class="adm-choices">
+                            <label class="adm-choice"><input type="radio" name="SelectedCategoryIds" value="0" @(selectedCategory == 0 ? "checked" : "") /><span>@T("Kategori yok", "Keine Kategorie")</span></label>
+                            @foreach (var c in categories)
+                            {
+                                <label class="adm-choice"><input type="radio" name="SelectedCategoryIds" value="@c.Value" @(c.Value == selectedCategory.ToString() ? "checked" : "") /><span>@c.Text</span></label>
+                            }
+                        </div>
+                    </fieldset>
+                    <fieldset class="adm-field">
+                        <legend class="adm-label">@T("Etiketler", "Schlagwörter") <span class="adm-opt">@T("birden fazla seçebilirsiniz", "mehrere möglich")</span></legend>
+                        <div class="adm-choices">
+                            @foreach (var tag in tags)
+                            {
+                                <label class="adm-choice"><input type="checkbox" name="SelectedTagIds" value="@tag.Value" @(selectedTags.Contains(int.Parse(tag.Value)) ? "checked" : "") /><span>@tag.Text</span></label>
+                            }
+                            @if (!tags.Any())
+                            {
+                                <span class="adm-choices__empty">@T("Henüz etiket yok.", "Noch keine Schlagwörter.") <a href="@Url.Action("TagCreate", "Admin")" target="_blank" rel="noopener">@T("Etiket ekle", "Schlagwort anlegen")</a></span>
+                            }
+                        </div>
+                    </fieldset>
+                </div>
+            </section>
+            <div><button type="button" class="adm-btn" data-tab-next>@T("Sonraki: yazıyı yazın", "Weiter: Text schreiben")<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button></div>
+        </div>
+
+        @* ---------------- 2. Content ---------------- *@
+        <div class="adm-tabpanel" id="panel-content" role="tabpanel" aria-labelledby="tab-content">
+            <section class="adm-panel">
+                <div class="adm-panel__head">
+                    <span class="adm-panel__num">3</span>
+                    <div>
+                        <h2>@T("Yazının metni", "Der Text des Beitrags")</h2>
+                        <p>@T("Word'den kopyalayıp yapıştırabilirsiniz; başlıklar, kalın yazılar ve listeler korunur. Resim eklemek için araç çubuğundaki resim düğmesini kullanın.", "Sie können aus Word kopieren; Überschriften, Fettdruck und Listen bleiben erhalten. Bilder fügen Sie über die Bild-Schaltfläche ein.")</p>
+                    </div>
+                </div>
+                <div class="adm-panel__body">
+                    <textarea asp-for="Content" id="Content" class="adm-input" rows="14"></textarea>
+                    <p class="adm-hint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>@T("Bu metin sitenin her iki dilinde de gösterilir; bir dile özel metin yazmak isterseniz 4. adımdaki “Türkçe / Almanca” sekmesini kullanın.", "Dieser Text erscheint in beiden Sprachen; für einen eigenen Text pro Sprache nutzen Sie Schritt 4 „Türkisch / Deutsch“.")</p>
+                </div>
+            </section>
+            <details class="adm-details">
+                <summary><i class="fa-brands fa-youtube" aria-hidden="true"></i>@T("Video veya harita ekle", "Video oder Karte einfügen") <small>@T("isteğe bağlı", "freiwillig")</small></summary>
+                <div class="adm-details__body">
+                    <div class="adm-field">
+                        <label asp-for="RawYT">@T("YouTube video kodu", "YouTube-Einbettungscode")</label>
+                        <textarea asp-for="RawYT" class="adm-input" rows="3" placeholder="&lt;iframe src=&quot;https://www.youtube.com/embed/…&quot;&gt;&lt;/iframe&gt;"></textarea>
+                        <p class="adm-hint">@T("YouTube'da videonun altındaki Paylaş → Yerleştir'e basın ve gösterilen kodu buraya yapıştırın.", "Bei YouTube unter dem Video Teilen → Einbetten wählen und den Code hier einfügen.")</p>
+                    </div>
+                    <div class="adm-field">
+                        <label asp-for="RawMaps">@T("Google Haritalar kodu", "Google-Maps-Code")</label>
+                        <textarea asp-for="RawMaps" class="adm-input" rows="3" placeholder="&lt;iframe src=&quot;https://www.google.com/maps/embed?…&quot;&gt;&lt;/iframe&gt;"></textarea>
+                        <p class="adm-hint">@T("Google Haritalar'da Paylaş → Harita yerleştir'den kodu kopyalayın.", "In Google Maps Teilen → Karte einbetten wählen und den Code kopieren.")</p>
+                    </div>
+                </div>
+            </details>
+            <details class="adm-details" @(Model.SelectedQuestionId.HasValue ? "open" : "")>
+                <summary><i class="fa-solid fa-circle-question" aria-hidden="true"></i>@T("Yazının sonuna bir sınav sorusu ekle", "Eine Prüfungsfrage unter den Beitrag setzen") <small>@T("isteğe bağlı", "freiwillig")</small></summary>
+                <div class="adm-details__body">
+                    <div class="adm-row">
+                        <div class="adm-field">
+                            <label for="quizDropdown">@T("Sınav", "Prüfung")</label>
+                            <select id="quizDropdown" class="form-select" data-quiz-select>
+                                <option value="">@T("— Sınav seçin —", "— Prüfung wählen —")</option>
+                                @foreach (var quiz in quizzes)
+                                {
+                                    <option value="@quiz.Value" selected="@(quiz.Selected ? "selected" : null)">@quiz.Text</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="adm-field">
+                            <label for="SelectedQuestionId">@T("Soru", "Frage")</label>
+                            <select id="SelectedQuestionId" name="SelectedQuestionId" class="form-select" data-question-select>
+                                <option value="">@T("— Soru yok —", "— Keine Frage —")</option>
+                                @foreach (var q in questions)
+                                {
+                                    <option value="@q.Value" selected="@(q.Selected ? "selected" : null)">@q.Text</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <p class="adm-hint">@T("Önce sınavı, sonra soruyu seçin. Okurlar yazının sonunda bu soruyu cevaplayabilir.", "Erst die Prüfung, dann die Frage wählen. Leser können sie am Ende des Beitrags beantworten.")</p>
+                </div>
+            </details>
+            <div><button type="button" class="adm-btn" data-tab-next>@T("Sonraki: görseller", "Weiter: Bilder")<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button></div>
+        </div>
+
+        @* ---------------- 3. Media ---------------- *@
+        <div class="adm-tabpanel" id="panel-media" role="tabpanel" aria-labelledby="tab-media">
+            <section class="adm-panel">
+                <div class="adm-panel__head">
+                    <span class="adm-panel__num">4</span>
+                    <div>
+                        <h2>@T("Kapak resmi", "Titelbild")</h2>
+                        <p>@T("Yazı kartında, yazının üstünde ve sosyal medyada paylaşıldığında görünür. Yatay bir fotoğraf (ör. 1200×630) en iyisidir.", "Erscheint auf der Karte, über dem Beitrag und beim Teilen. Ein Querformat (z. B. 1200×630) ist ideal.")</p>
+                    </div>
+                </div>
+                <div class="adm-panel__body">
+                    @if (!string.IsNullOrEmpty(cover))
+                    {
+                        <div class="adm-current">
+                            <img src="@Img(cover)" alt="" />
+                            <small>@T("Şu anki kapak resmi. Yeni bir resim seçerseniz yerini alır.", "Aktuelles Titelbild. Ein neues Bild ersetzt es.")</small>
+                        </div>
+                    }
+                    <label class="adm-drop">
+                        <input type="file" asp-for="ImageFile" accept=".jpg,.jpeg,.png,.gif,.webp" data-max-mb="8" data-cover-input />
+                        <span class="adm-drop__empty">
+                            <span class="adm-drop__icon"><i class="fa-solid fa-image" aria-hidden="true"></i></span>
+                            <strong>@(string.IsNullOrEmpty(cover) ? T("Kapak resmi seçmek için tıklayın", "Zum Auswählen des Titelbilds klicken") : T("Yeni kapak resmi seç", "Neues Titelbild wählen"))</strong>
+                            <small>@T("ya da dosyayı buraya sürükleyin · JPG, PNG, GIF, WEBP", "oder Datei hierher ziehen · JPG, PNG, GIF, WEBP")</small>
+                        </span>
+                        <span class="adm-drop__preview"></span>
+                    </label>
+                    <p class="adm-hint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>@T("Telefonla çektiğiniz fotoğraf HEIC biçimindeyse kabul edilmez; önce JPG olarak kaydedin.", "HEIC-Fotos vom Handy werden nicht angenommen; speichern Sie sie vorher als JPG.")</p>
+                </div>
+            </section>
+
+            <section class="adm-panel">
+                <div class="adm-panel__head">
+                    <span class="adm-panel__num">5</span>
+                    <div>
+                        <h2>@T("Ekli dosyalar", "Angehängte Dateien")</h2>
+                        <p>@T("Okurların indirebileceği PDF, Word, Excel veya PowerPoint dosyaları (ör. alıştırma sayfası).", "PDF-, Word-, Excel- oder PowerPoint-Dateien zum Herunterladen (z. B. Übungsblatt).")</p>
+                    </div>
+                </div>
+                <div class="adm-panel__body">
+                    @if (edit?.ExistingFiles?.Any() == true)
+                    {
+                        <ul class="adm-list" data-existing-files>
+                            @foreach (var file in edit.ExistingFiles)
+                            {
+                                <li id="existing-file-@file.FileId">
+                                    <span class="adm-list__thumb" aria-hidden="true"><i class="fa-regular @FileIcon(file.FileExtension)"></i></span>
+                                    <span class="adm-list__main">
+                                        <strong>@file.DisplayName</strong>
+                                        <small>@file.OriginalFileName · @((file.FileSizeBytes / 1024.0 / 1024.0).ToString("0.0")) MB · @T($"{file.DownloadCount} indirme", $"{file.DownloadCount} Downloads")</small>
+                                    </span>
+                                    <button type="button" class="adm-btn adm-btn--danger adm-btn--sm adm-btn--icon" data-delete-file="@file.FileId" data-blog-id="@edit.BlogId" data-file-name="@file.DisplayName" aria-label="@T("Dosyayı sil", "Datei löschen"): @file.DisplayName"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    <label class="adm-drop" style="min-height:120px">
+                        <input type="file" asp-for="AttachmentFiles" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" data-max-mb="50" data-attachments-input />
+                        <span class="adm-drop__empty">
+                            <span class="adm-drop__icon"><i class="fa-solid fa-paperclip" aria-hidden="true"></i></span>
+                            <strong>@T("Dosya eklemek için tıklayın", "Zum Anhängen klicken")</strong>
+                            <small>@T("Birden fazla seçebilirsiniz · dosya başına en fazla 50 MB", "Mehrere möglich · höchstens 50 MB pro Datei")</small>
+                        </span>
+                        <span class="adm-drop__preview"></span>
+                    </label>
+                    <div class="adm-attach-names" data-attachment-names hidden>
+                        <p class="adm-hint">@T("Okurların göreceği adlar (boş bırakırsanız dosya adı kullanılır):", "Namen, die Leser sehen (leer = Dateiname):")</p>
+                    </div>
+                    <input type="hidden" asp-for="AttachmentDisplayNames" data-attachment-names-field />
+                </div>
+            </section>
+            <div><button type="button" class="adm-btn" data-tab-next>@T("Sonraki: dil seçenekleri", "Weiter: Sprachen")<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button></div>
+        </div>
+
+        @* ---------------- 4. Languages ---------------- *@
+        <div class="adm-tabpanel" id="panel-lang" role="tabpanel" aria-labelledby="tab-lang">
+            <div class="adm-alert adm-alert--info">
+                <i class="fa-solid fa-language" aria-hidden="true"></i>
+                <div>@T("Bu sekme isteğe bağlıdır. Burada bir dil için başlık veya metin yazarsanız, o dilde 2. adımdaki metnin yerine bu gösterilir. Boş bırakırsanız 2. adımdaki metin kullanılır.", "Dieser Reiter ist freiwillig. Schreiben Sie hier Titel oder Text für eine Sprache, wird er in dieser Sprache statt des Textes aus Schritt 2 gezeigt. Leer = Text aus Schritt 2.")</div>
+            </div>
+            @foreach (var (code, label) in new[] { ("TR", T("Türkçe", "Türkisch")), ("DE", T("Almanca", "Deutsch")) })
+            {
+                var lang = code == "TR" ? "tr" : "de";
+                <section class="adm-panel">
+                    <div class="adm-panel__head">
+                        <span class="adm-panel__num" aria-hidden="true" style="font-size:0.72rem">@code</span>
+                        <div>
+                            <h2>@T($"{label} hali", $"{label}e Fassung")</h2>
+                            <p>@(code == "TR" ? T("Sitenin Türkçe halinde (/yazilar/…) gösterilir.", "Erscheint auf der türkischen Website (/yazilar/…).") : T("Sitenin Almanca halinde (/beitraege/…) gösterilir.", "Erscheint auf der deutschen Website (/beitraege/…)."))</p>
+                        </div>
+                    </div>
+                    <div class="adm-panel__body">
+                        <div class="adm-field">
+                            <label for="Title@(code)">@T("Başlık", "Titel") (@label)</label>
+                            <input id="Title@(code)" name="Title@(code)" value="@(code == "TR" ? Model.TitleTR : Model.TitleDE)" class="adm-input" maxlength="200" lang="@lang" />
+                        </div>
+                        <div class="adm-field">
+                            <label for="Description@(code)">@T("Kısa özet", "Kurze Zusammenfassung") (@label)</label>
+                            <textarea id="Description@(code)" name="Description@(code)" class="adm-input" rows="2" maxlength="250" lang="@lang">@(code == "TR" ? Model.DescriptionTR : Model.DescriptionDE)</textarea>
+                        </div>
+                        <div class="adm-field">
+                            <label for="Content@(code)">@T("Metin", "Text") (@label)</label>
+                            <textarea id="Content@(code)" name="Content@(code)" class="adm-input" rows="10" lang="@lang">@(code == "TR" ? Model.ContentTR : Model.ContentDE)</textarea>
+                        </div>
+                        <details class="adm-details">
+                            <summary><i class="fa-brands fa-google" aria-hidden="true"></i>@T("Google ayarları", "Google-Einstellungen") (@label) <small>@T("isteğe bağlı", "freiwillig")</small></summary>
+                            <div class="adm-details__body">
+                                <div class="adm-field">
+                                    <label for="Slug@(code)">@T("Adres (bağlantı)", "Adresse (Link)")</label>
+                                    <input id="Slug@(code)" name="Slug@(code)" value="@(code == "TR" ? Model.SlugTR : Model.SlugDE)" class="adm-input" maxlength="200" placeholder="@(code == "TR" ? "almanca-ogrenmenin-yollari" : "wege-deutsch-zu-lernen")" />
+                                    <p class="adm-hint">@T("Boş bırakırsanız başlıktan otomatik oluşturulur.", "Leer = wird automatisch aus dem Titel erzeugt.")</p>
+                                </div>
+                                <div class="adm-field">
+                                    <label for="MetaTitle@(code)">@T("Google başlığı", "Google-Titel")</label>
+                                    <input id="MetaTitle@(code)" name="MetaTitle@(code)" value="@(code == "TR" ? Model.MetaTitleTR : Model.MetaTitleDE)" class="adm-input" maxlength="100" />
+                                </div>
+                                <div class="adm-field">
+                                    <label for="MetaDescription@(code)">@T("Google açıklaması", "Google-Beschreibung")</label>
+                                    <textarea id="MetaDescription@(code)" name="MetaDescription@(code)" class="adm-input" rows="2" maxlength="160">@(code == "TR" ? Model.MetaDescriptionTR : Model.MetaDescriptionDE)</textarea>
+                                </div>
+                                <div class="adm-field">
+                                    <label for="MetaKeywords@(code)">@T("Anahtar kelimeler", "Schlüsselwörter")</label>
+                                    <input id="MetaKeywords@(code)" name="MetaKeywords@(code)" value="@(code == "TR" ? Model.MetaKeywordsTR : Model.MetaKeywordsDE)" class="adm-input" maxlength="300" placeholder="@(code == "TR" ? "almanca öğren, konuşma kulübü" : "deutsch lernen, sprachclub")" />
+                                </div>
+                                <div class="adm-row">
+                                    <div class="adm-field">
+                                        <label for="OgTitle@(code)">@T("Paylaşım başlığı", "Titel beim Teilen")</label>
+                                        <input id="OgTitle@(code)" name="OgTitle@(code)" value="@(code == "TR" ? Model.OgTitleTR : Model.OgTitleDE)" class="adm-input" maxlength="200" />
+                                    </div>
+                                    <div class="adm-field">
+                                        <label for="OgDescription@(code)">@T("Paylaşım açıklaması", "Beschreibung beim Teilen")</label>
+                                        <input id="OgDescription@(code)" name="OgDescription@(code)" value="@(code == "TR" ? Model.OgDescriptionTR : Model.OgDescriptionDE)" class="adm-input" maxlength="300" />
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                </section>
+            }
+            <div><button type="button" class="adm-btn" data-tab-next>@T("Sonraki: Google ve paylaşım", "Weiter: Google & Teilen")<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button></div>
+        </div>
+
+        @* ---------------- 5. Search & sharing ---------------- *@
+        <div class="adm-tabpanel" id="panel-seo" role="tabpanel" aria-labelledby="tab-seo">
+            <div class="adm-alert adm-alert--info">
+                <i class="fa-brands fa-google" aria-hidden="true"></i>
+                <div>@T("Bu sekmedeki her şey isteğe bağlıdır; boş bırakılan alanlar başlıktan ve özetten otomatik doldurulur. Yazınızın Google'da daha iyi görünmesini istiyorsanız doldurun.", "Alles hier ist freiwillig; leere Felder werden aus Titel und Zusammenfassung gefüllt. Füllen Sie es aus, damit der Beitrag bei Google besser erscheint.")</div>
+            </div>
+            <section class="adm-panel">
+                <div class="adm-panel__head">
+                    <span class="adm-panel__num">6</span>
+                    <div>
+                        <h2>@T("Google'da nasıl görünsün?", "Wie soll er bei Google erscheinen?")</h2>
+                    </div>
+                </div>
+                <div class="adm-panel__body">
+                    <div class="adm-field">
+                        <label asp-for="Slug">@T("Yazının adresi", "Adresse des Beitrags")</label>
+                        <input asp-for="Slug" class="adm-input" maxlength="200" placeholder="@T("boş bırakın, başlıktan oluşturulsun", "leer lassen, wird aus dem Titel erzeugt")"
+                               data-val-regex="@T("Sadece küçük harf, rakam ve tire (-) kullanın; Türkçe harf ve boşluk olmasın.", "Nur Kleinbuchstaben, Ziffern und Bindestriche, ohne Umlaute und Leerzeichen.")" />
+                        <span asp-validation-for="Slug"></span>
+                        <div class="adm-preview-url" data-slug-preview></div>
+                    </div>
+                    <div class="adm-field">
+                        <label asp-for="MetaTitle">@T("Google'da görünecek başlık", "Titel bei Google")</label>
+                        <input asp-for="MetaTitle" class="adm-input" maxlength="100" placeholder="@T("boş bırakılırsa yazı başlığı kullanılır", "leer = Titel des Beitrags")" />
+                        <span class="adm-count" data-count-for="MetaTitle" data-max="60"></span>
+                    </div>
+                    <div class="adm-field">
+                        <label asp-for="MetaDescription">@T("Google'da görünecek açıklama", "Beschreibung bei Google")</label>
+                        <textarea asp-for="MetaDescription" class="adm-input" rows="3" maxlength="160" placeholder="@T("boş bırakılırsa kısa özet kullanılır", "leer = kurze Zusammenfassung")"></textarea>
+                        <span class="adm-count" data-count-for="MetaDescription" data-max="160"></span>
+                    </div>
+                    <div class="adm-row">
+                        <div class="adm-field">
+                            <label asp-for="FocusKeyphrase">@T("Ana anahtar kelime", "Haupt-Schlüsselwort")</label>
+                            <input asp-for="FocusKeyphrase" class="adm-input" maxlength="200" placeholder="@T("ör. almanca konuşma", "z. B. deutsch sprechen")" />
+                            <p class="adm-hint">@T("İnsanların Google'a yazacağı kelime. Başlıkta da geçmesi iyi olur.", "Das Wort, das Menschen bei Google eingeben. Gut, wenn es auch im Titel steht.")</p>
+                        </div>
+                        <div class="adm-field">
+                            <label asp-for="MetaKeywords">@T("Diğer anahtar kelimeler", "Weitere Schlüsselwörter")</label>
+                            <input asp-for="MetaKeywords" class="adm-input" maxlength="300" placeholder="@T("virgülle ayırın", "mit Komma trennen")" />
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="adm-panel">
+                <div class="adm-panel__head">
+                    <span class="adm-panel__num">7</span>
+                    <div>
+                        <h2>@T("WhatsApp, Facebook'ta paylaşılınca", "Beim Teilen auf WhatsApp, Facebook")</h2>
+                        <p>@T("Paylaşımda kapak resmi kullanılır; başlık ve açıklamayı burada değiştirebilirsiniz.", "Beim Teilen wird das Titelbild gezeigt; Titel und Beschreibung können Sie hier ändern.")</p>
+                    </div>
+                </div>
+                <div class="adm-panel__body">
+                    <div class="adm-field">
+                        <label asp-for="OgTitle">@T("Paylaşım başlığı", "Titel beim Teilen")</label>
+                        <input asp-for="OgTitle" class="adm-input" maxlength="200" placeholder="@T("boş bırakılırsa yazı başlığı kullanılır", "leer = Titel des Beitrags")" />
+                    </div>
+                    <div class="adm-field">
+                        <label asp-for="OgDescription">@T("Paylaşım açıklaması", "Beschreibung beim Teilen")</label>
+                        <textarea asp-for="OgDescription" class="adm-input" rows="2" maxlength="300" placeholder="@T("boş bırakılırsa Google açıklaması kullanılır", "leer = Google-Beschreibung")"></textarea>
+                    </div>
+                </div>
+            </section>
+            <details class="adm-details">
+                <summary><i class="fa-solid fa-sliders" aria-hidden="true"></i>@T("Gelişmiş ayarlar", "Erweiterte Einstellungen") <small>@T("genelde dokunmayın", "meist nicht nötig")</small></summary>
+                <div class="adm-details__body">
+                    <div class="adm-field">
+                        <label asp-for="CanonicalUrl">@T("Asıl adres (canonical)", "Kanonische Adresse")</label>
+                        <input asp-for="CanonicalUrl" class="adm-input" maxlength="500" placeholder="@SeoHelper.SiteUrl/yazilar/…" />
+                        <p class="adm-hint">@T("Yazı başka bir sitede ilk yayımlandıysa o adresi yazın; değilse boş bırakın.", "Nur ausfüllen, wenn der Beitrag zuerst woanders erschienen ist.")</p>
+                    </div>
+                    <label class="adm-toggle">
+                        <input type="checkbox" asp-for="NoIndex" />
+                        <span class="adm-toggle__track" aria-hidden="true"></span>
+                        <span class="adm-toggle__text"><strong>@T("Google'da gösterme", "Nicht bei Google anzeigen")</strong><small>@T("Yazı sitede görünür ama arama sonuçlarına çıkmaz.", "Der Beitrag bleibt auf der Website, erscheint aber nicht in Suchergebnissen.")</small></span>
+                    </label>
+                    <label class="adm-toggle">
+                        <input type="checkbox" asp-for="NoFollow" />
+                        <span class="adm-toggle__track" aria-hidden="true"></span>
+                        <span class="adm-toggle__text"><strong>@T("Bağlantıları takip ettirme", "Links nicht folgen")</strong><small>@T("Google yazıdaki bağlantıları izlemez. Emin değilseniz kapalı bırakın.", "Google folgt den Links im Beitrag nicht. Im Zweifel aus lassen.")</small></span>
+                    </label>
+                </div>
+            </details>
+        </div>
+
+        <div class="adm-savebar">
+            <span class="adm-savebar__hint">@T("Tüm sekmeler tek seferde kaydedilir.", "Alle Reiter werden zusammen gespeichert.")</span>
+            <a class="adm-btn adm-btn--ghost" href="@Url.Action("Blogs", "Admin")">@T("Vazgeç", "Abbrechen")</a>
+            <button type="submit" class="adm-btn adm-btn--primary"><i class="fa-solid fa-check" aria-hidden="true"></i>@(isEdit ? T("Değişiklikleri kaydet", "Änderungen speichern") : T("Yazıyı kaydet", "Beitrag speichern"))</button>
+        </div>
+    </div>
+
+    <aside class="adm-form__aside">
+        <section class="adm-panel">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num"><i class="fa-solid fa-eye" aria-hidden="true"></i></span>
+                <div><h2>@T("Yayın", "Veröffentlichung")</h2></div>
+            </div>
+            <div class="adm-panel__body adm-panel__body--tight">
+                <label class="adm-toggle">
+                    <input type="checkbox" asp-for="IsPublished" />
+                    <span class="adm-toggle__track" aria-hidden="true"></span>
+                    <span class="adm-toggle__text"><strong>@T("Yayında", "Veröffentlicht")</strong><small>@T("Kapalıysa yazı taslak olarak saklanır, sitede görünmez.", "Wenn aus, bleibt der Beitrag ein Entwurf und ist nicht sichtbar.")</small></span>
+                </label>
+                <label class="adm-toggle">
+                    <input type="checkbox" asp-for="IsHome" />
+                    <span class="adm-toggle__track" aria-hidden="true"></span>
+                    <span class="adm-toggle__text"><strong>@T("Ana sayfada göster", "Auf der Startseite zeigen")</strong><small>@T("Yazı ana sayfadaki öne çıkanlar arasına girer.", "Der Beitrag erscheint unter den Highlights der Startseite.")</small></span>
+                </label>
+                <button type="submit" class="adm-btn adm-btn--primary adm-btn--lg"><i class="fa-solid fa-check" aria-hidden="true"></i>@(isEdit ? T("Değişiklikleri kaydet", "Änderungen speichern") : T("Yazıyı kaydet", "Beitrag speichern"))</button>
+            </div>
+        </section>
+        <section class="adm-panel">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num"><i class="fa-solid fa-list-check" aria-hidden="true"></i></span>
+                <div>
+                    <h2>@T("Kontrol listesi", "Checkliste")</h2>
+                    <p>@T("Yeşil olanlar tamam.", "Grün ist erledigt.")</p>
+                </div>
+            </div>
+            <div class="adm-panel__body adm-panel__body--tight">
+                <div class="adm-meter" data-seo-meter>
+                    <div class="adm-meter__ring"><span data-seo-score>0</span></div>
+                    <ul data-checklist>
+                        <li data-check="title"><a href="#tab-basic" data-tab-go="tab-basic">@T("Başlık yazıldı", "Titel geschrieben")</a></li>
+                        <li data-check="author"><a href="#tab-basic" data-tab-go="tab-basic">@T("Yazar belli", "Autor angegeben")</a></li>
+                        <li data-check="summary"><a href="#tab-basic" data-tab-go="tab-basic">@T("Kısa özet var", "Zusammenfassung vorhanden")</a></li>
+                        <li data-check="content"><a href="#tab-content" data-tab-go="tab-content">@T("Metin en az 300 kelime", "Text mit mind. 300 Wörtern")</a></li>
+                        <li data-check="cover"><a href="#tab-media" data-tab-go="tab-media">@T("Kapak resmi seçildi", "Titelbild gewählt")</a></li>
+                        <li data-check="keyword"><a href="#tab-seo" data-tab-go="tab-seo">@T("Anahtar kelime başlıkta geçiyor", "Schlüsselwort steht im Titel")</a></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </aside>
+</form>

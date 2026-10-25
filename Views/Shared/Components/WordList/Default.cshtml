@@ -1,52 +1,78 @@
 @using SpeakingClub.Entity
+@using SpeakingClub.Services
 @model IEnumerable<Word>
+@* Admin → Kelimeler. The fields are editor HTML (shown raw on the dictionary page); here they are plain text. *@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    string Plain(string? html) => HtmlUtility.StripHtml(html ?? string.Empty).Trim();
+    var words = Model.OrderBy(w => w.Term).ToList();
+}
 
-<div class="word-management mt-4 container-xxl">
-    <div class="nav table-responsive mb-3">
-        <a class="btn btn-outline-success nav-item m-auto w-100" 
-           asp-controller="Admin" 
-           asp-action="WordCreate">
-            Create New Word
-        </a>
+@if (!words.Any())
+{
+    <div class="adm-empty">
+        <span class="adm-empty__icon" aria-hidden="true"><i class="fa-solid fa-spell-check"></i></span>
+        <h2>@T("Henüz kelime yok", "Noch keine Wörter")</h2>
+        <p>@T("Sözlüğe ilk kelimeyi eklemek için aşağıdaki düğmeye basın.", "Klicken Sie unten, um das erste Wort ins Wörterbuch aufzunehmen.")</p>
+        <a class="adm-btn adm-btn--primary adm-btn--lg" href="@Url.Action("WordCreate", "Admin")"><i class="fa-solid fa-plus" aria-hidden="true"></i>@T("İlk kelimeyi ekle", "Erstes Wort hinzufügen")</a>
     </div>
-
-    <table id="WordList" class="table table-striped table-bordered dt-responsive nowrap" style="width:100%">
-        <thead>
-            <tr>
-                <th>Term</th>
-                <th>Definition</th>
-                <th>Example</th>
-                <th>Pronunciation</th>
-                <th>Synonyms</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var word in Model)
-            {
-                <tr>
-                    <td>@word.Term</td>
-                    <td>@word.Definition</td>
-                    <td>@word.Example</td>
-                    <td>@word.Pronunciation</td>
-                    <td>@word.Synonyms</td>
-                    <td>
-                        <a asp-action="WordEdit" asp-controller="Admin" 
-                           asp-route-id="@word.WordId" 
-                           class="btn btn-warning btn-sm w-100 mb-2">
-                            <i class="fa fa-edit"></i> Edit
-                        </a>
-                        <form asp-controller="Admin" asp-action="WordDelete" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@word.WordId" />
-                            <button type="submit" class="btn btn-danger w-100" 
-                                    onclick="return confirm('Are you sure you want to delete this word?')">
-                                Delete
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
+}
+else
+{
+    <div data-list data-page-size="25">
+        <div class="adm-toolbar">
+            <label class="adm-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" data-list-search placeholder="@T("Kelime veya anlamında arayın…", "Nach Wort oder Bedeutung suchen…")" aria-label="@T("Kelimelerde ara", "Wörter durchsuchen")" />
+                <button type="button" aria-label="@T("Aramayı temizle", "Suche löschen")"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </label>
+            <span class="adm-toolbar__count" data-list-count></span>
+        </div>
+        <div class="adm-table-wrap">
+            <table class="adm-table">
+                <thead>
+                    <tr>
+                        <th data-sort>@T("Kelime", "Wort")</th>
+                        <th>@T("Anlamı", "Bedeutung")</th>
+                        <th>@T("Örnek", "Beispiel")</th>
+                        <th class="is-actions"><span class="adm-sr">@T("İşlemler", "Aktionen")</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var word in words)
+                    {
+                        <tr>
+                            <td class="is-primary" data-label="@T("Kelime", "Wort")">
+                                <div class="adm-cell-title">
+                                    <span>
+                                        <strong>@word.Term</strong>
+                                        @if (!string.IsNullOrWhiteSpace(Plain(word.Pronunciation)))
+                                        {
+                                            <small>/@Plain(word.Pronunciation)/</small>
+                                        }
+                                    </span>
+                                </div>
+                            </td>
+                            <td data-label="@T("Anlamı", "Bedeutung")"><span class="adm-clamp-2">@Plain(word.Definition)</span></td>
+                            <td data-label="@T("Örnek", "Beispiel")"><span class="adm-clamp-2 adm-hint">@(string.IsNullOrWhiteSpace(Plain(word.Example)) ? "—" : Plain(word.Example))</span></td>
+                            <td class="is-actions">
+                                <div class="adm-row-actions">
+                                    <a class="adm-btn adm-btn--sm" href="@Url.Action("WordEdit", "Admin", new { id = word.WordId })"><i class="fa-solid fa-pen" aria-hidden="true"></i>@T("Düzenle", "Bearbeiten")</a>
+                                    <form method="post" asp-controller="Admin" asp-action="WordDelete"
+                                          data-confirm="@T("Bu kelime silinsin mi?", "Dieses Wort löschen?")"
+                                          data-confirm-text="@T($"“{word.Term}” sözlükten kalıcı olarak silinecek.", $"„{word.Term}“ wird endgültig aus dem Wörterbuch gelöscht.")">
+                                        <input type="hidden" name="id" value="@word.WordId" />
+                                        <button type="submit" class="adm-btn adm-btn--danger adm-btn--sm adm-btn--icon" title="@T("Sil", "Löschen")" aria-label="@T("Sil", "Löschen"): @word.Term"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <p class="adm-noresult">@T("Aramanıza uyan kelime bulunamadı.", "Kein Wort passt zu Ihrer Suche.")</p>
+            <div class="adm-more"><button type="button" class="adm-btn adm-btn--sm" data-list-more hidden><i class="fa-solid fa-chevron-down" aria-hidden="true"></i><span></span></button></div>
+        </div>
+    </div>
+}

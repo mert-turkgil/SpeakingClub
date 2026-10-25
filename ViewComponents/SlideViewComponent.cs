@@ -40,6 +40,13 @@ namespace SpeakingClub.ViewComponents
                 "nursesgerman" => isGerman ? "/pflegedeutsch" : "/hemsirelik-almancasi",
                 _ => Url.Action(action, "Home") ?? "/"
             };
+            // A missing resource comes back as its own key ("Carousel_5_Title"), not null, so "?? fallback" never
+            // applied and a slide without translations showed the key on the home page.
+            string Text(string key, string? fallback)
+            {
+                var value = _localization.GetKey(key);
+                return value == null || value.ResourceNotFound || string.IsNullOrWhiteSpace(value.Value) ? fallback ?? string.Empty : value.Value;
+            }
             var slideItems = new SlideItemModel{SlideItems = slides.Select(s =>
             {
                 var action = string.IsNullOrEmpty(s.CarouselLink) ? "Index" : s.CarouselLink;
@@ -47,13 +54,13 @@ namespace SpeakingClub.ViewComponents
                 return new SlideModel
                 {
                     SlideId = s.SlideId,
-                    CarouselTitle = _localization.GetKey($"Carousel_{s.SlideId}_Title")?.Value ?? s.CarouselTitle,
+                    CarouselTitle = Text($"Carousel_{s.SlideId}_Title", s.CarouselTitle),
                     CarouselImage = s.CarouselImage,
                     CarouselImage600w = s.CarouselImage600w,
                     CarouselImage1200w = s.CarouselImage1200w,
-                    CarouselDescription =  _localization.GetKey($"Carousel_{s.SlideId}_Description")?.Value ?? s.CarouselDescription,
+                    CarouselDescription = Text($"Carousel_{s.SlideId}_Description", s.CarouselDescription),
                     CarouselLink = LinkFor(finalAction),
-                    CarouselLinkText = _localization.GetKey($"Carousel_{s.SlideId}_LinkText")?.Value ?? s.CarouselLinkText,
+                    CarouselLinkText = Text($"Carousel_{s.SlideId}_LinkText", s.CarouselLinkText),
                     DateAdded = s.DateAdded
                 };
             }).ToList()};

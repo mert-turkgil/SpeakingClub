@@ -1,0 +1,32 @@
+@model string
+@*
+    One admin section (blogs, quizzes, users…): header and guide from Models/AdminNav.cs, then the
+    section's list, rendered by its view component.
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    var section = AdminNav.Find(Model, isGerman)!;
+    ViewData["Title"] = section.Title;
+    ViewData["AdminSection"] = section.Key;
+}
+
+@{
+    var adminHeader = new AdminHeader(section.Key, section.Title, section.Lead,
+    section.CreateAction == null ? null : Url.Action(section.CreateAction, section.Controller),
+    section.CreateLabel, Guide: section.Guide);
+}
+<partial name="_AdminHeader" model="adminHeader" />
+
+@switch (section.Key)
+{
+    case "blogs": @await Component.InvokeAsync("GenericList", new { entityType = "Blogs" }) break;
+    case "quizzes": @await Component.InvokeAsync("GenericList", new { entityType = "Quizzes" }) break;
+    case "questions": @await Component.InvokeAsync("GenericList", new { entityType = "Questions" }) break;
+    case "slides": @await Component.InvokeAsync("GenericList", new { entityType = "Slides" }) break;
+    case "categories": @await Component.InvokeAsync("GenericList", new { entityType = "Categories" }) break;
+    case "tags": @await Component.InvokeAsync("GenericList", new { entityType = "Tags" }) break;
+    case "words": @await Component.InvokeAsync("WordList") break;
+    case "users": @await Component.InvokeAsync("UserManagement") break;
+    case "roles": @await Component.InvokeAsync("RoleManagement") break;
+    case "texts": @await Component.InvokeAsync("ResourceManagement") break;
+}

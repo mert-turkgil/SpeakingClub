@@ -1,50 +1,78 @@
 @using SpeakingClub.Entity
-@model IEnumerable<Tag>
-@if (Model.Any())
+@model List<Tag>
+@* Admin → Etiketler. A1–C2 are marked: they are the quiz levels shown to students. *@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var levels = new[] { "A1", "A2", "B1", "B2", "C1", "C2" };
+}
+
+@if (!Model.Any())
 {
-        <a class="btn btn-outline-success nav-item m-auto w-100" 
-    asp-controller="Admin" 
-    asp-action="TagCreate">
-        Create Tag
-    </a> 
-    <div class="table-responsive">
-        <table id="TagList" class="table table-hover table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Tag Name</th>
-                    <th>Used in Blogs</th>
-                    <th>Used in Quizzes</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var tag in Model)
-                {
-                    <tr>
-                        <td>@tag.Name</td>
-                        <td>@tag.Blogs.Count</td>
-                        <td>@tag.Quizzes.Count</td>
-                        <td>
-                            <a asp-action="TagEdit" asp-controller="Admin" 
-                               asp-route-id="@tag.TagId" class="btn btn-sm btn-warning mb-1">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                            <form asp-route-id="@tag.TagId" asp-action="TagDelete" method="post">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@tag.TagId" />
-                                <button type="submit" class="btn btn-sm btn-danger" 
-                                        onclick="return confirm('Delete this tag?')">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div class="adm-empty">
+        <span class="adm-empty__icon" aria-hidden="true"><i class="fa-solid fa-tags"></i></span>
+        <h2>@T("Henüz etiket yok", "Noch keine Schlagwörter")</h2>
+        <p>@T("İlk etiketinizi ekleyin. Örneğin sınav seviyeleri için A1, A2, B1…", "Fügen Sie Ihr erstes Schlagwort hinzu, z. B. A1, A2, B1 … für die Prüfungsniveaus.")</p>
+        <a class="adm-btn adm-btn--primary adm-btn--lg" href="@Url.Action("TagCreate", "Admin")"><i class="fa-solid fa-plus" aria-hidden="true"></i>@T("İlk etiketi ekle", "Erstes Schlagwort hinzufügen")</a>
     </div>
 }
 else
 {
-    <div class="alert alert-info">No tags found</div>
+    <div data-list data-page-size="30">
+        <div class="adm-toolbar">
+            <label class="adm-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" data-list-search placeholder="@T("Etiket arayın…", "Schlagwort suchen…")" aria-label="@T("Etiketlerde ara", "Schlagwörter durchsuchen")" />
+                <button type="button" aria-label="@T("Aramayı temizle", "Suche löschen")"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </label>
+            <span class="adm-toolbar__count" data-list-count></span>
+        </div>
+        <div class="adm-table-wrap">
+            <table class="adm-table">
+                <thead>
+                    <tr>
+                        <th data-sort>@T("Etiket", "Schlagwort")</th>
+                        <th data-sort="num" class="is-num">@T("Yazılarda", "In Beiträgen")</th>
+                        <th data-sort="num" class="is-num">@T("Sınavlarda", "In Prüfungen")</th>
+                        <th class="is-actions"><span class="adm-sr">@T("İşlemler", "Aktionen")</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var tag in Model)
+                    {
+                        var isLevel = levels.Contains(tag.Name?.Trim().ToUpperInvariant());
+                        var used = tag.Blogs.Count + tag.Quizzes.Count;
+                        <tr>
+                            <td class="is-primary" data-label="@T("Etiket", "Schlagwort")">
+                                <div class="adm-cell-title">
+                                    <span class="adm-badge @(isLevel ? "adm-badge--blue" : "adm-badge--coral") adm-badge--plain"><i class="fa-solid fa-hashtag" aria-hidden="true"></i>@tag.Name</span>
+                                    @if (isLevel)
+                                    {
+                                        <small>@T("Sınav seviyesi olarak görünür", "Erscheint als Prüfungsniveau")</small>
+                                    }
+                                </div>
+                            </td>
+                            <td data-label="@T("Yazılarda", "In Beiträgen")" class="is-num">@tag.Blogs.Count</td>
+                            <td data-label="@T("Sınavlarda", "In Prüfungen")" class="is-num">@tag.Quizzes.Count</td>
+                            <td class="is-actions">
+                                <div class="adm-row-actions">
+                                    <a class="adm-btn adm-btn--sm" href="@Url.Action("TagEdit", "Admin", new { id = tag.TagId })"><i class="fa-solid fa-pen" aria-hidden="true"></i>@T("Düzenle", "Bearbeiten")</a>
+                                    <form method="post" asp-controller="Admin" asp-action="TagDelete" asp-route-id="@tag.TagId"
+                                          data-confirm="@T("Bu etiket silinsin mi?", "Dieses Schlagwort löschen?")"
+                                          data-confirm-text="@(used > 0
+                                              ? T($"“{tag.Name}” etiketi {used} yazı/sınavdan kaldırılacak. Yazılar ve sınavlar silinmez.", $"„{tag.Name}“ wird von {used} Beiträgen/Prüfungen entfernt. Diese selbst bleiben erhalten.")
+                                              : T($"“{tag.Name}” etiketi silinecek.", $"„{tag.Name}“ wird gelöscht."))"
+                                          data-confirm-note="@(isLevel ? T("Bu bir seviye etiketi: kullanıldığı sınavlar seviyesiz görünecek.", "Das ist ein Niveau-Schlagwort: Die betroffenen Prüfungen erscheinen dann ohne Niveau.") : "")">
+                                        <button type="submit" class="adm-btn adm-btn--danger adm-btn--sm adm-btn--icon" title="@T("Sil", "Löschen")" aria-label="@T("Sil", "Löschen"): @tag.Name"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <p class="adm-noresult">@T("Aramanıza uyan etiket bulunamadı.", "Kein Schlagwort passt zu Ihrer Suche.")</p>
+            <div class="adm-more"><button type="button" class="adm-btn adm-btn--sm" data-list-more hidden><i class="fa-solid fa-chevron-down" aria-hidden="true"></i><span></span></button></div>
+        </div>
+    </div>
 }

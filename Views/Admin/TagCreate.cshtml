@@ -1,21 +1,47 @@
 @model SpeakingClub.Models.TagCreateViewModel
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var section = AdminNav.Find("tags", isGerman)!;
+    ViewData["Title"] = T("Yeni etiket", "Neues Schlagwort");
+    ViewData["AdminSection"] = section.Key;
+}
 
 @{
-    ViewData["Title"] = "Create Tag";
+    var adminHeader = new AdminHeader("tag-form", T("Yeni etiket", "Neues Schlagwort"),
+    T("Kısa bir etiket adı yazın. Etiketi sonra yazılara ve sınavlara, onların düzenleme sayfasından eklersiniz.", "Geben Sie einen kurzen Namen ein. Beiträgen und Prüfungen weisen Sie es danach auf deren Bearbeiten-Seite zu."),
+    ParentTitle: section.Title, ParentHref: Url.Action(section.Action));
 }
-<section class="container my-4">
-<h2>Create Tag</h2>
+<partial name="_AdminHeader" model="adminHeader" />
 
-<form asp-action="TagCreate" method="post">
-    <div class="form-group">
-        <label asp-for="Name"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
+<form method="post" asp-action="TagCreate" class="adm-form adm-form--single" data-dirty-guard data-loading>
+    <div class="adm-form__main">
+        <partial name="_AdminErrors" />
+        <section class="adm-panel">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num">1</span>
+                <div>
+                    <h2>@T("Etiket adı", "Name des Schlagworts")</h2>
+                    <p>@T("Bir ya da iki kelime yeterli.", "Ein oder zwei Wörter genügen.")</p>
+                </div>
+            </div>
+            <div class="adm-panel__body">
+                <div class="adm-field">
+                    <label asp-for="Name">@T("Ad", "Name") <span class="adm-req">@T("Zorunlu", "Pflicht")</span></label>
+                    <input asp-for="Name" class="adm-input" autocomplete="off" maxlength="50" placeholder="@T("ör. A1, Dinleme, Kelime", "z. B. A1, Hören, Wortschatz")" data-val-required="@T("Lütfen bir ad yazın.", "Bitte geben Sie einen Namen ein.")" />
+                    <span asp-validation-for="Name"></span>
+                    <p class="adm-hint"><i class="fa-solid fa-lightbulb" aria-hidden="true"></i>@Html.Raw(T("<b>A1, A2, B1, B2, C1, C2</b> özel etiketlerdir: bir sınava eklendiğinde öğrenciler sınav listesinde o seviyeyi görür.", "<b>A1, A2, B1, B2, C1, C2</b> sind besondere Schlagwörter: An einer Prüfung zeigen sie Lernenden das Niveau."))</p>
+                </div>
+            </div>
+        </section>
+        <div class="adm-savebar">
+            <span class="adm-savebar__hint">@T("Hazır olduğunuzda kaydedin.", "Speichern Sie, wenn Sie fertig sind.")</span>
+            <a class="adm-btn adm-btn--ghost" href="@Url.Action(section.Action)">@T("Vazgeç", "Abbrechen")</a>
+            <button type="submit" class="adm-btn adm-btn--primary"><i class="fa-solid fa-check" aria-hidden="true"></i>@T("Etiketi kaydet", "Schlagwort speichern")</button>
+        </div>
     </div>
-    <button type="submit" class="btn btn-primary">Create Tag</button>
-    <a asp-controller="Admin" asp-route-scrollTo="TagManagement" asp-action="Index" class="btn btn-secondary">Back</a>
 </form>
-</section>
+
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
 }

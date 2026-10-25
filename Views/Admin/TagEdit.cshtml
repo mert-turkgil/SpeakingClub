@@ -1,33 +1,81 @@
 @model TagEditViewModel
 @{
-    ViewData["Title"] = "Edit Tag";
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var section = AdminNav.Find("tags", isGerman)!;
+    ViewData["Title"] = T("Etiketi düzenle", "Schlagwort bearbeiten");
+    ViewData["AdminSection"] = section.Key;
 }
-<section class="container my-4">
-<h2>Edit Tag</h2>
 
-<form asp-action="TagEdit" method="post">
+@{
+    var adminHeader = new AdminHeader("tag-form", T("Etiketi düzenle", "Schlagwort bearbeiten"),
+    T("Adını değiştirin ve bu etiketin hangi yazılarda ve sınavlarda görüneceğini işaretleyin.", "Ändern Sie den Namen und markieren Sie, bei welchen Beiträgen und Prüfungen es erscheint."),
+    ParentTitle: section.Title, ParentHref: Url.Action(section.Action));
+}
+<partial name="_AdminHeader" model="adminHeader" />
+
+<form method="post" asp-action="TagEdit" asp-route-id="@Model.TagId" class="adm-form adm-form--single" data-dirty-guard data-loading>
     <input type="hidden" asp-for="TagId" />
-
-    <div class="form-group">
-        <label asp-for="Name"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
+    <div class="adm-form__main">
+        <partial name="_AdminErrors" />
+        <section class="adm-panel" style="--i:0">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num">1</span>
+                <div><h2>@T("Etiket adı", "Name des Schlagworts")</h2></div>
+            </div>
+            <div class="adm-panel__body">
+                <div class="adm-field">
+                    <label asp-for="Name">@T("Ad", "Name") <span class="adm-req">@T("Zorunlu", "Pflicht")</span></label>
+                    <input asp-for="Name" class="adm-input" autocomplete="off" maxlength="50" data-val-required="@T("Lütfen bir ad yazın.", "Bitte geben Sie einen Namen ein.")" />
+                    <span asp-validation-for="Name"></span>
+                </div>
+            </div>
+        </section>
+        <section class="adm-panel" style="--i:1">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num">2</span>
+                <div>
+                    <h2>@T("Bu etiket nerede görünsün?", "Wo soll das Schlagwort erscheinen?")</h2>
+                    <p>@T("İşaretli olanlar etiketi taşır. İşareti kaldırmak etiketi o yazıdan veya sınavdan çıkarır.", "Markierte tragen das Schlagwort. Entfernen Sie die Markierung, um es dort wegzunehmen.")</p>
+                </div>
+            </div>
+            <div class="adm-panel__body">
+                <fieldset class="adm-field">
+                    <legend class="adm-label"><i class="fa-solid fa-feather-pointed" aria-hidden="true"></i>@T("Blog yazıları", "Blogbeiträge")</legend>
+                    <div class="adm-choices adm-choices--grid">
+                        @foreach (var blog in Model.AvailableBlogs)
+                        {
+                            <label class="adm-choice"><input type="checkbox" name="SelectedBlogIds" value="@blog.Value" @(Model.SelectedBlogIds.Contains(int.Parse(blog.Value)) ? "checked" : "") /><span>@blog.Text</span></label>
+                        }
+                        @if (!Model.AvailableBlogs.Any())
+                        {
+                            <span class="adm-choices__empty">@T("Henüz yazı yok.", "Noch keine Beiträge.")</span>
+                        }
+                    </div>
+                </fieldset>
+                <fieldset class="adm-field">
+                    <legend class="adm-label"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>@T("Sınavlar", "Prüfungen")</legend>
+                    <div class="adm-choices adm-choices--grid">
+                        @foreach (var quiz in Model.AvailableQuizzes)
+                        {
+                            <label class="adm-choice"><input type="checkbox" name="SelectedQuizIds" value="@quiz.Value" @(Model.SelectedQuizIds.Contains(int.Parse(quiz.Value)) ? "checked" : "") /><span>@quiz.Text</span></label>
+                        }
+                        @if (!Model.AvailableQuizzes.Any())
+                        {
+                            <span class="adm-choices__empty">@T("Henüz sınav yok.", "Noch keine Prüfungen.")</span>
+                        }
+                    </div>
+                </fieldset>
+            </div>
+        </section>
+        <div class="adm-savebar">
+            <span class="adm-savebar__hint">@T("Hazır olduğunuzda kaydedin.", "Speichern Sie, wenn Sie fertig sind.")</span>
+            <a class="adm-btn adm-btn--ghost" href="@Url.Action(section.Action)">@T("Vazgeç", "Abbrechen")</a>
+            <button type="submit" class="adm-btn adm-btn--primary"><i class="fa-solid fa-check" aria-hidden="true"></i>@T("Kaydet", "Speichern")</button>
+        </div>
     </div>
-
-    <div class="form-group">
-        <label>Associated Blogs</label>
-        <select asp-for="SelectedBlogIds" asp-items="Model.AvailableBlogs" multiple class="form-control" size="8"></select>
-    </div>
-
-    <div class="form-group">
-        <label>Associated Quizzes</label>
-        <select asp-for="SelectedQuizIds" asp-items="Model.AvailableQuizzes" multiple class="form-control" size="8"></select>
-    </div>
-
-    <button type="submit" class="btn btn-success">Update Tag</button>
-    <a asp-controller="Admin" asp-route-scrollTo="TagManagement" asp-action="Index" class="btn btn-secondary">Back</a>
 </form>
-</section>
+
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
 }

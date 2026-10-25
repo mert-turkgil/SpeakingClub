@@ -227,7 +227,7 @@ builder.Services.AddScoped<IEmailSender, SmtpEmailSender>(sp =>
     new SmtpEmailSender(host!, port, enablessl, username!, password!, fromEmail!, fromName!, replyToEmail!));
 
 // Register resource services and file provider for localization/resources.
-var resourcesPath = Path.Combine(Directory.GetCurrentDirectory(), "Resources");
+var resourcesPath = Path.Combine(builder.Environment.ContentRootPath, "Resources");
 builder.Services.AddSingleton<AliveResourceService>(p => new AliveResourceService(resourcesPath));
 builder.Services.AddSingleton<IManageResourceService>(sp => new ManageResourceService(resourcesPath));
 builder.Services.AddSingleton<LanguageService>();

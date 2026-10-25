@@ -2,14 +2,16 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using System.Threading.Tasks;
 using SpeakingClub.Models;
-using SpeakingClub.Services;
-using System.Globalization;
 
+// Admin → Site metinleri: every text of Resources/SharedResource.<lang>.resx, Turkish and German side by
+// side (the old list showed one language at a time behind a dropdown of culture codes). Texts that are
+// edited elsewhere — slide captions (Carousel_*) and the old per-post blog keys — are left out.
 public class ResourceManagementViewComponent : ViewComponent
 {
+    private static readonly Regex ManagedElsewhere = new(@"^(Carousel_\d+_|(Title|Content)_\d+_)", RegexOptions.Compiled);
     private readonly IWebHostEnvironment _env;
 
     public ResourceManagementViewComponent(IWebHostEnvironment env)
@@ -17,41 +19,35 @@ public class ResourceManagementViewComponent : ViewComponent
         _env = env;
     }
 
-    public IViewComponentResult Invoke(string resourceLang)
+    public IViewComponentResult Invoke()
     {
-        // Fall back if nothing is chosen
-        if (string.IsNullOrEmpty(resourceLang))
-            resourceLang = "tr-TR";
-
-        var translations = LoadTranslations(GetResxPath(resourceLang));
-
-        var viewModel = new LocalizationViewModel
-        {
-            CurrentLanguage = resourceLang,
-            AvailableLanguages = new List<string> { "de-DE",   "tr-TR" },
-            Translations = translations
-        };
-
-        return View("Default", viewModel);
+        var tr = Load("tr-TR");
+        var de = Load("de-DE");
+        var keys = tr.Select(e => e.Key).Concat(de.Select(e => e.Key)).Distinct()
+            .Where(k => !ManagedElsewhere.IsMatch(k))
+            .ToList();
+        var trByKey = tr.GroupBy(e => e.Key).ToDictionary(g => g.Key, g => g.First());
+        var deByKey = de.GroupBy(e => e.Key).ToDictionary(g => g.Key, g => g.First());
+        var rows = keys.Select(k => new SiteTextRow(
+            k,
+            trByKey.TryGetValue(k, out var t) ? t.Value : string.Empty,
+            deByKey.TryGetValue(k, out var d) ? d.Value : string.Empty,
+            t?.Comment ?? d?.Comment)).ToList();
+        return View("Default", rows);
     }
 
-    private string GetResxPath(string lang)
+    private List<LocalizationModel> Load(string lang)
     {
-        var fileName = $"SharedResource.{lang}.resx";
-        return Path.Combine(_env.ContentRootPath, "Resources", fileName);
-    }
-
-    private List<LocalizationModel> LoadTranslations(string resxPath)
-    {
-        if (!System.IO.File.Exists(resxPath))
+        var path = Path.Combine(_env.ContentRootPath, "Resources", $"SharedResource.{lang}.resx");
+        if (!System.IO.File.Exists(path))
             return new List<LocalizationModel>();
 
-        var resxFile = XDocument.Load(resxPath);
-        return resxFile.Root?.Elements("data").Select(x => new LocalizationModel
+        return XDocument.Load(path).Root?.Elements("data").Select(x => new LocalizationModel
         {
-            Key = x.Attribute("name")?.Value ?? "N/A",
-            Value = x.Element("value")?.Value ?? "N/A",
-            Comment = x.Element("comment")?.Value ?? "N/A"
-        }).ToList() ?? new List<LocalizationModel>();
+            Key = x.Attribute("name")?.Value ?? string.Empty,
+            Value = x.Element("value")?.Value ?? string.Empty,
+            // An empty comment used to come back as "N/A" and was saved into the file on the next edit
+            Comment = x.Element("comment")?.Value ?? string.Empty
+        }).Where(m => m.Key.Length > 0).ToList() ?? new List<LocalizationModel>();
     }
 }

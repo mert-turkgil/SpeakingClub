@@ -9,6 +9,9 @@ namespace SpeakingClub.Models
     {
         public string Key { get; set; } = string.Empty;  // Translation key
         public string Value { get; set; } = string.Empty;  // Translated text
-        public string Comment { get; set; } = string.Empty; 
+        public string Comment { get; set; } = string.Empty;
     }
+
+    // One text of the site in both languages (Admin → Site metinleri)
+    public record SiteTextRow(string Key, string Turkish, string German, string? Comment);
 }

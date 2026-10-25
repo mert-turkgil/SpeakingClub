@@ -39,3 +39,8 @@ jobs:
 
       - name: Build
         run: dotnet build SpeakingClub.csproj --configuration Release --no-restore
+
+      # The deploy runs this tool only when a migration is pending, so a break in it would otherwise
+      # surface in the middle of a deploy.
+      - name: Build database backup tool
+        run: dotnet build .github/tools/DbBackup --configuration Release

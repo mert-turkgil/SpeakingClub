@@ -1,45 +1,73 @@
 @using SpeakingClub.Entity
-@model IEnumerable<Category>
-@if (Model.Any())
+@model List<Category>
+@* Admin → Kategoriler. Counts come from GenericListViewComponent (ViewData). *@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var blogCounts = ViewData["BlogCounts"] as Dictionary<int, int> ?? new Dictionary<int, int>();
+    var quizCounts = ViewData["QuizCounts"] as Dictionary<int, int> ?? new Dictionary<int, int>();
+}
+
+@if (!Model.Any())
 {
-        <a class="btn btn-outline-success nav-item m-auto w-100" 
-            asp-controller="Admin" 
-            asp-action="CategoryCreate">
-                Create Category
-            </a> 
-    <div class="table-responsive">
-        <table id="CategoryList" class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Blogs</th>
-                    <th>Quizzes</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>@item.Name</td>
-                        <td>@item.Blogs.Count</td>
-                        <td>@item.Quizzes.Count</td>
-                        <td>
-                            <a asp-action="CategoryEdit" asp-controller="Admin" asp-route-id="@item.CategoryId" 
-                               class="btn btn-sm btn-warning">Edit</a>
-                            <form  asp-route-id="@item.CategoryId" asp-action="CategoryDelete" method="post" class="d-inline">
-                                <input type="hidden" name="id" value="@item.CategoryId" />
-                                <button type="submit" class="btn btn-sm btn-danger" 
-                                        onclick="return confirm('Delete this category?')">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div class="adm-empty">
+        <span class="adm-empty__icon" aria-hidden="true"><i class="fa-solid fa-folder-open"></i></span>
+        <h2>@T("Henüz kategori yok", "Noch keine Kategorien")</h2>
+        <p>@T("Yazılarınızı ve sınavlarınızı gruplamak için ilk kategoriyi ekleyin (ör. Dilbilgisi).", "Fügen Sie die erste Kategorie hinzu, um Beiträge und Prüfungen zu gruppieren (z. B. Grammatik).")</p>
+        <a class="adm-btn adm-btn--primary adm-btn--lg" href="@Url.Action("CategoryCreate", "Admin")"><i class="fa-solid fa-plus" aria-hidden="true"></i>@T("İlk kategoriyi ekle", "Erste Kategorie hinzufügen")</a>
     </div>
 }
 else
 {
-    <div class="alert alert-info">No categories found</div>
+    <div data-list data-page-size="30">
+        <div class="adm-toolbar">
+            <label class="adm-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" data-list-search placeholder="@T("Kategori arayın…", "Kategorie suchen…")" aria-label="@T("Kategorilerde ara", "Kategorien durchsuchen")" />
+                <button type="button" aria-label="@T("Aramayı temizle", "Suche löschen")"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </label>
+            <span class="adm-toolbar__count" data-list-count></span>
+        </div>
+        <div class="adm-table-wrap">
+            <table class="adm-table">
+                <thead>
+                    <tr>
+                        <th data-sort>@T("Kategori", "Kategorie")</th>
+                        <th data-sort="num" class="is-num">@T("Yazı", "Beiträge")</th>
+                        <th data-sort="num" class="is-num">@T("Sınav", "Prüfungen")</th>
+                        <th class="is-actions"><span class="adm-sr">@T("İşlemler", "Aktionen")</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var category in Model)
+                    {
+                        var blogs = blogCounts.TryGetValue(category.CategoryId, out var b) ? b : 0;
+                        var quizzes = quizCounts.TryGetValue(category.CategoryId, out var q) ? q : 0;
+                        <tr>
+                            <td class="is-primary" data-label="@T("Kategori", "Kategorie")">
+                                <div class="adm-cell-title">
+                                    <span class="adm-thumb adm-thumb--empty" style="width:40px;height:40px;color:var(--a-coral-deep)" aria-hidden="true"><i class="fa-solid fa-folder"></i></span>
+                                    <strong>@category.Name</strong>
+                                </div>
+                            </td>
+                            <td data-label="@T("Yazı", "Beiträge")" class="is-num">@blogs</td>
+                            <td data-label="@T("Sınav", "Prüfungen")" class="is-num">@quizzes</td>
+                            <td class="is-actions">
+                                <div class="adm-row-actions">
+                                    <a class="adm-btn adm-btn--sm" href="@Url.Action("CategoryEdit", "Admin", new { id = category.CategoryId })"><i class="fa-solid fa-pen" aria-hidden="true"></i>@T("Düzenle", "Bearbeiten")</a>
+                                    <form method="post" asp-controller="Admin" asp-action="CategoryDelete" asp-route-id="@category.CategoryId"
+                                          data-confirm="@T("Bu kategori silinsin mi?", "Diese Kategorie löschen?")"
+                                          data-confirm-text="@T($"“{category.Name}” kategorisi silinecek. İçindeki {blogs} yazı ve {quizzes} sınav silinmez, sadece kategorisiz kalır.", $"„{category.Name}“ wird gelöscht. Die {blogs} Beiträge und {quizzes} Prüfungen darin bleiben erhalten, nur ohne Kategorie.")">
+                                        <button type="submit" class="adm-btn adm-btn--danger adm-btn--sm adm-btn--icon" title="@T("Sil", "Löschen")" aria-label="@T("Sil", "Löschen"): @category.Name"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <p class="adm-noresult">@T("Aramanıza uyan kategori bulunamadı.", "Keine Kategorie passt zu Ihrer Suche.")</p>
+            <div class="adm-more"><button type="button" class="adm-btn adm-btn--sm" data-list-more hidden><i class="fa-solid fa-chevron-down" aria-hidden="true"></i><span></span></button></div>
+        </div>
+    </div>
 }

@@ -1,0 +1,83 @@
+@using SpeakingClub.Services
+@model (string? Term, string? Definition, string? Pronunciation, string? Example, string? Synonyms, string? Origin, bool IsFromApi, List<int> SelectedQuizIds, IEnumerable<SelectListItem>? AvailableQuizzes)
+@*
+    Fields shared by WordCreate and WordEdit (same names on both models; written by name, see the data-val
+    attributes). Definition, example and origin are small rich-text editors because the dictionary page shows
+    them as HTML; pronunciation and synonyms are one-line text. Quizzes are tick boxes.
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    bool HasError(string key) => ViewData.ModelState.TryGetValue(key, out var e) && e.Errors.Count > 0;
+    var quizzes = Model.AvailableQuizzes ?? Enumerable.Empty<SelectListItem>();
+}
+<input type="hidden" name="IsFromApi" value="@(Model.IsFromApi ? "true" : "false")" />
+
+<section class="adm-panel" style="--i:0">
+    <div class="adm-panel__head">
+        <span class="adm-panel__num">1</span>
+        <div>
+            <h2>@T("Kelime ve anlamı", "Wort und Bedeutung")</h2>
+            <p>@T("Sözlük sayfasında öğrencilerin göreceği bilgiler.", "Was Lernende im Wörterbuch sehen.")</p>
+        </div>
+    </div>
+    <div class="adm-panel__body">
+        <div class="adm-row">
+            <div class="adm-field">
+                <label for="Term">@T("Kelime", "Wort") <span class="adm-req">@T("Zorunlu", "Pflicht")</span></label>
+                <input id="Term" name="Term" value="@Model.Term" class="adm-input @(HasError("Term") ? "input-validation-error" : "")" maxlength="100" autocomplete="off"
+                       placeholder="@T("ör. der Arzt", "z. B. der Arzt")"
+                       data-val="true" data-val-required="@T("Lütfen kelimeyi yazın.", "Bitte das Wort eingeben.")"
+                       data-val-length="@T("En fazla 100 karakter.", "Höchstens 100 Zeichen.")" data-val-length-max="100" />
+                @Html.ValidationMessage("Term")
+                <p class="adm-hint"><i class="fa-solid fa-lightbulb" aria-hidden="true"></i>@T("İsimleri artikeliyle yazın (der / die / das).", "Schreiben Sie Nomen mit Artikel (der / die / das).")</p>
+            </div>
+            <div class="adm-field">
+                <label for="Pronunciation">@T("Okunuşu", "Aussprache") <span class="adm-opt">@T("isteğe bağlı", "freiwillig")</span></label>
+                <input id="Pronunciation" name="Pronunciation" value="@HtmlUtility.StripHtml(Model.Pronunciation ?? "")" class="adm-input" autocomplete="off" placeholder="@T("ör. a:ɐ̯tst", "z. B. a:ɐ̯tst")" />
+            </div>
+        </div>
+        <div class="adm-field adm-mini">
+            <label for="Definition">@T("Anlamı", "Bedeutung") <span class="adm-req">@T("Zorunlu", "Pflicht")</span></label>
+            <textarea id="Definition" name="Definition" data-editor="mini" class="adm-input" placeholder="@T("Kelimenin Türkçe anlamı…", "Bedeutung des Wortes…")"
+                      data-val="true" data-val-required="@T("Lütfen anlamını yazın.", "Bitte die Bedeutung eingeben.")">@Model.Definition</textarea>
+            @Html.ValidationMessage("Definition")
+        </div>
+        <div class="adm-field adm-mini">
+            <label for="Example">@T("Örnek cümle", "Beispielsatz") <span class="adm-opt">@T("isteğe bağlı", "freiwillig")</span></label>
+            <textarea id="Example" name="Example" data-editor="mini" class="adm-input" placeholder="@T("ör. Der Arzt untersucht den Patienten.", "z. B. Der Arzt untersucht den Patienten.")">@Model.Example</textarea>
+        </div>
+        <div class="adm-row">
+            <div class="adm-field">
+                <label for="Synonyms">@T("Eş anlamlıları", "Synonyme") <span class="adm-opt">@T("isteğe bağlı", "freiwillig")</span></label>
+                <input id="Synonyms" name="Synonyms" value="@HtmlUtility.StripHtml(Model.Synonyms ?? "")" class="adm-input" autocomplete="off" placeholder="@T("Virgülle ayırın: der Doktor, der Mediziner", "Mit Komma trennen: der Doktor, der Mediziner")" />
+            </div>
+            <div class="adm-field adm-mini">
+                <label for="Origin">@T("Kökeni", "Herkunft") <span class="adm-opt">@T("isteğe bağlı", "freiwillig")</span></label>
+                <textarea id="Origin" name="Origin" data-editor="mini" class="adm-input" placeholder="@T("Kelimenin kökeni…", "Herkunft des Wortes…")">@Model.Origin</textarea>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="adm-panel" style="--i:1">
+    <div class="adm-panel__head">
+        <span class="adm-panel__num">2</span>
+        <div>
+            <h2>@T("İlgili sınavlar", "Zugehörige Prüfungen")</h2>
+            <p>@T("İsteğe bağlı: bu kelimenin geçtiği sınavları işaretleyin.", "Freiwillig: Markieren Sie die Prüfungen, in denen das Wort vorkommt.")</p>
+        </div>
+    </div>
+    <div class="adm-panel__body">
+        <div class="adm-choices adm-choices--grid">
+            @foreach (var quiz in quizzes)
+            {
+                <label class="adm-choice"><input type="checkbox" name="SelectedQuizIds" value="@quiz.Value" @(Model.SelectedQuizIds.Contains(int.Parse(quiz.Value)) ? "checked" : "") /><span>@quiz.Text</span></label>
+            }
+            @if (!quizzes.Any())
+            {
+                <span class="adm-choices__empty">@T("Henüz sınav yok.", "Noch keine Prüfungen.")</span>
+            }
+        </div>
+    </div>
+</section>

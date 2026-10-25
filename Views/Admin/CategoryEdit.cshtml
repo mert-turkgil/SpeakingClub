@@ -1,33 +1,32 @@
 @model CategoryEditViewModel
 @{
-    ViewData["Title"] = "Edit Category";
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var section = AdminNav.Find("categories", isGerman)!;
+    ViewData["Title"] = T("Kategoriyi düzenle", "Kategorie bearbeiten");
+    ViewData["AdminSection"] = section.Key;
 }
-<section class="container my-4">
-    <h2>Edit Category</h2>
 
-    <form asp-action="CategoryEdit" method="post">
-        <input type="hidden" asp-for="CategoryId" />
+@{
+    var adminHeader = new AdminHeader("category-form", T("Kategoriyi düzenle", "Kategorie bearbeiten"),
+    T("Adını değiştirin veya içindeki yazıları ve sınavları güncelleyin.", "Ändern Sie den Namen oder die Beiträge und Prüfungen darin."),
+    ParentTitle: section.Title, ParentHref: Url.Action(section.Action));
+}
+<partial name="_AdminHeader" model="adminHeader" />
 
-        <div class="form-group">
-            <label asp-for="Name"></label>
-            <input asp-for="Name" class="form-control" />
-            <span asp-validation-for="Name" class="text-danger"></span>
+<form method="post" asp-action="CategoryEdit" asp-route-id="@Model.CategoryId" class="adm-form adm-form--single" data-dirty-guard data-loading>
+    <input type="hidden" asp-for="CategoryId" />
+    <div class="adm-form__main">
+        <partial name="_AdminErrors" />
+        <partial name="_CategoryFields" model="(Model.Name, Model.SelectedBlogIds, Model.SelectedQuizIds, Model.AvailableBlogs, Model.AvailableQuizzes)" />
+        <div class="adm-savebar">
+            <span class="adm-savebar__hint">@T("Hazır olduğunuzda kaydedin.", "Speichern Sie, wenn Sie fertig sind.")</span>
+            <a class="adm-btn adm-btn--ghost" href="@Url.Action(section.Action)">@T("Vazgeç", "Abbrechen")</a>
+            <button type="submit" class="adm-btn adm-btn--primary"><i class="fa-solid fa-check" aria-hidden="true"></i>@T("Kaydet", "Speichern")</button>
         </div>
+    </div>
+</form>
 
-        <div class="form-group">
-            <label>Associated Blogs</label>
-            <select asp-for="SelectedBlogIds" asp-items="Model.AvailableBlogs" multiple class="form-control" size="8"></select>
-        </div>
-
-        <div class="form-group">
-            <label>Associated Quizzes</label>
-            <select asp-for="SelectedQuizIds" asp-items="Model.AvailableQuizzes" multiple class="form-control" size="8"></select>
-        </div>
-
-        <button type="submit" class="btn btn-success">Update Category</button>
-        <a asp-controller="Admin" asp-route-scrollTo="CategoryManagement" asp-action="Index" class="btn btn-secondary">Back</a>
-    </form>
-</section>
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
 }

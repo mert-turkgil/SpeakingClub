@@ -481,6 +481,8 @@ window.CKEditorManager = (function() {
                     if (targetInput) {
                         targetInput.value = editor.getData();
                     }
+                    // Admin panel: typing in an editor counts as an unsaved change
+                    if (typeof window.admMarkDirty === 'function') window.admMarkDirty(element.closest('form'));
                 });
 
                 console.log(`✓ Editor initialized: ${selector}`);
@@ -488,7 +490,7 @@ window.CKEditorManager = (function() {
             })
             .catch(error => {
                 console.error(`Error initializing editor ${selector}:`, error);
-                showNotification('Error initializing editor. Please refresh the page.', 'error');
+                showNotification(document.body.dataset.lang === 'de' ? 'Der Editor konnte nicht geladen werden. Bitte laden Sie die Seite neu.' : 'Metin düzenleyici yüklenemedi. Lütfen sayfayı yenileyin.', 'error');
                 return null;
             });
     }
@@ -499,7 +501,12 @@ window.CKEditorManager = (function() {
 
     function showNotification(message, type = 'info') {
         console.log(`[${type.toUpperCase()}] ${message}`);
-        
+        // Inside the admin panel, use its toasts (admin.js)
+        if (typeof window.admToast === 'function') {
+            window.admToast(message, type === 'info' ? 'success' : type);
+            return;
+        }
+
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
         notification.textContent = message;
@@ -540,18 +547,8 @@ window.CKEditorManager = (function() {
         }
     };
 
-    // Clean up on page unload
-    window.addEventListener('beforeunload', () => {
-        Object.values(editors).forEach(editor => {
-            if (editor) {
-                try {
-                    editor.destroy();
-                } catch (e) {
-                    console.warn('Error destroying editor:', e);
-                }
-            }
-        });
-    });
+    // (Editors used to be destroyed on beforeunload. Unloading frees them anyway, and when the admin panel's
+    // "unsaved changes" prompt kept the page open, the user was left with dead editors.)
 
     // Initialize Swiper if available
     if (typeof Swiper !== 'undefined') {
@@ -624,6 +621,6 @@ window.addEventListener('load', function () {
     })
     .catch(error => {
         console.error('❌ Failed to initialize editors:', error);
-        window.CKEditorManager.showNotification('Failed to initialize editors. Please refresh the page.', 'error');
+        window.CKEditorManager.showNotification(document.body.dataset.lang === 'de' ? 'Die Editoren konnten nicht geladen werden. Bitte laden Sie die Seite neu.' : 'Metin düzenleyiciler yüklenemedi. Lütfen sayfayı yenileyin.', 'error');
     });
 });

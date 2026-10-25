@@ -7,8 +7,9 @@
 #   2. Ask the production database which EF migrations it has not seen yet (both contexts:
 #      SpeakingClubContext and ApplicationDbContext). If the database cannot be reached, the deploy
 #      stops here — before anything on the server has been touched.
-#   3. If there are pending migrations, export a .bacpac backup of the production database and
-#      upload it to /<BACKUP_DIR>/ on the FTP account, then apply the migrations. (In Production the
+#   3. If there are pending migrations, back up the production database (a .bacpac, or a data-only
+#      backup when the login can't export one) and upload it to /<BACKUP_DIR>/ on the FTP account,
+#      then apply the migrations. (In Production the
 #      app itself only migrates an empty database — see "Database Migration and Seeding" in
 #      Program.cs — so this step is what keeps the schema current.)
 #   4. Put app_offline.htm in place so IIS stops the app and releases its file locks, wait, upload
@@ -67,7 +68,8 @@ env:
   PUBLISH_DIR: publish
 
   # --- Pre-migration database backup ---------------------------------------------------------------
-  # A .bacpac (schema + data) exported with SqlPackage and uploaded to /<BACKUP_DIR>/ in the FTP
+  # A .bacpac (schema + data) exported with SqlPackage, or a .data.zip from .github/tools/DbBackup
+  # when the login can't export a .bacpac (see the backup step), uploaded to /<BACKUP_DIR>/ in the FTP
   # home (httpdocs\publish). It is not web-reachable: IIS hands every request to the ASP.NET Core
   # app, which only serves static files from wwwroot/. Taken only when a deploy has migrations to
   # apply (or always, with BACKUP_ALWAYS). Restoring: see .github/deploy/RESTORE.md.
@@ -245,9 +247,15 @@ jobs:
           echo "count=$total" >> "$GITHUB_OUTPUT"
           echo "Pending migrations: $total"
 
-      # SqlPackage export works with the database's own login — no BACKUP DATABASE permission or
-      # server-side file path needed. The site is still online during the export. If the export
-      # fails the deploy stops here, before anything has been changed.
+      # Both kinds of backup work with the database's own login: no BACKUP DATABASE permission or
+      # server-side file path needed, and the site stays online meanwhile.
+      #  - First choice: a SqlPackage .bacpac (schema + data, RESTORE.md Path B). SqlPackage reads the
+      #    whole schema, which needs VIEW DEFINITION on the database. The Plesk database login doesn't
+      #    have it and can't grant it to itself, so today this always fails.
+      #  - Fallback: .github/tools/DbBackup, which needs only SELECT. It writes every row as a T-SQL
+      #    restore script, and the schema comes back from the EF migrations (RESTORE.md Path C).
+      # If the hosting provider grants VIEW DEFINITION, the .bacpac starts working again by itself.
+      # If neither backup can be made, the deploy stops here, before anything has been changed.
       - name: Back up production database
         if: steps.pending.outputs.count != '0' || env.BACKUP_ALWAYS == 'true'
         env:
@@ -257,11 +265,25 @@ jobs:
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
           dotnet tool install --global microsoft.sqlpackage
-          file="almanca-konus-$(date -u +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}.bacpac"
+          name="almanca-konus-$(date -u +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}"
 
-          "$HOME/.dotnet/tools/sqlpackage" /Action:Export \
-            /SourceConnectionString:"$PROD_CONNECTION_STRING" \
-            /TargetFile:"$file"
+          if "$HOME/.dotnet/tools/sqlpackage" /Action:Export \
+               /SourceConnectionString:"$PROD_CONNECTION_STRING" \
+               /TargetFile:"$name.bacpac" > sqlpackage.log 2>&1; then
+            file="$name.bacpac"
+            kind=".bacpac, restore with RESTORE.md Path B"
+          else
+            cat sqlpackage.log
+            if grep -qi 'view definition' sqlpackage.log; then
+              echo "::notice::No .bacpac: the database login lacks VIEW DEFINITION. Taking a data-only backup instead (restore with RESTORE.md, Path C)."
+            else
+              echo "::warning::SqlPackage could not export a .bacpac (log above). Taking a data-only backup instead (restore with RESTORE.md, Path C)."
+            fi
+            file="$name.data.zip"
+            kind="data-only backup, restore with RESTORE.md Path C"
+            BACKUP_CONNECTION_STRING="$PROD_CONNECTION_STRING" \
+              dotnet run --project .github/tools/DbBackup --configuration Release -- "$file"
+          fi
           ls -la "$file"
 
           # --ftp-create-dirs makes the backup folder on the first run.
@@ -272,14 +294,14 @@ jobs:
           echo "Uploaded to /$BACKUP_DIR/$file"
           {
             echo "### Database backup"
-            echo "Pending migrations: **${{ steps.pending.outputs.count }}** — exported \`/$BACKUP_DIR/$file\` ($(du -h "$file" | cut -f1)) before applying them."
+            echo "Pending migrations: **${{ steps.pending.outputs.count }}** — saved \`/$BACKUP_DIR/$file\` ($kind, $(du -h "$file" | cut -f1)) before applying them."
             echo "Restore instructions: .github/deploy/RESTORE.md"
           } >> "$GITHUB_STEP_SUMMARY"
 
           # Retention: names sort chronologically, so keep the last BACKUP_KEEP and delete the rest.
           existing=$(curl --silent --show-error --fail --list-only \
             --user "$FTP_USERNAME:$FTP_PASSWORD" "ftp://$FTP_SERVER/$BACKUP_DIR/" \
-            | sed 's|.*/||' | grep -E '^almanca-konus-.*\.bacpac$' | sort)
+            | sed 's|.*/||' | grep -E '^almanca-konus-.*\.(bacpac|data\.zip)$' | sort)
           total=$(printf '%s\n' "$existing" | grep -c . || true)
           if [ "$total" -gt "$BACKUP_KEEP" ]; then
             printf '%s\n' "$existing" | head -n $((total - BACKUP_KEEP)) | while read -r old; do

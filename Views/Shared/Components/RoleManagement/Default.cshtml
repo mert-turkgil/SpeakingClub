@@ -1,46 +1,67 @@
 @using Microsoft.AspNetCore.Identity
-@model IEnumerable<IdentityRole>
+@model List<(IdentityRole Role, int Users)>
+@* Admin → Roller. Root, Admin, Teacher and User are needed by the site: no rename, no delete. *@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var system = new[] { "Root", "Admin", "Teacher", "User" };
+    string Describe(string name) => name switch
+    {
+        "Root" => T("Sitenin sahibi. Her şeyi yapabilir; diğer yöneticileri de yönetir.", "Inhaber der Website. Darf alles, auch andere Administratoren verwalten."),
+        "Admin" => T("Yönetici. Kullanıcılar ve site metinleri dahil paneldeki her şey.", "Administrator. Alles im Panel, auch Benutzer und Website-Texte."),
+        "Teacher" => T("Öğretmen. Yazı, sınav, soru, kelime ve slaytları yönetir.", "Lehrkraft. Verwaltet Beiträge, Prüfungen, Fragen, Wörter und Slider."),
+        "User" => T("Öğrenci. Sınavları çözer; panele giremez.", "Lernende. Legt Prüfungen ab, ohne Zugang zum Panel."),
+        _ => T("Kendi eklediğiniz rol.", "Eine von Ihnen angelegte Rolle.")
+    };
+    string Icon(string name) => name switch { "Root" => "fa-crown", "Admin" => "fa-user-shield", "Teacher" => "fa-chalkboard-user", "User" => "fa-user-graduate", _ => "fa-user-tag" };
+}
 
-<div class="container-xxl my-4">
-    <div class="nav mb-3">
-        <a class="btn btn-outline-success nav-item m-auto w-100" 
-           asp-controller="Admin" 
-           asp-action="RoleCreate">
-            Create Role
-        </a>
-    </div>
-
-    <div class="row">
-        <div class="col table-responsive">
-            <table id="rolesTable" class="table table-striped dt-responsive nowrap" style="width:100%">
-                <thead>
-                    <tr>
-                        <th data-priority="1">Name</th>
-                        <th data-priority="3">ID</th>
-                        <th data-priority="1">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var role in Model)
-                    {
-                        <tr>
-                            <td>@role.Name</td>
-                            <td>@role.Id</td>
-                            <td>
-                            <a asp-controller="Admin" asp-action="RoleEdit" asp-route-id="@role.Id" class="btn btn-warning btn-sm w-100">Edit</a>
-                            <form asp-controller="Admin" asp-action="RoleDelete" method="post" class="d-block">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@role.Id" />
-                                <button type="submit" class="btn btn-danger w-100" 
-                                    onclick="return confirm('Are you sure you want to delete this role?')">
-                                    Delete
-                                </button>
-                            </form>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
+<div class="adm-table-wrap">
+    <table class="adm-table">
+        <thead>
+            <tr>
+                <th>@T("Rol", "Rolle")</th>
+                <th>@T("Ne yapabilir?", "Was darf sie?")</th>
+                <th class="is-num">@T("Kişi", "Personen")</th>
+                <th class="is-actions"><span class="adm-sr">@T("İşlemler", "Aktionen")</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (role, users) in Model)
+            {
+                var isSystem = system.Contains(role.Name);
+                <tr>
+                    <td class="is-primary" data-label="@T("Rol", "Rolle")">
+                        <div class="adm-cell-title">
+                            <span class="adm-thumb adm-thumb--empty" style="width:40px;height:40px;color:var(--a-coral-deep)" aria-hidden="true"><i class="fa-solid @Icon(role.Name!)"></i></span>
+                            <span>
+                                <strong>@role.Name</strong>
+                                @if (isSystem)
+                                {
+                                    <small><i class="fa-solid fa-lock me-1" aria-hidden="true"></i>@T("Site için gerekli", "Für die Website nötig")</small>
+                                }
+                            </span>
+                        </div>
+                    </td>
+                    <td data-label="@T("Ne yapabilir?", "Was darf sie?")"><span class="adm-hint">@Describe(role.Name!)</span></td>
+                    <td data-label="@T("Kişi", "Personen")" class="is-num">@users</td>
+                    <td class="is-actions">
+                        <div class="adm-row-actions">
+                            <a class="adm-btn adm-btn--sm adm-btn--ghost" href="@Url.Action("Users", "Admin")"><i class="fa-solid fa-user-group" aria-hidden="true"></i>@T("Kişiler", "Personen")</a>
+                            @if (!isSystem)
+                            {
+                                <a class="adm-btn adm-btn--sm" href="@Url.Action("RoleEdit", "Admin", new { id = role.Id })"><i class="fa-solid fa-pen" aria-hidden="true"></i>@T("Adını değiştir", "Umbenennen")</a>
+                                <form method="post" asp-controller="Admin" asp-action="RoleDelete"
+                                      data-confirm="@T("Bu rol silinsin mi?", "Diese Rolle löschen?")"
+                                      data-confirm-text="@T($"“{role.Name}” rolü silinecek. Bu role sahip {users} kişi rolünü kaybeder; hesapları silinmez.", $"Die Rolle „{role.Name}“ wird gelöscht. {users} Personen verlieren sie; ihre Konten bleiben.")">
+                                    <input type="hidden" name="id" value="@role.Id" />
+                                    <button type="submit" class="adm-btn adm-btn--danger adm-btn--sm adm-btn--icon" title="@T("Sil", "Löschen")" aria-label="@T("Sil", "Löschen"): @role.Name"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+                                </form>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>

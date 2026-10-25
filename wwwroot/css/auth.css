@@ -55,18 +55,37 @@ html[data-bs-theme="dark"] .auth__brand {
   color: #F6EFE9;
   background: linear-gradient(150deg, #2a1d19 0%, #3a2420 55%, #5a2c27 100%);
 }
+/* The balloons float on their own slow paths (transform), and lean a little toward the pointer
+   (translate, set from --auth-px/--auth-py by auth.js), each by a different depth. */
 .auth__blob {
   position: absolute;
   z-index: -1;
   border-radius: 50%;
   filter: blur(42px);
   opacity: 0.7;
-  animation: bp-drift 16s ease-in-out infinite;
+  translate: calc(var(--auth-px, 0) * var(--depth) * 1px) calc(var(--auth-py, 0) * var(--depth) * 1px);
+  transition: translate 1.4s var(--bp-ease);
+  animation: auth-float-a 14s ease-in-out infinite;
+  will-change: transform;
 }
-.auth__blob--a { width: 340px; height: 340px; top: -120px; right: -90px; background: #FF9494; }
-.auth__blob--b { width: 260px; height: 260px; bottom: -80px; left: -60px; background: #FFF5E4; animation-duration: 20s; animation-direction: reverse; }
-.auth__blob--c { width: 180px; height: 180px; top: 45%; left: 55%; background: #E36464; opacity: 0.35; animation-duration: 24s; }
+.auth__blob--a { --depth: 26; width: 340px; height: 340px; top: -120px; right: -90px; background: #FF9494; }
+.auth__blob--b { --depth: -18; width: 260px; height: 260px; bottom: -80px; left: -60px; background: #FFF5E4; animation-name: auth-float-b; animation-duration: 18s; }
+.auth__blob--c { --depth: 40; width: 180px; height: 180px; top: 45%; left: 55%; background: #E36464; opacity: 0.35; animation-name: auth-float-c; animation-duration: 11s; }
 html[data-bs-theme="dark"] .auth__blob--b { background: #E36464; opacity: 0.25; }
+@keyframes auth-float-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33%      { transform: translate3d(-38px, 30px, 0) scale(1.08); }
+  66%      { transform: translate3d(20px, 48px, 0) scale(0.95); }
+}
+@keyframes auth-float-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(52px, -36px, 0) scale(1.12); }
+}
+@keyframes auth-float-c {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  25%      { transform: translate3d(-44px, -26px, 0) scale(1.14); }
+  75%      { transform: translate3d(32px, 22px, 0) scale(0.9); }
+}
 .auth__brand::after {
   /* fine dot grid for texture */
   content: "";

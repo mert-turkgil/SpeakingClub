@@ -1,126 +1,120 @@
 @using SpeakingClub.Entity
-@model IEnumerable<SpeakingClub.Entity.Quiz>
-@if (Model.Any())
-{
-    <div class="mb-3">
-        <a class="btn btn-outline-success nav-item m-auto w-100" 
-        asp-controller="Admin" 
-        asp-action="QuizCreate">
-            Quiz Create
-        </a> 
-    </div>
-    <div class="table-responsive">
-        <table id="QuizList" class="table table-hover table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Title</th>
-                    <th>Description</th>
-                    <th>Category</th>
-                    <th>Questions</th>
-                    <th>Tags</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var quiz in Model)
-                {
-                    <tr>
-                        <td>@quiz.Title</td>
-                        <td>@(quiz.Description?.Length > 50 ? quiz.Description.Substring(0, 47) + "..." : quiz.Description)</td>
-                        <td>@quiz.Category?.Name</td>
-                        <td>@quiz.Questions.Count</td>
-                        <td>
-                            @foreach (var tag in quiz.Tags.Take(3))
-                            {
-                                <span class="badge bg-primary">@tag.Name</span>
-                            }
-                        </td>
-                        <td>
-                            <a asp-action="QuizEdit" asp-controller="Admin" 
-                               asp-route-id="@quiz.Id" class="btn btn-sm btn-warning mb-1">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                            <button type="button" class="btn btn-sm btn-danger mb-1" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#deleteQuizModal-@quiz.Id">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+@using SpeakingClub.Services
+@model List<SpeakingClub.Entity.Quiz>
+@*
+    Admin → Sınavlar. One delete button: a quiz goes with its questions and results (questions can't exist
+    without their quiz), and the confirmation says how many results that is. The old "keep the questions"
+    option never worked.
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var submissions = ViewData["SubmissionCounts"] as Dictionary<int, int> ?? new Dictionary<int, int>();
+}
 
-    <!-- Delete Confirmation Modals (Outside the table) -->
-    @foreach (var quiz in Model)
-    {
-        <div class="modal fade" id="deleteQuizModal-@quiz.Id" tabindex="-1" aria-labelledby="deleteQuizModalLabel-@quiz.Id" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title" id="deleteQuizModalLabel-@quiz.Id">
-                            <i class="fas fa-exclamation-triangle me-2"></i>Confirm Quiz Deletion
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p class="mb-3">Are you sure you want to delete the quiz: <strong>@quiz.Title</strong>?</p>
-                        
-                        @if (quiz.Questions.Count > 0)
-                        {
-                            <div class="alert alert-warning">
-                                <p><strong>This quiz has @quiz.Questions.Count question(s).</strong></p>
-                                <p class="mb-2">Choose an option:</p>
-                                
-                                <form asp-controller="Admin" asp-action="QuizDelete" asp-route-id="@quiz.Id" method="post" class="mb-2">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="deleteQuestions" value="false" />
-                                    <button type="submit" class="btn btn-warning w-100">
-                                        <i class="fas fa-unlink me-1"></i>Delete Quiz Only (Preserve Questions)
-                                    </button>
-                                    <small class="text-muted d-block mt-1">Questions will be unlinked and available for reuse</small>
-                                </form>
-                                
-                                <form asp-controller="Admin" asp-action="QuizDelete" asp-route-id="@quiz.Id" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="deleteQuestions" value="true" />
-                                    <button type="submit" class="btn btn-danger w-100">
-                                        <i class="fas fa-trash-alt me-1"></i>Delete Quiz + All Questions & Files
-                                    </button>
-                                    <small class="text-muted d-block mt-1">Permanently delete questions, answers, and media files (images, audio, videos)</small>
-                                </form>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="alert alert-info">
-                                <p><i class="fas fa-info-circle me-1"></i>This quiz has no questions.</p>
-                            </div>
-                            <form asp-controller="Admin" asp-action="QuizDelete" asp-route-id="@quiz.Id" method="post">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="deleteQuestions" value="false" />
-                                <button type="submit" class="btn btn-danger w-100">
-                                    <i class="fas fa-trash me-1"></i>Delete Quiz
-                                </button>
-                            </form>
-                        }
-                        
-                        <div class="alert alert-info mt-3 mb-0">
-                            <small><i class="fas fa-info-circle me-1"></i>Quiz files (audio/video) will be deleted automatically.</small>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-1"></i>Cancel
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
+@if (!Model.Any())
+{
+    <div class="adm-empty">
+        <span class="adm-empty__icon" aria-hidden="true"><i class="fa-solid fa-clipboard-check"></i></span>
+        <h2>@T("Henüz sınav yok", "Noch keine Prüfungen")</h2>
+        <p>@T("İlk sınavınızı hazırlamak için aşağıdaki düğmeye basın.", "Klicken Sie unten, um Ihre erste Prüfung zu erstellen.")</p>
+        <a class="adm-btn adm-btn--primary adm-btn--lg" href="@Url.Action("QuizCreate", "Admin")"><i class="fa-solid fa-plus" aria-hidden="true"></i>@T("İlk sınavı hazırla", "Erste Prüfung erstellen")</a>
+    </div>
 }
 else
 {
-    <div class="alert alert-info">No quizzes found</div>
+    <div data-list data-page-size="20">
+        <div class="adm-toolbar">
+            <label class="adm-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" data-list-search placeholder="@T("Sınav adı, kategori veya etikete göre arayın…", "Nach Name, Kategorie oder Schlagwort suchen…")" aria-label="@T("Sınavlarda ara", "Prüfungen durchsuchen")" />
+                <button type="button" aria-label="@T("Aramayı temizle", "Suche löschen")"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </label>
+            <span class="adm-toolbar__count" data-list-count></span>
+        </div>
+
+        <div class="adm-table-wrap">
+            <table class="adm-table">
+                <thead>
+                    <tr>
+                        <th data-sort>@T("Sınav", "Prüfung")</th>
+                        <th data-sort>@T("Seviye", "Niveau")</th>
+                        <th data-sort="num" class="is-num">@T("Soru", "Fragen")</th>
+                        <th data-sort="num" class="is-num">@T("Çözülme", "Ergebnisse")</th>
+                        <th>@T("Etiketler", "Schlagwörter")</th>
+                        <th class="is-actions"><span class="adm-sr">@T("İşlemler", "Aktionen")</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var quiz in Model)
+                    {
+                        var questionCount = quiz.Questions?.Count ?? 0;
+                        var resultCount = submissions.TryGetValue(quiz.Id, out var n) ? n : 0;
+                        var level = ExamRules.LevelOf(quiz);
+                        var note = resultCount > 0
+                            ? T($"Bu sınavı öğrenciler {resultCount} kez çözdü. Bu sonuçlar da silinecek ve öğrenciler kendi sonuç sayfalarında artık göremeyecek.",
+                                $"Diese Prüfung wurde {resultCount}-mal abgelegt. Diese Ergebnisse werden ebenfalls gelöscht und sind für die Lernenden nicht mehr sichtbar.")
+                            : "";
+                        <tr>
+                            <td class="is-primary" data-label="@T("Sınav", "Prüfung")">
+                                <div class="adm-cell-title">
+                                    <span>
+                                        <strong>@quiz.Title</strong>
+                                        <small class="adm-clamp-2">@(quiz.Category?.Name ?? T("Kategorisiz", "Ohne Kategorie"))@(quiz.TimeLimitMinutes.HasValue ? " · " + T($"{quiz.TimeLimitMinutes} dk", $"{quiz.TimeLimitMinutes} Min.") : "")</small>
+                                    </span>
+                                </div>
+                            </td>
+                            <td data-label="@T("Seviye", "Niveau")">
+                                @if (level != null)
+                                {
+                                    <span class="adm-badge adm-badge--blue adm-badge--plain">@level</span>
+                                }
+                                else
+                                {
+                                    <span class="adm-hint" title="@T("Seviye için A1–C2 adlı bir etiket ekleyin", "Für das Niveau ein Schlagwort A1–C2 hinzufügen")">—</span>
+                                }
+                            </td>
+                            <td data-label="@T("Soru", "Fragen")" class="is-num" data-value="@questionCount">
+                                @if (questionCount == 0)
+                                {
+                                    <span class="adm-badge adm-badge--amber">@T("Soru yok", "Keine Fragen")</span>
+                                }
+                                else
+                                {
+                                    @questionCount
+                                }
+                            </td>
+                            <td data-label="@T("Çözülme", "Ergebnisse")" class="is-num" data-value="@resultCount">@resultCount</td>
+                            <td data-label="@T("Etiketler", "Schlagwörter")">
+                                <span class="adm-chips">
+                                    @foreach (var tag in quiz.Tags.Take(4))
+                                    {
+                                        <span class="adm-badge adm-badge--plain">@tag.Name</span>
+                                    }
+                                    @if (quiz.Tags.Count > 4)
+                                    {
+                                        <span class="adm-badge adm-badge--plain">+@(quiz.Tags.Count - 4)</span>
+                                    }
+                                </span>
+                            </td>
+                            <td class="is-actions">
+                                <div class="adm-row-actions">
+                                    <a class="adm-btn adm-btn--ghost adm-btn--sm adm-btn--icon" href="@Url.Action("QuestionCreate", "Admin", new { quizId = quiz.Id })" title="@T("Bu sınava soru ekle", "Frage zu dieser Prüfung hinzufügen")" aria-label="@T("Bu sınava soru ekle", "Frage zu dieser Prüfung hinzufügen"): @quiz.Title"><i class="fa-solid fa-plus" aria-hidden="true"></i></a>
+                                    <a class="adm-btn adm-btn--sm" href="@Url.Action("QuizEdit", "Admin", new { id = quiz.Id })"><i class="fa-solid fa-pen" aria-hidden="true"></i>@T("Düzenle", "Bearbeiten")</a>
+                                    <form method="post" asp-controller="Admin" asp-action="QuizDelete" asp-route-id="@quiz.Id"
+                                          data-confirm="@T("Bu sınav silinsin mi?", "Diese Prüfung löschen?")"
+                                          data-confirm-text="@T($"“{quiz.Title}” sınavı, {questionCount} sorusu ve bu sorulara ait resim ve ses dosyalarıyla birlikte kalıcı olarak silinecek.", $"„{quiz.Title}“ wird mit {questionCount} Fragen samt Bildern und Audiodateien endgültig gelöscht.")"
+                                          data-confirm-note="@note">
+                                        <button type="submit" class="adm-btn adm-btn--danger adm-btn--sm adm-btn--icon" title="@T("Sil", "Löschen")" aria-label="@T("Sil", "Löschen"): @quiz.Title"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <p class="adm-noresult">@T("Aramanıza uyan sınav bulunamadı.", "Keine Prüfung passt zu Ihrer Suche.")</p>
+            <div class="adm-more"><button type="button" class="adm-btn adm-btn--sm" data-list-more hidden><i class="fa-solid fa-chevron-down" aria-hidden="true"></i><span></span></button></div>
+        </div>
+    </div>
 }

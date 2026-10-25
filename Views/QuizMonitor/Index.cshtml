@@ -1,555 +1,422 @@
 @model IEnumerable<SpeakingClub.Models.QuizMonitorViewModel>
 @using Newtonsoft.Json
+@*
+    Admin → Sınav sonuçları (QuizMonitor): every submission with filters, live updates (SignalR), charts,
+    Excel/PDF export and a detail window per attempt.
+    Fixes: the data was written into the page unescaped (@Html.Raw of plain JSON) and names/answers went
+    into the table and the detail window as HTML, so a student name like "</script><script>…" ran in the
+    teacher's browser. The JSON now escapes HTML and every value is inserted as text.
+*@
 @{
-    ViewData["Title"] = "Quiz Monitor";
-    var users = Model.Select(x => x.UserName).Distinct().OrderBy(x => x).ToList();
-    var quizzes = Model.Select(x => x.QuizTitle).Distinct().OrderBy(x => x).ToList();
-    var now = DateTime.Now;
+    Layout = "_AdminLayout";
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var section = AdminNav.Find("results", isGerman)!;
+    ViewData["Title"] = section.Title;
+    ViewData["AdminSection"] = section.Key;
+    var rows = Model.ToList();
+    var users = rows.Select(x => x.UserName).Distinct().OrderBy(x => x).ToList();
+    var quizzes = rows.Select(x => x.QuizTitle).Distinct().OrderBy(x => x).ToList();
+    var passCount = rows.Count(x => x.Score >= 50);
+    var weekAgo = DateTime.Now.AddDays(-7);
+    var adminHeader = new AdminHeader(section.Key, section.Title, section.Lead, Guide: section.Guide);
+    var json = JsonConvert.SerializeObject(rows, new JsonSerializerSettings { StringEscapeHandling = StringEscapeHandling.EscapeHtml });
+    var strings = new
+    {
+        passed = T("Geçti", "Bestanden"),
+        failed = T("Kaldı", "Nicht bestanden"),
+        live = T("Şimdi", "Live"),
+        history = T("Geçmiş", "Verlauf"),
+        terminated = T("Kural ihlaliyle bitti", "Wegen Verstößen beendet"),
+        timeUp = T("Süre doldu", "Zeit abgelaufen"),
+        warnings = T("Uyarı", "Warnungen"),
+        details = T("Ayrıntılar", "Details"),
+        student = T("Öğrenci", "Lernende"),
+        quiz = T("Sınav", "Prüfung"),
+        score = T("Puan", "Punkte"),
+        maxScore = T("En yüksek puan", "Höchstpunktzahl"),
+        attempt = T("Deneme", "Versuch"),
+        age = T("Yaş", "Alter"),
+        time = T("Süre", "Dauer"),
+        status = T("Durum", "Status"),
+        submitted = T("Gönderilme", "Abgegeben"),
+        question = T("Soru", "Frage"),
+        answer = T("Cevap", "Antwort"),
+        correct = T("Doğru mu?", "Richtig?"),
+        yes = T("Evet", "Ja"),
+        no = T("Hayır", "Nein"),
+        seconds = T("Süre (sn)", "Zeit (s)"),
+        noAnswers = T("Bu deneme için cevap kaydı yok.", "Für diesen Versuch sind keine Antworten gespeichert."),
+        scoresChart = T("Deneme başına puan", "Punkte pro Versuch"),
+        trendChart = T("Zaman içinde puan", "Punkte im Zeitverlauf"),
+        avgChart = T("Sınav başına ortalama", "Durchschnitt pro Prüfung"),
+        passChart = T("Geçen / kalan", "Bestanden / nicht bestanden"),
+        attemptsChart = T("Öğrenci başına deneme", "Versuche pro Lernende"),
+        report = T("Sınav sonuçları raporu", "Bericht Prüfungsergebnisse"),
+        submissions = T("Gönderilen sınavlar", "Abgegebene Prüfungen"),
+        sheet = T("Sınav sonuçları", "Prüfungsergebnisse")
+    };
+    var tableLanguage = isGerman
+        ? new { search = "Suchen:", lengthMenu = "_MENU_ pro Seite", info = "_START_–_END_ von _TOTAL_", infoEmpty = "Keine Einträge", zeroRecords = "Keine passenden Einträge", emptyTable = "Noch keine Ergebnisse", paginate = new { previous = "Zurück", next = "Weiter" } }
+        : new { search = "Ara:", lengthMenu = "Sayfada _MENU_ kayıt", info = "_TOTAL_ kayıttan _START_–_END_", infoEmpty = "Kayıt yok", zeroRecords = "Uygun kayıt bulunamadı", emptyTable = "Henüz sonuç yok", paginate = new { previous = "Önceki", next = "Sonraki" } };
 }
 
 @section Css {
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <style>
-        #monitor-container { max-width:1250px; margin:auto; }
-        #userSelect, #quizSelect { max-width:260px; }
-        .dataTables_wrapper .dataTables_filter { float: right; }
-        .modal-dialog { max-width: 800px; }
-        canvas { background: #fff; border-radius: 8px; }
-        .badge-live { background: #ff1744; color:#fff; font-weight:600; }
-        .table-hover tbody tr:hover { background: #f0f5ff !important; }
+        .qm-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; margin-bottom: 1rem; }
+        .qm-filters .form-select { width: auto; min-width: 200px; }
+        .qm-scroll { overflow-x: auto; }
+        .qm-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; margin-top: 1.1rem; }
+        .qm-charts .adm-card { margin: 0; }
+        .qm-charts h3 { margin: 0 0 0.6rem; font-size: 0.95rem; font-weight: 600; }
+        .qm-charts canvas { max-height: 320px; }
+        .qm-tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1rem; margin-top: 1.1rem; }
+        .qm-tables .adm-card { margin: 0; }
+        .badge-live { background: var(--a-red) !important; color: #fff !important; }
+        .dataTables_wrapper .dataTables_filter input, .dataTables_wrapper .dataTables_length select { border-radius: 10px; border: 1px solid var(--a-hairline-strong); background: var(--a-surface); color: var(--a-ink); min-height: 38px; padding: 0.3rem 0.6rem; }
+        .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter { color: var(--a-muted); font-size: 0.86rem; }
+        @@media (max-width: 599.98px) { .qm-tables { grid-template-columns: 1fr; } .qm-filters .form-select { width: 100%; } }
     </style>
 }
 
-<div id="monitor-container" class="py-3">
-    <h2 class="mb-4"><i class="fas fa-chart-line"></i> Quiz Monitor <span id="livePulse" style="display:none;" class="badge badge-live ms-2"><i class="fas fa-broadcast-tower"></i> LIVE</span></h2>
+<partial name="_AdminHeader" model="adminHeader" />
 
-    <!-- Filtres -->
-    <div class="mb-4 d-flex flex-wrap align-items-center gap-3">
-        <label for="userSelect" class="fw-bold">Filter by Student:</label>
-        <select id="userSelect" class="form-select">
-            <option value="">All Students</option>
+<div class="adm-stats">
+    <div class="adm-stat" style="--i:0">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-pen-to-square"></i></span>
+        <span><span class="adm-stat__num">@rows.Count</span><span class="adm-stat__label">@T("toplam deneme", "Versuche insgesamt")</span></span>
+    </div>
+    <div class="adm-stat tone-blue" style="--i:1">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-user-graduate"></i></span>
+        <span><span class="adm-stat__num">@users.Count</span><span class="adm-stat__label">@T("öğrenci", "Lernende")</span></span>
+    </div>
+    <div class="adm-stat tone-green" style="--i:2">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span>
+        <span><span class="adm-stat__num">@(rows.Count == 0 ? 0 : passCount * 100 / rows.Count)%</span><span class="adm-stat__label">@T("geçme oranı (50+ puan)", "Bestehensquote (50+ Punkte)")</span></span>
+    </div>
+    <div class="adm-stat tone-amber" style="--i:3">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-calendar-week"></i></span>
+        <span><span class="adm-stat__num">@rows.Count(x => x.SubmissionDate >= weekAgo)</span><span class="adm-stat__label">@T("bu hafta", "diese Woche")</span></span>
+    </div>
+</div>
+
+<div class="adm-card">
+    <div class="qm-filters">
+        <select id="userSelect" class="form-select" aria-label="@T("Öğrenciye göre", "Nach Lernenden")">
+            <option value="">@T("Tüm öğrenciler", "Alle Lernenden")</option>
             @foreach (var u in users)
             {
                 <option>@u</option>
             }
         </select>
-        <label for="quizSelect" class="fw-bold ms-2">Filter by Quiz:</label>
-        <select id="quizSelect" class="form-select">
-            <option value="">All Quizzes</option>
+        <select id="quizSelect" class="form-select" aria-label="@T("Sınava göre", "Nach Prüfung")">
+            <option value="">@T("Tüm sınavlar", "Alle Prüfungen")</option>
             @foreach (var q in quizzes)
             {
                 <option>@q</option>
             }
         </select>
-        <label class="ms-3">
-            <input type="checkbox" id="showFailed" /> Show only failed attempts
-        </label>
-        <hr/>
-        <button class="btn btn-outline-success ms-2" id="exportExcel"><i class="fas fa-file-excel"></i> Export Excel</button>
-        <button class="btn btn-outline-danger" id="exportPdf"><i class="fas fa-file-pdf"></i> Export PDF</button>
+        <label class="adm-choice"><input type="checkbox" id="showFailed" /><span>@T("Yalnızca kalanlar", "Nur nicht bestandene")</span></label>
+        <span id="livePulse" class="adm-badge adm-badge--red" hidden><i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i>@T("Şu anda sınav çözülüyor", "Gerade läuft eine Prüfung")</span>
+        <span class="adm-toolbar__end">
+            <button type="button" class="adm-btn adm-btn--sm" id="exportExcel"><i class="fa-solid fa-file-excel" style="color: var(--a-green)" aria-hidden="true"></i>Excel</button>
+            <button type="button" class="adm-btn adm-btn--sm" id="exportPdf"><i class="fa-solid fa-file-pdf" style="color: var(--a-red)" aria-hidden="true"></i>PDF</button>
+        </span>
     </div>
-
-    <!-- TABLE 1: Ana Tablo (Geçmiş ve Canlı) -->
-    <div class="card shadow mb-4">
-        <div class="card-body">
-            <table id="monitorTable" class="table table-striped table-bordered table-hover align-middle" style="width:100%">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Student</th>
-                        <th>Quiz</th>
-                        <th>Score</th>
-                        <th>Max Score</th>
-                        <th>Attempt</th>
-                        <th>Age</th>
-                        <th>Time</th>
-                        <th>Status</th>
-                        <th>Submission Time</th>
-                        <th>Detail</th>
-                    </tr>
-                </thead>
-                <tbody>
-
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- TABLE 2: Öğrenciye göre geçmiş -->
-    <div class="card shadow mb-4">
-        <div class="card-header"><b>Student-wise Attempts</b></div>
-        <div class="card-body">
-            <table id="studentHistoryTable" class="table table-sm table-striped">
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Quiz</th>
-                        <th>Attempts</th>
-                        <th>Best Score</th>
-                        <th>Average Score</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @{
-                        var studentGroups = Model.GroupBy(x => x.UserName);
-                        foreach (var g in studentGroups)
-                        {
-                            var attempts = g.Count();
-                            var best = g.Max(x => x.Score);
-                            var avg = g.Average(x => x.Score);
-                            <tr>
-                                <td>@g.Key</td>
-                                <td>@string.Join(", ", g.Select(x => x.QuizTitle).Distinct())</td>
-                                <td>@attempts</td>
-                                <td>@best</td>
-                                <td>@avg.ToString("0.##")</td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- TABLE 3: Quizlere göre analiz -->
-    <div class="card shadow mb-4">
-        <div class="card-header"><b>Quiz-wise Analysis</b></div>
-        <div class="card-body">
-            <table id="quizAnalysisTable" class="table table-sm table-striped">
-                <thead>
-                    <tr>
-                        <th>Quiz</th>
-                        <th>Total Attempts</th>
-                        <th>Best Score</th>
-                        <th>Average Score</th>
-                        <th>Pass %</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @{
-                        var quizGroups = Model.GroupBy(x => x.QuizTitle);
-                        foreach (var g in quizGroups)
-                        {
-                            var total = g.Count();
-                            var best = g.Max(x => x.Score);
-                            var avg = g.Average(x => x.Score);
-                            var pass = g.Count(x => x.Score >= 50);
-                            <tr>
-                                <td>@g.Key</td>
-                                <td>@total</td>
-                                <td>@best</td>
-                                <td>@avg.ToString("0.##")</td>
-                                <td>@((total > 0) ? ((pass * 100) / total) : 0) %</td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- TABLE 4: En iyi denemeler -->
-    <div class="card shadow mb-4">
-        <div class="card-header"><b>Top Attempts (Score &gt;= 90)</b></div>
-        <div class="card-body">
-            <table id="topAttemptsTable" class="table table-sm table-striped">
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Quiz</th>
-                        <th>Score</th>
-                        <th>Attempt</th>
-                        <th>Time</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach(var s in Model.Where(x => x.Score >= 90).OrderByDescending(x=>x.Score))
-                    {
-                        <tr>
-                            <td>@s.UserName</td>
-                            <td>@s.QuizTitle</td>
-                            <td>@s.Score</td>
-                            <td>@s.AttemptNumber</td>
-                            <td>@s.SubmissionTimeFormatted</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- TABLE 5: Son 20 Deneme -->
-    <div class="card shadow mb-4">
-        <div class="card-header"><b>Recent 20 Attempts</b></div>
-        <div class="card-body">
-            <table id="recentAttemptsTable" class="table table-sm table-striped">
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Quiz</th>
-                        <th>Score</th>
-                        <th>Attempt</th>
-                        <th>Time</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach(var s in Model.OrderByDescending(x=>x.SubmissionDate).Take(20))
-                    {
-                        <tr>
-                            <td>@s.UserName</td>
-                            <td>@s.QuizTitle</td>
-                            <td>@s.Score</td>
-                            <td>@s.AttemptNumber</td>
-                            <td>@s.SubmissionTimeFormatted</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Grafikler -->
-    <div class="mb-4 row g-4">
-        <div class="col-md-6"><canvas id="scoresChart" height="220"></canvas></div>
-        <div class="col-md-6"><canvas id="trendChart"  height="220"></canvas></div>
-    </div>
-    <div class="mb-4 row g-4">
-        <div class="col-md-6"><canvas id="avgScoreChart"    height="180"></canvas></div>
-        <div class="col-md-6"><canvas id="successPieChart"  height="180"></canvas></div>
-    </div>
-    <div class="mb-4 row g-4">
-        <div class="col-md-12"><canvas id="attemptsBarChart" height="160"></canvas></div>
+    <div class="qm-scroll">
+        <table id="monitorTable" class="table table-hover align-middle" style="width:100%">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>@strings.student</th>
+                    <th>@strings.quiz</th>
+                    <th>@strings.score</th>
+                    <th>@strings.attempt</th>
+                    <th>@strings.age</th>
+                    <th>@strings.time</th>
+                    <th>@strings.status</th>
+                    <th>@strings.submitted</th>
+                    <th><span class="adm-sr">@strings.details</span></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 </div>
 
-<!-- Drilldown Modal -->
+<div class="qm-charts">
+    <section class="adm-card"><h3>@strings.trendChart</h3><canvas id="trendChart" height="220"></canvas></section>
+    <section class="adm-card"><h3>@strings.passChart</h3><canvas id="successPieChart" height="220"></canvas></section>
+    <section class="adm-card"><h3>@strings.avgChart</h3><canvas id="avgScoreChart" height="220"></canvas></section>
+    <section class="adm-card"><h3>@strings.attemptsChart</h3><canvas id="attemptsBarChart" height="220"></canvas></section>
+    <section class="adm-card" style="grid-column: 1 / -1"><h3>@strings.scoresChart</h3><canvas id="scoresChart" height="260"></canvas></section>
+</div>
+
+<div class="qm-tables">
+    <section class="adm-card">
+        <div class="adm-card__head"><h2>@T("Öğrenci bazında", "Pro Lernende")</h2></div>
+        <div class="qm-scroll">
+            <table id="studentHistoryTable" class="table table-sm">
+                <thead><tr><th>@strings.student</th><th>@strings.quiz</th><th>@T("Deneme", "Versuche")</th><th>@T("En iyi", "Beste")</th><th>@T("Ortalama", "Schnitt")</th></tr></thead>
+                <tbody>
+                    @foreach (var g in rows.GroupBy(x => x.UserName))
+                    {
+                        <tr>
+                            <td>@g.Key</td>
+                            <td>@string.Join(", ", g.Select(x => x.QuizTitle).Distinct())</td>
+                            <td>@g.Count()</td>
+                            <td>@g.Max(x => x.Score)</td>
+                            <td>@g.Average(x => x.Score).ToString("0.#")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <section class="adm-card">
+        <div class="adm-card__head"><h2>@T("Sınav bazında", "Pro Prüfung")</h2></div>
+        <div class="qm-scroll">
+            <table id="quizAnalysisTable" class="table table-sm">
+                <thead><tr><th>@strings.quiz</th><th>@T("Deneme", "Versuche")</th><th>@T("En iyi", "Beste")</th><th>@T("Ortalama", "Schnitt")</th><th>@T("Geçen", "Bestanden")</th></tr></thead>
+                <tbody>
+                    @foreach (var g in rows.GroupBy(x => x.QuizTitle))
+                    {
+                        var total = g.Count();
+                        <tr>
+                            <td>@g.Key</td>
+                            <td>@total</td>
+                            <td>@g.Max(x => x.Score)</td>
+                            <td>@g.Average(x => x.Score).ToString("0.#")</td>
+                            <td>@(total > 0 ? g.Count(x => x.Score >= 50) * 100 / total : 0)%</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <section class="adm-card">
+        <div class="adm-card__head"><h2>@T("En iyi denemeler (90+)", "Beste Versuche (90+)")</h2></div>
+        <div class="qm-scroll">
+            <table id="topAttemptsTable" class="table table-sm">
+                <thead><tr><th>@strings.student</th><th>@strings.quiz</th><th>@strings.score</th><th>@strings.attempt</th><th>@strings.submitted</th></tr></thead>
+                <tbody>
+                    @foreach (var s in rows.Where(x => x.Score >= 90).OrderByDescending(x => x.Score))
+                    {
+                        <tr><td>@s.UserName</td><td>@s.QuizTitle</td><td>@s.Score</td><td>@s.AttemptNumber</td><td>@s.SubmissionTimeFormatted</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <section class="adm-card">
+        <div class="adm-card__head"><h2>@T("Son 20 deneme", "Letzte 20 Versuche")</h2></div>
+        <div class="qm-scroll">
+            <table id="recentAttemptsTable" class="table table-sm">
+                <thead><tr><th>@strings.student</th><th>@strings.quiz</th><th>@strings.score</th><th>@strings.attempt</th><th>@strings.submitted</th></tr></thead>
+                <tbody>
+                    @foreach (var s in rows.OrderByDescending(x => x.SubmissionDate).Take(20))
+                    {
+                        <tr><td>@s.UserName</td><td>@s.QuizTitle</td><td>@s.Score</td><td>@s.AttemptNumber</td><td>@s.SubmissionTimeFormatted</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
 <div class="modal fade" id="attemptDetailModal" tabindex="-1" aria-labelledby="attemptDetailModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="attemptDetailModalLabel"><i class="fas fa-list"></i> Attempt Details</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div id="attemptDetailBody"></div>
-      </div>
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="attemptDetailModalLabel"><i class="fa-solid fa-list-check me-2" style="color: var(--a-coral-deep)" aria-hidden="true"></i>@T("Deneme ayrıntıları", "Details des Versuchs")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@T("Kapat", "Schließen")"></button>
+            </div>
+            <div class="modal-body"><div id="attemptDetailBody"></div></div>
+        </div>
     </div>
-  </div>
 </div>
 
 @section Scripts {
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
     <script>
-        // Ana veri
-        const allData = @Html.Raw(JsonConvert.SerializeObject(Model));
-        let filtered = [...allData];
-        let dataTable;
+        (function () {
+            const allData = @Html.Raw(json);
+            const L = @Html.Raw(JsonConvert.SerializeObject(strings, new JsonSerializerSettings { StringEscapeHandling = StringEscapeHandling.EscapeHtml }));
+            const tableLanguage = @Html.Raw(JsonConvert.SerializeObject(tableLanguage, new JsonSerializerSettings { StringEscapeHandling = StringEscapeHandling.EscapeHtml }));
+            let filtered = [...allData];
+            let dataTable;
 
-        function safeDestroy(chart) { if(chart && typeof chart.destroy==='function') chart.destroy(); }
+            // Everything from the database goes into the page as text
+            const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            // Question text is editor HTML; show it as plain text (DOMParser documents run no scripts)
+            const plain = (html) => new DOMParser().parseFromString(String(html ?? ''), 'text/html').body.textContent.trim();
+            const isLive = (x) => new Date(x.SubmissionDate) > new Date(Date.now() - 5 * 60000);
+            const duration = (s) => s ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : '—';
 
-        // Grafik çizimleri
-        function updateCharts(data) {
-            safeDestroy(window.scoresChart);
-            safeDestroy(window.trendChart);
-            safeDestroy(window.avgScoreChart);
-            safeDestroy(window.successPieChart);
-            safeDestroy(window.attemptsBarChart);
-
-            // Score per attempt
-            const labels1 = data.map(x => `${x.QuizTitle} #${x.AttemptNumber} (${x.SubmissionTimeFormatted})`);
-            const dsScore    = data.map(x => x.Score);
-            const dsMaxScore = data.map(x => x.MaxScore);
-            window.scoresChart = new Chart(document.getElementById('scoresChart').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: labels1,
-                    datasets: [
-                        { label: 'Score',     data: dsScore,     backgroundColor: 'rgba(54,162,235,0.7)' },
-                        { label: 'Max Score', data: dsMaxScore,  backgroundColor: 'rgba(153,102,255,0.4)' }
-                    ]
-                },
-                options: { responsive: true, indexAxis: 'y', plugins:{legend:{position:'top'}} }
-            });
-
-            // Score Over Time
-            window.trendChart = new Chart(document.getElementById('trendChart').getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: data.map(x => x.SubmissionTimeFormatted),
-                    datasets: [{ label:'Score Over Time', data:data.map(x=>x.Score), borderColor:'rgba(255,99,132,1)', fill:false, tension:0.2 }]
-                },
-                options:{responsive:true, plugins:{legend:{display:true}}}
-            });
-
-            // Average Score per Quiz
-            const avgMap = {};
-            data.forEach(x => { avgMap[x.QuizTitle] = avgMap[x.QuizTitle]||[]; avgMap[x.QuizTitle].push(x.Score); });
-            const avgLabels = Object.keys(avgMap);
-            const avgValues = avgLabels.map(q => +(avgMap[q].reduce((a,b)=>a+b,0)/avgMap[q].length).toFixed(2));
-            window.avgScoreChart = new Chart(document.getElementById('avgScoreChart').getContext('2d'), {
-                type:'bar',
-                data:{
-                    labels:avgLabels,
-                    datasets:[{ label:'Average Score', data:avgValues, backgroundColor:'rgba(255,206,86,0.7)' }]
-                },
-                options:{responsive:true, indexAxis:'y', plugins:{legend:{position:'top'}}}
-            });
-
-            // Overall Pass/Fail
-            const pf = {Passed:0,Failed:0};
-            data.forEach(x => x.Score>=50?pf.Passed++:pf.Failed++);
-            window.successPieChart = new Chart(document.getElementById('successPieChart').getContext('2d'), {
-                type:'doughnut',
-                data:{
-                    labels:['Passed','Failed'],
-                    datasets:[{ data:[pf.Passed,pf.Failed], backgroundColor:['#4caf50','#e53935'] }]
-                },
-                options:{ responsive:true, plugins:{legend:{position:'top'}, title:{display:true,text:'Overall Pass/Fail Ratio'} } }
-            });
-
-            // Attempts per Student
-            const apu = {};
-            data.forEach(x => apu[x.UserName] = (apu[x.UserName]||0)+1);
-            const users = Object.keys(apu), counts=users.map(u=>apu[u]);
-            window.attemptsBarChart = new Chart(document.getElementById('attemptsBarChart').getContext('2d'), {
-                type:'bar',
-                data:{
-                    labels:users,
-                    datasets:[{ label:'Attempts', data:counts, backgroundColor:'rgba(33,150,243,0.6)' }]
-                },
-                options:{ responsive:true, indexAxis:'y', plugins:{legend:{display:false}, title:{display:true,text:'Quiz Attempts per Student'} } }
-            });
-        }
-
-        // Filtrele & güncelle
-        function filterAndRedraw() {
-            const userSel = $('#userSelect').val();
-            const quizSel = $('#quizSelect').val();
-            const showF   = $('#showFailed').is(':checked');
-            filtered = allData.filter(x =>
-                (!userSel   || x.UserName   === userSel) &&
-                (!quizSel   || x.QuizTitle  === quizSel) &&
-                (!showF     || x.Score < 50)
-            );
-dataTable.clear().rows.add(filtered.map((x,i) => [
-    (i+1).toString(),
-    String(x.UserName ?? ""),
-    String(x.QuizTitle ?? ""),
-    `<span>${x.Score} ${x.Score>=50?'<span class="badge bg-success ms-1">Passed</span>':'<span class="badge bg-danger ms-1">Failed</span>'}</span>`,
-    String(x.MaxScore ?? ""),
-    String(x.AttemptNumber ?? ""),
-    String(x.Age ?? ""),
-    x.DurationSeconds ? `${Math.floor(x.DurationSeconds / 60)}:${String(x.DurationSeconds % 60).padStart(2, '0')}` : '—',
-    ((new Date(x.SubmissionDate) > new Date(Date.now()-5*60000))
-        ? '<span class="badge badge-live">LIVE</span>'
-        : '<span class="badge bg-secondary">History</span>')
-    + (x.EndReason === 'violations' ? ' <span class="badge bg-danger">Terminated</span>'
-        : x.EndReason === 'timeout' ? ' <span class="badge bg-info text-dark">Time up</span>' : '')
-    + (x.ViolationCount > 0 ? ` <span class="badge bg-warning text-dark" title="Integrity warnings">&#9888; ${x.ViolationCount}</span>` : ''),
-    String(x.SubmissionTimeFormatted ?? ""),
-    `<button class="btn btn-sm btn-outline-primary show-details" data-row-idx="${i}"><i class="fas fa-eye"></i></button>`
-])).draw();
-
-            updateCharts(filtered);
-        }
-
-        $(function(){
-            // DataTable ana tablo
-            dataTable = $('#monitorTable').DataTable({
-                responsive: true,
-                order: [[9, 'desc']],
-                columns: [
-                    { title: "#"},  // idx
-                    { title: "Student"},
-                    { title: "Quiz"},
-                    { title: "Score"},
-                    { title: "Max Score"},
-                    { title: "Attempt"},
-                    { title: "Age"},
-                    { title: "Time"},
-                    { title: "Status"},
-                    { title: "Submission Time"},
-                    { title: "Detail", orderable:false}
-                ],
-                language:{search:"Search:",lengthMenu:"Show _MENU_ records"}
-            });
-            filterAndRedraw();
-            // Diğer tablolar için DataTable başlatabilirsin:
-            $('#studentHistoryTable, #quizAnalysisTable, #topAttemptsTable, #recentAttemptsTable').DataTable({paging:false, searching:false, info:false});
-
-            updateCharts(allData);
-            // NEW: Populate the table on first load!
-            filterAndRedraw();
-            // Filtre olayları
-            $('#userSelect, #quizSelect, #showFailed').on('change', filterAndRedraw);
-
-            // Export Excel (SheetJS)
-            $('#exportExcel').click(()=>{
-                // Use the filtered array, not DOM!
-                const data = filtered.map((x, i) => [
-                    i+1,
-                    x.UserName,
-                    x.QuizTitle,
-                    x.Score,
-                    x.MaxScore,
-                    x.AttemptNumber,
-                    x.Age,
-                    x.SubmissionTimeFormatted,
-                    (new Date(x.SubmissionDate) > new Date(Date.now()-5*60000)) ? 'LIVE' : 'History',
-                    x.SubmissionTimeFormatted
-                ]);
-                const ws = XLSX.utils.aoa_to_sheet([
-                    ['#','Student','Quiz','Score','Max Score','Attempt','Age','Time','Status','Submission Time'],
-                    ...data
-                ]);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Quiz Results');
-                XLSX.writeFile(wb, 'quiz_results.xlsx');
-            });
-            // Export PDF (jsPDF + autotable)
-            $('#exportPdf').click(()=>{
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({
-                    orientation: "landscape",
-                    unit: "px",
-                    format: "a4"
-                });
-
-                // --- TITLE ---
-                doc.setFontSize(28);
-                doc.setTextColor(45, 62, 80);
-                doc.text('Quiz Results Report', 35, 40);
-
-                let y = 60;
-
-                // --- CHARTS SECTION ---
-                const chartConfigs = [
-                    { id: 'scoresChart',      title: 'Scores per Attempt' },
-                    { id: 'trendChart',       title: 'Score Over Time' },
-                    { id: 'avgScoreChart',    title: 'Average Score per Quiz' },
-                    { id: 'successPieChart',  title: 'Overall Pass/Fail Ratio' },
-                    { id: 'attemptsBarChart', title: 'Quiz Attempts per Student' }
-                ];
-
-                let col = 0, row = 0;
-                const colW = 320, rowH = 120, leftM = 35, topM = y;
-                for(let i=0; i<chartConfigs.length; i++) {
-                    if (i === 2) { row++; col=0; } // Move to next row after 2 charts
-                    const x = leftM + col*colW;
-                    const yPos = topM + row*(rowH+40);
-                    doc.setFontSize(15);
-                    doc.setTextColor(65, 65, 80);
-                    doc.text(chartConfigs[i].title, x+10, yPos+15);
-
-                    const chartElem = document.getElementById(chartConfigs[i].id);
-                    if(chartElem) {
-                        const img = chartElem.toDataURL('image/png');
-                        doc.addImage(img, 'PNG', x, yPos+20, colW-25, rowH);
-                    }
-                    col++;
-                }
-
-                // --- Table Section ---
-                let tableStartY = topM + 2*(rowH+40) + 90;
-
-                doc.setFontSize(19);
-                doc.setTextColor(45, 62, 80);
-                doc.text('Quiz Submissions', leftM, tableStartY-18);
-
-                // Table data (filtered)
-                const data = filtered.map((x, i) => [
-                    i+1,
-                    x.UserName,
-                    x.QuizTitle,
-                    x.Score,
-                    x.MaxScore,
-                    x.AttemptNumber,
-                    x.Age,
-                    x.SubmissionTimeFormatted,
-                    (new Date(x.SubmissionDate) > new Date(Date.now()-5*60000)) ? 'LIVE' : 'History',
-                    x.SubmissionTimeFormatted
-                ]);
-
-                doc.autoTable({
-                    head: [['#','Student','Quiz','Score','Max Score','Attempt','Age','Time','Status','Submission Time']],
-                    body: data,
-                    startY: tableStartY,
-                    theme: 'striped',
-                    headStyles: { fillColor: [41, 128, 185], textColor: [255,255,255], fontStyle: 'bold' },
-                    bodyStyles: { textColor: [44, 62, 80] },
-                    styles: { fontSize: 12, cellPadding: 3, halign: 'center' },
-                    margin: { left: leftM, right: leftM }
-                });
-
-                // --- FOOTER with LOGO ---
-                const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
-                const footerY = pageHeight - 40;
-                const logo = new Image();
-                logo.src = '/img/footer_logo.png'; // <<-- your logo path here (should be accessible!)
-                logo.onload = function() {
-                    doc.addImage(logo, 'PNG', leftM, footerY-15, 100, 28); // size and position
-                    doc.setFontSize(10);
-                    doc.setTextColor(100, 100, 100);
-                    doc.text("© Almanca Konuşma Kulübü · " + (new Date().getFullYear()), leftM + 115, footerY+4);
-                    doc.save('quiz_results_report.pdf');
-                };
-                // Fallback: If logo not loaded, save anyway after delay
-                setTimeout(function(){
-                    try { doc.save('quiz_results_report.pdf'); } catch(e){}
-                }, 800);
-            });
-
-
-            // Drilldown modal: detay bak
-            $('#monitorTable tbody').on('click', '.show-details', function(e){
-                e.stopPropagation();
-                const idx = $(this).data('row-idx');
-                const row = filtered[idx];
-                if(!row?.Responses) return;
-                let html = `
-                    <p><b>Student:</b> ${row.UserName}<br>
-                    <b>Quiz:</b> ${row.QuizTitle}<br>
-                    <b>Attempt:</b> ${row.AttemptNumber}<br>
-                    <b>Score:</b> ${row.Score}/${row.MaxScore}<br>
-                    <b>Submitted:</b> ${row.SubmissionTimeFormatted}</p>
-                    <table class="table table-bordered">
-                    <thead><tr>
-                        <th>Question</th><th>Answer</th><th>Correct?</th><th>Time (s)</th>
-                    </tr></thead><tbody>`;
-                row.Responses.forEach(r=>{
-                    html+=`<tr>
-                        <td>${r.Question}</td>
-                        <td>${r.Answer}</td>
-                        <td>${r.IsCorrect?'<span class="badge bg-success">Yes</span>':'<span class="badge bg-danger">No</span>'}</td>
-                        <td>${r.TimeTakenSeconds}</td>
-                    </tr>`;
-                });
-                html+='</tbody></table>';
-                $('#attemptDetailBody').html(html);
-                $('#attemptDetailModal').modal('show');
-            });
-
-            // Live pulse
-            setInterval(function(){
-                const hasLive = filtered.some(x => (new Date(x.SubmissionDate) > new Date(Date.now()-5*60000)));
-                $('#livePulse').toggle(hasLive);
-            }, 3000);
-
-            // SignalR live (isteğe bağlı)
-            if(window.signalR){
-                const conn = new signalR.HubConnectionBuilder().withUrl('/quizMonitorHub').build();
-                conn.on('ReceiveSubmission', sub=>{
-                    allData.push(sub);
-                    filterAndRedraw();
-                });
-                conn.start().catch(e=>console.error(e));
+            const css = getComputedStyle(document.body);
+            const color = (name) => css.getPropertyValue(name).trim();
+            const palette = { coral: color('--a-coral-deep'), blue: color('--a-blue'), green: color('--a-green'), amber: color('--a-amber'), red: color('--a-red'), ink: color('--a-muted') };
+            if (window.Chart) {
+                Chart.defaults.font.family = "'Poppins', system-ui, sans-serif";
+                Chart.defaults.color = palette.ink;
+                Chart.defaults.borderColor = color('--a-hairline');
             }
-        });
+            function safeDestroy(chart) { if (chart && typeof chart.destroy === 'function') chart.destroy(); }
+
+            function updateCharts(data) {
+                if (!window.Chart) return;
+                ['scoresChart', 'trendChart', 'avgScoreChart', 'successPieChart', 'attemptsBarChart'].forEach((id) => safeDestroy(window[id]));
+                const ordered = [...data].sort((a, b) => new Date(a.SubmissionDate) - new Date(b.SubmissionDate));
+
+                window.scoresChart = new Chart(document.getElementById('scoresChart'), {
+                    type: 'bar',
+                    data: { labels: ordered.map((x) => x.UserName + ' · ' + x.QuizTitle + ' #' + x.AttemptNumber), datasets: [{ label: L.score, data: ordered.map((x) => x.Score), backgroundColor: ordered.map((x) => x.Score >= 50 ? palette.green : palette.red), borderRadius: 6 }] },
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 } } }
+                });
+                window.trendChart = new Chart(document.getElementById('trendChart'), {
+                    type: 'line',
+                    data: { labels: ordered.map((x) => x.SubmissionTimeFormatted), datasets: [{ label: L.score, data: ordered.map((x) => x.Score), borderColor: palette.coral, backgroundColor: palette.coral, tension: 0.3, pointRadius: 3 }] },
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 } } }
+                });
+                const byQuiz = {};
+                data.forEach((x) => { (byQuiz[x.QuizTitle] = byQuiz[x.QuizTitle] || []).push(x.Score); });
+                const quizNames = Object.keys(byQuiz);
+                window.avgScoreChart = new Chart(document.getElementById('avgScoreChart'), {
+                    type: 'bar',
+                    data: { labels: quizNames, datasets: [{ label: L.score, data: quizNames.map((q) => +(byQuiz[q].reduce((a, b) => a + b, 0) / byQuiz[q].length).toFixed(1)), backgroundColor: palette.amber, borderRadius: 6 }] },
+                    options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { min: 0, max: 100 } } }
+                });
+                const passed = data.filter((x) => x.Score >= 50).length;
+                window.successPieChart = new Chart(document.getElementById('successPieChart'), {
+                    type: 'doughnut',
+                    data: { labels: [L.passed, L.failed], datasets: [{ data: [passed, data.length - passed], backgroundColor: [palette.green, palette.red], borderWidth: 0 }] },
+                    options: { responsive: true, cutout: '62%', plugins: { legend: { position: 'bottom' } } }
+                });
+                const perStudent = {};
+                data.forEach((x) => { perStudent[x.UserName] = (perStudent[x.UserName] || 0) + 1; });
+                const students = Object.keys(perStudent);
+                window.attemptsBarChart = new Chart(document.getElementById('attemptsBarChart'), {
+                    type: 'bar',
+                    data: { labels: students, datasets: [{ label: L.attempt, data: students.map((s) => perStudent[s]), backgroundColor: palette.blue, borderRadius: 6 }] },
+                    options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { precision: 0 } } } }
+                });
+            }
+
+            function statusCell(x) {
+                let html = isLive(x) ? '<span class="adm-badge adm-badge--red">' + esc(L.live) + '</span> ' : '';
+                html += x.Score >= 50 ? '<span class="adm-badge adm-badge--green">' + esc(L.passed) + '</span>' : '<span class="adm-badge adm-badge--red">' + esc(L.failed) + '</span>';
+                if (x.EndReason === 'violations') html += ' <span class="adm-badge adm-badge--red">' + esc(L.terminated) + '</span>';
+                else if (x.EndReason === 'timeout') html += ' <span class="adm-badge adm-badge--blue">' + esc(L.timeUp) + '</span>';
+                if (x.ViolationCount > 0) html += ' <span class="adm-badge adm-badge--amber" title="' + esc(L.warnings) + '">&#9888; ' + esc(x.ViolationCount) + '</span>';
+                return html;
+            }
+
+            function filterAndRedraw() {
+                const user = $('#userSelect').val();
+                const quiz = $('#quizSelect').val();
+                const failedOnly = $('#showFailed').is(':checked');
+                filtered = allData.filter((x) => (!user || x.UserName === user) && (!quiz || x.QuizTitle === quiz) && (!failedOnly || x.Score < 50));
+                dataTable.clear().rows.add(filtered.map((x, i) => [
+                    String(i + 1),
+                    esc(x.UserName),
+                    esc(x.QuizTitle),
+                    '<b>' + esc(x.Score) + '</b>',
+                    esc(x.AttemptNumber),
+                    esc(x.Age || '—'),
+                    duration(x.DurationSeconds),
+                    statusCell(x),
+                    '<span data-order="' + esc(x.SubmissionDate) + '">' + esc(x.SubmissionTimeFormatted) + '</span>',
+                    '<button type="button" class="adm-btn adm-btn--sm adm-btn--icon show-details" data-row-idx="' + i + '" aria-label="' + esc(L.details) + '"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>'
+                ])).draw();
+                updateCharts(filtered);
+            }
+
+            $(function () {
+                dataTable = $('#monitorTable').DataTable({
+                    order: [[8, 'desc']],
+                    columnDefs: [{ targets: 9, orderable: false }, { targets: 8, type: 'string' }],
+                    pageLength: 25,
+                    language: tableLanguage
+                });
+                $('#studentHistoryTable, #quizAnalysisTable, #topAttemptsTable, #recentAttemptsTable').DataTable({ paging: false, searching: false, info: false, language: tableLanguage });
+                filterAndRedraw();
+                $('#userSelect, #quizSelect, #showFailed').on('change', filterAndRedraw);
+
+                const exportRows = () => filtered.map((x, i) => [i + 1, x.UserName, x.QuizTitle, x.Score, x.AttemptNumber, x.Age, duration(x.DurationSeconds), x.Score >= 50 ? L.passed : L.failed, x.SubmissionTimeFormatted]);
+                const exportHead = [['#', L.student, L.quiz, L.score, L.attempt, L.age, L.time, L.status, L.submitted]];
+
+                $('#exportExcel').on('click', () => {
+                    const ws = XLSX.utils.aoa_to_sheet([...exportHead, ...exportRows()]);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, L.sheet.slice(0, 31));
+                    XLSX.writeFile(wb, 'sinav-sonuclari.xlsx');
+                });
+
+                $('#exportPdf').on('click', () => {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({ orientation: 'landscape', unit: 'px', format: 'a4' });
+                    doc.setFontSize(22);
+                    doc.text(L.report, 35, 40);
+                    const charts = ['trendChart', 'successPieChart', 'avgScoreChart', 'attemptsBarChart'];
+                    charts.forEach((id, i) => {
+                        const canvas = document.getElementById(id);
+                        if (!canvas) return;
+                        const x = 35 + (i % 2) * 300;
+                        const y = 60 + Math.floor(i / 2) * 150;
+                        doc.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, 280, 135);
+                    });
+                    doc.autoTable({
+                        head: exportHead,
+                        body: exportRows(),
+                        startY: 370,
+                        theme: 'striped',
+                        headStyles: { fillColor: [227, 100, 100] },
+                        styles: { fontSize: 10, cellPadding: 3 },
+                        margin: { left: 35, right: 35 }
+                    });
+                    doc.save('sinav-sonuclari.pdf');
+                });
+
+                $('#monitorTable tbody').on('click', '.show-details', function (e) {
+                    e.stopPropagation();
+                    const row = filtered[$(this).data('row-idx')];
+                    if (!row) return;
+                    let html = '<dl class="row mb-3">' +
+                        '<dt class="col-sm-3">' + esc(L.student) + '</dt><dd class="col-sm-9">' + esc(row.UserName) + '</dd>' +
+                        '<dt class="col-sm-3">' + esc(L.quiz) + '</dt><dd class="col-sm-9">' + esc(row.QuizTitle) + '</dd>' +
+                        '<dt class="col-sm-3">' + esc(L.score) + '</dt><dd class="col-sm-9"><b>' + esc(row.Score) + '</b> / ' + esc(row.MaxScore) + ' · ' + statusCell(row) + '</dd>' +
+                        '<dt class="col-sm-3">' + esc(L.submitted) + '</dt><dd class="col-sm-9">' + esc(row.SubmissionTimeFormatted) + ' · ' + esc(L.attempt) + ' ' + esc(row.AttemptNumber) + '</dd>' +
+                        '</dl>';
+                    if (row.Responses && row.Responses.length) {
+                        html += '<div class="qm-scroll"><table class="table table-sm align-middle"><thead><tr><th>' + esc(L.question) + '</th><th>' + esc(L.answer) + '</th><th>' + esc(L.correct) + '</th></tr></thead><tbody>';
+                        row.Responses.forEach((r) => {
+                            html += '<tr><td>' + esc(plain(r.Question)) + '</td><td>' + esc(r.Answer || '—') + '</td><td>' +
+                                (r.IsCorrect ? '<span class="adm-badge adm-badge--green">' + esc(L.yes) + '</span>' : '<span class="adm-badge adm-badge--red">' + esc(L.no) + '</span>') + '</td></tr>';
+                        });
+                        html += '</tbody></table></div>';
+                    } else {
+                        html += '<p class="adm-hint">' + esc(L.noAnswers) + '</p>';
+                    }
+                    document.getElementById('attemptDetailBody').innerHTML = html;
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('attemptDetailModal')).show();
+                });
+
+                const pulse = document.getElementById('livePulse');
+                setInterval(() => { pulse.hidden = !filtered.some(isLive); }, 3000);
+
+                if (window.signalR) {
+                    const connection = new signalR.HubConnectionBuilder().withUrl('/quizMonitorHub').withAutomaticReconnect().build();
+                    connection.on('ReceiveSubmission', (submission) => { allData.push(submission); filterAndRedraw(); });
+                    connection.start().catch((err) => console.error(err));
+                }
+            });
+        })();
     </script>
 }

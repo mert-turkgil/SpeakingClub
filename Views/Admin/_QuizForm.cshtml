@@ -1,0 +1,372 @@
+@using System.Text.RegularExpressions
+@model SpeakingClub.Models.QuizFormData
+@*
+    The quiz form, shared by QuizCreate and QuizEdit (two separate pages with ~1,700 lines of duplicated
+    markup and script before). Questions are cards with answers A, B, C…; a tick marks the correct one.
+    Field names are the same for both models: Questions[i].QuestionText, Questions[i].Answers[j].IsCorrect…
+    Behaviour: wwwroot/js/admin-quiz.js.
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    const string letters = "ABCDEFGHIJ";
+    var levels = new[] { "A1", "A2", "B1", "B2", "C1", "C2" };
+    bool HasError(string key) => ViewData.ModelState.TryGetValue(key, out var e) && e.Errors.Count > 0;
+    // Question text written in the rich editor of the question page comes as <p>…</p>; plain paragraphs are
+    // shown as text here, anything with more formatting is left as it is.
+    string Editable(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return string.Empty;
+        return Regex.IsMatch(text, @"^(\s*<p>[^<>]*</p>\s*)+$")
+            ? System.Net.WebUtility.HtmlDecode(Regex.Replace(text.Trim(), @"</p>\s*<p>", "\n").Replace("<p>", "").Replace("</p>", ""))
+            : text;
+    }
+    var questions = Model.Questions.Count > 0
+        ? Model.Questions
+        : new List<QuizFormQuestion> { new(0, string.Empty, null, null, null, Enumerable.Range(0, 4).Select(_ => new QuizFormAnswer(0, string.Empty, false)).ToList()) };
+}
+
+<form method="post" asp-action="@(Model.IsEdit ? "QuizEdit" : "QuizCreate")" asp-route-id="@(Model.IsEdit ? Model.QuizId : null)"
+      enctype="multipart/form-data" class="adm-form" id="quizForm" autocomplete="off" data-dirty-guard data-loading data-edit="@(Model.IsEdit ? "true" : "false")">
+    @if (Model.IsEdit)
+    {
+        <input type="hidden" name="QuizId" value="@Model.QuizId" />
+    }
+
+    <div class="adm-form__main">
+        <partial name="_AdminErrors" />
+
+        <section class="adm-panel" style="--i:0">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num">1</span>
+                <div>
+                    <h2>@T("Sınav bilgileri", "Angaben zur Prüfung")</h2>
+                    <p>@T("Öğrencilerin sınav listesinde ve sınav sayfasında göreceği bilgiler.", "Was Lernende in der Prüfungsliste und auf der Prüfungsseite sehen.")</p>
+                </div>
+            </div>
+            <div class="adm-panel__body">
+                <div class="adm-field">
+                    <label for="Title">@T("Sınavın adı", "Name der Prüfung") <span class="adm-req">@T("Zorunlu", "Pflicht")</span></label>
+                    <input id="Title" name="Title" value="@Model.Title" class="adm-input adm-input--lg @(HasError("Title") ? "input-validation-error" : "")" maxlength="200"
+                           placeholder="@T("ör. A1 Seviye Tespit Sınavı", "z. B. A1 Einstufungstest")"
+                           data-val="true" data-val-required="@T("Lütfen sınava bir ad verin.", "Bitte geben Sie der Prüfung einen Namen.")" />
+                    @Html.ValidationMessage("Title")
+                </div>
+                <div class="adm-field">
+                    <label for="Description">@T("Kısa açıklama", "Kurzbeschreibung") @if (Model.DescriptionRequired) { <span class="adm-req">@T("Zorunlu", "Pflicht")</span> } else { <span class="adm-opt">@T("önerilir", "empfohlen")</span> }</label>
+                    <textarea id="Description" name="Description" class="adm-input @(HasError("Description") ? "input-validation-error" : "")" rows="3"
+                              placeholder="@T("Bu sınav neyi ölçüyor? Kimler için?", "Was prüft diese Prüfung? Für wen?")"
+                              data-val="@(Model.DescriptionRequired ? "true" : "false")" data-val-required="@T("Lütfen kısa bir açıklama yazın.", "Bitte eine kurze Beschreibung eingeben.")">@Model.Description</textarea>
+                    @Html.ValidationMessage("Description")
+                </div>
+                <div class="adm-row">
+                    <div class="adm-field">
+                        <label for="CategoryId">@T("Kategori", "Kategorie")</label>
+                        <select id="CategoryId" name="CategoryId" class="form-select">
+                            <option value="">@T("— Kategori yok —", "— Keine Kategorie —")</option>
+                            @foreach (var c in Model.Categories)
+                            {
+                                <option value="@c.Value" selected="@(c.Value == Model.CategoryId?.ToString() ? "selected" : null)">@c.Text</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="adm-field">
+                        <label for="TimeLimitMinutes">@T("Süre (dakika)", "Zeit (Minuten)") <span class="adm-opt">@T("isteğe bağlı", "freiwillig")</span></label>
+                        <input id="TimeLimitMinutes" name="TimeLimitMinutes" value="@Model.TimeLimitMinutes" type="number" min="1" max="300" class="adm-input @(HasError("TimeLimitMinutes") ? "input-validation-error" : "")"
+                               placeholder="@T("Otomatik", "Automatisch")"
+                               data-val="true" data-val-range="@T("Süre 1 ile 300 dakika arasında olmalı.", "Die Zeit muss zwischen 1 und 300 Minuten liegen.")" data-val-range-min="1" data-val-range-max="300" />
+                        @Html.ValidationMessage("TimeLimitMinutes")
+                        <p class="adm-hint">@T("Boş bırakırsanız soru başına 90 saniye hesaplanır (en az 5, en çok 120 dakika).", "Leer = 90 Sekunden pro Frage (mindestens 5, höchstens 120 Minuten).")</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="adm-panel" style="--i:1">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num">2</span>
+                <div>
+                    <h2>@T("Sorular", "Fragen") <span class="adm-badge adm-badge--plain" data-question-count></span></h2>
+                    <p>@T("Her soruya cevapları yazın ve doğru cevabın yanındaki kutuyu işaretleyin. Boş bıraktığınız cevap satırları kaydedilmez.", "Tragen Sie zu jeder Frage die Antworten ein und markieren Sie die richtige. Leere Antwortzeilen werden nicht gespeichert.")</p>
+                </div>
+            </div>
+            <div class="adm-panel__body">
+                @foreach (var key in ViewData.ModelState.Keys.Where(k => k.StartsWith("Questions[") && HasError(k)).Take(1))
+                {
+                    <div class="adm-alert adm-alert--error" style="padding:0.6rem 0.9rem"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>@T("Bazı sorularda eksik var; kırmızı işaretli alanlara bakın.", "Bei einigen Fragen fehlt etwas; sehen Sie sich die rot markierten Felder an.")</div>
+                }
+                <div class="adm-qlist" data-questions>
+                    @for (var q = 0; q < questions.Count; q++)
+                    {
+                        var question = questions[q];
+                        var answers = question.Answers.Count >= 2 ? question.Answers : question.Answers.Concat(Enumerable.Range(0, 2 - question.Answers.Count).Select(_ => new QuizFormAnswer(0, string.Empty, false))).ToList();
+                        var qError = HasError($"Questions[{q}].QuestionText") || HasError($"Questions[{q}].Answers");
+                        <article class="adm-qcard @(qError ? "has-error" : "")" data-question>
+                            <header class="adm-qcard__head">
+                                <span class="adm-qcard__num">@T("Soru", "Frage") <b data-qnum>@(q + 1)</b></span>
+                                <span class="adm-qcard__tools">
+                                    <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm adm-btn--icon" data-q-up aria-label="@T("Yukarı taşı", "Nach oben")" title="@T("Yukarı taşı", "Nach oben")"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
+                                    <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm adm-btn--icon" data-q-down aria-label="@T("Aşağı taşı", "Nach unten")" title="@T("Aşağı taşı", "Nach unten")"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>
+                                    <button type="button" class="adm-btn adm-btn--danger adm-btn--sm adm-btn--icon" data-q-remove aria-label="@T("Soruyu kaldır", "Frage entfernen")" title="@T("Soruyu kaldır", "Frage entfernen")"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+                                </span>
+                            </header>
+                            <input type="hidden" data-qfield="QuestionId" name="Questions[@q].QuestionId" value="@question.QuestionId" />
+                            <div class="adm-field">
+                                <label>@T("Soru metni", "Fragetext")</label>
+                                <textarea data-qfield="QuestionText" name="Questions[@q].QuestionText" class="adm-input @(HasError($"Questions[{q}].QuestionText") ? "input-validation-error" : "")" rows="2" placeholder="@T("Soruyu buraya yazın…", "Frage hier eingeben…")">@Editable(question.Text)</textarea>
+                                @Html.ValidationMessage($"Questions[{q}].QuestionText")
+                            </div>
+                            <div class="adm-answers" data-answers>
+                                @for (var a = 0; a < answers.Count; a++)
+                                {
+                                    var answer = answers[a];
+                                    <div class="adm-answer @(answer.IsCorrect ? "is-correct" : "")" data-answer>
+                                        <span class="adm-answer__letter" data-letter>@letters[Math.Min(a, letters.Length - 1)]</span>
+                                        <input type="hidden" data-afield="AnswerId" name="Questions[@q].Answers[@a].AnswerId" value="@answer.AnswerId" />
+                                        <input type="text" data-afield="AnswerText" name="Questions[@q].Answers[@a].AnswerText" value="@answer.Text" class="form-control" maxlength="200" placeholder="@T("Cevap", "Antwort") @letters[Math.Min(a, letters.Length - 1)]" />
+                                        <label class="adm-answer__ok">
+                                            <input type="checkbox" data-afield="IsCorrect" name="Questions[@q].Answers[@a].IsCorrect" value="true" @(answer.IsCorrect ? "checked" : "") data-correct />
+                                            <input type="hidden" data-afield="IsCorrect" name="Questions[@q].Answers[@a].IsCorrect" value="false" />
+                                            @T("Doğru", "Richtig")
+                                        </label>
+                                        <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm adm-btn--icon" data-a-remove aria-label="@T("Bu cevabı kaldır", "Diese Antwort entfernen")"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                                    </div>
+                                }
+                            </div>
+                            @Html.ValidationMessage($"Questions[{q}].Answers")
+                            <div class="adm-qcard__foot">
+                                <button type="button" class="adm-btn adm-btn--soft adm-btn--sm" data-a-add><i class="fa-solid fa-plus" aria-hidden="true"></i>@T("Cevap ekle", "Antwort hinzufügen")</button>
+                                <details class="adm-details adm-qcard__media" @(string.IsNullOrEmpty(question.ImageUrl) && string.IsNullOrEmpty(question.AudioUrl) && string.IsNullOrEmpty(question.VideoUrl) ? "" : "open")>
+                                    <summary><i class="fa-regular fa-image" aria-hidden="true"></i>@T("Resim, ses veya video", "Bild, Audio oder Video") <small>@T("isteğe bağlı", "freiwillig")</small></summary>
+                                    <div class="adm-details__body">
+                                        @if (!string.IsNullOrEmpty(question.ImageUrl))
+                                        {
+                                            <div class="adm-current"><img src="@question.ImageUrl" alt="" style="max-height:140px; width:auto" /><small>@T("Şu anki resim", "Aktuelles Bild")</small></div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(question.AudioUrl))
+                                        {
+                                            <div class="adm-current"><audio controls src="@question.AudioUrl" style="width:100%"></audio><small>@T("Şu anki ses dosyası", "Aktuelle Audiodatei")</small></div>
+                                        }
+                                        <div class="adm-row">
+                                            <div class="adm-field">
+                                                <label>@T("Resim", "Bild") <span class="adm-opt">JPG, PNG, GIF · 5 MB</span></label>
+                                                <input type="file" data-qfield="ImageFile" name="Questions[@q].ImageFile" class="form-control" accept=".jpg,.jpeg,.png,.gif" />
+                                            </div>
+                                            <div class="adm-field">
+                                                <label>@T("Ses dosyası", "Audiodatei") <span class="adm-opt">MP3, WAV, OGG · 10 MB</span></label>
+                                                <input type="file" data-qfield="AudioFile" name="Questions[@q].AudioFile" class="form-control" accept=".mp3,.wav,.ogg,.m4a" />
+                                            </div>
+                                        </div>
+                                        <div class="adm-field">
+                                            <label>@T("YouTube bağlantısı", "YouTube-Link")</label>
+                                            <input type="url" data-qfield="VideoUrl" name="Questions[@q].VideoUrl" value="@question.VideoUrl" class="adm-input" placeholder="https://www.youtube.com/watch?v=…" />
+                                        </div>
+                                    </div>
+                                </details>
+                            </div>
+                        </article>
+                    }
+                </div>
+                <button type="button" class="adm-btn adm-btn--soft adm-btn--lg" data-q-add><i class="fa-solid fa-plus" aria-hidden="true"></i>@T("Yeni soru ekle", "Neue Frage hinzufügen")</button>
+            </div>
+        </section>
+
+        <div class="adm-savebar">
+            <span class="adm-savebar__hint">@T("Kaydetmeden önce her sorunun doğru cevabının işaretli olduğundan emin olun.", "Prüfen Sie vor dem Speichern, dass bei jeder Frage die richtige Antwort markiert ist.")</span>
+            <a class="adm-btn adm-btn--ghost" href="@Url.Action("Quizzes", "Admin")">@T("Vazgeç", "Abbrechen")</a>
+            <button type="submit" class="adm-btn adm-btn--primary"><i class="fa-solid fa-check" aria-hidden="true"></i>@(Model.IsEdit ? T("Değişiklikleri kaydet", "Änderungen speichern") : T("Sınavı kaydet", "Prüfung speichern"))</button>
+        </div>
+    </div>
+
+    <aside class="adm-form__aside">
+        <section class="adm-panel" style="--i:2">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num"><i class="fa-solid fa-signal" aria-hidden="true"></i></span>
+                <div>
+                    <h2>@T("Seviye ve etiketler", "Niveau und Schlagwörter")</h2>
+                    <p>@T("Seviye etiketi (A1–C2) öğrencilerin sınavı seviyeye göre bulmasını sağlar.", "Ein Niveau-Schlagwort (A1–C2) lässt Lernende nach Niveau filtern.")</p>
+                </div>
+            </div>
+            <div class="adm-panel__body adm-panel__body--tight">
+                <div class="adm-choices">
+                    @foreach (var tag in Model.Tags.OrderBy(t => levels.Contains(t.Text?.Trim().ToUpperInvariant()) ? 0 : 1).ThenBy(t => t.Text))
+                    {
+                        var isLevel = levels.Contains(tag.Text?.Trim().ToUpperInvariant());
+                        <label class="adm-choice"><input type="checkbox" name="SelectedTagIds" value="@tag.Value" @(Model.SelectedTagIds.Contains(int.Parse(tag.Value)) ? "checked" : "") /><span>@if (isLevel) { <i class="fa-solid fa-signal" style="font-size:0.7rem; color: var(--a-blue)" aria-hidden="true"></i> }@tag.Text</span></label>
+                    }
+                    @if (!Model.Tags.Any())
+                    {
+                        <span class="adm-choices__empty">@T("Henüz etiket yok.", "Noch keine Schlagwörter.") <a href="@Url.Action("TagCreate", "Admin")" target="_blank" rel="noopener">@T("Etiket ekle", "Schlagwort anlegen")</a></span>
+                    }
+                </div>
+            </div>
+        </section>
+
+        <section class="adm-panel" style="--i:3">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num"><i class="fa-solid fa-chalkboard-user" aria-hidden="true"></i></span>
+                <div><h2>@T("Öğretmen", "Lehrkraft")</h2></div>
+            </div>
+            <div class="adm-panel__body adm-panel__body--tight">
+                <select id="TeacherId" name="TeacherId" class="form-select" aria-label="@T("Öğretmen", "Lehrkraft")" data-teacher-select>
+                    @foreach (var teacher in Model.TeacherOptions)
+                    {
+                        <option value="@teacher.Value" selected="@(teacher.Value == Model.TeacherId ? "selected" : null)">@teacher.Text</option>
+                    }
+                </select>
+                <label class="adm-toggle">
+                    <input type="checkbox" name="IsAnonymous" value="true" @(Model.IsAnonymous ? "checked" : "") data-anonymous />
+                    <input type="hidden" name="IsAnonymous" value="false" />
+                    <span class="adm-toggle__track" aria-hidden="true"></span>
+                    <span class="adm-toggle__text"><strong>@T("Öğretmen adı gösterilmesin", "Ohne Namen der Lehrkraft")</strong><small>@T("Sınav sayfasında öğretmen adı yazmaz.", "Auf der Prüfungsseite steht kein Name.")</small></span>
+                </label>
+            </div>
+        </section>
+
+        <section class="adm-panel" style="--i:4">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num"><i class="fa-regular fa-image" aria-hidden="true"></i></span>
+                <div>
+                    <h2>@T("Sınav görseli ve medya", "Bild und Medien")</h2>
+                    <p>@T("İsteğe bağlı.", "Freiwillig.")</p>
+                </div>
+            </div>
+            <div class="adm-panel__body adm-panel__body--tight">
+                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    <div class="adm-current"><img src="@Model.ImageUrl" alt="" /><small>@T("Şu anki görsel", "Aktuelles Bild")</small></div>
+                }
+                <label class="adm-drop" style="min-height:120px">
+                    <input type="file" name="ImageFile" accept=".jpg,.jpeg,.png,.gif" data-max-mb="5" />
+                    <span class="adm-drop__empty"><strong>@(string.IsNullOrEmpty(Model.ImageUrl) ? T("Görsel seç", "Bild wählen") : T("Yeni görsel seç", "Neues Bild wählen"))</strong><small>JPG, PNG, GIF · 5 MB</small></span>
+                    <span class="adm-drop__preview"></span>
+                </label>
+                @Html.ValidationMessage("ImageFile")
+                @if (!string.IsNullOrEmpty(Model.AudioUrl))
+                {
+                    <div class="adm-current"><audio controls src="@Model.AudioUrl" style="width:100%"></audio><small>@T("Şu anki ses dosyası", "Aktuelle Audiodatei")</small></div>
+                }
+                <div class="adm-field">
+                    <label for="AudioFile">@T("Dinleme sesi", "Hörtext") <span class="adm-opt">MP3 · 10 MB</span></label>
+                    <input type="file" id="AudioFile" name="AudioFile" class="form-control" accept=".mp3,.wav,.ogg,.m4a" />
+                    @Html.ValidationMessage("AudioFile")
+                </div>
+                <div class="adm-field">
+                    <label for="YouTubeVideoUrl">@T("YouTube videosu", "YouTube-Video")</label>
+                    <input id="YouTubeVideoUrl" name="YouTubeVideoUrl" value="@Model.YouTubeVideoUrl" class="adm-input" placeholder="https://www.youtube.com/watch?v=…" />
+                </div>
+            </div>
+        </section>
+
+        <details class="adm-details adm-panel" style="--i:5">
+            <summary><i class="fa-solid fa-language" aria-hidden="true"></i>@T("Almanca ve Google", "Deutsch & Google") <small>@T("isteğe bağlı", "freiwillig")</small></summary>
+            <div class="adm-details__body">
+                <div class="adm-field">
+                    <label for="TitleDe">@T("Sınavın adı (Almanca)", "Name (Deutsch)")</label>
+                    <input id="TitleDe" name="TitleDe" value="@Model.TitleDe" class="adm-input" maxlength="200" lang="de" />
+                </div>
+                <div class="adm-field">
+                    <label for="DescriptionDe">@T("Açıklama (Almanca)", "Beschreibung (Deutsch)")</label>
+                    <textarea id="DescriptionDe" name="DescriptionDe" class="adm-input" rows="2" lang="de">@Model.DescriptionDe</textarea>
+                </div>
+                <div class="adm-field">
+                    <label for="Slug">@T("Adres (Türkçe)", "Adresse (Türkisch)")</label>
+                    <input id="Slug" name="Slug" value="@Model.Slug" class="adm-input" maxlength="200" placeholder="almanca-a1-sinavi" />
+                </div>
+                <div class="adm-field">
+                    <label for="SlugDe">@T("Adres (Almanca)", "Adresse (Deutsch)")</label>
+                    <input id="SlugDe" name="SlugDe" value="@Model.SlugDe" class="adm-input" maxlength="200" placeholder="deutsch-a1-pruefung" />
+                </div>
+                <div class="adm-field">
+                    <label for="MetaDescription">@T("Google açıklaması (Türkçe)", "Google-Beschreibung (Türkisch)")</label>
+                    <textarea id="MetaDescription" name="MetaDescription" class="adm-input" rows="2" maxlength="160">@Model.MetaDescription</textarea>
+                </div>
+                <div class="adm-field">
+                    <label for="MetaDescriptionDe">@T("Google açıklaması (Almanca)", "Google-Beschreibung (Deutsch)")</label>
+                    <textarea id="MetaDescriptionDe" name="MetaDescriptionDe" class="adm-input" rows="2" maxlength="160" lang="de">@Model.MetaDescriptionDe</textarea>
+                </div>
+                <div class="adm-field">
+                    <label for="MetaKeywords">@T("Anahtar kelimeler (Türkçe)", "Schlüsselwörter (Türkisch)")</label>
+                    <input id="MetaKeywords" name="MetaKeywords" value="@Model.MetaKeywords" class="adm-input" maxlength="300" />
+                </div>
+                <div class="adm-field">
+                    <label for="MetaKeywordsDe">@T("Anahtar kelimeler (Almanca)", "Schlüsselwörter (Deutsch)")</label>
+                    <input id="MetaKeywordsDe" name="MetaKeywordsDe" value="@Model.MetaKeywordsDe" class="adm-input" maxlength="300" lang="de" />
+                </div>
+            </div>
+        </details>
+
+        @if (Model.Words.Any())
+        {
+            <details class="adm-details adm-panel" style="--i:6" @(Model.SelectedWordIds.Any() ? "open" : "")>
+                <summary><i class="fa-solid fa-spell-check" aria-hidden="true"></i>@T("İlgili kelimeler", "Zugehörige Wörter") <small>@T("isteğe bağlı", "freiwillig")</small></summary>
+                <div class="adm-details__body">
+                    <div class="adm-choices" data-word-choices>
+                        @foreach (var word in Model.Words.OrderBy(w => w.Text))
+                        {
+                            <label class="adm-choice"><input type="checkbox" name="SelectedWordIds" value="@word.Value" @(Model.SelectedWordIds.Contains(int.Parse(word.Value)) ? "checked" : "") /><span>@word.Text</span></label>
+                        }
+                    </div>
+                </div>
+            </details>
+        }
+
+        <div class="adm-savebar" style="margin-top:0">
+            <button type="submit" class="adm-btn adm-btn--primary" style="flex:1"><i class="fa-solid fa-check" aria-hidden="true"></i>@(Model.IsEdit ? T("Değişiklikleri kaydet", "Änderungen speichern") : T("Sınavı kaydet", "Prüfung speichern"))</button>
+        </div>
+    </aside>
+</form>
+
+<template id="quiz-question-template">
+    <article class="adm-qcard" data-question>
+        <header class="adm-qcard__head">
+            <span class="adm-qcard__num">@T("Soru", "Frage") <b data-qnum></b></span>
+            <span class="adm-qcard__tools">
+                <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm adm-btn--icon" data-q-up aria-label="@T("Yukarı taşı", "Nach oben")" title="@T("Yukarı taşı", "Nach oben")"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
+                <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm adm-btn--icon" data-q-down aria-label="@T("Aşağı taşı", "Nach unten")" title="@T("Aşağı taşı", "Nach unten")"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>
+                <button type="button" class="adm-btn adm-btn--danger adm-btn--sm adm-btn--icon" data-q-remove aria-label="@T("Soruyu kaldır", "Frage entfernen")" title="@T("Soruyu kaldır", "Frage entfernen")"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+            </span>
+        </header>
+        <input type="hidden" data-qfield="QuestionId" value="0" />
+        <div class="adm-field">
+            <label>@T("Soru metni", "Fragetext")</label>
+            <textarea data-qfield="QuestionText" class="adm-input" rows="2" placeholder="@T("Soruyu buraya yazın…", "Frage hier eingeben…")"></textarea>
+        </div>
+        <div class="adm-answers" data-answers></div>
+        <div class="adm-qcard__foot">
+            <button type="button" class="adm-btn adm-btn--soft adm-btn--sm" data-a-add><i class="fa-solid fa-plus" aria-hidden="true"></i>@T("Cevap ekle", "Antwort hinzufügen")</button>
+            <details class="adm-details adm-qcard__media">
+                <summary><i class="fa-regular fa-image" aria-hidden="true"></i>@T("Resim, ses veya video", "Bild, Audio oder Video") <small>@T("isteğe bağlı", "freiwillig")</small></summary>
+                <div class="adm-details__body">
+                    <div class="adm-row">
+                        <div class="adm-field">
+                            <label>@T("Resim", "Bild") <span class="adm-opt">JPG, PNG, GIF · 5 MB</span></label>
+                            <input type="file" data-qfield="ImageFile" class="form-control" accept=".jpg,.jpeg,.png,.gif" />
+                        </div>
+                        <div class="adm-field">
+                            <label>@T("Ses dosyası", "Audiodatei") <span class="adm-opt">MP3, WAV, OGG · 10 MB</span></label>
+                            <input type="file" data-qfield="AudioFile" class="form-control" accept=".mp3,.wav,.ogg,.m4a" />
+                        </div>
+                    </div>
+                    <div class="adm-field">
+                        <label>@T("YouTube bağlantısı", "YouTube-Link")</label>
+                        <input type="url" data-qfield="VideoUrl" class="adm-input" placeholder="https://www.youtube.com/watch?v=…" />
+                    </div>
+                </div>
+            </details>
+        </div>
+    </article>
+</template>
+<template id="quiz-answer-template">
+    <div class="adm-answer" data-answer>
+        <span class="adm-answer__letter" data-letter></span>
+        <input type="hidden" data-afield="AnswerId" value="0" />
+        <input type="text" data-afield="AnswerText" class="form-control" maxlength="200" />
+        <label class="adm-answer__ok">
+            <input type="checkbox" data-afield="IsCorrect" value="true" data-correct />
+            <input type="hidden" data-afield="IsCorrect" value="false" />
+            @T("Doğru", "Richtig")
+        </label>
+        <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm adm-btn--icon" data-a-remove aria-label="@T("Bu cevabı kaldır", "Diese Antwort entfernen")"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+</template>

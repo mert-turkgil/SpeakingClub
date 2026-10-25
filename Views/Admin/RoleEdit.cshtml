@@ -1,33 +1,47 @@
 @model SpeakingClub.Models.RoleEditModel
-
 @{
-    ViewData["Title"] = "Edit Role";
-    Layout = "_Layout";
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var section = AdminNav.Find("roles", isGerman)!;
+    ViewData["Title"] = T("Rolün adını değiştir", "Rolle umbenennen");
+    ViewData["AdminSection"] = section.Key;
 }
 
-<div style="height: 80vh;" class="card shadow">
-    <div class="card-header bg-primary text-white">
-        <h3 class="card-title">Edit Role</h3>
-    </div>
-    <div class="card-body">
-        <form asp-action="RoleEdit" method="post">
-            <input type="hidden" asp-for="Id" />
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            
-            <div class="form-group mb-3">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+@{
+    var adminHeader = new AdminHeader("role-form", T("Rolün adını değiştir", "Rolle umbenennen"),
+    T("Rolü taşıyan kişiler yeni adla devam eder.", "Personen mit dieser Rolle behalten sie unter dem neuen Namen."),
+    ParentTitle: section.Title, ParentHref: Url.Action(section.Action));
+}
+<partial name="_AdminHeader" model="adminHeader" />
+
+<form method="post" asp-action="RoleEdit" asp-route-id="@Model.Id" class="adm-form adm-form--single" data-dirty-guard data-loading>
+    <input type="hidden" asp-for="Id" />
+    <div class="adm-form__main">
+        <partial name="_AdminErrors" />
+        <section class="adm-panel">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num">1</span>
+                <div>
+                    <h2>@T("Yeni ad", "Neuer Name")</h2>
+                    <p>@T("Root, Admin, Teacher ve User adları kullanılamaz.", "Die Namen Root, Admin, Teacher und User sind vergeben.")</p>
+                </div>
             </div>
-            
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary">Update</button>
-                <a asp-controller="Admin" asp-route-scrollTo="RoleManagement" asp-action="Index" class="btn btn-secondary">Cancel</a>
+            <div class="adm-panel__body">
+                <div class="adm-field">
+                    <label asp-for="Name">@T("Rol adı", "Rollenname") <span class="adm-req">@T("Zorunlu", "Pflicht")</span></label>
+                    <input asp-for="Name" class="adm-input" autocomplete="off" maxlength="50" data-val-required="@T("Lütfen bir ad yazın.", "Bitte geben Sie einen Namen ein.")" />
+                    <span asp-validation-for="Name"></span>
+                </div>
             </div>
-        </form>
+        </section>
+        <div class="adm-savebar">
+            <span class="adm-savebar__hint">@T("Hazır olduğunuzda kaydedin.", "Speichern Sie, wenn Sie fertig sind.")</span>
+            <a class="adm-btn adm-btn--ghost" href="@Url.Action(section.Action)">@T("Vazgeç", "Abbrechen")</a>
+            <button type="submit" class="adm-btn adm-btn--primary"><i class="fa-solid fa-check" aria-hidden="true"></i>@T("Kaydet", "Speichern")</button>
+        </div>
     </div>
-</div>
+</form>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
 }

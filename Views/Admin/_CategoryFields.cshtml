@@ -1,0 +1,67 @@
+@model (string Name, List<int> SelectedBlogIds, List<int> SelectedQuizIds, IEnumerable<SelectListItem> AvailableBlogs, IEnumerable<SelectListItem> AvailableQuizzes)
+@*
+    Fields shared by CategoryCreate and CategoryEdit. The two models have the same field names, so the
+    inputs are written by name (the tuple model carries no validation metadata, hence the data-val attributes).
+    Blogs and quizzes are tick boxes instead of a multi-select that needed Ctrl+click.
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var nameError = ViewData.ModelState.TryGetValue("Name", out var entry) && entry.Errors.Count > 0;
+}
+<section class="adm-panel" style="--i:0">
+    <div class="adm-panel__head">
+        <span class="adm-panel__num">1</span>
+        <div>
+            <h2>@T("Kategori adı", "Name der Kategorie")</h2>
+            <p>@T("Sitede yazıların ve sınavların üstünde bu ad görünür.", "Dieser Name erscheint auf der Website über Beiträgen und Prüfungen.")</p>
+        </div>
+    </div>
+    <div class="adm-panel__body">
+        <div class="adm-field">
+            <label for="Name">@T("Ad", "Name") <span class="adm-req">@T("Zorunlu", "Pflicht")</span></label>
+            <input id="Name" name="Name" value="@Model.Name" class="adm-input @(nameError ? "input-validation-error" : "")" autocomplete="off" maxlength="50"
+                   placeholder="@T("ör. Dilbilgisi", "z. B. Grammatik")"
+                   data-val="true" data-val-required="@T("Lütfen bir ad yazın.", "Bitte geben Sie einen Namen ein.")"
+                   data-val-maxlength="@T("En fazla 50 karakter olabilir.", "Höchstens 50 Zeichen.")" data-val-maxlength-max="50" />
+            @Html.ValidationMessage("Name")
+        </div>
+    </div>
+</section>
+<section class="adm-panel" style="--i:1">
+    <div class="adm-panel__head">
+        <span class="adm-panel__num">2</span>
+        <div>
+            <h2>@T("Bu kategoride neler olsun?", "Was gehört in diese Kategorie?")</h2>
+            <p>@T("Bir yazı ya da sınav tek bir kategoriye ait olabilir: başka bir kategorideki birini işaretlerseniz buraya taşınır.", "Ein Beitrag oder eine Prüfung gehört zu genau einer Kategorie: Markieren Sie einen aus einer anderen, wird er hierher verschoben.")</p>
+        </div>
+    </div>
+    <div class="adm-panel__body">
+        <fieldset class="adm-field">
+            <legend class="adm-label"><i class="fa-solid fa-feather-pointed" aria-hidden="true"></i>@T("Blog yazıları", "Blogbeiträge")</legend>
+            <div class="adm-choices adm-choices--grid">
+                @foreach (var blog in Model.AvailableBlogs)
+                {
+                    <label class="adm-choice"><input type="checkbox" name="SelectedBlogIds" value="@blog.Value" @(Model.SelectedBlogIds.Contains(int.Parse(blog.Value)) ? "checked" : "") /><span>@blog.Text</span></label>
+                }
+                @if (!Model.AvailableBlogs.Any())
+                {
+                    <span class="adm-choices__empty">@T("Henüz yazı yok.", "Noch keine Beiträge.")</span>
+                }
+            </div>
+        </fieldset>
+        <fieldset class="adm-field">
+            <legend class="adm-label"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>@T("Sınavlar", "Prüfungen")</legend>
+            <div class="adm-choices adm-choices--grid">
+                @foreach (var quiz in Model.AvailableQuizzes)
+                {
+                    <label class="adm-choice"><input type="checkbox" name="SelectedQuizIds" value="@quiz.Value" @(Model.SelectedQuizIds.Contains(int.Parse(quiz.Value)) ? "checked" : "") /><span>@quiz.Text</span></label>
+                }
+                @if (!Model.AvailableQuizzes.Any())
+                {
+                    <span class="adm-choices__empty">@T("Henüz sınav yok.", "Noch keine Prüfungen.")</span>
+                }
+            </div>
+        </fieldset>
+    </div>
+</section>

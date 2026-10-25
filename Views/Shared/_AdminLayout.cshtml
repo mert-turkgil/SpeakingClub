@@ -1,0 +1,185 @@
+@using Microsoft.AspNetCore.Identity
+@using SpeakingClub.Identity
+@using Microsoft.Extensions.Configuration
+@inject UserManager<User> UserManager
+@inject IConfiguration Configuration
+@*
+    Admin panel layout: sidebar (sections from Models/AdminNav.cs), top bar (breadcrumb, language, theme,
+    user menu), toasts for TempData messages and one shared "Are you sure?" dialog (admin.js).
+    Pages set ViewData["AdminSection"] to highlight their sidebar entry and ViewData["Title"] for the tab.
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var sections = AdminNav.Build(isGerman);
+    var isAdmin = User.IsInRole("Admin") || User.IsInRole("Root");
+    var currentKey = ViewData["AdminSection"] as string ?? "";
+    var currentSection = sections.FirstOrDefault(s => s.Key == currentKey);
+    var me = await UserManager.GetUserAsync(User);
+    var fullName = me == null ? "" : string.Join(' ', new[] { me.FirstName, me.LastName }.Where(p => !string.IsNullOrWhiteSpace(p)));
+    if (string.IsNullOrWhiteSpace(fullName)) fullName = me?.UserName ?? "";
+    var initials = string.Concat(fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpper(p[0])));
+    var roleLabel = User.IsInRole("Root") ? "Root" : User.IsInRole("Admin") ? "Admin" : T("Öğretmen", "Lehrkraft");
+    var pageTitle = ViewData["Title"] as string;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+<!DOCTYPE html>
+<html lang="@(isGerman ? "de" : "tr")">
+<head>
+    <script>
+        (function () {
+            var t = 'light';
+            try { t = localStorage.getItem('theme') || 'light'; } catch (e) { }
+            document.documentElement.setAttribute('data-bs-theme', t);
+        })();
+    </script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="ck-license-key" content="@Configuration["License:CKEditor"]" />
+    <title>@(string.IsNullOrWhiteSpace(pageTitle) ? "" : pageTitle + " · ")@T("Yönetim paneli", "Verwaltung") · Almanca Konuş</title>
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@@9..144,600&family=Poppins:wght@@400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    @await RenderSectionAsync("Css", required: false)
+</head>
+<body class="adm-body" data-lang="@(isGerman ? "de" : "tr")">
+    <a class="adm-skip" href="#adm-main">@T("İçeriğe geç", "Zum Inhalt springen")</a>
+
+    <div class="adm" data-admin>
+        <aside class="adm-side" id="adm-side" aria-label="@T("Panel menüsü", "Panel-Menü")">
+            <a class="adm-brand" href="@Url.Action("Index", "Admin")">
+                <span class="adm-brand__mark"><img src="~/img/logo.svg" alt="" width="24" height="24" /></span>
+                <span class="adm-brand__text">
+                    <strong>Almanca Konuş</strong>
+                    <small>@T("Yönetim paneli", "Verwaltung")</small>
+                </span>
+            </a>
+
+            <nav class="adm-nav">
+                <a class="adm-nav__link @(currentKey == "dashboard" ? "is-active" : "")" href="@Url.Action("Index", "Admin")" aria-current="@(currentKey == "dashboard" ? "page" : null)">
+                    <i class="fa-solid fa-house" aria-hidden="true"></i>@T("Ana sayfa", "Übersicht")
+                </a>
+                @foreach (var group in sections.Where(s => isAdmin || !s.AdminOnly).GroupBy(s => s.Group))
+                {
+                    <div class="adm-nav__group">@AdminNav.GroupTitle(group.Key, isGerman)</div>
+                    @foreach (var s in group)
+                    {
+                        var active = s.Key == currentKey;
+                        <a class="adm-nav__link @(active ? "is-active" : "")" href="@Url.Action(s.Action, s.Controller)" aria-current="@(active ? "page" : null)">
+                            <i class="@s.Icon" aria-hidden="true"></i>@s.Title
+                        </a>
+                    }
+                }
+            </nav>
+
+            <div class="adm-side__foot">
+                <div class="adm-side__help">
+                    <strong><i class="fa-regular fa-life-ring me-1" aria-hidden="true"></i>@T("Takıldınız mı?", "Hängen geblieben?")</strong>
+                    @T("Her sayfanın üstündeki sarı “Nasıl yapılır?” kutusu adım adım anlatır.", "Der gelbe Kasten „Wie geht das?“ oben auf jeder Seite erklärt es Schritt für Schritt.")
+                </div>
+                <a class="adm-btn adm-btn--ghost" href="/" target="_blank" rel="noopener">
+                    <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>@T("Siteyi aç", "Website öffnen")
+                </a>
+            </div>
+        </aside>
+        <div class="adm-scrim" data-side-close></div>
+
+        <div class="adm-main">
+            <header class="adm-top">
+                <button type="button" class="adm-btn adm-btn--ghost adm-btn--icon adm-top__burger" data-side-open aria-controls="adm-side" aria-label="@T("Menüyü aç", "Menü öffnen")">
+                    <i class="fa-solid fa-bars" aria-hidden="true"></i>
+                </button>
+                <nav class="adm-top__crumbs" aria-label="@T("Bulunduğunuz yer", "Sie sind hier")">
+                    @if (currentKey == "dashboard")
+                    {
+                        <strong>@T("Ana sayfa", "Übersicht")</strong>
+                    }
+                    else
+                    {
+                        <a href="@Url.Action("Index", "Admin")">@T("Panel", "Panel")</a>
+                        @if (currentSection != null && pageTitle != currentSection.Title)
+                        {
+                            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                            <a href="@Url.Action(currentSection.Action, currentSection.Controller)">@currentSection.Title</a>
+                        }
+                        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                        <strong>@(pageTitle ?? currentSection?.Title)</strong>
+                    }
+                </nav>
+                <div class="adm-top__end">
+                    <form method="post" asp-controller="Home" asp-action="SetLanguage" asp-route-returnUrl="@returnUrl" class="adm-lang" aria-label="@T("Dil", "Sprache")">
+                        <button type="submit" name="culture" value="tr-TR" aria-pressed="@(!isGerman ? "true" : "false")" lang="tr" title="Türkçe">TR</button>
+                        <button type="submit" name="culture" value="de-DE" aria-pressed="@(isGerman ? "true" : "false")" lang="de" title="Deutsch">DE</button>
+                    </form>
+                    <button type="button" class="adm-btn adm-btn--ghost adm-btn--icon" data-theme-toggle aria-pressed="false" aria-label="@T("Koyu temaya geç", "Dunkles Design")">
+                        <i class="fa-solid fa-moon" aria-hidden="true"></i>
+                    </button>
+                    <div class="adm-user">
+                        <button type="button" data-menu-button aria-expanded="false" aria-controls="adm-user-menu">
+                            <span class="adm-avatar" aria-hidden="true">@(string.IsNullOrEmpty(initials) ? "?" : initials)</span>
+                            <span class="adm-user__name">@(me?.FirstName ?? fullName)</span>
+                            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                        </button>
+                        <div class="adm-menu" id="adm-user-menu">
+                            <div class="adm-menu__who">
+                                <strong>@fullName</strong>
+                                <small>@me?.Email · @roleLabel</small>
+                            </div>
+                            <a href="@Url.Action("Account", "Account")"><i class="fa-regular fa-user" aria-hidden="true"></i>@T("Hesabım", "Mein Konto")</a>
+                            <a href="@Url.Action("ChangePassword", "Account")"><i class="fa-solid fa-key" aria-hidden="true"></i>@T("Şifremi değiştir", "Passwort ändern")</a>
+                            <a href="/" target="_blank" rel="noopener"><i class="fa-solid fa-globe" aria-hidden="true"></i>@T("Siteyi aç", "Website öffnen")</a>
+                            <form method="post" asp-controller="Account" asp-action="Logout">
+                                <button type="submit" class="is-danger"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>@T("Çıkış yap", "Abmelden")</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main id="adm-main" class="adm-content" tabindex="-1">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <div class="adm-toasts" aria-live="polite">
+        @foreach (var (key, kind, icon) in new[] {
+            ("SuccessMessage", "success", "fa-circle-check"),
+            ("WarningMessage", "warning", "fa-triangle-exclamation"),
+            ("ErrorMessage", "error", "fa-circle-exclamation") })
+        {
+            if (TempData[key] is string message && !string.IsNullOrWhiteSpace(message))
+            {
+                <div class="adm-toast adm-toast--@kind" role="@(kind == "error" ? "alert" : "status")">
+                    <i class="fa-solid @icon" aria-hidden="true"></i>
+                    <p>@message</p>
+                    <button type="button" data-toast-close aria-label="@T("Kapat", "Schließen")"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                </div>
+            }
+        }
+    </div>
+
+    <dialog class="adm-dialog" id="adm-confirm" aria-labelledby="adm-confirm-title">
+        <div class="adm-dialog__body">
+            <div class="adm-dialog__icon" aria-hidden="true"><i class="fa-solid fa-trash-can"></i></div>
+            <h2 id="adm-confirm-title" data-confirm-title></h2>
+            <p data-confirm-text></p>
+            <p class="adm-dialog__note" data-confirm-note></p>
+        </div>
+        <div class="adm-dialog__actions">
+            <button type="button" class="adm-btn" data-confirm-cancel>@T("Vazgeç", "Abbrechen")</button>
+            <button type="button" class="adm-btn adm-btn--danger-solid" data-confirm-ok><i class="fa-solid fa-trash-can" aria-hidden="true"></i><span data-confirm-ok-label></span></button>
+        </div>
+    </dialog>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+    <script src="~/js/admin.js" asp-append-version="true"></script>
+</body>
+</html>

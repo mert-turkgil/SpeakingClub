@@ -1,90 +1,103 @@
 @model List<SpeakingClub.Entity.DownloadLog>
+@* Admin → İndirme kayıtları: who downloaded which blog attachment, searchable and paged on the server. *@
 @{
-    Layout = "_Layout";
-    ViewData["Title"] = "Download Logs";
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var section = AdminNav.Find("downloads", isGerman)!;
+    ViewData["Title"] = section.Title;
+    ViewData["AdminSection"] = section.Key;
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalItems = ViewBag.TotalItems ?? Model.Count;
+    string? sortBy = ViewBag.SortBy;
+    string? searchTerm = ViewBag.SearchTerm;
+    string Ext(string? file) => System.IO.Path.GetExtension(file ?? "").TrimStart('.').ToLowerInvariant();
+    string Icon(string ext) => ext switch { "pdf" => "fa-file-pdf", "doc" or "docx" => "fa-file-word", "xls" or "xlsx" => "fa-file-excel", "ppt" or "pptx" => "fa-file-powerpoint", _ => "fa-file" };
 }
 
-@section Css{
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"
-          onerror="this.onerror=null;this.href='/css/dataTables.bootstrap5.min.css'">
+@{
+    var adminHeader = new AdminHeader(section.Key, section.Title, section.Lead, Guide: section.Guide);
 }
+<partial name="_AdminHeader" model="adminHeader" />
 
-<section class="container-xxl my-4">
-    <div class="card shadow">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h3 class="card-title mb-0"><i class="fa-solid fa-download me-2"></i>Download Logs</h3>
-            <a href="@Url.Action("Index", "Admin")" class="btn btn-light btn-sm">
-                <i class="fas fa-arrow-left me-1"></i> Back to Admin
-            </a>
-        </div>
-        <div class="card-body">
-            <form method="get" class="row g-2 mb-3">
-                <div class="col-md-4">
-                    <input type="text" name="searchTerm" class="form-control" placeholder="Search by user, email, or file name..."
-                           value="@ViewBag.SearchTerm" />
-                </div>
-                <div class="col-md-3">
-                    <select name="sortBy" class="form-select">
-                        <option value="">Newest first</option>
-                        <option value="oldest" selected="@(ViewBag.SortBy == "oldest")">Oldest first</option>
-                        <option value="user" selected="@(ViewBag.SortBy == "user")">By user</option>
-                        <option value="file" selected="@(ViewBag.SortBy == "file")">By file name</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search me-1"></i>Filter</button>
-                </div>
-            </form>
+<form method="get" class="adm-toolbar" role="search">
+    <label class="adm-search @(string.IsNullOrEmpty(searchTerm) ? "" : "has-value")">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <input type="search" name="searchTerm" value="@searchTerm" placeholder="@T("Kişi, e-posta veya dosya adı…", "Person, E-Mail oder Dateiname…")" aria-label="@T("Kayıtlarda ara", "Protokoll durchsuchen")" />
+    </label>
+    <select name="sortBy" class="form-select" style="width:auto" aria-label="@T("Sıralama", "Sortierung")">
+        <option value="">@T("En yeni önce", "Neueste zuerst")</option>
+        <option value="oldest" selected="@(sortBy == "oldest" ? "selected" : null)">@T("En eski önce", "Älteste zuerst")</option>
+        <option value="user" selected="@(sortBy == "user" ? "selected" : null)">@T("Kişiye göre", "Nach Person")</option>
+        <option value="file" selected="@(sortBy == "file" ? "selected" : null)">@T("Dosyaya göre", "Nach Datei")</option>
+    </select>
+    <button type="submit" class="adm-btn adm-btn--primary"><i class="fa-solid fa-filter" aria-hidden="true"></i>@T("Filtrele", "Filtern")</button>
+    @if (!string.IsNullOrEmpty(searchTerm) || !string.IsNullOrEmpty(sortBy))
+    {
+        <a class="adm-btn adm-btn--ghost" href="@Url.Action("DownloadLogs", "Admin")">@T("Temizle", "Zurücksetzen")</a>
+    }
+    <span class="adm-toolbar__count">@T($"{totalItems} kayıt", $"{totalItems} Einträge")</span>
+</form>
 
-            @if (!Model.Any())
-            {
-                <div class="alert alert-info">No download logs found.</div>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>#</th>
-                                <th>User</th>
-                                <th>Email</th>
-                                <th>File</th>
-                                <th>Downloaded At (UTC)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @{ int rowNum = (ViewBag.CurrentPage - 1) * 50; }
-                            @foreach (var log in Model)
-                            {
-                                rowNum++;
-                                <tr>
-                                    <td>@rowNum</td>
-                                    <td>@log.UserFullName</td>
-                                    <td>@log.UserEmail</td>
-                                    <td>@log.FileName</td>
-                                    <td>@log.DownloadedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-
-                @if (ViewBag.TotalPages > 1)
-                {
-                    <nav>
-                        <ul class="pagination justify-content-center">
-                            @for (int i = 1; i <= ViewBag.TotalPages; i++)
-                            {
-                                <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
-                                    <a class="page-link"
-                                       href="@Url.Action("DownloadLogs", "Admin", new { page = i, searchTerm = ViewBag.SearchTerm, sortBy = ViewBag.SortBy })">@i</a>
-                                </li>
-                            }
-                        </ul>
-                    </nav>
-                }
-            }
-        </div>
+@if (!Model.Any())
+{
+    <div class="adm-empty">
+        <span class="adm-empty__icon" aria-hidden="true"><i class="fa-solid fa-file-arrow-down"></i></span>
+        <h2>@(string.IsNullOrEmpty(searchTerm) ? T("Henüz indirme yok", "Noch keine Downloads") : T("Aramanıza uyan kayıt yok", "Keine Einträge zu Ihrer Suche"))</h2>
+        <p>@T("Blog yazılarına eklediğiniz dosyalar indirildikçe burada listelenir.", "Sobald Dateien aus Blogbeiträgen heruntergeladen werden, erscheinen sie hier.")</p>
     </div>
-</section>
+}
+else
+{
+    <div class="adm-table-wrap">
+        <table class="adm-table">
+            <thead>
+                <tr>
+                    <th>@T("Kişi", "Person")</th>
+                    <th>@T("Dosya", "Datei")</th>
+                    <th>@T("Tarih", "Datum")</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < Model.Count; i++)
+                {
+                    var log = Model[i];
+                    var ext = Ext(log.FileName);
+                    <tr style="--i:@i">
+                        <td class="is-primary" data-label="@T("Kişi", "Person")">
+                            <div class="adm-cell-title">
+                                <span>
+                                    <strong>@(string.IsNullOrWhiteSpace(log.UserFullName) ? "—" : log.UserFullName)</strong>
+                                    <small>@log.UserEmail</small>
+                                </span>
+                            </div>
+                        </td>
+                        <td data-label="@T("Dosya", "Datei")"><i class="fa-regular @Icon(ext) me-2" style="color: var(--a-coral-deep)" aria-hidden="true"></i>@log.FileName</td>
+                        <td data-label="@T("Tarih", "Datum")">@log.DownloadedAt.ToLocalTime().ToString("d MMM yyyy, HH:mm", culture)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (totalPages > 1)
+    {
+        <nav class="d-flex justify-content-center mt-3" aria-label="@T("Sayfalar", "Seiten")">
+            <ul class="pagination flex-wrap gap-1">
+                @if (currentPage > 1)
+                {
+                    <li class="page-item"><a class="page-link" href="@Url.Action("DownloadLogs", "Admin", new { page = currentPage - 1, searchTerm, sortBy })" aria-label="@T("Önceki sayfa", "Vorherige Seite")"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a></li>
+                }
+                @for (var p = Math.Max(1, currentPage - 3); p <= Math.Min(totalPages, currentPage + 3); p++)
+                {
+                    <li class="page-item @(p == currentPage ? "active" : "")"><a class="page-link" href="@Url.Action("DownloadLogs", "Admin", new { page = p, searchTerm, sortBy })" aria-current="@(p == currentPage ? "page" : null)">@p</a></li>
+                }
+                @if (currentPage < totalPages)
+                {
+                    <li class="page-item"><a class="page-link" href="@Url.Action("DownloadLogs", "Admin", new { page = currentPage + 1, searchTerm, sortBy })" aria-label="@T("Sonraki sayfa", "Nächste Seite")"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+                }
+            </ul>
+        </nav>
+    }
+}

@@ -1,0 +1,32 @@
+@model (string Name, string? Value)
+@*
+    Where a slide's button goes. The slider turns these Home action names into the page in the visitor's
+    language (SlideViewComponent.LinkFor); typing "DoctorsGerman" by hand was the only way before.
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var pages = new List<(string Value, string Label)>
+    {
+        ("", T("Ana sayfa", "Startseite")),
+        ("Quizzes", T("Sınavlar (seviye testleri)", "Prüfungen (Einstufungstests)")),
+        ("Blog", T("Blog yazıları", "Blogbeiträge")),
+        ("About", T("Hakkımda ve iletişim", "Über mich & Kontakt")),
+        ("Words", T("Sözlük", "Wörterbuch")),
+        ("DoctorsGerman", T("Hekimler için Almanca", "Deutsch für Ärztinnen und Ärzte")),
+        ("NursesGerman", T("Hemşireler için Almanca", "Deutsch für Pflegekräfte")),
+        ("Privacy", T("Gizlilik", "Datenschutz"))
+    };
+    var current = Model.Value ?? "";
+    var known = pages.Any(x => string.Equals(x.Value, current, StringComparison.OrdinalIgnoreCase));
+}
+<select id="@Model.Name" name="@Model.Name" class="form-select">
+    @foreach (var item in pages)
+    {
+        <option value="@item.Value" selected="@(string.Equals(item.Value, current, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@item.Label</option>
+    }
+    @if (!known)
+    {
+        <option value="@current" selected="selected">@T("Diğer", "Andere"): @current</option>
+    }
+</select>

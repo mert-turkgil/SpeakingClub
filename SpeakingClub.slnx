@@ -1,3 +1,7 @@
 <Solution>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/tools/">
+    <Project Path=".github/tools/DbBackup/DbBackup.csproj" />
+  </Folder>
   <Project Path="SpeakingClub.csproj" />
 </Solution>
