@@ -26,7 +26,7 @@ namespace SpeakingClub.Models
         
         [Required(ErrorMessage = "Password is required.")]
         [DataType(DataType.Password)]
-        [MinLength(6, ErrorMessage = "Password must be at least 6 characters long.")]
+        [MinLength(8, ErrorMessage = "Password must be at least 8 characters long.")] // Identity requires 8 (Program.cs)
         public required string Password { get; set; }
         
         [Required(ErrorMessage = "Confirm Password is required.")]

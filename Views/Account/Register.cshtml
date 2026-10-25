@@ -1,224 +1,149 @@
 @model SpeakingClub.Models.RegisterViewModel
 @inject LanguageService Localizer
-
 @{
     ViewData["Title"] = Localizer.GetKey("Register_Title");
+    ViewData["Robots"] = "noindex, follow";
     var returnUrl = ViewData["ReturnUrl"] as string;
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var privacyPath = isGerman ? "/datenschutz" : "/gizlilik";
+    var error = TempData["Error"] as string;
 }
-
 @section Css {
-<style>
-    .animated-form {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        background-color: #fff;
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-        max-width: 600px;
-        margin: auto;
-    }
-
-    .animated-title {
-        font-size: 28px;
-        color: royalblue;
-        font-weight: 600;
-        position: relative;
-        padding-left: 30px;
-    }
-
-    .animated-title::before, .animated-title::after {
-        content: "";
-        position: absolute;
-        border-radius: 50%;
-        left: 0;
-        background-color: royalblue;
-    }
-
-    .animated-title::before {
-        width: 18px;
-        height: 18px;
-    }
-
-    .animated-title::after {
-        width: 18px;
-        height: 18px;
-        animation: pulse 1.2s infinite ease-in-out;
-    }
-
-    @@keyframes pulse {
-        0% { transform: scale(1); opacity: 1; }
-        100% { transform: scale(2); opacity: 0; }
-    }
-    
-    /* Enhanced validation error styling */
-    .validation-summary-errors {
-        background-color: #fee;
-        border-left: 4px solid #dc3545;
-        padding: 15px;
-        margin-bottom: 20px;
-        border-radius: 8px;
-        animation: slideIn 0.3s ease-out;
-    }
-    
-    .validation-summary-errors ul {
-        margin: 0;
-        padding-left: 20px;
-    }
-    
-    .validation-summary-errors li {
-        color: #721c24;
-        font-weight: 500;
-        margin-bottom: 5px;
-    }
-    
-    .text-danger {
-        color: #dc3545 !important;
-        font-size: 0.875rem;
-        margin-top: 5px;
-        display: block;
-        font-weight: 500;
-    }
-    
-    .form-control.input-validation-error {
-        border-color: #dc3545;
-        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-    }
-    
-    @@keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    /* Turnstile widget container */
-    #turnstile-widget {
-        min-height: 65px;
-    }
-</style>
+    <script>document.documentElement.classList.add('bp-js');</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@@0,9..144,600;1,9..144,600&display=swap" />
+    <link rel="stylesheet" href="~/css/blog.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
 }
-@if (!ViewData.ModelState.IsValid)
-{
-    <div class="alert alert-warning mt-3">
-        @Localizer.GetKey("WarningMessage_Login_UnderDevelopment")
-    </div>
-}
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">
-        @TempData["Success"]
-    </div>
-}
-@Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
-<div style="min-height: 100vh;" class="container-xxl">
-    <div class="row py-5">
-        <div class="col">
-    <form method="post" class="animated-form" id="registerForm">
-        @if (!ViewData.ModelState.IsValid)
-        {
-        <div asp-validation-summary="All" class="alert alert-danger"></div>
-        }
-        @Html.AntiForgeryToken()
-        <!-- Bot Detection Fields -->
-        <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
-        <input type="text" name="phone" style="display:none" autocomplete="off" tabindex="-1" />
-        <input type="text" name="website" style="display:none" autocomplete="off" tabindex="-1" />
-        <input type="hidden" name="_ts" id="registerTs" />
-        <h2 class="animated-title">@Localizer.GetKey("Register_Header")</h2>
-        <p class="text-muted">@Localizer.GetKey("Register_Subtitle")</p>
 
-        <div class="row">
-            <div class="col-md-6">
-                <label asp-for="FirstName" class="form-label">@Localizer.GetKey("Label_FirstName")</label>
-                <input asp-for="FirstName" class="form-control" placeholder="@Localizer.GetKey("Placeholder_FirstName")">
-                <span asp-validation-for="FirstName" class="text-danger"></span>
+<div class="site-page auth auth--register">
+    <div class="auth__shell">
+        <partial name="_AuthBrand" />
+
+        <section class="auth__panel">
+            <div class="auth__card">
+                <nav class="auth__tabs" aria-label="@T("Hesap", "Konto")">
+                    <a asp-action="Login" asp-route-returnUrl="@returnUrl">@T("Giriş yap", "Anmelden")</a>
+                    <a asp-action="Register" asp-route-returnUrl="@returnUrl" aria-current="page">@T("Kayıt ol", "Registrieren")</a>
+                </nav>
+
+                <h1 class="auth__title">@T("Hesabınızı oluşturun", "Konto erstellen")</h1>
+                <p class="auth__lead">@T("Bir dakikada kayıt olun; seviye sınavlarına ve ilerleme panelinize hemen erişin.", "In einer Minute registriert – sofort Zugang zu Einstufungstests und Ihrem Fortschritt.")</p>
+
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="auth-alert auth-alert--error" role="alert"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span>@error</span></div>
+                }
+                <div asp-validation-summary="ModelOnly" class="auth-alert auth-alert--error" role="alert"></div>
+
+                <partial name="_AuthGoogle" />
+
+                <form method="post" asp-controller="Account" asp-action="Register" asp-route-returnUrl="@returnUrl" class="auth-form" id="registerForm" data-auth-form novalidate>
+                    @* Bot detection: hidden fields a person never fills in *@
+                    <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
+                    <input type="text" name="phone" style="display:none" autocomplete="off" tabindex="-1" />
+                    <input type="text" name="website" style="display:none" autocomplete="off" tabindex="-1" />
+                    <input type="hidden" name="_ts" />
+
+                    <div class="auth-row auth-row--2">
+                        <div class="auth-field">
+                            <label asp-for="FirstName">@Localizer.GetKey("Label_FirstName")</label>
+                            <div class="auth-input">
+                                <i class="fa-regular fa-user" aria-hidden="true"></i>
+                                <input asp-for="FirstName" autocomplete="given-name" placeholder="@T("Adınız", "Vorname")"
+                                       data-val-required="@T("Adınızı girin.", "Bitte geben Sie Ihren Vornamen ein.")" />
+                            </div>
+                            <span asp-validation-for="FirstName" class="auth-error"></span>
+                        </div>
+                        <div class="auth-field">
+                            <label asp-for="LastName">@Localizer.GetKey("Label_LastName")</label>
+                            <div class="auth-input">
+                                <i class="fa-regular fa-id-badge" aria-hidden="true"></i>
+                                <input asp-for="LastName" autocomplete="family-name" placeholder="@T("Soyadınız", "Nachname")"
+                                       data-val-required="@T("Soyadınızı girin.", "Bitte geben Sie Ihren Nachnamen ein.")" />
+                            </div>
+                            <span asp-validation-for="LastName" class="auth-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="auth-row auth-row--wide">
+                        <div class="auth-field">
+                            <label asp-for="Email">@Localizer.GetKey("Label_Email")</label>
+                            <div class="auth-input">
+                                <i class="fa-regular fa-envelope" aria-hidden="true"></i>
+                                <input asp-for="Email" type="email" autocomplete="email" inputmode="email" placeholder="ornek@eposta.com"
+                                       data-val-required="@T("E-posta adresinizi girin.", "Bitte geben Sie Ihre E-Mail-Adresse ein.")"
+                                       data-val-email="@T("Geçerli bir e-posta adresi girin.", "Bitte geben Sie eine gültige E-Mail-Adresse ein.")" />
+                            </div>
+                            <span asp-validation-for="Email" class="auth-error"></span>
+                        </div>
+                        <div class="auth-field">
+                            <label asp-for="Age">@Localizer.GetKey("Label_Age")</label>
+                            <div class="auth-input">
+                                <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+                                <input asp-for="Age" type="number" min="1" max="120" inputmode="numeric" placeholder="25" value="@(Model?.Age > 0 ? Model.Age.ToString() : "")"
+                                       data-val-required="@T("Yaşınızı girin.", "Bitte geben Sie Ihr Alter ein.")"
+                                       data-val-range="@T("Geçerli bir yaş girin.", "Bitte geben Sie ein gültiges Alter ein.")" />
+                            </div>
+                            <span asp-validation-for="Age" class="auth-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="auth-field">
+                        <label asp-for="Password">@Localizer.GetKey("Label_Password")</label>
+                        <div class="auth-input">
+                            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                            <input asp-for="Password" type="password" autocomplete="new-password" placeholder="••••••••" aria-describedby="passwordRules"
+                                   data-val-required="@T("Bir şifre belirleyin.", "Bitte wählen Sie ein Passwort.")"
+                                   data-val-minlength="@T("Şifre en az 8 karakter olmalı.", "Das Passwort muss mindestens 8 Zeichen lang sein.")" />
+                            <button type="button" class="auth-eye" data-toggle-password="Password" aria-pressed="false"
+                                    aria-label="@T("Şifreyi göster", "Passwort anzeigen")" data-label-show="@T("Şifreyi göster", "Passwort anzeigen")" data-label-hide="@T("Şifreyi gizle", "Passwort verbergen")">
+                                <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="auth-strength" data-strength-for="Password" data-score="0" role="meter" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0" aria-label="@T("Şifre gücü", "Passwortstärke")">
+                            <span></span><span></span><span></span><span></span>
+                        </div>
+                        <ul class="auth-rules" id="passwordRules" data-rules>
+                            <li data-rule="length">@T("En az 8 karakter", "Mind. 8 Zeichen")</li>
+                            <li data-rule="upper">@T("Büyük harf", "Großbuchstabe")</li>
+                            <li data-rule="lower">@T("Küçük harf", "Kleinbuchstabe")</li>
+                            <li data-rule="digit">@T("Rakam", "Ziffer")</li>
+                        </ul>
+                        <span class="auth-hint" data-caps-for="Password"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>@T("Caps Lock açık", "Feststelltaste ist aktiv")</span>
+                        <span asp-validation-for="Password" class="auth-error"></span>
+                    </div>
+
+                    <div class="auth-field">
+                        <label asp-for="ConfirmPassword">@Localizer.GetKey("Label_ConfirmPassword")</label>
+                        <div class="auth-input">
+                            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                            <input asp-for="ConfirmPassword" type="password" autocomplete="new-password" placeholder="••••••••" data-match-for="Password"
+                                   data-val-required="@T("Şifrenizi tekrar girin.", "Bitte wiederholen Sie das Passwort.")"
+                                   data-val-equalto="@T("Şifreler eşleşmiyor.", "Die Passwörter stimmen nicht überein.")" />
+                        </div>
+                        <span asp-validation-for="ConfirmPassword" class="auth-error"></span>
+                    </div>
+
+                    <div id="turnstile-widget" class="auth-turnstile" data-sitekey="@ViewBag.TurnstileSiteKey"></div>
+
+                    <button type="submit" class="auth-submit">
+                        <span class="auth-spinner" aria-hidden="true"></span>
+                        @Localizer.GetKey("Button_CreateAccount")
+                        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </form>
+
+                <p class="auth__switch">@Localizer.GetKey("AlreadyHaveAccount") <a asp-action="Login" asp-route-returnUrl="@returnUrl">@T("Giriş yapın", "Anmelden")</a></p>
             </div>
-            <div class="col-md-6">
-                <label asp-for="LastName" class="form-label">@Localizer.GetKey("Label_LastName")</label>
-                <input asp-for="LastName" class="form-control" placeholder="@Localizer.GetKey("Placeholder_LastName")">
-                <span asp-validation-for="LastName" class="text-danger"></span>
-            </div>
-        </div>
-
-        <div>
-            <label asp-for="Age" class="form-label">@Localizer.GetKey("Label_Age")</label>
-            <input asp-for="Age" class="form-control" type="number" min="1" max="120">
-            <span asp-validation-for="Age" class="text-danger"></span>
-        </div>
-
-        <div>
-            <label asp-for="Email" class="form-label">@Localizer.GetKey("Label_Email")</label>
-            <input asp-for="Email" class="form-control" placeholder="@Localizer.GetKey("Placeholder_Email")">
-            <span asp-validation-for="Email" class="text-danger"></span>
-        </div>
-
-        <div>
-            <label asp-for="Password" class="form-label">@Localizer.GetKey("Label_Password")</label>
-            <input asp-for="Password" type="password" class="form-control" placeholder="••••••" autocomplete="new-password">
-            <span asp-validation-for="Password" class="text-danger"></span>
-        </div>
-
-        <div>
-            <label asp-for="ConfirmPassword" class="form-label">@Localizer.GetKey("Label_ConfirmPassword")</label>
-            <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="••••••" autocomplete="new-password">
-            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-        </div>
-        <!-- Cloudflare Turnstile Widget -->
-        <div id="turnstile-widget" class="d-flex justify-content-center my-3"></div>
-        <button type="submit" class="btn btn-primary w-100 mt-2">@Localizer.GetKey("Button_CreateAccount")</button>
-
-        <div class="text-center mt-3">
-            @Localizer.GetKey("AlreadyHaveAccount") <a asp-action="Login" asp-route-returnUrl="@returnUrl">@Localizer.GetKey("Link_LoginHere")</a>
-        </div>
-    </form>
-        </div>
+            <p class="auth__legal">@T("Kayıt olarak", "Mit der Registrierung akzeptieren Sie unsere") <a href="@privacyPath">@T("gizlilik politikamızı", "Datenschutzerklärung")</a>@T(" kabul etmiş olursunuz. Hesabınızı e-postanıza gelen bağlantıyla onaylarsınız.", ". Sie bestätigen Ihr Konto über den Link in der E-Mail, die wir Ihnen senden.")</p>
+        </section>
     </div>
-</div>    
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        window.onloadTurnstileRegister = function() {
-            var container = document.getElementById('turnstile-widget');
-            if (container) {
-                turnstile.render('#turnstile-widget', {
-                    sitekey: '@ViewBag.TurnstileSiteKey',
-                    theme: 'light',
-                    callback: function(token) {}
-                });
-            }
-        };
-    </script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileRegister&render=explicit" defer></script>
-    <script>
-        // Bot detection - timestamp field
-        document.addEventListener("DOMContentLoaded", function() {
-            var tsField = document.getElementById('registerTs');
-            if(tsField) {
-                tsField.value = Date.now();
-            }
-            
-            // Prevent form submission if honeypot is filled
-            var form = document.getElementById('registerForm');
-            if(form) {
-                form.addEventListener('submit', function(e) {
-                    var honeypot = document.querySelector('input[name="honeypot"]');
-                    var phone = document.querySelector('input[name="phone"]');
-                    var website = document.querySelector('input[name="website"]');
-                    
-                    if((honeypot && honeypot.value) || (phone && phone.value) || (website && website.value)) {
-                        e.preventDefault();
-                        console.warn('Bot detected - honeypot filled');
-                        alert('Form submission failed. Please try again.');
-                        return false;
-                    }
-                });
-            }
-        });
-    </script>
+    <script src="~/js/blog.js" asp-append-version="true" defer></script>
+    <script src="~/js/auth.js" asp-append-version="true" defer></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileAuth&render=explicit" defer></script>
 }

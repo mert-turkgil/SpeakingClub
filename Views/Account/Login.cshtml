@@ -1,252 +1,108 @@
 @model SpeakingClub.Models.LoginViewModel
 @inject LanguageService Localizer
-
 @{
     ViewData["Title"] = Localizer.GetKey("Login_Title");
+    ViewData["Robots"] = "noindex, follow";
     var returnUrl = ViewData["ReturnUrl"] as string;
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var privacyPath = isGerman ? "/datenschutz" : "/gizlilik";
+    var success = (TempData["SplashMessage"] ?? TempData["Success"]) as string;
+    var error = TempData["Error"] as string;
 }
-
 @section Css {
-<style>
-    .animated-login-form {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        background-color: #fff;
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-        max-width: 500px;
-        margin: auto;
-    }
-
-    .animated-login-title {
-        font-size: 28px;
-        color: royalblue;
-        font-weight: 600;
-        position: relative;
-        padding-left: 30px;
-    }
-
-    .animated-login-title::before, .animated-login-title::after {
-        content: "";
-        position: absolute;
-        border-radius: 50%;
-        left: 0;
-        background-color: royalblue;
-    }
-
-    .animated-login-title::before {
-        width: 18px;
-        height: 18px;
-    }
-
-    .animated-login-title::after {
-        width: 18px;
-        height: 18px;
-        animation: pulse 1.2s infinite ease-in-out;
-    }
-
-    @@keyframes pulse {
-        0% { transform: scale(1); opacity: 1; }
-        100% { transform: scale(2); opacity: 0; }
-    }
-    
-    /* Enhanced validation error styling */
-    .validation-summary-errors {
-        background-color: #fee;
-        border-left: 4px solid #dc3545;
-        padding: 15px;
-        margin-bottom: 20px;
-        border-radius: 8px;
-        animation: slideIn 0.3s ease-out;
-    }
-    
-    .validation-summary-errors ul {
-        margin: 0;
-        padding-left: 20px;
-    }
-    
-    .validation-summary-errors li {
-        color: #721c24;
-        font-weight: 500;
-        margin-bottom: 5px;
-    }
-    
-    .text-danger {
-        color: #dc3545 !important;
-        font-size: 0.875rem;
-        margin-top: 5px;
-        display: block;
-        font-weight: 500;
-    }
-    
-    .form-control.input-validation-error {
-        border-color: #dc3545;
-        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-    }
-    
-    @@keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    /* Turnstile widget container */
-    #turnstile-widget {
-        min-height: 65px;
-    }
-</style>
+    <script>document.documentElement.classList.add('bp-js');</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@@0,9..144,600;1,9..144,600&display=swap" />
+    <link rel="stylesheet" href="~/css/blog.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
 }
-@if (!ViewData.ModelState.IsValid)
-{
-<div class="alert alert-warning mt-3">
-    @Localizer.GetKey("WarningMessage_Login_UnderDevelopment")
-</div>
-}
-@if (TempData["ShowSplash"] != null)
-{
-    <script>
-        window.localizedSplashMessage = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(TempData["SplashMessage"]));
-    </script>
 
-    <!-- Three.js -->
-    <script type="module" src="~/js/splash.js"></script>
+<div class="site-page auth auth--login">
+    <div class="auth__shell">
+        <partial name="_AuthBrand" />
 
-    <div id="splash-container"></div>
+        <section class="auth__panel">
+            <div class="auth__card">
+                <nav class="auth__tabs" aria-label="@T("Hesap", "Konto")">
+                    <a asp-action="Login" asp-route-returnUrl="@returnUrl" aria-current="page">@T("Giriş yap", "Anmelden")</a>
+                    <a asp-action="Register" asp-route-returnUrl="@returnUrl">@T("Kayıt ol", "Registrieren")</a>
+                </nav>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const splash = document.getElementById("splash-container");
+                <h1 class="auth__title">@T("Tekrar hoş geldiniz", "Willkommen zurück")</h1>
+                <p class="auth__lead">@Localizer.GetKey("Login_Subtitle")</p>
 
-            // Start with splash
-            splash.innerHTML = `<div class="splash-animation"></div>`;
+                @if (!string.IsNullOrEmpty(success))
+                {
+                    <div class="auth-alert auth-alert--ok" role="status"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span>@success</span></div>
+                }
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="auth-alert auth-alert--error" role="alert"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><span>@error</span></div>
+                }
+                <div asp-validation-summary="ModelOnly" class="auth-alert auth-alert--error" role="alert"></div>
 
-            // After 5s, show confirmation message
-            setTimeout(() => {
-                splash.innerHTML = `<div class="alert alert-info text-center p-3 rounded shadow">
-                    ${window.localizedSplashMessage}
-                </div>`;
-            }, 5000);
-        });
-    </script>
-}
-@if (TempData["Success"] != null)
-{
-    <div class="container-xxl">
-        <div class="row py-3">
-            <div class="col">
-                <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
-                    <strong>✅ @TempData["Success"]</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+                <partial name="_AuthGoogle" />
+
+                <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl" method="post" class="auth-form" id="loginForm" data-auth-form novalidate>
+                    @* Bot detection: hidden fields a person never fills in *@
+                    <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
+                    <input type="text" name="phone" style="display:none" autocomplete="off" tabindex="-1" />
+                    <input type="text" name="website" style="display:none" autocomplete="off" tabindex="-1" />
+                    <input type="hidden" name="_ts" />
+
+                    <div class="auth-field">
+                        <label asp-for="Email">@Localizer.GetKey("Label_Email")</label>
+                        <div class="auth-input">
+                            <i class="fa-regular fa-envelope" aria-hidden="true"></i>
+                            <input asp-for="Email" type="email" autocomplete="email" inputmode="email" placeholder="ornek@eposta.com"
+                                   data-val-required="@T("E-posta adresinizi girin.", "Bitte geben Sie Ihre E-Mail-Adresse ein.")"
+                                   data-val-email="@T("Geçerli bir e-posta adresi girin.", "Bitte geben Sie eine gültige E-Mail-Adresse ein.")" />
+                        </div>
+                        <span asp-validation-for="Email" class="auth-error"></span>
+                    </div>
+
+                    <div class="auth-field">
+                        <label asp-for="Password">@Localizer.GetKey("Label_Password")</label>
+                        <div class="auth-input">
+                            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                            <input asp-for="Password" type="password" autocomplete="current-password" placeholder="••••••••"
+                                   data-val-required="@T("Şifrenizi girin.", "Bitte geben Sie Ihr Passwort ein.")" />
+                            <button type="button" class="auth-eye" data-toggle-password="Password" aria-pressed="false"
+                                    aria-label="@T("Şifreyi göster", "Passwort anzeigen")" data-label-show="@T("Şifreyi göster", "Passwort anzeigen")" data-label-hide="@T("Şifreyi gizle", "Passwort verbergen")">
+                                <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <span class="auth-hint" data-caps-for="Password"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>@T("Caps Lock açık", "Feststelltaste ist aktiv")</span>
+                        <span asp-validation-for="Password" class="auth-error"></span>
+                    </div>
+
+                    <div class="auth-options">
+                        <label class="auth-check">
+                            <input asp-for="RememberMe" />
+                            <span class="auth-check__box" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                            @Localizer.GetKey("Label_RememberMe")
+                        </label>
+                    </div>
+
+                    <div id="turnstile-widget" class="auth-turnstile" data-sitekey="@ViewBag.TurnstileSiteKey"></div>
+
+                    <button type="submit" class="auth-submit">
+                        <span class="auth-spinner" aria-hidden="true"></span>
+                        @Localizer.GetKey("Button_Login")
+                        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                    </button>
+                </form>
+
+                <p class="auth__switch">@Localizer.GetKey("NoAccountYet") <a asp-action="Register" asp-route-returnUrl="@returnUrl">@T("Ücretsiz kayıt olun", "Kostenlos registrieren")</a></p>
             </div>
-        </div>
-    </div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="container-xxl">
-        <div class="row py-3">
-            <div class="col">
-                <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
-                    <strong>❌ @TempData["Error"]</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-<div style="min-height: 100vh;" class="container-xxl">
-<div class="row py-5">
-    <div class="col">
-    <form asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl" method="post" class="animated-login-form" id="loginForm">
-        @Html.AntiForgeryToken()
-        <!-- Bot Detection Fields -->
-        <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
-        <input type="text" name="phone" style="display:none" autocomplete="off" tabindex="-1" />
-        <input type="text" name="website" style="display:none" autocomplete="off" tabindex="-1" />
-        <input type="hidden" name="_ts" id="loginTs" />
-        <h2 class="animated-login-title">@Localizer.GetKey("Login_Header")</h2>
-        <p class="text-muted">@Localizer.GetKey("Login_Subtitle")</p>
-
-        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-
-        <div>
-             <label asp-for="Email" class="form-label">@Localizer.GetKey("Label_Email")</label>
-             <input asp-for="Email" class="form-control" placeholder="@Localizer.GetKey("Placeholder_Email")">
-             <span asp-validation-for="Email" class="text-danger"></span>
-        </div>
-
-        <div>
-             <label asp-for="Password" class="form-label">@Localizer.GetKey("Label_Password")</label>
-             <input asp-for="Password" type="password" class="form-control" placeholder="••••••" autocomplete="current-password">
-             <span asp-validation-for="Password" class="text-danger"></span>
-        </div>
-
-        <div class="form-check">
-             <input asp-for="RememberMe" class="form-check-input">
-             <label asp-for="RememberMe" class="form-check-label">@Localizer.GetKey("Label_RememberMe")</label>
-        </div>
-        
-        <!-- Cloudflare Turnstile Widget -->
-        <div id="turnstile-widget" class="d-flex justify-content-center my-3"></div>
-
-        <button type="submit" class="btn btn-primary w-100 mt-2">@Localizer.GetKey("Button_Login")</button>
-        
-        <div class="text-center w-100 mt-3">
-             @Localizer.GetKey("NoAccountYet") <a asp-action="Register" asp-route-returnUrl="@returnUrl">@Localizer.GetKey("Link_RegisterHere")</a>
-        </div>
-    </form>
+            <p class="auth__legal">@T("Devam ederek", "Mit der Anmeldung akzeptieren Sie unsere") <a href="@privacyPath">@T("gizlilik politikamızı", "Datenschutzerklärung")</a>@T(" kabul etmiş olursunuz.", ".")</p>
+        </section>
     </div>
 </div>
-</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        window.onloadTurnstileLogin = function() {
-            var container = document.getElementById('turnstile-widget');
-            if (container) {
-                turnstile.render('#turnstile-widget', {
-                    sitekey: '@ViewBag.TurnstileSiteKey',
-                    theme: 'light',
-                    callback: function(token) {}
-                });
-            }
-        };
-    </script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileLogin&render=explicit" defer></script>
-    <script>
-        // Bot detection - timestamp field
-        document.addEventListener("DOMContentLoaded", function() {
-            var tsField = document.getElementById('loginTs');
-            if(tsField) {
-                tsField.value = Date.now();
-            }
-            
-            // Prevent form submission if honeypot is filled
-            var form = document.getElementById('loginForm');
-            if(form) {
-                form.addEventListener('submit', function(e) {
-                    var honeypot = document.querySelector('input[name="honeypot"]');
-                    var phone = document.querySelector('input[name="phone"]');
-                    var website = document.querySelector('input[name="website"]');
-                    
-                    if((honeypot && honeypot.value) || (phone && phone.value) || (website && website.value)) {
-                        e.preventDefault();
-                        console.warn('Bot detected - honeypot filled');
-                        alert('Form submission failed. Please try again.');
-                        return false;
-                    }
-                });
-            }
-        });
-    </script>
-        <!-- 2. Bootstrap Bundle (uses jQuery) -->
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/blog.js" asp-append-version="true" defer></script>
+    <script src="~/js/auth.js" asp-append-version="true" defer></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileAuth&render=explicit" defer></script>
 }

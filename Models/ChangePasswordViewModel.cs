@@ -11,7 +11,7 @@ namespace SpeakingClub.Models
         [Required, DataType(DataType.Password), Display(Name = "Current Password")]
         public required string CurrentPassword { get; set; }
 
-        [Required, DataType(DataType.Password), Display(Name = "New Password"), MinLength(6)]
+        [Required, DataType(DataType.Password), Display(Name = "New Password"), MinLength(8)] // Identity requires 8 (Program.cs)
         public required string NewPassword { get; set; }
 
         [Required, DataType(DataType.Password), Display(Name = "Confirm New Password"), Compare("NewPassword")]

@@ -562,9 +562,14 @@
                                     <span><span class="visually-hidden">@T("Adres", "Adresse"): </span>@T("İstanbul, Türkiye", "Istanbul, Türkei")</span>
                                   </li>
                                 </ul>
-                                <a class="site-btn site-footer__cta" href="@(aboutPath)#contact-form">
-                                  <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>@T("Bize yazın", "Schreiben Sie uns")
-                                </a>
+                                <div class="site-footer__ctas">
+                                  <a class="site-btn site-footer__cta" href="@(aboutPath)#contact-form">
+                                    <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>@T("Bize yazın", "Schreiben Sie uns")
+                                  </a>
+                                  <a class="site-btn site-btn--whatsapp site-footer__cta" href="@SpeakingClub.Models.AboutFaqContent.WhatsAppUrl(SpeakingClub.Models.AboutFaqContent.WhatsAppGreeting(isGerman))" target="_blank" rel="noopener">
+                                    <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>WhatsApp
+                                  </a>
+                                </div>
                               </div>
                             </div>
 

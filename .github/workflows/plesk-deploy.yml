@@ -101,6 +101,8 @@ jobs:
           TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
           DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
           CKEDITOR_LICENSE_KEY: ${{ secrets.CKEDITOR_LICENSE_KEY }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           # Required: the app refuses to start in Production without SMTP credentials (Program.cs)
           # or the PONS key (DictionaryService throws), and nothing works without the database.
@@ -117,12 +119,20 @@ jobs:
           [ -n "$TURNSTILE_SECRET_KEY" ] || echo "::warning::TURNSTILE_SECRET_KEY is empty — the contact and sign-up forms cannot verify the captcha."
           [ -n "$DEEPL_API_KEY" ]        || echo "::warning::DEEPL_API_KEY is empty — translations are off."
           [ -n "$CKEDITOR_LICENSE_KEY" ] || echo "::warning::CKEDITOR_LICENSE_KEY is empty — the admin rich-text editor will not load."
+          { [ -n "$GOOGLE_CLIENT_ID" ] && [ -n "$GOOGLE_CLIENT_SECRET" ]; } || echo "::warning::GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET are not both set — \"Continue with Google\" on the login page stays off."
 
       # --- Build -----------------------------------------------------------------------------------
+      # Exact SDK version on purpose. A floating version (10.0.x) makes the install script look the
+      # download up through aka.ms, which currently redirects to a Microsoft storage account that refuses
+      # public downloads (HTTP 409 "Public access is not permitted") and fails the job. An exact version
+      # downloads straight from builds.dotnet.microsoft.com. Bump it when a new SDK ships:
+      # https://dotnet.microsoft.com/download/dotnet/10.0 (keep it in step with the 10.0.x packages).
+      # setup-dotnet's own "latest LTS runtime" pre-install still goes through aka.ms and may log a
+      # warning; that step is non-fatal.
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: '10.0.402'
 
       - name: Restore
         run: dotnet restore SpeakingClub.csproj
@@ -139,6 +149,8 @@ jobs:
           DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
           PONS_API_KEY: ${{ secrets.PONS_API_KEY }}
           CKEDITOR_LICENSE_KEY: ${{ secrets.CKEDITOR_LICENSE_KEY }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           jq -n \
             --arg connectionString "$PROD_CONNECTION_STRING" \
@@ -154,6 +166,8 @@ jobs:
             --arg deeplKey         "$DEEPL_API_KEY" \
             --arg ponsKey          "$PONS_API_KEY" \
             --arg ckeditorKey      "$CKEDITOR_LICENSE_KEY" \
+            --arg googleClientId   "$GOOGLE_CLIENT_ID" \
+            --arg googleSecret     "$GOOGLE_CLIENT_SECRET" \
             '{
               Logging: {
                 LogLevel: { Default: "Information", "Microsoft.AspNetCore": "Warning", "Microsoft.Hosting.Lifetime": "Information" }
@@ -167,11 +181,12 @@ jobs:
               Turnstile: { SiteKey: $turnstileSite, SecretKey: $turnstileSecret },
               DeepL: { ApiKey: $deeplKey },
               Pons: { ApiKey: $ponsKey },
-              License: { CKEditor: $ckeditorKey }
+              License: { CKEditor: $ckeditorKey },
+              Authentication: { Google: { ClientId: $googleClientId, ClientSecret: $googleSecret } }
             }' > appsettings.Production.json
 
           echo "appsettings.Production.json written. Non-secret sections:"
-          jq 'del(.ConnectionStrings, .EmailSender.Password, .Turnstile.SecretKey, .DeepL, .Pons, .License)' appsettings.Production.json
+          jq 'del(.ConnectionStrings, .EmailSender.Password, .Turnstile.SecretKey, .DeepL, .Pons, .License, .Authentication)' appsettings.Production.json
 
       - name: Publish
         run: >
@@ -388,4 +403,8 @@ jobs:
 #   PONS_API_KEY            Pons:ApiKey
 #   CKEDITOR_LICENSE_KEY    License:CKEditor (the production key licensed for almanca-konus.com —
 #                           not the development key, which only allows localhost / private IPs)
+#   GOOGLE_CLIENT_ID        Authentication:Google:ClientId and ClientSecret — optional; together they
+#   GOOGLE_CLIENT_SECRET    turn on "Continue with Google". Google Cloud Console → APIs & Services →
+#                           Credentials → OAuth client ID (Web application), authorized redirect URI
+#                           https://www.almanca-konus.com/signin-google
 # ---------------------------------------------------------------------------------------------------

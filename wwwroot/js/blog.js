@@ -7,8 +7,8 @@
 (function () {
     'use strict';
 
-    // Also runs on the home and quiz pages, which reuse the cards, buttons and reveal animations
-    var root = document.querySelector('.blog-page, .home-page, .quiz-page');
+    // Also runs on the home, quiz and other redesigned pages, which reuse the cards, buttons and reveal animations
+    var root = document.querySelector('.blog-page, .home-page, .quiz-page, .site-page');
     if (!root) return;
 
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Reflection;
 using Castle.Core.Configuration;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
@@ -108,6 +109,22 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
+
+// "Continue with Google" on the login and register pages. Turned on by setting
+// Authentication:Google:ClientId and ClientSecret (Google Cloud Console → Credentials → OAuth client,
+// authorized redirect URI https://<site>/signin-google). Without them the button explains that it is off.
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    builder.Services.AddAuthentication().AddGoogle(options =>
+    {
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
+        options.SignInScheme = IdentityConstants.ExternalScheme;
+        options.ClaimActions.MapJsonKey("email_verified", "email_verified"); // checked before an account is linked
+    });
+}
 #endregion
 
 #region Identity Cookie Configuration

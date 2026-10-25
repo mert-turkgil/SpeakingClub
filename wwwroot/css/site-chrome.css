@@ -623,6 +623,13 @@ html[data-bs-theme="dark"] .site-footer__sheet::before { opacity: 0.25; }
 .site-social a[data-social="linktree"] { --brand: #29AF7D; }
 
 .site-footer__cta { margin-top: 0.25rem; }
+.site-footer__ctas { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+/* WhatsApp quick contact (footer) */
+.site-btn--whatsapp { background: #25D366; border-color: #25D366; color: #06341F; }
+.site-btn--whatsapp > i { color: #06341F; font-size: 1.05em; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.site-btn--whatsapp:hover,
+.site-btn--whatsapp:focus-visible { background: #128C7E; border-color: #128C7E; color: #fff; }
+.site-btn--whatsapp:hover > i { color: #fff; transform: rotate(-12deg) scale(1.12); }
 
 .site-footer__bottom {
   display: flex;

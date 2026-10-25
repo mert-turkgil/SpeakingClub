@@ -3,445 +3,306 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] ??= Model.PageTitle;
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var quizzesPath = isGerman ? "/pruefungen" : "/sinavlar";
+    var faq = AboutFaqContent.Build(isGerman);
+    var whatsappUrl = AboutFaqContent.WhatsAppUrl(AboutFaqContent.WhatsAppGreeting(isGerman));
+    var json = new System.Text.Json.JsonSerializerOptions
+    {
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All)
+    };
+    var chatData = new
+    {
+        topics = faq,
+        whatsapp = whatsappUrl,
+        whatsappBase = "https://wa.me/" + AboutFaqContent.WhatsAppNumber + "?text=",
+        strings = new Dictionary<string, string>
+        {
+            ["greeting"] = T("Merhaba, hoş geldiniz! 👋 Ben Suna'nın asistanıyım. Ne öğrenmek istersiniz?", "Hallo und willkommen! 👋 Ich bin Sunas Assistent. Was möchten Sie wissen?"),
+            ["more"] = T("Başka bir sorunuz var mı?", "Haben Sie noch eine Frage?"),
+            ["otherTopic"] = T("Başka bir konu", "Anderes Thema"),
+            ["sameTopic"] = T("Bu konuda başka soru", "Weitere Fragen hierzu"),
+            ["human"] = T("Bir insanla konuşmak istiyorum", "Ich möchte mit einem Menschen sprechen"),
+            ["humanAnswer"] = T("Tabii! WhatsApp'tan yazın, mesajınızı Suna okuyup yanıtlıyor. İsterseniz e-posta ya da iletişim formunu da kullanabilirsiniz.", "Gern! Schreiben Sie per WhatsApp – Suna liest und beantwortet Ihre Nachricht. Alternativ per E-Mail oder Kontaktformular."),
+            ["notFound"] = T("Bu soruya hazır bir yanıtım yok. Sorunuzu doğrudan Suna'ya iletebilirsiniz:", "Darauf habe ich keine fertige Antwort. Sie können Ihre Frage direkt an Suna senden:"),
+            ["askOnWhatsApp"] = T("Bu soruyu WhatsApp'tan sor", "Diese Frage per WhatsApp stellen"),
+            ["maybe"] = T("Şunu mu demek istediniz?", "Meinten Sie vielleicht:"),
+            ["typing"] = T("yazıyor…", "schreibt…"),
+            ["you"] = T("Siz", "Sie")
+        }
+    };
+
+    // FAQPage structured data (Google rich results) from the same content
+    var faqSchema = new Dictionary<string, object>
+    {
+        ["@context"] = "https://schema.org",
+        ["@type"] = "FAQPage",
+        ["mainEntity"] = faq.SelectMany(t => t.Items).Select(i => new Dictionary<string, object>
+        {
+            ["@type"] = "Question",
+            ["name"] = i.Question,
+            ["acceptedAnswer"] = new Dictionary<string, object> { ["@type"] = "Answer", ["text"] = i.Answer }
+        }).ToList()
+    };
+    ViewData["ArticleSchema"] = "<script type=\"application/ld+json\">" + System.Text.Json.JsonSerializer.Serialize(faqSchema, json) + "</script>";
 }
-@section Css{
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <style>
-        :root {
-            --first:  #FFF5E4;
-            --second: #FFE3E1;
-            --third:  #FFD1D1;
-            --fourth: #FF9494;
-        }
-        
-        /* Hero Section Styling */
-        .hero-section {
-            background: linear-gradient(135deg, var(--first) 0%, var(--second) 100%);
-            position: relative;
-            overflow: hidden;
-        }
-        .hero-section::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, var(--fourth) 0%, transparent 70%);
-            opacity: 0.1;
-        }
-        
-        /* Hero portrait */
-        .about-hero-img {
-            max-height: 420px;
-            width: auto;
-            border-radius: 24px;
-            object-fit: cover;
-            box-shadow: 0 18px 45px rgba(255, 148, 148, 0.35), 0 8px 20px rgba(0, 0, 0, 0.12);
-            border: 5px solid #fff;
-        }
-        @@media (max-width: 575px) {
-            .about-hero-img { max-height: 320px; }
-        }
-
-        /* About Section */
-        .about-section {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            padding: 3rem;
-            margin-top: -60px;
-            position: relative;
-            z-index: 10;
-        }
-        .about-section p {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: #444;
-        }
-        .about-section .lead {
-            font-size: 1.25rem;
-            color: #333;
-        }
-        
-        .process-card {
-            background-color: var(--second);
-            padding: 30px;
-            border-radius: 15px;
-            height: 100%;
-            transition: all .3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .process-card:hover {
-            background-color: var(--fourth);
-            color: white;
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(255,148,148,.4);
-        }
-        .step-icon {
-            font-size: 3rem;
-            color: var(--fourth);
-            transition: all .3s ease;
-        }
-        .process-card:hover .step-icon {
-            color: white;
-        }
-        .detail-link {
-            color: var(--fourth);
-            font-weight: bold;
-            margin-top: auto;
-            transition: color .3s ease;
-        }
-        .process-card:hover .detail-link {
-            color: white;
-        }
-        .swiper-slide {
-            display: flex;
-            height: auto;
-        }
-        
-        /* FAQ Styling */
-        .accordion-item {
-            background-color: var(--third);
-            border: none;
-            border-radius: 10px !important;
-            margin-bottom: 10px;
-            overflow: hidden;
-        }
-        .accordion-button {
-            background-color: var(--third);
-            font-weight: 600;
-        }
-        .accordion-button:not(.collapsed) {
-            background-color: var(--fourth);
-            color: white;
-        }
-        .accordion-button:focus {
-            box-shadow: none;
-        }
-        
-        /* Contact Form */
-        .contact-section {
-            background: linear-gradient(135deg, var(--second) 0%, var(--first) 100%);
-            border-radius: 20px;
-            padding: 3rem;
-        }
-        .contact-section .form-control {
-            border-radius: 10px;
-            border: 2px solid var(--third);
-            padding: 12px 15px;
-        }
-        .contact-section .form-control:focus {
-            border-color: var(--fourth);
-            box-shadow: 0 0 0 3px rgba(255,148,148,0.2);
-        }
-        
-        @@keyframes colorChange {
-            from { color: rgb(0, 60, 255); }
-            to { color: #FF9494; }
-        }
-        @@keyframes colorChange2 {
-            from { color: rgb(214, 41, 41); }
-            to { color: #FF9494; }
-        }
-        .color-animation {
-            animation: colorChange 2s infinite alternate;
-        }
-        .color-animation-2 {
-            animation: colorChange2 2s infinite alternate;
-        }
-
-    </style>
+@section Css {
+    <script>document.documentElement.classList.add('bp-js');</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@@0,9..144,600;1,9..144,600&display=swap" />
+    <link rel="stylesheet" href="~/css/blog.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/about.css" asp-append-version="true" />
 }
 
-<!-- Hero Section -->
-<section class="py-5 hero-section">
-    <div class="container text-center">
-        <h1 class="display-4 fw-bold animate__animated animate__fadeInDown text-fourth">
-            @Html.Raw(Model.HeroSection.Greeting)
-        </h1>
-        <h2 class="lead animate__animated animate__fadeInUp text-muted mb-4">
-            @Model.HeroSection.Subtitle
-        </h2>
-        <img src="~/img/SecondImageGoesForAboutMe.jpeg" alt="@Model.HeroSection.ImageAlt" class="img-fluid about-hero-img" data-aos="zoom-in">
-    </div>
-</section>
+<div class="site-page about">
 
-<!-- Hakkımda Section -->
-<section class="mt-5 py-5 bg-first">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <div class="about-section" data-aos="fade-up">
-                    <h2 class="fw-bold mb-4 text-center" style="color: #FF9494;">@Model.AboutSection.Title</h2>
-                    <p class="lead">@Html.Raw(Model.AboutSection.Paragraph1)</p>
-                    <p>@Html.Raw(Model.AboutSection.Paragraph2)</p>
-                    <p>@Html.Raw(Model.AboutSection.Paragraph3)</p>
-                    <p>@Html.Raw(Model.AboutSection.Paragraph4)</p>
-                    <p>@Html.Raw(Model.AboutSection.Paragraph5)</p>
+    @* ---------------- Hero ---------------- *@
+    <section class="ab-hero">
+        <div class="bp-container ab-hero__grid">
+            <div class="ab-hero__text">
+                <span class="bp-eyebrow bp-enter"><i class="fa-solid fa-hand-sparkles" aria-hidden="true"></i>@Model.AboutSection.Title</span>
+                <h1 class="ab-hero__title bp-enter" style="--bp-delay: 80ms">@Html.Raw(T("Merhaba, ben <em>Suna</em>.", "Hallo, ich bin <em>Suna</em>."))</h1>
+                <p class="ab-hero__lead bp-enter" style="--bp-delay: 160ms">@T("Bremen'de doğup büyüdüm; Almanca ana dilim. Almancayı anlıyor ama konuşurken zorlanıyorsanız, yalnız değilsiniz — birlikte özgüvenle konuşmaya başlayalım.", "Ich bin in Bremen aufgewachsen, Deutsch ist meine Muttersprache. Wenn Sie Deutsch verstehen, aber beim Sprechen zögern, sind Sie nicht allein – lassen Sie uns gemeinsam selbstbewusst sprechen.")</p>
+                <div class="ab-hero__cta bp-enter" style="--bp-delay: 240ms">
+                    <a class="bp-btn" href="#faq"><i class="fa-regular fa-comments" aria-hidden="true"></i>@T("Sorularınızı yanıtlayalım", "Ihre Fragen beantwortet")</a>
+                    <a class="bp-btn bp-btn--ghost" href="#contact-form">@T("İletişime geçin", "Kontakt aufnehmen")<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
                 </div>
+                <ul class="ab-hero__facts bp-enter" style="--bp-delay: 320ms">
+                    <li><i class="fa-solid fa-location-dot" aria-hidden="true"></i>@T("Bremen doğumlu", "Aus Bremen")</li>
+                    <li><i class="fa-solid fa-school" aria-hidden="true"></i>@T("Devlet ve özel okul deneyimi", "Staatliche & private Schulen")</li>
+                    <li><i class="fa-solid fa-user-group" aria-hidden="true"></i>@T("4–6 kişilik gruplar", "Gruppen mit 4–6 Personen")</li>
+                    <li><i class="fa-solid fa-stethoscope" aria-hidden="true"></i>@T("Klinik Almanca", "Klinisches Deutsch")</li>
+                </ul>
+            </div>
+            <figure class="ab-hero__media bp-enter" style="--bp-delay: 120ms">
+                <span class="ab-hero__ring" aria-hidden="true"></span>
+                <div class="ab-hero__frame">
+                    <img src="~/img/SecondImageGoesForAboutMe.jpeg" alt="@Model.HeroSection.ImageAlt" width="420" height="560" fetchpriority="high" />
+                </div>
+                <span class="ab-float ab-float--a"><i class="fa-solid fa-language" aria-hidden="true"></i>@T("Ana dili Almanca", "Muttersprache Deutsch")</span>
+                <span class="ab-float ab-float--b"><i class="fa-solid fa-microphone-lines" aria-hidden="true"></i>@T("Konuşma odaklı", "Sprechen im Fokus")</span>
+            </figure>
+        </div>
+    </section>
+
+    @* ---------------- Story ---------------- *@
+    <section class="ab-story" aria-labelledby="story-title">
+        <div class="bp-container ab-story__grid">
+            <aside class="ab-story__aside reveal">
+                <span class="bp-eyebrow"><i class="fa-solid fa-feather" aria-hidden="true"></i>@T("Hikayem", "Meine Geschichte")</span>
+                <h2 id="story-title" class="ab-h2">@T("Dili bir ders gibi değil, hayatın bir parçası olarak", "Sprache nicht als Fach, sondern als Teil des Lebens")</h2>
+                <blockquote class="ab-quote">
+                    <i class="fa-solid fa-quote-left" aria-hidden="true"></i>
+                    <p>@T("Amacım; Almancayı bir ders gibi değil, hayatın bir parçası olarak kullanabilmenizi sağlamak.", "Mein Ziel ist es, Ihnen zu ermöglichen, Deutsch nicht als Unterricht, sondern als Teil des Lebens zu nutzen.")</p>
+                    <cite class="ab-quote__by">Suna Türkgil</cite>
+                </blockquote>
+            </aside>
+            <div class="ab-story__body">
+                <p class="ab-lead reveal">@Html.Raw(Model.AboutSection.Paragraph1)</p>
+                <p class="reveal">@Html.Raw(Model.AboutSection.Paragraph2)</p>
+                <p class="reveal">@Html.Raw(Model.AboutSection.Paragraph3)</p>
+                <p class="reveal">@Html.Raw(Model.AboutSection.Paragraph4)</p>
+                <p class="reveal">@Html.Raw(Model.AboutSection.Paragraph5)</p>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- Almanca Kursu Nasıl İşliyor Section -->
-<section class="py-5 bg-first">
-    <div class="container">
-        <div class="text-center mb-5" data-aos="fade-up">
-            <h2 class="fw-bold" style="color: #FF9494;">@Model.ProcessSection.Title</h2>
-        </div>
-        <div class="swiper processSwiper" data-aos="fade-up">
-            <div class="swiper-wrapper pb-5">
-                @for (int i = 0; i < Model.ProcessSection.Steps.Count; i++)
+    @* ---------------- How it works ---------------- *@
+    <section class="ab-steps" aria-labelledby="steps-title">
+        <div class="bp-container">
+            <div class="ab-section-head reveal">
+                <span class="bp-eyebrow"><i class="fa-solid fa-route" aria-hidden="true"></i>@T("Süreç", "Ablauf")</span>
+                <h2 id="steps-title" class="ab-h2">@Model.ProcessSection.Title</h2>
+            </div>
+            <ol class="ab-steps__list">
+                @for (var i = 0; i < Model.ProcessSection.Steps.Count; i++)
                 {
                     var step = Model.ProcessSection.Steps[i];
-                    <div class="swiper-slide">
-                        @if (step.Id == 1)
-                        {
-                            <a href="@(System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de" ? "/pruefungen" : "/sinavlar")" class="text-decoration-none">
-                                <div class="process-card text-center">
-                                    <i class="@step.IconClass step-icon"></i>
-                                    <h4 class="fw-bold mt-3">@step.Title</h4>
-                                    <p>@step.Description</p>
-                                    <span class="detail-link">@step.LinkText</span>
-                                </div>
-                            </a>
-                        }
-                        else
-                        {
-                            <a href="#contact-form" class="text-decoration-none contact-scroll">
-                                <div class="process-card text-center">
-                                    <i class="@step.IconClass step-icon"></i>
-                                    <h4 class="fw-bold mt-3">@step.Title</h4>
-                                    <p>@step.Description</p>
-                                    <span class="detail-link">@step.LinkText</span>
-                                </div>
-                            </a>
-                        }
-                    </div>
+                    var href = step.Id == 1 ? quizzesPath : step.Id >= 4 ? "#faq" : "#contact-form";
+                    <li class="ab-step reveal" style="--bp-delay: @(i * 80)ms">
+                        <a href="@href">
+                            <span class="ab-step__num" aria-hidden="true">@((i + 1).ToString("00"))</span>
+                            <span class="ab-step__icon" aria-hidden="true"><i class="@step.IconClass"></i></span>
+                            <strong>@step.Title</strong>
+                            <span class="ab-step__text">@step.Description</span>
+                            <span class="ab-step__more">@T("Detay", "Mehr")<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
+                        </a>
+                    </li>
                 }
-            </div>
-            <div class="swiper-pagination"></div>
-            <div class="swiper-button-prev"></div>
-            <div class="swiper-button-next"></div>
+            </ol>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- FAQ Section -->
-<section class="py-5 bg-first">
-    <div class="container">
-        <h2 class="fw-bold mb-5 text-center" style="color: #FF9494;" data-aos="fade-up">@Model.FAQSection.Title</h2>
-        <div class="accordion accordion-flush" id="faqAccordion">
-            @foreach (var faq in Model.FAQSection.FAQItems)
-            {
-                var faqId = faq.Question.GetHashCode();
-                <div class="accordion-item" data-aos="fade-up">
-                    <h2 class="accordion-header" id="faqHeading-@faqId">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse-@faqId">
-                            @faq.Question
-                        </button>
-                    </h2>
-                    <div id="faqCollapse-@faqId" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                        <div class="accordion-body">
-                            @faq.Answer
-                        </div>
+    @* ---------------- FAQ concierge ---------------- *@
+    <section class="ab-faq" id="faq" aria-labelledby="faq-title">
+        <div class="bp-container ab-faq__grid">
+            <div class="ab-faq__intro reveal">
+                <span class="bp-eyebrow"><i class="fa-regular fa-circle-question" aria-hidden="true"></i>@T("SSS", "FAQ")</span>
+                <h2 id="faq-title" class="ab-h2">@Model.FAQSection.Title</h2>
+                <p>@T("Merak ettiğiniz konuyu seçin ya da sorunuzu yazın; yanıt hemen gelsin. Aradığınızı bulamazsanız tek dokunuşla WhatsApp'tan sorun.", "Wählen Sie ein Thema oder tippen Sie Ihre Frage – die Antwort kommt sofort. Nicht dabei? Dann fragen Sie mit einem Tipp per WhatsApp.")</p>
+                <ul class="ab-faq__points">
+                    <li><i class="fa-solid fa-bolt" aria-hidden="true"></i>@T("Anında yanıt, beklemek yok", "Sofort eine Antwort, ohne Warten")</li>
+                    <li><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>@T("Kendi sorunuzu yazarak arayın", "Eigene Frage eintippen und suchen")</li>
+                    <li><i class="fa-brands fa-whatsapp" aria-hidden="true"></i>@T("Gerekirse doğrudan Suna'ya ulaşın", "Bei Bedarf direkt an Suna")</li>
+                </ul>
+            </div>
+
+            <div class="concierge reveal" data-concierge style="--bp-delay: 120ms">
+                <script type="application/json" id="conciergeData">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(chatData, json))</script>
+                <header class="concierge__head">
+                    <span class="concierge__avatar"><img src="~/img/SecondImageGoesForAboutMe.jpeg" alt="" width="44" height="44" loading="lazy" /></span>
+                    <div class="concierge__who">
+                        <strong>@T("Almanca Konuş", "Sprich Deutsch")</strong>
+                        <small><span class="concierge__dot" aria-hidden="true"></span>@T("Sık sorulan sorular · anında yanıt", "Häufige Fragen · sofortige Antwort")</small>
+                    </div>
+                    <button type="button" class="concierge__restart" data-restart aria-label="@T("Baştan başla", "Neu starten")" title="@T("Baştan başla", "Neu starten")"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
+                    <div class="concierge__progress" aria-hidden="true"><span></span><span></span><span></span></div>
+                </header>
+
+                <div class="concierge__log" data-log role="log" aria-live="polite" aria-label="@T("Sohbet", "Chat")">
+                    @* Without JavaScript (and for search engines) every question is listed with its answer *@
+                    <div class="concierge__fallback">
+                        @foreach (var topic in faq)
+                        {
+                            <h3><i class="@topic.Icon" aria-hidden="true"></i>@topic.Title</h3>
+                            @foreach (var item in topic.Items)
+                            {
+                                <details>
+                                    <summary>@item.Question</summary>
+                                    <p>@item.Answer</p>
+                                </details>
+                            }
+                        }
                     </div>
                 </div>
-            }
-        </div>
-    </div>
-</section>
-<!-- Contact Form -->
-<section id="contact-form" class="py-5 bg-first">
-    <div class="container">
-        <h2 class="fw-bold mb-5 text-center" style="color: #FF9494;" data-aos="fade-up">
-            @Model.ContactSection.Title
-        </h2>
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="contact-section" data-aos="fade-up">
-                    <form method="post" asp-controller="Home" asp-action="Contact" id="contactForm">
-                        @Html.AntiForgeryToken()
-                        <!-- Bot Detection Fields -->
-                        <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
-                        <input type="text" name="phone" style="display:none" autocomplete="off" tabindex="-1" />
-                        <input type="text" name="website" style="display:none" autocomplete="off" tabindex="-1" />
-                        <input type="hidden" name="_ts" id="contactTs" />
-                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="ContactForm.Name" class="form-label fw-semibold">
-                                    @Model.ContactSection.NameLabel
-                                </label>
-                                <input asp-for="ContactForm.Name" class="form-control" required />
-                                <span asp-validation-for="ContactForm.Name" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="ContactForm.Email" class="form-label fw-semibold">
-                                    @Model.ContactSection.EmailLabel
-                                </label>
-                                <input asp-for="ContactForm.Email" class="form-control" required />
-                                <span asp-validation-for="ContactForm.Email" class="text-danger"></span>
-                            </div>
-                        </div>
-                        <div class="mb-4">
-                            <label asp-for="ContactForm.Message" class="form-label fw-semibold">
-                                @Model.ContactSection.MessageLabel
-                            </label>
-                            <div class="ck-editor-wrapper">
-                                <textarea asp-for="ContactForm.Message" class="form-control" id="messageEditor" rows="5" required></textarea>
-                                <div class="ck-word-count-bar">
-                                    <span id="ck-word-count">0 @(System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de" ? "W&#246;rter" : "kelime")</span>
-                                </div>
-                            </div>
-                            <span asp-validation-for="ContactForm.Message" class="text-danger"></span>
-                        </div>
-                        <!-- Cloudflare Turnstile Widget -->
-                        <div id="turnstile-widget" class="d-flex justify-content-center my-4"></div>
-                        <div class="text-center">
-                            <button type="submit" class="btn btn-lg text-white px-5 py-3" style="background-color: #FF9494; border-radius: 10px; transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='#ff7b7b'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 25px rgba(255,148,148,0.4)'" onmouseout="this.style.backgroundColor='#FF9494'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                                <i class="bi bi-send me-2"></i>@Model.ContactSection.ButtonText
-                            </button>
-                        </div>
-                    </form>
-                </div>
+
+                <form class="concierge__input" data-ask autocomplete="off">
+                    <label for="conciergeQuestion" class="bp-sr-only">@T("Sorunuzu yazın", "Ihre Frage")</label>
+                    <input id="conciergeQuestion" type="text" maxlength="300" placeholder="@T("Sorunuzu yazın…", "Ihre Frage eingeben…")" />
+                    <button type="submit" aria-label="@T("Gönder", "Senden")"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></button>
+                </form>
+                <footer class="concierge__foot">
+                    @T("Yanıt bulamadınız mı?", "Keine Antwort gefunden?") <a href="@whatsappUrl" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i>@T("WhatsApp'tan yazın", "Per WhatsApp schreiben")</a>
+                </footer>
             </div>
         </div>
-    </div>
-</section>
+    </section>
+
+    @* ---------------- Contact ---------------- *@
+    <section id="contact-form" class="ab-contact" aria-labelledby="contact-title">
+        <div class="bp-container ab-contact__grid">
+            <div class="ab-contact__intro reveal">
+                <span class="bp-eyebrow"><i class="fa-regular fa-envelope" aria-hidden="true"></i>@T("İletişim", "Kontakt")</span>
+                <h2 id="contact-title" class="ab-h2">@Model.ContactSection.Title</h2>
+                <p>@T("Mevcut seviyenizi, müsait olduğunuz zamanları ve hedeflerinizi yazın; size en uygun programı birlikte belirleyelim.", "Schreiben Sie mir Ihr Niveau, Ihre Verfügbarkeit und Ihre Ziele – gemeinsam finden wir das passende Programm.")</p>
+
+                <a class="ab-wa" href="@whatsappUrl" target="_blank" rel="noopener">
+                    <span class="ab-wa__icon" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
+                    <span class="ab-wa__text">
+                        <strong>@T("WhatsApp'tan yazın", "Per WhatsApp schreiben")</strong>
+                        <small>@T("En hızlı yol", "Der schnellste Weg") · +49 160 3866222</small>
+                    </span>
+                    <i class="fa-solid fa-arrow-up-right-from-square ab-wa__go" aria-hidden="true"></i>
+                </a>
+
+                <ul class="ab-contact__list">
+                    <li><a href="mailto:@AboutFaqContent.Email"><span aria-hidden="true"><i class="fa-regular fa-envelope"></i></span><span><small>@T("E-posta", "E-Mail")</small>@AboutFaqContent.Email</span></a></li>
+                    <li><a href="tel:+491603866222"><span aria-hidden="true"><i class="fa-solid fa-phone"></i></span><span><small>@T("Telefon", "Telefon")</small>+49 160 3866222</span></a></li>
+                    <li><div><span aria-hidden="true"><i class="fa-solid fa-location-dot"></i></span><span><small>@T("Konum", "Standort")</small>@T("İstanbul, Türkiye · online dersler", "Istanbul, Türkei · Online-Unterricht")</span></div></li>
+                </ul>
+            </div>
+
+            <div class="ab-contact__card reveal" style="--bp-delay: 120ms">
+                <form method="post" asp-controller="Home" asp-action="Contact" id="contactForm" class="ab-form">
+                    @Html.AntiForgeryToken()
+                    @* Bot detection: hidden fields a person never fills in *@
+                    <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
+                    <input type="text" name="phone" style="display:none" autocomplete="off" tabindex="-1" />
+                    <input type="text" name="website" style="display:none" autocomplete="off" tabindex="-1" />
+                    <input type="hidden" name="_ts" id="contactTs" />
+                    <div asp-validation-summary="All" class="ab-form__errors"></div>
+
+                    <div class="ab-form__row">
+                        <div class="ab-field">
+                            <label asp-for="ContactForm.Name">@Model.ContactSection.NameLabel</label>
+                            <div class="ab-input"><i class="fa-regular fa-user" aria-hidden="true"></i><input asp-for="ContactForm.Name" autocomplete="name" required /></div>
+                            <span asp-validation-for="ContactForm.Name" class="ab-error"></span>
+                        </div>
+                        <div class="ab-field">
+                            <label asp-for="ContactForm.Email">@Model.ContactSection.EmailLabel</label>
+                            <div class="ab-input"><i class="fa-regular fa-envelope" aria-hidden="true"></i><input asp-for="ContactForm.Email" type="email" autocomplete="email" required /></div>
+                            <span asp-validation-for="ContactForm.Email" class="ab-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="ab-field">
+                        <label asp-for="ContactForm.Message">@Model.ContactSection.MessageLabel</label>
+                        <div class="ck-editor-wrapper">
+                            <textarea asp-for="ContactForm.Message" class="form-control" id="messageEditor" rows="5" required></textarea>
+                            <div class="ck-word-count-bar"><span id="ck-word-count">0 @T("kelime", "Wörter")</span></div>
+                        </div>
+                        <span asp-validation-for="ContactForm.Message" class="ab-error"></span>
+                    </div>
+
+                    <div id="turnstile-widget" class="ab-turnstile"></div>
+
+                    <button type="submit" class="ab-submit">
+                        <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>@Model.ContactSection.ButtonText
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+</div>
 
 @section Scripts {
+    <script src="~/js/blog.js" asp-append-version="true" defer></script>
+    <script src="~/js/about-chat.js" asp-append-version="true" defer></script>
     <script>
-        window.onloadTurnstileAbout = function() {
-            var container = document.getElementById('turnstile-widget');
-            if (container) {
-                turnstile.render('#turnstile-widget', {
-                    sitekey: '@ViewBag.TurnstileSiteKey',
-                    theme: 'light',
-                    callback: function(token) {}
-                });
-            }
+        window.onloadTurnstileAbout = function () {
+            if (!document.getElementById('turnstile-widget') || !window.turnstile) return;
+            turnstile.render('#turnstile-widget', {
+                sitekey: '@ViewBag.TurnstileSiteKey',
+                theme: document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light'
+            });
         };
-    </script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileAbout&render=explicit" defer></script>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
-    <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
-    
-    <!-- CKEditor 5 CDN (Superbuild with more features) -->
-    <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.umd.js"></script>
-    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.css" />
-
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script>
-        const swiperInstance  = new Swiper(".processSwiper", {
-            slidesPerView: 1,
-            spaceBetween: 20,
-            grabCursor: true,
-            loop: true,
-            autoplay: { delay: 3000 },
-            pagination: {
-                el: ".swiper-pagination",
-                clickable: true,
-            },
-            navigation: {
-                nextEl: ".swiper-button-next",
-                prevEl: ".swiper-button-prev",
-            },
-            breakpoints: {
-                768: { slidesPerView: 2 },
-                992: { slidesPerView: 3 },
-            }
-        });
-    </script>
-    <script>
-        document.querySelectorAll('.contact-scroll').forEach(link => {
-            link.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+        // Bot detection for the contact form: timestamp + honeypot
+        document.addEventListener('DOMContentLoaded', function () {
+            var ts = document.getElementById('contactTs');
+            if (ts) ts.value = Date.now();
+            var form = document.getElementById('contactForm');
+            if (!form) return;
+            form.addEventListener('submit', function (e) {
+                var trapped = ['honeypot', 'phone', 'website'].some(function (name) {
+                    var field = form.querySelector('input[name="' + name + '"]');
+                    return field && field.value;
+                });
+                if (trapped) e.preventDefault();
             });
         });
-        
-        // Bot detection for contact form
-        document.addEventListener("DOMContentLoaded", function() {
-            var tsField = document.getElementById('contactTs');
-            if(tsField) {
-                tsField.value = Date.now();
-            }
-            
-            var form = document.getElementById('contactForm');
-            if(form) {
-                form.addEventListener('submit', function(e) {
-                    var honeypot = document.querySelector('input[name="honeypot"]');
-                    var phone = document.querySelector('input[name="phone"]');
-                    var website = document.querySelector('input[name="website"]');
-                    
-                    if((honeypot && honeypot.value) || (phone && phone.value) || (website && website.value)) {
-                        e.preventDefault();
-                        console.warn('Bot detected in contact form - honeypot filled');
-                        alert('Form submission failed. Please try again.');
-                        return false;
-                    }
-                });
-            }
-        });
     </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-    <script>
-        AOS.init({ duration: 1000, once: true });
-    </script>
-    
-    <!-- CKEditor Initialization -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileAbout&render=explicit" defer></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+
+    <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.umd.js"></script>
+    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.css" />
     <script type="module">
         const { ClassicEditor, Essentials, Bold, Italic, Underline, Strikethrough, Font, Paragraph, Heading, Link, List, BlockQuote, Alignment, Indent, IndentBlock, Undo, WordCount } = window.CKEDITOR;
-        
         let editorInstance;
         ClassicEditor
             .create(document.querySelector('#messageEditor'), {
                 licenseKey: '@ViewBag.CKEditorLicenseKey',
-                plugins: [
-                    Essentials, Bold, Italic, Underline, Strikethrough,
-                    Font, Paragraph, Heading, Link, List, BlockQuote,
-                    Alignment, Indent, IndentBlock, Undo, WordCount
-                ],
+                plugins: [Essentials, Bold, Italic, Underline, Strikethrough, Font, Paragraph, Heading, Link, List, BlockQuote, Alignment, Indent, IndentBlock, Undo, WordCount],
                 toolbar: {
-                    items: [
-                        'heading', '|',
-                        'bold', 'italic', 'underline', 'strikethrough', '|',
-                        'fontSize', 'fontColor', 'fontBackgroundColor', '|',
-                        'link', 'bulletedList', 'numberedList', '|',
-                        'alignment', 'outdent', 'indent', '|',
-                        'blockQuote', '|',
-                        'undo', 'redo'
-                    ],
+                    items: ['bold', 'italic', 'underline', '|', 'link', 'bulletedList', 'numberedList', '|', 'blockQuote', '|', 'undo', 'redo'],
                     shouldNotGroupWhenFull: true
-                },
-                heading: {
-                    options: [
-                        { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
-                        { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
-                        { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
-                        { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' }
-                    ]
-                },
-                fontSize: {
-                    options: [10, 12, 14, 'default', 18, 20, 22]
                 },
                 wordCount: {
                     onUpdate: stats => {
                         const el = document.getElementById('ck-word-count');
-                        if (el) {
-                            const lbl = @Json.Serialize(System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de" ? "Wörter" : "kelime");
-                            el.textContent = stats.words + ' ' + lbl;
-                        }
+                        if (el) el.textContent = stats.words + ' ' + @Json.Serialize(T("kelime", "Wörter"));
                     }
                 },
                 placeholder: @Json.Serialize(Model.ContactSection.MessagePlaceholder ?? Model.ContactSection.MessageLabel),
@@ -449,82 +310,11 @@
             })
             .then(editor => {
                 editorInstance = editor;
-                
-                // Sync CKEditor content with textarea before form submission
-                const form = document.getElementById('contactForm');
-                if (form) {
-                    form.addEventListener('submit', function() {
-                        const messageTextarea = document.querySelector('#messageEditor');
-                        if (messageTextarea && editorInstance) {
-                            messageTextarea.value = editorInstance.getData();
-                        }
-                    });
-                }
+                // The textarea carries the message; keep it in sync before the form posts
+                document.getElementById('contactForm')?.addEventListener('submit', () => {
+                    document.querySelector('#messageEditor').value = editorInstance.getData();
+                });
             })
-            .catch(error => {
-                console.error('CKEditor initialization error:', error);
-            });
+            .catch(error => console.error('CKEditor initialization error:', error));
     </script>
-    
-    <style>
-        /* CKEditor wrapper — owns the visible border and focus ring */
-        .ck-editor-wrapper {
-            border: 2px solid var(--third);
-            border-radius: 12px;
-            overflow: hidden;
-            transition: border-color 0.25s ease, box-shadow 0.25s ease;
-        }
-        .ck-editor-wrapper:focus-within {
-            border-color: var(--fourth);
-            box-shadow: 0 0 0 4px rgba(255,148,148,0.18);
-        }
-        /* Strip CKEditor's own outer borders — wrapper owns them now */
-        .ck.ck-editor__top .ck-toolbar,
-        .ck.ck-editor__main > .ck-editor__editable {
-            border: none !important;
-            box-shadow: none !important;
-            border-radius: 0 !important;
-        }
-        /* Toolbar */
-        .ck.ck-toolbar {
-            background: linear-gradient(90deg, var(--first) 0%, var(--second) 100%) !important;
-            border-radius: 0 !important;
-            border-bottom: 1px solid var(--third) !important;
-            padding: 4px 8px !important;
-        }
-        .ck.ck-toolbar .ck-toolbar__items {
-            flex-wrap: wrap;
-            gap: 2px;
-        }
-        .ck.ck-button:not(.ck-disabled):hover {
-            background-color: rgba(255,148,148,0.12) !important;
-        }
-        /* Editable area */
-        .ck-editor__editable {
-            min-height: 200px;
-            padding: 16px 18px !important;
-            font-size: 0.95rem !important;
-            line-height: 1.75 !important;
-            background: #fff !important;
-        }
-        /* Placeholder text */
-        .ck.ck-editor__editable .ck-placeholder::before {
-            color: #aaa !important;
-            font-style: italic;
-        }
-        /* Word count bar */
-        .ck-word-count-bar {
-            background: var(--first);
-            border-top: 1px solid var(--third);
-            padding: 5px 14px;
-            text-align: right;
-            font-size: 0.78rem;
-            color: #999;
-            user-select: none;
-        }
-        /* Turnstile widget container */
-        #turnstile-widget {
-            min-height: 65px;
-        }
-    </style>
 }

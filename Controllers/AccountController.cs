@@ -1,6 +1,6 @@
 using System;
-using System.Dynamic;
 using System.Globalization;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -474,6 +474,7 @@ namespace SpeakingClub.Controllers
 
         #endregion
         #region Account
+        // "Hesabım": profile, quiz progress, security and staff shortcuts
         [Authorize]
         public async Task<IActionResult> Account()
         {
@@ -484,64 +485,75 @@ namespace SpeakingClub.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
+            await _examService.FinalizeExpiredAttemptsAsync(user); // exams left running past their deadline
+            var submissions = (await _unitOfWork.QuizSubmissions.GetSubmissionsByUserIdAsync(user.Id))
+                .OrderBy(s => s.SubmissionDate)
+                .ToList();
+            var now = DateTime.UtcNow;
+            var running = (await Attempts.GetAllAsync(a => a.UserId == user.Id && a.SubmittedAt == null))
+                .Where(a => a.ExpiresAt.AddSeconds(ExamRules.GraceSeconds) > now)
+                .OrderByDescending(a => a.StartedAt)
+                .FirstOrDefault();
+            var quizIds = submissions.Select(s => s.QuizId).Append(running?.QuizId ?? 0).Distinct().ToList();
+            var titles = (await _unitOfWork.Quizzes.GetAllAsync(q => quizIds.Contains(q.Id)))
+                .ToDictionary(q => q.Id, q => IsGerman() && !string.IsNullOrWhiteSpace(q.TitleDe) ? q.TitleDe! : q.Title);
+            var roles = await _userManager.GetRolesAsync(user);
+            var fullName = ExamService.FullName(user);
 
-            var submissions = await _unitOfWork.QuizSubmissions.GetAllAsync();
-            var quizzes = await _unitOfWork.Quizzes.GetAllAsync();
-            var userSubmissions = submissions.Where(qs => qs.UserId == user.Id).ToList();
-
-            // Check if any quizzes have been completed
-            bool hasQuizData = userSubmissions.Any();
-            ViewBag.HasQuizData = hasQuizData;
-
-            if (hasQuizData)
+            var model = new AccountDashboardViewModel
             {
-                double averageScore = userSubmissions.Average(q => q.Score);
-                int totalAttempts = userSubmissions.Count;
-                int distinctQuizzes = userSubmissions.Select(s => s.QuizId).Distinct().Count();
+                FullName = string.IsNullOrWhiteSpace(fullName) ? user.Email ?? "" : fullName,
+                Initials = string.Concat(new[] { user.FirstName, user.LastName }
+                    .Where(n => !string.IsNullOrWhiteSpace(n)).Select(n => char.ToUpperInvariant(n!.Trim()[0]))),
+                Email = user.Email,
+                EmailConfirmed = user.EmailConfirmed,
+                Age = user.Age,
+                Roles = roles,
+                IsStaff = roles.Any(r => r is "Root" or "Admin" or "Teacher"),
+                CanDelete = !roles.Any(r => r is "Root" or "Admin"),
+                HasPassword = await _userManager.HasPasswordAsync(user),
+                GoogleLinked = (await _userManager.GetLoginsAsync(user)).Any(l => l.LoginProvider == "Google"),
+                TotalAttempts = submissions.Count,
+                DistinctQuizzes = submissions.Select(s => s.QuizId).Distinct().Count(),
+                ScoreHistory = submissions.TakeLast(12).Select(s => s.Score).ToList(),
+                RecentAttempts = submissions.AsEnumerable().Reverse().Take(6).Select(s => new AccountAttemptViewModel
+                {
+                    QuizId = s.QuizId,
+                    SubmissionId = s.QuizSubmissionId,
+                    QuizTitle = titles.TryGetValue(s.QuizId, out var title) ? title : "—",
+                    Score = s.Score,
+                    SubmissionDate = s.SubmissionDate,
+                    DurationSeconds = s.DurationSeconds,
+                    EndReason = s.EndReason,
+                    AttemptNumber = s.AttemptNumber
+                }).ToList()
+            };
+            if (string.IsNullOrEmpty(model.Initials))
+                model.Initials = string.IsNullOrEmpty(user.Email) ? "?" : user.Email[..1].ToUpperInvariant();
 
-                string level;
-                if (averageScore >= 90)
-                    level = "C2";
-                else if (averageScore >= 80)
-                    level = "C1";
-                else if (averageScore >= 70)
-                    level = "B2";
-                else if (averageScore >= 60)
-                    level = "B1";
-                else if (averageScore >= 50)
-                    level = "A2";
-                else
-                    level = "A1";
-
-                // Prepare list of all attempts with quiz title and score (optional, for graphs)
-                var attemptsList = userSubmissions
-                    .OrderBy(s => s.SubmissionDate)
-                    .Select(s =>
-                    {
-                        dynamic obj = new ExpandoObject();
-                        obj.QuizTitle = quizzes.FirstOrDefault(q => q.Id == s.QuizId)?.Title ?? "Unknown";
-                        obj.Score = s.Score;
-                        obj.Date = s.SubmissionDate;
-                        return obj;
-                    })
-                    .ToList();
-
-                ViewBag.AttemptsList = attemptsList;
-                ViewBag.UserLevel = level;
-                ViewBag.Progress = averageScore;
-                ViewBag.TotalAttempts = totalAttempts;
-                ViewBag.DistinctQuizzes = distinctQuizzes;
-            }
-            else
+            if (submissions.Count > 0)
             {
-                ViewBag.UserLevel = null;
-                ViewBag.Progress = 0;
-                ViewBag.TotalAttempts = 0;
-                ViewBag.DistinctQuizzes = 0;
-                ViewBag.AttemptsList = new List<object>();
+                var average = submissions.Average(s => s.Score);
+                model.AverageScore = (int)Math.Round(average);
+                model.BestScore = submissions.Max(s => s.Score);
+                model.LastScore = submissions[^1].Score;
+                model.Trend = submissions.Count > 1 ? submissions[^1].Score - submissions[^2].Score : null;
+                // A rough guide from the average score, not a CEFR placement
+                model.EstimatedLevel = average >= 90 ? "C2" : average >= 80 ? "C1" : average >= 70 ? "B2"
+                    : average >= 60 ? "B1" : average >= 50 ? "A2" : "A1";
+            }
+            if (running != null)
+            {
+                model.ActiveExam = new AccountActiveExamViewModel
+                {
+                    QuizId = running.QuizId,
+                    QuizTitle = titles.TryGetValue(running.QuizId, out var runningTitle) ? runningTitle : "—",
+                    RemainingSeconds = Math.Max(0, (int)(running.ExpiresAt - now).TotalSeconds)
+                };
             }
 
-            return View(user);
+            ViewData["Robots"] = "noindex, nofollow";
+            return View(model);
         }
 
         #endregion
@@ -567,7 +579,7 @@ namespace SpeakingClub.Controllers
             if (result.Succeeded)
             {
                 await _signInManager.RefreshSignInAsync(user!);
-                TempData["Success"] = "Your password has been changed successfully!";
+                TempData["Success"] = T("Şifreniz başarıyla değiştirildi.", "Ihr Passwort wurde erfolgreich geändert.");
                 return RedirectToAction(nameof(Account));
             }
 
@@ -970,6 +982,95 @@ namespace SpeakingClub.Controllers
             _logger.LogInformation("User logged out.");
             return RedirectToAction(nameof(HomeController.Index), "Home");
         }
+
+        #region External login (Google)
+        // "Continue with Google": sends the visitor to Google, which returns to ExternalLoginCallback
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ExternalLogin(string provider, string? returnUrl = null)
+        {
+            var schemes = await _signInManager.GetExternalAuthenticationSchemesAsync();
+            if (!schemes.Any(s => s.Name == provider))
+            {
+                TempData["Error"] = T("Google ile giriş henüz etkin değil. Lütfen e-posta ve şifrenizle devam edin.",
+                    "Die Anmeldung mit Google ist noch nicht aktiviert. Bitte fahren Sie mit E-Mail und Passwort fort.");
+                return RedirectToAction(nameof(Login), new { returnUrl });
+            }
+            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            return Challenge(properties, provider);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
+        {
+            IActionResult Fail(string tr, string de)
+            {
+                TempData["Error"] = T(tr, de);
+                return RedirectToAction(nameof(Login), new { returnUrl });
+            }
+
+            if (remoteError != null)
+                return Fail("Google ile giriş iptal edildi veya başarısız oldu.", "Die Anmeldung mit Google wurde abgebrochen oder ist fehlgeschlagen.");
+
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info == null)
+                return Fail("Google bilgileri alınamadı. Lütfen tekrar deneyin.", "Die Google-Daten konnten nicht gelesen werden. Bitte versuchen Sie es erneut.");
+
+            // Someone who has signed in with this Google account before
+            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
+            if (result.Succeeded)
+                return RedirectToLocal(returnUrl);
+            if (result.IsLockedOut)
+                return View("Lockout");
+
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrWhiteSpace(email))
+                return Fail("Google hesabınız bir e-posta adresi paylaşmadı.", "Ihr Google-Konto hat keine E-Mail-Adresse freigegeben.");
+
+            // Only an address Google has verified may confirm a new account or join an existing one
+            if (!string.Equals(info.Principal.FindFirstValue("email_verified"), "true", StringComparison.OrdinalIgnoreCase))
+                return Fail("Google hesabınızın e-posta adresi doğrulanmamış.", "Die E-Mail-Adresse Ihres Google-Kontos ist nicht bestätigt.");
+
+            var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey)
+                       ?? await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                user = new User
+                {
+                    UserName = email,
+                    Email = email,
+                    EmailConfirmed = true,
+                    FirstName = info.Principal.FindFirstValue(ClaimTypes.GivenName),
+                    LastName = info.Principal.FindFirstValue(ClaimTypes.Surname)
+                };
+                var created = await _userManager.CreateAsync(user);
+                if (!created.Succeeded)
+                {
+                    _logger.LogWarning("Google sign-up failed for {Email}: {Errors}", email, string.Join("; ", created.Errors.Select(e => e.Description)));
+                    return Fail("Hesap oluşturulamadı. Lütfen e-posta ile kayıt olmayı deneyin.", "Das Konto konnte nicht erstellt werden. Bitte registrieren Sie sich mit E-Mail.");
+                }
+                _logger.LogInformation("User created an account with Google.");
+            }
+            else if (!user.EmailConfirmed)
+            {
+                user.EmailConfirmed = true; // Google has just proven the address
+                await _userManager.UpdateAsync(user);
+            }
+
+            if ((await _userManager.GetLoginsAsync(user)).All(l => l.LoginProvider != info.LoginProvider))
+            {
+                var linked = await _userManager.AddLoginAsync(user, info);
+                if (!linked.Succeeded)
+                    return Fail("Google hesabı bağlanamadı.", "Das Google-Konto konnte nicht verknüpft werden.");
+            }
+
+            await _signInManager.SignInAsync(user, isPersistent: false);
+            return RedirectToLocal(returnUrl);
+        }
+        #endregion
 
         private IActionResult RedirectToLocal(string? returnUrl)
         {

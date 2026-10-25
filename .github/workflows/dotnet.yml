@@ -22,10 +22,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Exact SDK version on purpose. A floating version (10.0.x) makes the install script look the
+      # download up through aka.ms, which currently redirects to a Microsoft storage account that refuses
+      # public downloads (HTTP 409 "Public access is not permitted") and fails the job. An exact version
+      # downloads straight from builds.dotnet.microsoft.com. Bump it when a new SDK ships:
+      # https://dotnet.microsoft.com/download/dotnet/10.0 (keep it in step with the 10.0.x packages).
+      # setup-dotnet's own "latest LTS runtime" pre-install still goes through aka.ms and may log a
+      # warning; that step is non-fatal.
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: '10.0.402'
 
       - name: Restore
         run: dotnet restore SpeakingClub.csproj

@@ -1,253 +1,309 @@
-@model SpeakingClub.Identity.User
+@model SpeakingClub.Models.AccountDashboardViewModel
 @inject LanguageService _localization
-
 @{
     ViewData["Title"] = _localization.GetKey("MyAccount_Title");
-    var userLevel = ViewBag.UserLevel as string;
-    var progress = ViewBag.Progress != null ? Convert.ToDouble(ViewBag.Progress) : 0;
-    bool hasQuizData = ViewBag.HasQuizData != null && (bool)ViewBag.HasQuizData;
-    bool canAccessDashboard = User.IsInRole("Admin") || User.IsInRole("Teacher") || User.IsInRole("Root");
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    string Pct(int value) => isGerman ? $"{value} %" : $"%{value}";
+    string Tone(int score) => score >= 80 ? "good" : score >= 50 ? "mid" : "low";
+    var quizzesPath = isGerman ? "/pruefungen" : "/sinavlar";
+    TimeZoneInfo? zone = null;
+    try { zone = TimeZoneInfo.FindSystemTimeZoneById(isGerman ? "Europe/Berlin" : "Europe/Istanbul"); } catch (TimeZoneNotFoundException) { }
+    string Local(DateTime utc) => (zone == null ? utc : TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), zone)).ToString("dd.MM.yyyy HH:mm");
+    string Duration(int s) => s >= 60 ? (isGerman ? $"{s / 60} Min." : $"{s / 60} dk") : (isGerman ? $"{s} s" : $"{s} sn");
+    string RoleName(string role) => role switch
+    {
+        "Root" => "Root",
+        "Admin" => T("Yönetici", "Administrator"),
+        "Teacher" => T("Öğretmen", "Lehrkraft"),
+        "Student" => T("Öğrenci", "Lernende/r"),
+        _ => role
+    };
+    var hasData = Model.TotalAttempts > 0;
 
-    // NEW: Quiz analytics
-    var totalAttempts = ViewBag.TotalAttempts != null ? (int)ViewBag.TotalAttempts : 0;
-    var distinctQuizzes = ViewBag.DistinctQuizzes != null ? (int)ViewBag.DistinctQuizzes : 0;
-    var attempts = ((IEnumerable<dynamic>)ViewBag.AttemptsList) ?? Enumerable.Empty<dynamic>();
+    // Score chart: points in a 100 × 40 box (y grows downwards)
+    var history = Model.ScoreHistory;
+    var points = history.Select((score, i) => (
+        X: history.Count == 1 ? 50.0 : i * 100.0 / (history.Count - 1),
+        Y: 38 - score * 0.36,
+        Score: score)).ToList();
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+    var line = string.Join(" ", points.Select(p => $"{p.X.ToString("0.##", inv)},{p.Y.ToString("0.##", inv)}"));
+    var area = points.Count > 1 ? $"M0,40 L{line.Replace(" ", " L")} L100,40 Z" : "";
 }
 @section Css {
-    <link rel="stylesheet" href="~/lib/animate/animate.min.css" />
-    <style>
-        .account-container {
-            max-width: 700px;
-            margin: auto;
-            padding-top: 40px;
-        }
-
-        .card-hover {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 20px rgba(0,0,0,0.1);
-        }
-
-        .btn-custom {
-            border-radius: 25px;
-            padding: 8px 25px;
-        }
-
-        .delete-btn:hover {
-            background-color: #dc3545;
-            color: white;
-        }
-        @@keyframes progress {
-            from { stroke-dashoffset: 283; }
-            to { stroke-dashoffset: calc(283 - (283 * var(--percent)) / 100); }
-        }
-
-        .level-text {
-            position: absolute;
-            font-size: 20px;
-            font-weight: bold;
-        }
-
-        .no-quiz-data {
-            font-size: 14px;
-            color: #888;
-            text-align: right;
-        }
-        /* New for attempts table */
-        .attempt-table th, .attempt-table td {
-            vertical-align: middle !important;
-        }
-        .attempt-table th {
-            background: #f8fafc;
-        }
-        @@media (max-width: 767.98px) {
-            .progress-circle {
-                margin: 0 auto 14px auto;
-                width: 90px;
-                height: 90px;
-            }
-            .card-title,
-            .card-body p {
-                text-align: center !important;
-            }
-        }
-        .progress-circle {
-            width: 90px;
-            height: 90px;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .progress-circle svg {
-            transform: rotate(-90deg);
-        }
-        .progress-circle .circle-bg {
-            fill: none;
-            stroke: #eee;
-            stroke-width: 8;
-        }
-        .progress-circle .circle {
-            fill: none;
-            stroke-width: 8;
-            stroke-linecap: round;
-            stroke: #00b4d8;
-            stroke-dasharray: 251.2;
-            stroke-dashoffset: calc(251.2 - (251.2 * var(--percent)) / 100);
-            animation: progress 1.5s ease-out forwards;
-        }
-        .level-text {
-            position: absolute;
-            font-size: 20px;
-            font-weight: bold;
-        }
-        .no-quiz-data {
-            font-size: 14px;
-            color: #888;
-            text-align: right;
-        }
-    </style>
+    <script>document.documentElement.classList.add('bp-js');</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@@0,9..144,600;1,9..144,600&display=swap" />
+    <link rel="stylesheet" href="~/css/blog.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/quiz.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/account.css" asp-append-version="true" />
 }
-<div class="container account-container animate__animated animate__fadeIn">
 
-    <h2 class="mb-5 text-center fw-bold">@_localization.GetKey("MyAccount_Header")</h2>
+<div class="site-page acct">
+    <div class="bp-container">
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success animate__animated animate__fadeInDown">
-            @TempData["Success"]
-        </div>
-    }
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger animate__animated animate__shakeX">
-            @TempData["Error"]
-        </div>
-    }
-
-    <!-- ================== END QUIZ ANALYTICS SECTION (NEW) ================== -->
-<div class="card shadow-sm card-hover mb-4 animate__animated animate__fadeInUp">
-    <div class="card-body px-2 py-4">
-        <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-4">
-            <!-- İstatistik ve Progress aynı blokta, flex ile -->
-            <div class="d-flex flex-column flex-md-row align-items-center gap-3 w-100 justify-content-center">
-                <!-- İstatistik Kutu -->
-                <div class="mb-3 mb-md-0">
-                    <div class="p-3 border rounded bg-light text-center" style="min-width:160px;">
-                        <div><strong>@_localization.GetKey("Level"):</strong> @userLevel</div>
-                        <div><strong>@_localization.GetKey("AverageScore"):</strong> @progress.ToString("F1")%</div>
-                        <div><strong>@_localization.GetKey("TotalAttempts"):</strong> @totalAttempts</div>
-                        <div><strong>@_localization.GetKey("DistinctQuizzes"):</strong> @distinctQuizzes</div>
+        <header class="acct-hero bp-enter">
+            <div>
+                <div class="acct-who">
+                    <span class="acct-avatar" aria-hidden="true">
+                        @Model.Initials
+                        @if (Model.EmailConfirmed)
+                        {
+                            <span class="acct-avatar__badge" title="@T("E-posta doğrulandı", "E-Mail bestätigt")"><i class="fa-solid fa-check"></i></span>
+                        }
+                    </span>
+                    <div>
+                        <h1>@Model.FullName</h1>
+                        <p>@Model.Email</p>
+                        <div class="acct-roles">
+                            @foreach (var role in Model.Roles)
+                            {
+                                <span class="acct-role @(role is "Root" or "Admin" or "Teacher" ? "acct-role--staff" : "")"><i class="fa-solid @(role is "Teacher" ? "fa-chalkboard-user" : role is "Student" ? "fa-user-graduate" : "fa-shield-halved")" aria-hidden="true"></i>@RoleName(role)</span>
+                            }
+                            @if (Model.GoogleLinked)
+                            {
+                                <span class="acct-role"><i class="fa-brands fa-google" aria-hidden="true"></i>Google</span>
+                            }
+                        </div>
                     </div>
                 </div>
-                <!-- Progress Circle -->
-                <div>
-                    @if (hasQuizData)
+                <div class="acct-actions">
+                    <a class="bp-btn" href="@quizzesPath"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i>@T("Sınavlara git", "Zu den Prüfungen")<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                    @if (Model.IsStaff)
                     {
-                        <div class="progress-circle mx-auto">
-                            <svg width="90" height="90">
-                                <circle class="circle-bg" cx="45" cy="45" r="40"></circle>
-                                <circle class="circle" cx="45" cy="45" r="40"></circle>
+                        <a class="bp-btn bp-btn--ghost" asp-controller="Admin" asp-action="Index"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i>@_localization.GetKey("GoToDashboard")</a>
+                    }
+                </div>
+            </div>
+
+            <div class="acct-level @(hasData ? "" : "acct-level--empty")">
+                <span class="qz-ring" style="--value: @(hasData ? Model.AverageScore : 0)" data-tone="@(hasData ? Tone(Model.AverageScore) : "low")" role="img"
+                      aria-label="@T("Tahmini seviye", "Geschätztes Niveau") @(Model.EstimatedLevel ?? "–")">
+                    <svg viewBox="0 0 36 36" aria-hidden="true"><circle class="qz-ring__track" cx="18" cy="18" r="15.9" pathLength="100" /><circle class="qz-ring__bar" cx="18" cy="18" r="15.9" pathLength="100" /></svg>
+                    <span class="qz-ring__label">@(Model.EstimatedLevel ?? "?")</span>
+                </span>
+                <small>@(hasData ? T("Tahmini seviye · ortalama puanınıza göre", "Geschätztes Niveau · nach Ihrem Durchschnitt") : _localization.GetKey("NoQuizData"))</small>
+            </div>
+        </header>
+
+        @if (TempData["Success"] is string success)
+        {
+            <div class="acct-notice acct-notice--ok" role="status"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>@success</div>
+        }
+        @if (TempData["Error"] is string error)
+        {
+            <div class="acct-notice acct-notice--error" role="alert"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>@error</div>
+        }
+        @if (Model.ActiveExam != null)
+        {
+            <div class="acct-live" role="status">
+                <span class="acct-live__dot" aria-hidden="true"></span>
+                <div>
+                    <strong>@T("Devam eden bir sınavınız var", "Sie haben eine laufende Prüfung"): @Model.ActiveExam.QuizTitle</strong><br />
+                    <small>@T("Kalan süre", "Verbleibende Zeit"): <span data-countdown="@Model.ActiveExam.RemainingSeconds">@(Model.ActiveExam.RemainingSeconds / 60):@((Model.ActiveExam.RemainingSeconds % 60).ToString("00"))</span></small>
+                </div>
+                <a class="bp-btn" asp-action="StartQuiz" asp-route-id="@Model.ActiveExam.QuizId"><i class="fa-solid fa-play" aria-hidden="true"></i>@T("Sınava dön", "Zurück zur Prüfung")</a>
+            </div>
+        }
+
+        <section class="acct-stats" aria-label="@T("Özet", "Übersicht")">
+            <div class="acct-stat reveal" style="--tone: #2E8B57">
+                <i class="fa-solid fa-chart-simple" aria-hidden="true"></i>
+                <strong>@(isGerman ? "" : "%")<span data-count="@Model.AverageScore">@Model.AverageScore</span>@(isGerman ? " %" : "")</strong>
+                <span>@T("Ortalama puan", "Durchschnitt")</span>
+            </div>
+            <div class="acct-stat reveal" style="--tone: #E36464; --bp-delay: 70ms">
+                <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+                <strong>@(Model.LastScore.HasValue ? Pct(Model.LastScore.Value) : "–")
+                    @if (Model.Trend is int trend && trend != 0)
+                    {
+                        <span class="acct-trend @(trend > 0 ? "acct-trend--up" : "acct-trend--down")" title="@T("Bir önceki denemeye göre", "Gegenüber dem vorigen Versuch")"><i class="fa-solid @(trend > 0 ? "fa-arrow-trend-up" : "fa-arrow-trend-down")" aria-hidden="true"></i>@(trend > 0 ? "+" : "")@trend</span>
+                    }
+                </strong>
+                <span>@T("Son puan", "Letztes Ergebnis")</span>
+            </div>
+            <div class="acct-stat reveal" style="--tone: #E0A325; --bp-delay: 140ms">
+                <i class="fa-solid fa-trophy" aria-hidden="true"></i>
+                <strong>@(Model.BestScore.HasValue ? Pct(Model.BestScore.Value) : "–")</strong>
+                <span>@T("En iyi puan", "Bestes Ergebnis")</span>
+            </div>
+            <div class="acct-stat reveal" style="--tone: #2A8FB0; --bp-delay: 210ms">
+                <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                <strong><span data-count="@Model.TotalAttempts">@Model.TotalAttempts</span></strong>
+                <span>@T($"Toplam deneme · {Model.DistinctQuizzes} farklı sınav", $"Versuche · {Model.DistinctQuizzes} Prüfung(en)")</span>
+            </div>
+        </section>
+
+        <div class="acct-grid">
+            <section class="acct-card reveal" aria-labelledby="activity-title">
+                <div class="acct-card__head">
+                    <h2 class="acct-card__title" id="activity-title"><i class="fa-solid fa-wave-square" aria-hidden="true"></i>@T("Son denemeler", "Letzte Versuche")</h2>
+                    <a class="acct-card__link" href="@quizzesPath">@T("Tüm sınavlar", "Alle Prüfungen") <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                </div>
+
+                @if (hasData)
+                {
+                    @if (points.Count > 1)
+                    {
+                        <figure class="acct-chart" data-chart>
+                            <svg viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label="@T("Son puanlarınızın grafiği", "Verlauf Ihrer letzten Ergebnisse")">
+                                <defs>
+                                    <linearGradient id="acctArea" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#FF9494" stop-opacity="0.35" />
+                                        <stop offset="100%" stop-color="#FF9494" stop-opacity="0" />
+                                    </linearGradient>
+                                </defs>
+                                <g class="acct-chart__grid"><line x1="0" x2="100" y1="2" y2="2" /><line x1="0" x2="100" y1="20" y2="20" /><line x1="0" x2="100" y1="38" y2="38" /></g>
+                                <path class="acct-chart__area" d="@area" />
+                                <polyline class="acct-chart__line" points="@line" />
                             </svg>
-                            <span class="level-text" style="font-size:1.1rem;">@userLevel</span>
+                            <figcaption class="acct-chart__legend"><span>@T($"Son {points.Count} deneme", $"Letzte {points.Count} Versuche")</span><span>100 · 50 · 0</span></figcaption>
+                        </figure>
+                    }
+                    <ul class="acct-attempts">
+                        @foreach (var attempt in Model.RecentAttempts)
+                        {
+                            <li class="acct-attempt">
+                                <a asp-action="ReviewQuiz" asp-route-id="@attempt.QuizId" asp-route-submission="@attempt.SubmissionId">
+                                    <span class="qz-ring" style="--value: @attempt.Score" data-tone="@Tone(attempt.Score)" aria-hidden="true">
+                                        <svg viewBox="0 0 36 36"><circle class="qz-ring__track" cx="18" cy="18" r="15.9" pathLength="100" /><circle class="qz-ring__bar" cx="18" cy="18" r="15.9" pathLength="100" /></svg>
+                                        <span class="qz-ring__label">@attempt.Score</span>
+                                    </span>
+                                    <span>
+                                        <span class="acct-attempt__title">@attempt.QuizTitle</span>
+                                        <span class="acct-attempt__meta">
+                                            <span><i class="fa-regular fa-calendar" aria-hidden="true"></i>@Local(attempt.SubmissionDate)</span>
+                                            @if (attempt.DurationSeconds > 0)
+                                            {
+                                                <span><i class="fa-regular fa-clock" aria-hidden="true"></i>@Duration(attempt.DurationSeconds)</span>
+                                            }
+                                            @if (attempt.AttemptNumber > 0)
+                                            {
+                                                <span>#@attempt.AttemptNumber</span>
+                                            }
+                                            @if (attempt.EndReason == "timeout")
+                                            {
+                                                <span class="acct-badge acct-badge--warn"><i class="fa-solid fa-hourglass-end" aria-hidden="true"></i>@T("Süre doldu", "Zeit abgelaufen")</span>
+                                            }
+                                            else if (attempt.EndReason == "violations")
+                                            {
+                                                <span class="acct-badge acct-badge--bad"><i class="fa-solid fa-ban" aria-hidden="true"></i>@T("Sonlandırıldı", "Beendet")</span>
+                                            }
+                                        </span>
+                                    </span>
+                                    <i class="fa-solid fa-chevron-right acct-attempt__go" aria-hidden="true"></i>
+                                    <span class="bp-sr-only">@T("Puan", "Ergebnis") @Pct(attempt.Score)</span>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <div class="acct-empty">
+                        <i class="fa-solid fa-seedling" aria-hidden="true"></i>
+                        <strong>@T("Henüz bir sınav çözmediniz", "Noch keine Prüfung abgelegt")</strong>
+                        <p>@T("İlk seviye sınavınızı çözün; puanlarınız ve ilerlemeniz burada görünsün.", "Legen Sie Ihren ersten Einstufungstest ab – Ergebnisse und Fortschritt erscheinen dann hier.")</p>
+                        <a class="bp-btn" href="@quizzesPath"><i class="fa-solid fa-play" aria-hidden="true"></i>@T("İlk sınavı başlat", "Ersten Test starten")</a>
+                    </div>
+                }
+            </section>
+
+            <div class="acct-side">
+                <section class="acct-card reveal" aria-labelledby="profile-title">
+                    <div class="acct-card__head">
+                        <h2 class="acct-card__title" id="profile-title"><i class="fa-regular fa-id-card" aria-hidden="true"></i>@T("Profil", "Profil")</h2>
+                    </div>
+                    <dl class="acct-dl">
+                        <div><dt>@T("Ad Soyad", "Name")</dt><dd>@Model.FullName</dd></div>
+                        <div><dt>@T("E-posta", "E-Mail")</dt><dd>@Model.Email</dd></div>
+                        @if (Model.Age > 0)
+                        {
+                            <div><dt>@T("Yaş", "Alter")</dt><dd>@Model.Age</dd></div>
+                        }
+                        <div><dt>@T("E-posta durumu", "E-Mail-Status")</dt><dd><span class="acct-status @(Model.EmailConfirmed ? "acct-status--on" : "")">@(Model.EmailConfirmed ? T("Doğrulandı", "Bestätigt") : T("Doğrulanmadı", "Nicht bestätigt"))</span></dd></div>
+                    </dl>
+                </section>
+
+                <section class="acct-card reveal" aria-labelledby="security-title">
+                    <div class="acct-card__head">
+                        <h2 class="acct-card__title" id="security-title"><i class="fa-solid fa-lock" aria-hidden="true"></i>@T("Güvenlik", "Sicherheit")</h2>
+                    </div>
+                    <div class="acct-row-action">
+                        <div>
+                            <strong>@T("Şifre", "Passwort")</strong>
+                            <span>@(Model.HasPassword ? _localization.GetKey("ManagePasswordText").Value : T("Hesabınız Google ile oluşturuldu; şifre tanımlı değil.", "Ihr Konto wurde mit Google erstellt; es ist kein Passwort gesetzt."))</span>
                         </div>
+                        @if (Model.HasPassword)
+                        {
+                            <a class="bp-btn bp-btn--ghost" asp-action="ChangePassword"><i class="fa-solid fa-key" aria-hidden="true"></i>@T("Değiştir", "Ändern")</a>
+                        }
+                    </div>
+                    <div class="acct-row-action">
+                        <div>
+                            <strong><i class="fa-brands fa-google me-1" aria-hidden="true"></i>Google</strong>
+                            <span>@(Model.GoogleLinked ? T("Google ile giriş yapabilirsiniz.", "Sie können sich mit Google anmelden.") : T("Giriş sayfasında “Google ile devam et” ile bağlayabilirsiniz.", "Auf der Anmeldeseite mit „Mit Google fortfahren“ verknüpfen."))</span>
+                        </div>
+                        <span class="acct-status @(Model.GoogleLinked ? "acct-status--on" : "")">@(Model.GoogleLinked ? T("Bağlı", "Verknüpft") : T("Bağlı değil", "Nicht verknüpft"))</span>
+                    </div>
+                </section>
+
+                @if (Model.IsStaff)
+                {
+                    <section class="acct-card reveal" aria-labelledby="tools-title">
+                        <div class="acct-card__head">
+                            <h2 class="acct-card__title" id="tools-title"><i class="fa-solid fa-toolbox" aria-hidden="true"></i>@T("Öğretmen araçları", "Werkzeuge für Lehrkräfte")</h2>
+                        </div>
+                        <div class="acct-tools">
+                            <a class="acct-tool" asp-controller="Admin" asp-action="Index">
+                                <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>
+                                <span><strong>@T("Yönetim paneli", "Verwaltung")</strong><small>@T("Sınavlar, bloglar, kullanıcılar", "Prüfungen, Blogs, Nutzer")</small></span>
+                                <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                            </a>
+                            <a class="acct-tool" asp-controller="QuizMonitor" asp-action="Index">
+                                <i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i>
+                                <span><strong>@T("Canlı sınav takibi", "Live-Prüfungsmonitor")</strong><small>@T("Gönderimler anında, ihlaller ve süreler", "Abgaben in Echtzeit, Verstöße und Zeiten")</small></span>
+                                <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                            </a>
+                        </div>
+                    </section>
+                }
+
+                <section class="acct-card acct-danger reveal" aria-labelledby="danger-title">
+                    <div class="acct-card__head">
+                        <h2 class="acct-card__title" id="danger-title"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>@_localization.GetKey("DeleteAccount")</h2>
+                    </div>
+                    <p>@_localization.GetKey("DeleteAccountText")</p>
+                    @if (Model.CanDelete)
+                    {
+                        <button type="button" class="bp-btn bp-btn--danger-outline" data-open-dialog="deleteDialog"><i class="fa-regular fa-trash-can" aria-hidden="true"></i>@_localization.GetKey("DeleteAccountButton")</button>
                     }
                     else
                     {
-                        <div class="d-flex flex-column align-items-center justify-content-center">
-                            <div class="progress-circle mx-auto">
-                                <svg width="90" height="90">
-                                    <circle class="circle-bg" cx="45" cy="45" r="40"></circle>
-                                    <circle class="circle" cx="45" cy="45" r="40"></circle>
-                                </svg>
-                                <span class="level-text">?</span>
-                            </div>
-                            <span class="no-quiz-data mt-2">@_localization.GetKey("NoQuizData")</span>
-                        </div>
+                        <p class="mb-0"><small>@T("Yönetici hesapları buradan silinemez.", "Administratorkonten können hier nicht gelöscht werden.")</small></p>
                     }
+                </section>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.CanDelete)
+    {
+        <dialog class="acct-dialog" id="deleteDialog" aria-labelledby="deleteTitle">
+            <form method="post" asp-action="DeleteAccount" class="acct-dialog__body">
+                <span class="acct-dialog__icon" aria-hidden="true"><i class="fa-regular fa-trash-can"></i></span>
+                <h2 id="deleteTitle">@T("Hesabınız silinsin mi?", "Konto wirklich löschen?")</h2>
+                <p>@_localization.GetKey("DeleteAccountConfirm")</p>
+                <div class="acct-dialog__actions">
+                    <button type="button" class="bp-btn bp-btn--ghost" data-close-dialog>@T("Vazgeç", "Abbrechen")</button>
+                    <button type="submit" class="bp-btn bp-btn--danger"><i class="fa-regular fa-trash-can" aria-hidden="true"></i>@_localization.GetKey("DeleteAccountButton")</button>
                 </div>
-            </div>
-            <!-- Kullanıcı Bilgi + Panel Butonu -->
-            <div class="w-50 m-0" style="max-width:320px;">
-                <h5 class="card-title text-center text-md-start">@_localization.GetKey("AccountDetails")</h5>
-                <p class="mb-1 text-center text-md-start">
-                    <strong>@_localization.GetKey("FirstName"):</strong> @Model.FirstName
-                </p>
-                <p class="mb-1 text-center text-md-start">
-                    <strong>@_localization.GetKey("LastName"):</strong> @Model.LastName
-                </p>
-                <p class="mb-3 text-center text-md-start">
-                    <strong>@_localization.GetKey("Age"):</strong> @Model.Age
-                </p>
-                @if (canAccessDashboard)
-                {
-                    <div class="d-flex justify-content-center justify-content-md-start">
-                        <a asp-controller="Admin" asp-action="Index" class="btn btn-outline-info btn-custom">
-                            @_localization.GetKey("GoToDashboard")
-                        </a>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-</div>
-
-    <div class="card shadow-sm card-hover mb-4 animate__animated animate__fadeInUp animate__delay-1s">
-        <div class="card-body d-flex justify-content-between align-items-center">
-            <div>
-                <h5 class="card-title">@_localization.GetKey("ManagePassword")</h5>
-                <p class="text-muted">@_localization.GetKey("ManagePasswordText")</p>
-            </div>
-            <a asp-action="ChangePassword" class="btn btn-outline-primary btn-custom">@_localization.GetKey("ChangePassword")</a>
-        </div>
-    </div>
-
-    <div class="card shadow-sm card-hover mb-4 animate__animated animate__fadeInUp animate__delay-2s">
-        <div class="card-body d-flex justify-content-between align-items-center">
-            <div>
-                <h5 class="card-title">@_localization.GetKey("MyQuizzesLevels")</h5>
-                <p class="text-muted">@_localization.GetKey("MyQuizzesLevelsText")</p>
-            </div>
-            @{
-                var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
-                var quizzesPath = isGerman ? "/pruefungen" : "/sinavlar";
-            }
-            <a href="@quizzesPath" class="btn btn-outline-success btn-custom">@_localization.GetKey("GoToQuizzes")</a>
-        </div>
-    </div>
-
-    <div class="card shadow-sm card-hover animate__animated animate__fadeInUp animate__delay-3s my-3">
-        <div class="card-body">
-            <h5 class="card-title text-danger">@_localization.GetKey("DeleteAccount")</h5>
-            <p class="text-muted">@_localization.GetKey("DeleteAccountText")</p>
-            <form asp-action="DeleteAccount" method="post" onsubmit="return confirm('@_localization.GetKey("DeleteAccountConfirm")');">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-outline-danger btn-custom delete-btn">@_localization.GetKey("DeleteAccountButton")</button>
             </form>
-        </div>
-    </div>
-@if (User.IsInRole("Root") || User.IsInRole("Admin") || User.IsInRole("Teacher"))
-{
-    <div class="card border-primary animate__animated animate__fadeInUp animate__delay-3s my-3 shadow">
-        <div class="card-header bg-primary text-white">
-            <i class="fas fa-chart-bar"></i> Quiz Monitoring
-        </div>
-        <div class="card-body">
-            <h5 class="card-title">Real-Time Quiz Analytics</h5>
-            <p class="card-text">
-                Access all quiz attempts, student results, and analytics. See charts, trends, and student activity in real time.
-            </p>
-            <a href="@Url.Action("Index", "QuizMonitor")" class="btn btn-primary">
-                <i class="fas fa-arrow-right"></i> Go to Quiz Monitor
-            </a>
-        </div>
-    </div>
-}
-
+        </dialog>
+    }
 </div>
+
+@section Scripts {
+    <script src="~/js/blog.js" asp-append-version="true" defer></script>
+    <script src="~/js/account.js" asp-append-version="true" defer></script>
+}
