@@ -131,6 +131,13 @@
                         <span asp-validation-for="YouTubeVideoUrl" class="text-danger d-block mt-1"></span>
                         <small class="text-muted">Optional YouTube link</small>
                     </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="TimeLimitMinutes" class="form-label fw-bold">Time limit (minutes)</label>
+                        <input asp-for="TimeLimitMinutes" type="number" min="1" max="300" class="form-control" placeholder="Auto" />
+                        <span asp-validation-for="TimeLimitMinutes" class="text-danger d-block mt-1"></span>
+                        <small class="text-muted">Empty = 90 seconds per question (5–120 min)</small>
+                    </div>
                 </div>
 
                 <!-- SEO & Localization Section -->

@@ -84,6 +84,11 @@ namespace SpeakingClub.Models
 public string? AudioUrl { get; set; }    [Display(Name = "YouTube Video URL")]
     public string? YouTubeVideoUrl { get; set; }
 
+    // Exam time limit; empty = 90 seconds per question (ExamRules.TimeLimitSeconds)
+    [Display(Name = "Time limit (minutes)")]
+    [Range(1, 300, ErrorMessage = "Time limit must be between 1 and 300 minutes.")]
+    public int? TimeLimitMinutes { get; set; }
+
     // Teacher selection (frontend only for now)
     public string? TeacherId { get; set; }
     public string TeacherName { get; set; } = string.Empty;

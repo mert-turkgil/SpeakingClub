@@ -31,6 +31,7 @@ namespace SpeakingClub.Data
         public DbSet<QuizAnswer> QuizAnswers { get; set; }
         public DbSet<QuizResponse> QuizResponses { get; set; }
         public DbSet<QuizSubmission> QuizSubmissions { get; set; }
+        public DbSet<QuizAttempt> QuizAttempts { get; set; }
         public DbSet<Word> Words { get; set; }
         
         // DbSets for additional entities
@@ -51,6 +52,25 @@ namespace SpeakingClub.Data
             modelBuilder.Entity<QuizSubmission>()
                 .Property(qs => qs.UserId)
                 .IsRequired();
+            modelBuilder.Entity<QuizSubmission>()
+                .Property(qs => qs.EndReason)
+                .HasMaxLength(20);
+            // One submission per exam attempt (makes double submits harmless)
+            modelBuilder.Entity<QuizSubmission>()
+                .HasIndex(qs => qs.AttemptId)
+                .IsUnique()
+                .HasFilter("[AttemptId] IS NOT NULL");
+
+            modelBuilder.Entity<QuizAttempt>(attempt =>
+            {
+                attempt.HasKey(a => a.Id);
+                attempt.Property(a => a.UserId).IsRequired().HasMaxLength(450);
+                attempt.HasIndex(a => new { a.UserId, a.QuizId, a.SubmittedAt });
+                attempt.HasOne(a => a.Quiz)
+                    .WithMany()
+                    .HasForeignKey(a => a.QuizId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
             // Configure composite key for BlogQuiz join table
             modelBuilder.Entity<BlogQuiz>()
                 .HasKey(bq => new { bq.BlogId, bq.QuizId });

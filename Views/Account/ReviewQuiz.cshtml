@@ -1,63 +1,175 @@
 @model SpeakingClub.Models.QuizReviewViewModel
-@inject LanguageService _localization
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    string Pct(int value) => isGerman ? $"{value} %" : $"%{value}";
+    string Tone(int score) => score >= 80 ? "good" : score >= 50 ? "mid" : "low";
+    string Duration(int seconds) => seconds >= 60
+        ? (isGerman ? $"{seconds / 60} Min. {seconds % 60} s" : $"{seconds / 60} dk {seconds % 60} sn")
+        : (isGerman ? $"{seconds} s" : $"{seconds} sn");
+    var quizzesPath = isGerman ? "/pruefungen" : "/sinavlar";
+    var notice = TempData["QuizNotice"] as string;
 
-@section Css {
-    <style>
-        .table-review th,
-        .table-review td {
-            vertical-align: middle;
-        }
-    </style>
+    var total = Math.Max(Model.TotalQuestions, 1);
+    var wrong = Model.AnsweredCount - Model.CorrectCount;
+    var empty = Model.TotalQuestions - Model.AnsweredCount;
+    var pctCorrect = Model.CorrectCount * 100.0 / total;
+    var pctWrong = wrong * 100.0 / total;
+    var pctEmpty = empty * 100.0 / total;
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+
+    var verdict = Model.EndReason == "violations"
+        ? T("Sınav, kural ihlalleri nedeniyle sonlandırıldı.", "Die Prüfung wurde wegen Regelverstößen beendet.")
+        : Model.Score >= 90 ? T("Mükemmel! Bu konuya hâkimsiniz.", "Ausgezeichnet! Sie beherrschen das Thema.")
+        : Model.Score >= 75 ? T("Harika iş! Çok iyi bir sonuç.", "Starke Leistung! Ein sehr gutes Ergebnis.")
+        : Model.Score >= 50 ? T("İyi gidiyorsunuz. Yanlışlarınızı inceleyip tekrar deneyin.", "Gut unterwegs. Sehen Sie sich die Fehler an und versuchen Sie es erneut.")
+        : T("Biraz daha pratik gerekiyor. Aşağıdaki cevaplar size yol gösterecek.", "Etwas mehr Übung hilft. Die Antworten unten zeigen Ihnen den Weg.");
+
+    // Submission times are stored in UTC; show them in the audience's time zone
+    var submitted = DateTime.SpecifyKind(Model.SubmissionDate, DateTimeKind.Utc);
+    try { submitted = TimeZoneInfo.ConvertTimeFromUtc(submitted, TimeZoneInfo.FindSystemTimeZoneById(isGerman ? "Europe/Berlin" : "Europe/Istanbul")); }
+    catch (TimeZoneNotFoundException) { }
 }
-<div style="height: 80vh;" class="container my-5">
-    <h2 class="text-center mb-4">@string.Format(_localization.GetKey("ReviewQuiz_Title"), Model.QuizTitle)</h2>
-    <div class="mb-3 text-center">
-        <strong>@_localization.GetKey("SubmissionDate"):</strong> @Model.SubmissionDate.ToLocalTime().ToString("g") <br />
-        <strong>@_localization.GetKey("Score"):</strong> @Model.Score% <br />
-        <strong>@_localization.GetKey("TotalTimeTaken"):</strong> @Model.TotalTimeTaken @_localization.GetKey("TimeSeconds")
-    </div>
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title">@_localization.GetKey("QuestionDetails")</h5>
-            <table class="table table-sm table-review">
-                <thead>
-                    <tr>
-                        <th>@_localization.GetKey("Question")</th>
-                        <th>@_localization.GetKey("YourAnswer")</th>
-                        <th>@_localization.GetKey("CorrectAnswer")</th>
-                        <th>@_localization.GetKey("TimeSeconds")</th>
-                        <th>@_localization.GetKey("Status")</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var detail in Model.Details)
-                    {
-                        <tr>
-                            <td>@detail.QuestionText</td>
-                            <td>@detail.YourAnswer</td>
-                            <td>@detail.CorrectAnswer</td>
-                            <td>@detail.TimeTakenSeconds</td>
-                            <td>
-                                @if (detail.IsCorrect)
-                                {
-                                    <span class="badge bg-success">@_localization.GetKey("Correct")</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger">@_localization.GetKey("Incorrect")</span>
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <div class="mt-3">
-        @{
-            var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
-            var quizzesPath = isGerman ? "/pruefungen" : "/sinavlar";
+@section Css {
+    <script>document.documentElement.classList.add('bp-js');</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@@0,9..144,600;1,9..144,600&display=swap" />
+    <link rel="stylesheet" href="~/css/blog.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/quiz.css" asp-append-version="true" />
+}
+
+<div class="quiz-page qr" data-page="quiz-result" data-score="@Model.Score" data-end-reason="@Model.EndReason" data-attempt="@Model.AttemptId">
+    <div class="bp-container">
+        <nav aria-label="@T("Sayfa yolu", "Brotkrumen")">
+            <ol class="qz-breadcrumb bp-enter">
+                <li><a href="@quizzesPath">@T("Sınavlar", "Prüfungen")</a></li>
+                <li><a asp-action="StartQuiz" asp-route-id="@Model.QuizId">@Model.QuizTitle</a></li>
+                <li aria-current="page">@T("Sonuç", "Ergebnis")</li>
+            </ol>
+        </nav>
+        @if (!string.IsNullOrEmpty(notice))
+        {
+            <div class="qz-notice@(Model.EndReason is "violations" or "timeout" ? " qz-notice--warn" : "")" role="status">
+                <i class="fa-solid @(Model.EndReason == "submitted" ? "fa-circle-check" : "fa-triangle-exclamation")" aria-hidden="true"></i><span>@notice</span>
+                <button type="button" data-dismiss aria-label="@T("Kapat", "Schließen")">&times;</button>
+            </div>
         }
-        <a href="@quizzesPath" class="btn btn-secondary">@_localization.GetKey("BackToQuizzes")</a>
+
+        <section class="qz-card-surface qr-hero bp-enter" style="--bp-delay: 80ms; margin-top: 1rem" aria-labelledby="result-title">
+            <div>
+                <span class="bp-eyebrow"><i class="fa-solid fa-square-poll-vertical" aria-hidden="true"></i>@T("Sonuç", "Ergebnis") · @T("Deneme", "Versuch") #@Model.AttemptNumber</span>
+                <h1 class="qr-hero__title" id="result-title">@Model.QuizTitle</h1>
+                <p class="qr-hero__verdict">@verdict</p>
+                <ul class="qr-hero__meta">
+                    <li><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="@DateTime.SpecifyKind(Model.SubmissionDate, DateTimeKind.Utc).ToString("o")">@submitted.ToString(isGerman ? "dd.MM.yyyy, HH:mm" : "dd.MM.yyyy HH:mm")</time></li>
+                    <li><i class="fa-regular fa-clock" aria-hidden="true"></i>@Duration(Model.TotalTimeTaken)</li>
+                    @if (Model.Level != null)
+                    {
+                        <li><span class="qz-level" data-level="@Model.Level">@Model.Level</span></li>
+                    }
+                    <li><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>@Model.ViolationCount @T("ihlal", Model.ViolationCount == 1 ? "Verstoß" : "Verstöße")</li>
+                </ul>
+
+                @if (Model.EndReason == "violations")
+                {
+                    <div class="qr-banner qr-banner--danger"><i class="fa-solid fa-ban" aria-hidden="true"></i><span>@T($"İhlal sınırına ({Model.ViolationCount}) ulaşıldığı için sınav o ana kadarki cevaplarla gönderildi. Öğretmeniniz bu denemenin kayıtlarını görebilir.", $"Das Limit für Verstöße ({Model.ViolationCount}) wurde erreicht; die Prüfung wurde mit den bisherigen Antworten abgegeben. Ihre Lehrkraft kann das Protokoll dieses Versuchs einsehen.")</span></div>
+                }
+                else if (Model.EndReason == "timeout")
+                {
+                    <div class="qr-banner qr-banner--warn"><i class="fa-solid fa-hourglass-end" aria-hidden="true"></i><span>@T("Süre dolduğunda cevaplarınız otomatik olarak gönderildi.", "Bei Ablauf der Zeit wurden Ihre Antworten automatisch abgegeben.")</span></div>
+                }
+                else if (Model.ViolationCount == 0 && Model.EndReason != null)
+                {
+                    <div class="qr-banner qr-banner--ok"><i class="fa-solid fa-shield-heart" aria-hidden="true"></i><span>@T("Temiz sınav: hiçbir kural ihlali kaydedilmedi.", "Saubere Prüfung: Es wurden keine Regelverstöße erfasst.")</span></div>
+                }
+
+                <div class="qr-hero__actions">
+                    <a class="bp-btn" asp-action="StartQuiz" asp-route-id="@Model.QuizId"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i>@T("Tekrar çöz", "Erneut versuchen")</a>
+                    <a class="bp-btn bp-btn--ghost" href="@quizzesPath"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i>@T("Tüm sınavlar", "Alle Prüfungen")</a>
+                </div>
+            </div>
+
+            <div class="qr-score">
+                <span class="qz-ring" style="--value: @Model.Score" data-tone="@Tone(Model.Score)" role="img" aria-label="@T("Puan", "Ergebnis") @Pct(Model.Score)">
+                    <svg viewBox="0 0 36 36" aria-hidden="true"><circle class="qz-ring__track" cx="18" cy="18" r="15.9" pathLength="100" /><circle class="qz-ring__bar" cx="18" cy="18" r="15.9" pathLength="100" /></svg>
+                    <span class="qz-ring__label">@if (!isGerman) {<small>%</small>}<span data-count="@Model.Score">@Model.Score</span>@if (isGerman) {<small> %</small>}</span>
+                </span>
+                <div class="qr-kpis">
+                    <div class="is-ok"><strong data-count="@Model.CorrectCount">@Model.CorrectCount</strong><span>@T("Doğru", "Richtig")</span></div>
+                    <div class="is-bad"><strong data-count="@wrong">@wrong</strong><span>@T("Yanlış", "Falsch")</span></div>
+                    <div><strong data-count="@empty">@empty</strong><span>@T("Boş", "Offen")</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="qz-card-surface reveal" style="margin-top: 1.5rem; padding: clamp(1.25rem, 3vw, 1.75rem)" aria-label="@T("Dağılım", "Verteilung")">
+            <div class="qr-breakdown" style="margin-top: 0" role="img" aria-label="@T($"{Model.CorrectCount} doğru, {wrong} yanlış, {empty} boş", $"{Model.CorrectCount} richtig, {wrong} falsch, {empty} offen")">
+                <span class="is-correct" data-width="@pctCorrect.ToString("0.##", inv)"></span>
+                <span class="is-wrong" data-width="@pctWrong.ToString("0.##", inv)"></span>
+                <span class="is-empty" data-width="@pctEmpty.ToString("0.##", inv)"></span>
+            </div>
+            <noscript><style>.qr-breakdown span { width: auto; flex: 1; }</style></noscript>
+            <ul class="qr-legend">
+                <li class="is-correct">@T("Doğru", "Richtig") · @Model.CorrectCount</li>
+                <li class="is-wrong">@T("Yanlış", "Falsch") · @wrong</li>
+                <li class="is-empty">@T("Boş", "Offen") · @empty</li>
+                <li style="margin-left: auto">@Model.TotalQuestions @T("soru", "Fragen")</li>
+            </ul>
+        </section>
+
+        <section class="qr-review" aria-labelledby="review-title">
+            <div class="qr-review__head">
+                <h2 id="review-title">@T("Cevap anahtarı", "Lösungen")</h2>
+                <div class="bp-chips" role="group" aria-label="@T("Filtre", "Filter")" data-review-filter>
+                    <button type="button" class="bp-chip is-active" data-value="" aria-pressed="true">@T("Tümü", "Alle") <small>@Model.TotalQuestions</small></button>
+                    <button type="button" class="bp-chip" data-value="wrong" aria-pressed="false">@T("Yanlış", "Falsch") <small>@wrong</small></button>
+                    <button type="button" class="bp-chip" data-value="empty" aria-pressed="false">@T("Boş", "Offen") <small>@empty</small></button>
+                    <button type="button" class="bp-chip" data-value="correct" aria-pressed="false">@T("Doğru", "Richtig") <small>@Model.CorrectCount</small></button>
+                </div>
+            </div>
+
+            <ol class="qr-list">
+                @foreach (var item in Model.Details)
+                {
+                    var status = !item.IsAnswered ? "empty" : item.IsCorrect ? "correct" : "wrong";
+                    <li class="qr-item reveal" data-status="@status">
+                        <span class="qr-item__num" aria-hidden="true">
+                            @if (status == "correct") { <i class="fa-solid fa-check"></i> }
+                            else if (status == "wrong") { <i class="fa-solid fa-xmark"></i> }
+                            else { @item.Number }
+                        </span>
+                        <div>
+                            <p class="qr-item__q"><span class="bp-sr-only">@T("Soru", "Frage") @item.Number: </span>@item.QuestionText</p>
+                            <div class="qr-item__answers">
+                                <div>
+                                    <span>@T("Cevabınız", "Ihre Antwort")</span>
+                                    @if (!item.IsAnswered)
+                                    {
+                                        <em>@T("Boş bırakıldı", "Nicht beantwortet")</em>
+                                    }
+                                    else
+                                    {
+                                        <strong class="@(item.IsCorrect ? "is-right" : "is-wrong")">@item.YourAnswer</strong>
+                                    }
+                                </div>
+                                @if (!item.IsCorrect)
+                                {
+                                    <div><span>@T("Doğru cevap", "Richtige Antwort")</span><strong class="is-right">@item.CorrectAnswer</strong></div>
+                                }
+                            </div>
+                            @if (item.TimeTakenSeconds > 0)
+                            {
+                                <p class="qr-item__time"><i class="fa-regular fa-clock me-1" aria-hidden="true"></i>@Duration(item.TimeTakenSeconds)</p>
+                            }
+                        </div>
+                    </li>
+                }
+                <li class="qr-empty-note" data-review-empty hidden>@T("Bu filtrede soru yok.", "Keine Fragen in diesem Filter.")</li>
+            </ol>
+        </section>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/blog.js" asp-append-version="true" defer></script>
+    <script src="~/js/quiz.js" asp-append-version="true" defer></script>
+}

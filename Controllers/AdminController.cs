@@ -3048,6 +3048,7 @@ namespace SpeakingClub.Controllers
                         ImageUrl = uploadedImageUrl,
                         AudioUrl = uploadedAudioUrl,
                         YouTubeVideoUrl = finalYouTubeUrl,
+                        TimeLimitMinutes = model.TimeLimitMinutes,
                         Tags = taglist.Where(t => model.SelectedTagIds.Contains(t.TagId)).ToList(),
                         Words = wordlist.Where(w => model.SelectedWordIds.Contains(w.WordId)).ToList(),
                         // SEO Fields
@@ -3199,6 +3200,7 @@ namespace SpeakingClub.Controllers
                 MetaKeywordsDe = quiz.MetaKeywordsDe,
                 TitleDe = quiz.TitleDe,
                 DescriptionDe = quiz.DescriptionDe,
+                TimeLimitMinutes = quiz.TimeLimitMinutes,
                 SelectedTagIds = quiz.Tags.Select(t => t.TagId).ToList(),
                 SelectedWordIds = quiz.Words.Select(w => w.WordId).ToList(),
                 Questions = quiz.Questions.Select(q => new QuestionEditViewModel
@@ -3320,6 +3322,7 @@ namespace SpeakingClub.Controllers
                 quiz.MetaKeywordsDe = model.MetaKeywordsDe ?? string.Empty;
                 quiz.TitleDe = model.TitleDe ?? string.Empty;
                 quiz.DescriptionDe = model.DescriptionDe ?? string.Empty;
+                quiz.TimeLimitMinutes = model.TimeLimitMinutes;
 
                 // Handle Image Upload
                 if (model.ImageFile != null && model.ImageFile.Length > 0)

@@ -53,6 +53,15 @@ namespace SpeakingClub.Data.Concrete
                 .ToListAsync();
         }
 
+        public async Task<QuizSubmission?> GetByIdWithResponsesAsync(int submissionId)
+        {
+            return await _dbSet
+                .Include(s => s.QuizResponses)
+                    .ThenInclude(r => r.QuizAnswer)
+                .Include(s => s.Quiz)
+                .FirstOrDefaultAsync(s => s.QuizSubmissionId == submissionId);
+        }
+
         public async Task<QuizSubmission?> GetLatestSubmissionByUserAndQuiz(string userId, int quizId)
         {
             return await _dbSet

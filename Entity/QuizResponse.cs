@@ -11,6 +11,10 @@ namespace SpeakingClub.Entity
         public int QuizResponseId { get; set; }
         public int QuizSubmissionId { get; set; }
         public QuizSubmission QuizSubmission { get; set; }
+
+        // The question this response answers. Kept even when no answer was chosen, so unanswered
+        // questions still show up in the review. (A plain column: no FK, question deletes stay unaffected.)
+        public int? QuestionId { get; set; }
         
         // Reference to the answer option (if applicable)
         public int? QuizAnswerId { get; set; }

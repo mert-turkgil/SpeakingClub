@@ -13,5 +13,7 @@ namespace SpeakingClub.Models
         public string? CorrectAnswer { get; set; }
         public int TimeTakenSeconds { get; set; }
         public bool IsCorrect { get; set; }
+        public bool IsAnswered { get; set; }
+        public int Number { get; set; }
     }
 }

@@ -22,5 +22,13 @@ namespace SpeakingClub.Models
         public string? AudioUrl { get; set; }
 
         public IEnumerable<AttemptDetailViewModel>? RecentAttemptDetails { get; set; }
+
+        // Exam facts shown on the card
+        public int QuestionCount { get; set; }
+        public int TimeLimitMinutes { get; set; }
+        public string? Level { get; set; }
+        public int? BestScore { get; set; }
+        // An attempt the user started and has not submitted yet (shown as "Resume")
+        public Guid? ActiveAttemptId { get; set; }
     }
 }

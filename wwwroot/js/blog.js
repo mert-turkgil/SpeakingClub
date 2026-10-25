@@ -7,8 +7,8 @@
 (function () {
     'use strict';
 
-    // Also runs on the home page, which reuses the blog cards, buttons and reveal animations
-    var root = document.querySelector('.blog-page, .home-page');
+    // Also runs on the home and quiz pages, which reuse the cards, buttons and reveal animations
+    var root = document.querySelector('.blog-page, .home-page, .quiz-page');
     if (!root) return;
 
     var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -41,7 +41,7 @@
     function initCardGlow() {
         if (reduceMotion || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
         document.addEventListener('pointermove', function (e) {
-            var card = e.target.closest && e.target.closest('.post-card');
+            var card = e.target.closest && e.target.closest('.post-card, .qz-card');
             if (!card) return;
             var r = card.getBoundingClientRect();
             card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
@@ -54,7 +54,7 @@
     // ------------------------------------------------------------------------
     function initImageFallbacks() {
         function fallback(img) {
-            if (img.closest('.post-card__media')) {
+            if (img.closest('.post-card__media, .qz-card__media')) {
                 img.classList.add('is-broken');
             } else if (img.closest('.post-cover')) {
                 img.closest('.post-cover').remove();
@@ -64,7 +64,7 @@
             if (e.target && e.target.tagName === 'IMG') fallback(e.target);
         }, true);
         // Images that already failed before this script ran
-        document.querySelectorAll('.post-card__media img, .post-cover img').forEach(function (img) {
+        document.querySelectorAll('.post-card__media img, .qz-card__media img, .post-cover img').forEach(function (img) {
             if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) fallback(img);
         });
     }

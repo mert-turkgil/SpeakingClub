@@ -30,6 +30,7 @@ namespace SpeakingClub.Controllers
         private readonly IDictionaryService _dictionaryService;
         private readonly IDeeplService _deeplService;
         private readonly UserManager<User> _userManager;
+        private readonly ExamService _examService;
 
         public HomeController(
             IConfiguration configuration,
@@ -40,8 +41,10 @@ namespace SpeakingClub.Controllers
             IEmailSender emailSender,
             IDeeplService deeplService,
             IDictionaryService dictionaryService,
-            UserManager<User> userManager)
+            UserManager<User> userManager,
+            ExamService examService)
         {
+            _examService = examService;
             _configuration = configuration;
             _memoryCache = memoryCache;
             _logger = logger;
@@ -1195,128 +1198,99 @@ namespace SpeakingClub.Controllers
             if (RedirectToCanonical(GetLocalizedPath("/sinavlar", "/pruefungen", "/sinavlar") + levelPath) is { } redirect)
                 return redirect;
 
-            // SEO metadata for quizzes
+            // SEO metadata for quizzes. /sinavlar/a1 shows the same list with the A1 filter pre-selected,
+            // so its canonical is the list itself.
+            var levelText = !string.IsNullOrEmpty(level) ? $" - {level.ToUpperInvariant()}" : "";
             if (IsGerman())
             {
-                var levelText = !string.IsNullOrEmpty(level) ? $" - {level}" : "";
                 SetSeoData(
-                    $"Deutsch-Prüfungen{levelText} | Almanca Konuşma Kulübü",
-                    "Testen Sie Ihr Deutsch mit unseren interaktiven Quizzen. Verschiedene Schwierigkeitsstufen für Anfänger bis Fortgeschrittene.",
-                    "Deutsch-Quiz, Prüfung, Deutschtest, A1, A2, B1, B2, C1, Grammatik-Quiz, Vokabel-Quiz",
-                    "/pruefungen" + (level != null ? $"/{level.ToLower()}" : ""));
+                    $"Deutsch-Einstufungstests{levelText} | Almanca Konuşma Kulübü",
+                    "Testen Sie Ihr Deutsch mit zeitgesteuerten Online-Prüfungen von A1 bis C1 – mit sofortiger Auswertung und Fragen-Review.",
+                    "Deutsch-Quiz, Prüfung, Deutschtest, Einstufungstest, A1, A2, B1, B2, C1, Grammatik-Quiz, Vokabel-Quiz",
+                    "/pruefungen");
             }
             else
             {
-                var levelText = !string.IsNullOrEmpty(level) ? $" - {level}" : "";
                 SetSeoData(
-                    $"Almanca Sınavlar{levelText} | Almanca Konuşma Kulübü",
-                    "Almanca bilginizi interaktif sınavlarla test edin. Başlangıçtan ileri seviyeye farklı zorluk seviyeleri.",
-                    "almanca quiz, sınav, almanca test, A1, A2, B1, B2, C1, gramer quiz, kelime quiz",
-                    "/sinavlar" + (level != null ? $"/{level.ToLower()}" : ""));
+                    $"Almanca Seviye Sınavları{levelText} | Almanca Konuşma Kulübü",
+                    "A1'den C1'e süreli online Almanca sınavlarıyla seviyenizi ölçün; anında puan ve soru soru değerlendirme.",
+                    "almanca quiz, sınav, almanca test, seviye tespit sınavı, A1, A2, B1, B2, C1, gramer quiz, kelime quiz",
+                    "/sinavlar");
             }
-            SetHreflang("/sinavlar" + levelPath, "/pruefungen" + levelPath);
+            SetHreflang("/sinavlar", "/pruefungen");
 
-            // Quiz Schema.org structured data ("@@" is Razor escaping only; in C# it produced an invalid "@@context" key)
             ViewData["ArticleSchema"] = $@"<script type=""application/ld+json"">
             {{
                 ""@context"": ""https://schema.org"",
                 ""@type"": ""ItemList"",
-                ""name"": ""{(IsGerman() ? "Deutsch-Prüfungen" : "Almanca Sınavlar")}"",
-                ""description"": ""{(IsGerman() ? "Interaktive Deutsch-Quizze" : "Almanca interaktif sınavlar")}"",
+                ""name"": ""{(IsGerman() ? "Deutsch-Einstufungstests" : "Almanca Seviye Sınavları")}"",
+                ""description"": ""{(IsGerman() ? "Interaktive Deutsch-Prüfungen" : "Almanca interaktif sınavlar")}"",
                 ""url"": ""{AbsoluteUrl(IsGerman() ? "/pruefungen" : "/sinavlar")}""
             }}
             </script>";
 
-            // Retrieve all quizzes
-            var allQuizzes = await _unitOfWork.Quizzes.GetAllAsync();
+            var allQuizzes = (await _unitOfWork.Quizzes.GetAllAsync()).ToList();
 
-            // Filter by level if provided
-            if (!string.IsNullOrEmpty(level))
-            {
-                var filteredQuizzes = allQuizzes.Where(q => q.Tags != null && q.Tags.Any(t => t.Name.Equals(level, StringComparison.OrdinalIgnoreCase))).ToList();
-                if (filteredQuizzes.Any())
-                {
-                    allQuizzes = filteredQuizzes;
-                }
-                ViewBag.SelectedLevel = level;
-            }
-
-            // Get the current user if logged in
+            // The signed-in user's attempts and running exams
             var user = await _userManager.GetUserAsync(User);
             var userSubmissions = new List<QuizSubmission>();
-
+            var activeAttempts = new List<QuizAttempt>();
             if (user != null)
             {
-                var submissions = await _unitOfWork.QuizSubmissions.GetAllAsync();
-                userSubmissions = submissions.Where(s => s.UserId == user.Id).ToList();
+                await _examService.FinalizeExpiredAttemptsAsync(user); // exams left running past their deadline
+                userSubmissions = (await _unitOfWork.QuizSubmissions.GetSubmissionsByUserIdAsync(user.Id)).ToList();
+                var now = DateTime.UtcNow;
+                activeAttempts = (await _unitOfWork.GenericRepository<QuizAttempt>()
+                        .GetAllAsync(a => a.UserId == user.Id && a.SubmittedAt == null))
+                    .Where(a => a.ExpiresAt.AddSeconds(ExamRules.GraceSeconds) > now)
+                    .ToList();
             }
 
             // Pre-fetch teacher display names
-            var teacherUserNames = allQuizzes.Select(q => q.TeacherName).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
             var teacherDisplayNames = new Dictionary<string, string>();
-            foreach (var teacherUserName in teacherUserNames)
+            foreach (var teacherUserName in allQuizzes.Select(q => q.TeacherName).Where(t => !string.IsNullOrEmpty(t)).Distinct())
             {
-                if (!string.IsNullOrEmpty(teacherUserName))
-                {
-                    var teacher = await _userManager.FindByNameAsync(teacherUserName);
-                    teacherDisplayNames[teacherUserName] = teacher != null ? $"{teacher.FirstName} {teacher.LastName}" : teacherUserName;
-                }
+                var teacher = await _userManager.FindByNameAsync(teacherUserName);
+                var fullName = teacher == null ? "" : $"{teacher.FirstName} {teacher.LastName}".Trim();
+                teacherDisplayNames[teacherUserName] = string.IsNullOrEmpty(fullName) ? teacherUserName : fullName;
             }
 
-            Func<SpeakingClub.Entity.Quiz, QuizSummaryViewModel> mapQuiz = q =>
+            QuizSummaryViewModel MapQuiz(SpeakingClub.Entity.Quiz q)
             {
-                var lastSubmission = userSubmissions
-                    .Where(s => s.QuizId == q.Id)
-                    .OrderByDescending(s => s.SubmissionDate)
-                    .FirstOrDefault();
-
-                IEnumerable<AttemptDetailViewModel>? details = null;
-                if (lastSubmission != null && lastSubmission.QuizResponses != null)
-                {
-                    details = lastSubmission.QuizResponses.Select(r =>
-                    {
-                        var question = r.QuizAnswer?.Question;
-                        var correctAnswer = question?.Answers.FirstOrDefault(a => a.IsCorrect)?.AnswerText ?? "N/A";
-                        var yourAnswer = r.QuizAnswer?.AnswerText ?? r.AnswerText ?? "No answer";
-                        bool isCorrect = r.QuizAnswer != null && r.QuizAnswer.IsCorrect;
-                        return new AttemptDetailViewModel
-                        {
-                            QuestionId = question?.Id ?? 0,
-                            QuestionText = question?.QuestionText ?? "N/A",
-                            YourAnswer = yourAnswer,
-                            CorrectAnswer = correctAnswer,
-                            TimeTakenSeconds = 0,
-                            IsCorrect = isCorrect
-                        };
-                    });
-                }
-
+                var attempts = userSubmissions.Where(s => s.QuizId == q.Id).OrderByDescending(s => s.SubmissionDate).ToList();
                 return new QuizSummaryViewModel
                 {
-                    Tags = q.Tags?.ToList() ?? new List<Tag>(),
-                    AudioUrl = q.AudioUrl,
-                    YouTubeVideoUrl = q.YouTubeVideoUrl,
                     QuizId = q.Id,
-                    QuizTitle = q.Title,
-                    QuizDescription = q.Description,
-                    ImageUrl = !string.IsNullOrEmpty(q.ImageUrl) ? q.ImageUrl : Url.Content("~/img/header_logo.png"),
-                    TeacherName = !string.IsNullOrEmpty(q.TeacherName) && teacherDisplayNames.ContainsKey(q.TeacherName) 
-                        ? teacherDisplayNames[q.TeacherName] 
-                        : "Unknown Instructor",
-                    CategoryName = q.Category != null ? q.Category.Name : "General",
-                    AttemptCount = userSubmissions.Count(s => s.QuizId == q.Id),
-                    LastScore = lastSubmission?.Score,
-                    LastAttemptDate = lastSubmission?.SubmissionDate,
-                    RecentAttemptDetails = details
+                    QuizTitle = IsGerman() && !string.IsNullOrWhiteSpace(q.TitleDe) ? q.TitleDe : q.Title,
+                    QuizDescription = IsGerman() && !string.IsNullOrWhiteSpace(q.DescriptionDe) ? q.DescriptionDe : q.Description,
+                    ImageUrl = q.ImageUrl,
+                    TeacherName = !string.IsNullOrEmpty(q.TeacherName) && teacherDisplayNames.TryGetValue(q.TeacherName, out var name)
+                        ? name
+                        : "Almanca Konuş",
+                    CategoryName = q.Category?.Name,
+                    Tags = q.Tags?.ToList() ?? new List<Tag>(),
+                    QuestionCount = q.Questions?.Count ?? 0,
+                    TimeLimitMinutes = ExamRules.TimeLimitSeconds(q) / 60,
+                    Level = ExamRules.LevelOf(q),
+                    AttemptCount = attempts.Count,
+                    LastScore = attempts.FirstOrDefault()?.Score,
+                    LastAttemptDate = attempts.FirstOrDefault()?.SubmissionDate,
+                    BestScore = attempts.Count > 0 ? attempts.Max(s => s.Score) : null,
+                    ActiveAttemptId = activeAttempts.Where(a => a.QuizId == q.Id).OrderByDescending(a => a.StartedAt).FirstOrDefault()?.Id
                 };
-            };
+            }
 
             var viewModel = new CombinedQuizzesViewModel
             {
-                AvailableQuizzes = allQuizzes.Select(mapQuiz).ToList()
+                AvailableQuizzes = allQuizzes.Select(MapQuiz).ToList(),
+                SelectedLevel = string.IsNullOrWhiteSpace(level) ? null : level.ToUpperInvariant(),
+                TotalAttempts = userSubmissions.Count,
+                AverageScore = userSubmissions.Count > 0 ? (int)Math.Round(userSubmissions.Average(s => s.Score)) : 0,
+                BestScore = userSubmissions.Count > 0 ? userSubmissions.Max(s => s.Score) : 0,
+                CompletedQuizzes = userSubmissions.Select(s => s.QuizId).Distinct().Count()
             };
 
-            return View("~/Views/Account/Quizzes.cshtml", viewModel);
+            return View("Quizzes", viewModel);
         }
         #endregion
 

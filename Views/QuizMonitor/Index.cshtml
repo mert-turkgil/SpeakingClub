@@ -244,6 +244,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
     <script>
         // Ana veri
         const allData = @Html.Raw(JsonConvert.SerializeObject(Model));
@@ -344,10 +345,13 @@ dataTable.clear().rows.add(filtered.map((x,i) => [
     String(x.MaxScore ?? ""),
     String(x.AttemptNumber ?? ""),
     String(x.Age ?? ""),
-    String(x.SubmissionTimeFormatted ?? ""),
-    (new Date(x.SubmissionDate) > new Date(Date.now()-5*60000))
+    x.DurationSeconds ? `${Math.floor(x.DurationSeconds / 60)}:${String(x.DurationSeconds % 60).padStart(2, '0')}` : '—',
+    ((new Date(x.SubmissionDate) > new Date(Date.now()-5*60000))
         ? '<span class="badge badge-live">LIVE</span>'
-        : '<span class="badge bg-secondary">History</span>',
+        : '<span class="badge bg-secondary">History</span>')
+    + (x.EndReason === 'violations' ? ' <span class="badge bg-danger">Terminated</span>'
+        : x.EndReason === 'timeout' ? ' <span class="badge bg-info text-dark">Time up</span>' : '')
+    + (x.ViolationCount > 0 ? ` <span class="badge bg-warning text-dark" title="Integrity warnings">&#9888; ${x.ViolationCount}</span>` : ''),
     String(x.SubmissionTimeFormatted ?? ""),
     `<button class="btn btn-sm btn-outline-primary show-details" data-row-idx="${i}"><i class="fas fa-eye"></i></button>`
 ])).draw();

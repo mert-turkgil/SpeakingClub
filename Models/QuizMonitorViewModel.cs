@@ -17,6 +17,9 @@ namespace SpeakingClub.Models
         public DateTime SubmissionDate { get; set; }
         public string SubmissionTimeFormatted { get; set; }
         public int Age { get; set; }
+        public int DurationSeconds { get; set; }
+        public int ViolationCount { get; set; }
+        public string EndReason { get; set; }
         public List<UserResponseViewModel> Responses { get; set; } // optional, for drilldown
         
     }

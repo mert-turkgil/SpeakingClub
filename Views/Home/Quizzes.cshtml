@@ -1,0 +1,229 @@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<SpeakingClub.Identity.User> SignInManager
+@model CombinedQuizzesViewModel
+@{
+    // Title, description, canonical and hreflang come from HomeController.Quizzes.
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var signedIn = SignInManager.IsSignedIn(User);
+    var quizzes = (Model.AvailableQuizzes ?? Enumerable.Empty<QuizSummaryViewModel>()).ToList();
+    var levelOrder = new[] { "A1", "A2", "B1", "B2", "C1", "C2" };
+    var levels = quizzes.Where(q => q.Level != null).GroupBy(q => q.Level!)
+        .OrderBy(g => Array.IndexOf(levelOrder, g.Key)).Select(g => (Level: g.Key, Count: g.Count())).ToList();
+    var categories = quizzes.Where(q => !string.IsNullOrWhiteSpace(q.CategoryName)).GroupBy(q => q.CategoryName!)
+        .OrderBy(g => g.Key).Select(g => (Name: g.Key, Count: g.Count())).ToList();
+    string Tone(int score) => score >= 80 ? "good" : score >= 50 ? "mid" : "low";
+    // "%80" in Turkish, "80 %" in German
+    string Pct(int? value) => value == null ? "–" : isGerman ? $"{value} %" : $"%{value}";
+    var notice = (TempData["QuizNotice"] ?? TempData["Success"] ?? TempData["Warning"]) as string;
+}
+@section Css {
+    <script>document.documentElement.classList.add('bp-js');</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@@0,9..144,600;1,9..144,600&display=swap" />
+    <link rel="stylesheet" href="~/css/blog.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/quiz.css" asp-append-version="true" />
+}
+
+<div class="quiz-page qz-list" data-page="quiz-list"
+     data-selected-level="@Model.SelectedLevel"
+     data-label-count="@T("{0} sınav", "{0} Prüfungen")"
+     data-label-prev="@T("Önceki", "Zurück")" data-label-next="@T("Sonraki", "Weiter")">
+    <header class="qz-hero">
+        <div class="bp-container">
+            @if (!string.IsNullOrEmpty(notice))
+            {
+                <div class="qz-notice" role="status">
+                    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                    <span>@notice</span>
+                    <button type="button" data-dismiss aria-label="@T("Kapat", "Schließen")">&times;</button>
+                </div>
+            }
+            <div class="qz-hero__grid">
+                <div>
+                    <span class="bp-eyebrow bp-enter"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i>@T("Online sınav merkezi", "Online-Prüfungszentrum")</span>
+                    <h1 class="qz-hero__title bp-enter" style="--bp-delay: 80ms">
+                        @if (isGerman)
+                        {
+                            <text>Deutsch-<em>Einstufungstests</em></text>
+                        }
+                        else
+                        {
+                            <text>Almanca <em>Seviye Sınavları</em></text>
+                        }
+                    </h1>
+                    <p class="qz-hero__lead bp-enter" style="--bp-delay: 160ms">
+                        @T("Gerçek bir online sınav gibi: süreli, tam ekran ve otomatik kayıtlı. Bitirdiğiniz anda puanınızı ve soru soru değerlendirmenizi görün.",
+                           "Wie eine echte Online-Prüfung: mit Zeitlimit, im Vollbild und automatisch gespeichert. Ergebnis und Fragen-Review sehen Sie sofort nach der Abgabe.")
+                    </p>
+                    <ol class="qz-steps bp-enter" style="--bp-delay: 240ms">
+                        <li>@T("Kuralları okuyun", "Regeln lesen")</li>
+                        <li>@T("Süreli sınavı çözün", "Prüfung mit Zeitlimit")</li>
+                        <li>@T("Sonucu inceleyin", "Ergebnis ansehen")</li>
+                    </ol>
+                </div>
+                @if (signedIn)
+                {
+                    <div class="qz-stats bp-enter" style="--bp-delay: 200ms" aria-label="@T("İlerlemeniz", "Ihr Fortschritt")">
+                        <div class="qz-stat"><span class="qz-stat__value" data-count="@Model.CompletedQuizzes">@Model.CompletedQuizzes</span><span class="qz-stat__label"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>@T("Çözülen sınav", "Abgelegte Prüfungen")</span></div>
+                        <div class="qz-stat"><span class="qz-stat__value" data-count="@Model.TotalAttempts">@Model.TotalAttempts</span><span class="qz-stat__label"><i class="fa-solid fa-rotate" aria-hidden="true"></i>@T("Toplam deneme", "Versuche gesamt")</span></div>
+                        <div class="qz-stat"><span class="qz-stat__value">@(isGerman ? "" : "%")<span data-count="@Model.AverageScore">@Model.AverageScore</span>@(isGerman ? " %" : "")</span><span class="qz-stat__label"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>@T("Ortalama puan", "Durchschnitt")</span></div>
+                        <div class="qz-stat"><span class="qz-stat__value">@(isGerman ? "" : "%")<span data-count="@Model.BestScore">@Model.BestScore</span>@(isGerman ? " %" : "")</span><span class="qz-stat__label"><i class="fa-solid fa-trophy" aria-hidden="true"></i>@T("En iyi puan", "Bestes Ergebnis")</span></div>
+                    </div>
+                }
+                else
+                {
+                    <div class="qz-login bp-enter" style="--bp-delay: 200ms">
+                        <h2>@T("Sonuçlarınızı kaydedin", "Speichern Sie Ihre Ergebnisse")</h2>
+                        <p>@T("Sınava girmek, puanlarınızı saklamak ve gelişiminizi izlemek için giriş yapın.", "Melden Sie sich an, um Prüfungen abzulegen, Ergebnisse zu speichern und Ihren Fortschritt zu verfolgen.")</p>
+                        <div class="qz-login__actions">
+                            <a class="bp-btn" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@(isGerman ? "/pruefungen" : "/sinavlar")" rel="nofollow"><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>@T("Giriş yap", "Anmelden")</a>
+                            <a class="bp-btn bp-btn--ghost" asp-controller="Account" asp-action="Register" rel="nofollow">@T("Kayıt ol", "Registrieren")</a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </header>
+
+    <section class="bp-container" aria-label="@T("Sınavlar", "Prüfungen")">
+        <div class="qz-filters" role="search">
+            <div class="qz-filters__row">
+                <label class="qz-search">
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                    <span class="visually-hidden">@T("Sınav ara", "Prüfung suchen")</span>
+                    <input type="search" id="quizSearch" placeholder="@T("Sınav, öğretmen veya konu ara…", "Prüfung, Lehrkraft oder Thema suchen…")" autocomplete="off" />
+                </label>
+                <span class="qz-count" aria-live="polite" id="quizCount"><strong>@quizzes.Count</strong> @T("sınav", "Prüfungen")</span>
+            </div>
+            @if (levels.Count > 0)
+            {
+                <div class="qz-filters__row bp-chips" role="group" aria-label="@T("Seviye", "Niveau")" data-filter="level">
+                    <button type="button" class="bp-chip is-active" data-value="" aria-pressed="true">@T("Tüm seviyeler", "Alle Niveaus")</button>
+                    @foreach (var level in levels)
+                    {
+                        <button type="button" class="bp-chip" data-value="@level.Level" aria-pressed="false">@level.Level <small>@level.Count</small></button>
+                    }
+                </div>
+            }
+            @if (categories.Count > 1)
+            {
+                <div class="qz-filters__row bp-chips" role="group" aria-label="@T("Kategori", "Kategorie")" data-filter="category">
+                    <button type="button" class="bp-chip is-active" data-value="" aria-pressed="true">@T("Tüm kategoriler", "Alle Kategorien")</button>
+                    @foreach (var category in categories)
+                    {
+                        <button type="button" class="bp-chip" data-value="@category.Name" aria-pressed="false">@category.Name <small>@category.Count</small></button>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="qz-grid" id="quizGrid">
+            @foreach (var quiz in quizzes)
+            {
+                var lobbyUrl = Url.Action("StartQuiz", "Account", new { id = quiz.QuizId });
+                var tagText = string.Join(" ", quiz.Tags.Select(t => t.Name));
+                <article class="qz-card reveal"
+                         data-level="@quiz.Level" data-category="@quiz.CategoryName"
+                         data-search="@($"{quiz.QuizTitle} {quiz.QuizDescription} {quiz.TeacherName} {quiz.CategoryName} {tagText}".ToLowerInvariant())">
+                    <div class="qz-card__media">
+                        @if (!string.IsNullOrEmpty(quiz.ImageUrl))
+                        {
+                            <img src="@quiz.ImageUrl" alt="" loading="lazy" decoding="async" />
+                        }
+                        else
+                        {
+                            <span class="qz-card__placeholder" aria-hidden="true">@(quiz.Level ?? quiz.QuizTitle?.Substring(0, 1).ToUpper())</span>
+                        }
+                        <div class="qz-card__badges">
+                            @if (quiz.Level != null)
+                            {
+                                <span class="qz-level" data-level="@quiz.Level">@quiz.Level</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(quiz.CategoryName))
+                            {
+                                <span class="qz-badge">@quiz.CategoryName</span>
+                            }
+                            @if (quiz.ActiveAttemptId != null)
+                            {
+                                <span class="qz-badge qz-badge--live">@T("Devam ediyor", "Läuft")</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="qz-card__body">
+                        <h2 class="qz-card__title"><a href="@lobbyUrl" rel="nofollow">@quiz.QuizTitle</a></h2>
+                        <p class="qz-card__teacher">@T("Hazırlayan:", "Von") @quiz.TeacherName</p>
+                        @if (!string.IsNullOrWhiteSpace(quiz.QuizDescription))
+                        {
+                            <p class="qz-card__desc">@quiz.QuizDescription</p>
+                        }
+                        <ul class="qz-facts">
+                            <li><i class="fa-solid fa-list-ol" aria-hidden="true"></i>@quiz.QuestionCount @T("soru", "Fragen")</li>
+                            <li><i class="fa-regular fa-clock" aria-hidden="true"></i>@quiz.TimeLimitMinutes @T("dk", "Min.")</li>
+                            @if (signedIn && quiz.AttemptCount > 0)
+                            {
+                                <li><i class="fa-solid fa-rotate" aria-hidden="true"></i>@quiz.AttemptCount @T("deneme", "Versuche")</li>
+                            }
+                        </ul>
+                        <div class="qz-card__foot">
+                            @if (signedIn && quiz.BestScore.HasValue)
+                            {
+                                <div class="qz-card__score">
+                                    <span class="qz-ring" style="--value: @quiz.BestScore" data-tone="@Tone(quiz.BestScore.Value)" role="img" aria-label="@T("En iyi puan", "Bestes Ergebnis") @Pct(quiz.BestScore)">
+                                        <svg viewBox="0 0 36 36" aria-hidden="true"><circle class="qz-ring__track" cx="18" cy="18" r="15.9" pathLength="100" /><circle class="qz-ring__bar" cx="18" cy="18" r="15.9" pathLength="100" /></svg>
+                                        <span class="qz-ring__label">@quiz.BestScore</span>
+                                    </span>
+                                    <span class="qz-card__score-text"><strong>@T("En iyi", "Bestes"): @Pct(quiz.BestScore)</strong>@T("Son", "Zuletzt"): @Pct(quiz.LastScore)</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="qz-card__new"><i class="fa-regular fa-star me-1" aria-hidden="true"></i>@T("Henüz çözülmedi", "Noch nicht abgelegt")</span>
+                            }
+                            <div class="qz-card__actions">
+                                @if (!signedIn)
+                                {
+                                    <a class="bp-btn bp-btn--ghost" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@lobbyUrl" rel="nofollow"><i class="fa-solid fa-lock" aria-hidden="true"></i>@T("Giriş yap", "Anmelden")</a>
+                                }
+                                else
+                                {
+                                    @if (quiz.BestScore.HasValue)
+                                    {
+                                        <a class="qz-icon-btn" asp-controller="Account" asp-action="ReviewQuiz" asp-route-id="@quiz.QuizId" title="@T("Son sonucu incele", "Letztes Ergebnis ansehen")" aria-label="@T("Son sonucu incele", "Letztes Ergebnis ansehen")" rel="nofollow"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i></a>
+                                    }
+                                    <a class="bp-btn" href="@lobbyUrl" rel="nofollow">
+                                        @if (quiz.ActiveAttemptId != null)
+                                        {
+                                            <i class="fa-solid fa-play" aria-hidden="true"></i>@T("Devam et", "Fortsetzen")
+                                        }
+                                        else if (quiz.BestScore.HasValue)
+                                        {
+                                            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>@T("Tekrar çöz", "Erneut")
+                                        }
+                                        else
+                                        {
+                                            <i class="fa-solid fa-play" aria-hidden="true"></i>@T("Başla", "Starten")
+                                        }
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+
+        <div class="qz-empty" id="quizEmpty" role="status">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <h2>@T("Eşleşen sınav bulunamadı", "Keine passende Prüfung gefunden")</h2>
+            <p>@T("Farklı bir arama deneyin veya filtreleri temizleyin.", "Versuchen Sie eine andere Suche oder setzen Sie die Filter zurück.")</p>
+            <button type="button" class="bp-btn" data-reset>@T("Filtreleri temizle", "Filter zurücksetzen")</button>
+        </div>
+        <ul class="qz-pagination" id="quizPages" aria-label="@T("Sayfalar", "Seiten")"></ul>
+        <div style="height: 4rem"></div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/js/blog.js" asp-append-version="true" defer></script>
+    <script src="~/js/quiz.js" asp-append-version="true" defer></script>
+}

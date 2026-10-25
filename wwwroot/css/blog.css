@@ -7,10 +7,11 @@
    ===================================================================== */
 
 /* ---------------------------------------------------------------------
-   1. TOKENS  (shared with the home page: .home-page, see home.css)
+   1. TOKENS  (shared with the home page and the quiz pages: .home-page, .quiz-page)
    --------------------------------------------------------------------- */
 .blog-page,
-.home-page {
+.home-page,
+.quiz-page {
   --bp-canvas: #FFF5E4;
   --bp-surface: #FFFFFF;
   --bp-surface-soft: #FFFAF3;
@@ -51,7 +52,8 @@
 }
 
 html[data-bs-theme="dark"] .blog-page,
-html[data-bs-theme="dark"] .home-page {
+html[data-bs-theme="dark"] .home-page,
+html[data-bs-theme="dark"] .quiz-page {
   --bp-canvas: #15110e;
   --bp-surface: #1f1a16;
   --bp-surface-soft: #251f1a;
@@ -69,7 +71,8 @@ html[data-bs-theme="dark"] .home-page {
 }
 
 .blog-page ::selection,
-.home-page ::selection { background: var(--bp-pink); color: var(--bp-ink); }
+.home-page ::selection,
+.quiz-page ::selection { background: var(--bp-pink); color: var(--bp-ink); }
 
 .bp-container {
   width: min(1180px, 100% - 2rem);
@@ -85,7 +88,8 @@ html[data-bs-theme="dark"] .home-page {
 }
 
 .blog-page :focus-visible,
-.home-page :focus-visible {
+.home-page :focus-visible,
+.quiz-page :focus-visible {
   outline: 3px solid var(--bp-coral) !important;
   outline-offset: 3px;
   border-radius: 6px;
@@ -119,7 +123,8 @@ html[data-bs-theme="dark"] .home-page {
 
 @media (prefers-reduced-motion: reduce) {
   .blog-page *, .blog-page *::before, .blog-page *::after,
-  .home-page *, .home-page *::before, .home-page *::after {
+  .home-page *, .home-page *::before, .home-page *::after,
+  .quiz-page *, .quiz-page *::before, .quiz-page *::after {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;

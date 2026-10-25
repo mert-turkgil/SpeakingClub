@@ -59,6 +59,9 @@ namespace SpeakingClub.Entity
         // The teacher (user) who created the quiz.
         public string TeacherName { get; set; }
 
+        // Exam time limit; null = a default based on the number of questions (see ExamRules.TimeLimitSeconds)
+        public int? TimeLimitMinutes { get; set; }
+
         public ICollection<Question> Questions { get; set; }
 
         public ICollection<QuizAnswer> Answers { get; set; }

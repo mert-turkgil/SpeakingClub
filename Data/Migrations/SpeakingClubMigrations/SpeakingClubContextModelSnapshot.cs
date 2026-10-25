@@ -17,7 +17,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.0")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -638,6 +638,9 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.Property<string>("TeacherName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("TimeLimitMinutes")
+                        .HasColumnType("int");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -806,6 +809,53 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         });
                 });
 
+            modelBuilder.Entity("SpeakingClub.Entity.QuizAttempt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AnswersJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("IntegrityLog")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("QuizId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("QuizSubmissionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Seed")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("ViolationCount")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuizId");
+
+                    b.HasIndex("UserId", "QuizId", "SubmittedAt");
+
+                    b.ToTable("QuizAttempts");
+                });
+
             modelBuilder.Entity("SpeakingClub.Entity.QuizResponse", b =>
                 {
                     b.Property<int>("QuizResponseId")
@@ -816,6 +866,9 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 
                     b.Property<string>("AnswerText")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("QuestionId")
+                        .HasColumnType("int");
 
                     b.Property<int?>("QuizAnswerId")
                         .HasColumnType("int");
@@ -941,14 +994,27 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("QuizSubmissionId"));
 
+                    b.Property<Guid?>("AttemptId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("AttemptNumber")
                         .HasColumnType("int");
+
+                    b.Property<int>("DurationSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EndReason")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<int>("QuizId")
                         .HasColumnType("int");
 
                     b.Property<int>("Score")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("SubmissionDate")
                         .HasColumnType("datetime2");
@@ -957,7 +1023,14 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("ViolationCount")
+                        .HasColumnType("int");
+
                     b.HasKey("QuizSubmissionId");
+
+                    b.HasIndex("AttemptId")
+                        .IsUnique()
+                        .HasFilter("[AttemptId] IS NOT NULL");
 
                     b.HasIndex("QuizId");
 
@@ -968,28 +1041,34 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         {
                             QuizSubmissionId = 1,
                             AttemptNumber = 1,
+                            DurationSeconds = 0,
                             QuizId = 1,
                             Score = 100,
                             SubmissionDate = new DateTime(2026, 3, 8, 12, 0, 0, 0, DateTimeKind.Utc),
-                            UserId = "user1-id"
+                            UserId = "user1-id",
+                            ViolationCount = 0
                         },
                         new
                         {
                             QuizSubmissionId = 2,
                             AttemptNumber = 2,
+                            DurationSeconds = 0,
                             QuizId = 1,
                             Score = 50,
                             SubmissionDate = new DateTime(2026, 3, 9, 12, 0, 0, 0, DateTimeKind.Utc),
-                            UserId = "user1-id"
+                            UserId = "user1-id",
+                            ViolationCount = 0
                         },
                         new
                         {
                             QuizSubmissionId = 3,
                             AttemptNumber = 1,
+                            DurationSeconds = 0,
                             QuizId = 1,
                             Score = 40,
                             SubmissionDate = new DateTime(2026, 3, 9, 12, 0, 0, 0, DateTimeKind.Utc),
-                            UserId = "user2-id"
+                            UserId = "user2-id",
+                            ViolationCount = 0
                         });
                 });
 
@@ -1291,7 +1370,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             Id = "teacher1",
                             AccessFailedCount = 0,
                             Age = 30,
-                            ConcurrencyStamp = "5a824f29-c254-49ca-ba1f-12ecc01551a4",
+                            ConcurrencyStamp = "5d530437-2013-45d9-a8f5-4b24303979d9",
                             Email = "teacher1@example.com",
                             EmailConfirmed = true,
                             FirstName = "Ali",
@@ -1310,7 +1389,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             Id = "user1-id",
                             AccessFailedCount = 0,
                             Age = 22,
-                            ConcurrencyStamp = "d2cf90ef-2a83-4ae7-94b8-9f5ff360ff86",
+                            ConcurrencyStamp = "47f2e278-4799-4b26-8559-62f1c7e9b0eb",
                             Email = "user1@example.com",
                             EmailConfirmed = true,
                             FirstName = "Mert",
@@ -1329,7 +1408,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             Id = "user2-id",
                             AccessFailedCount = 0,
                             Age = 18,
-                            ConcurrencyStamp = "60ea8f01-16f6-4c5b-8ca3-a7d2b8d25c8b",
+                            ConcurrencyStamp = "453d6a72-32ab-43af-8e3d-ee8c2af29a76",
                             Email = "user2@example.com",
                             EmailConfirmed = true,
                             FirstName = "Zeynep",
@@ -1522,6 +1601,17 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         .HasForeignKey("QuizId");
 
                     b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("SpeakingClub.Entity.QuizAttempt", b =>
+                {
+                    b.HasOne("SpeakingClub.Entity.Quiz", "Quiz")
+                        .WithMany()
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Quiz");
                 });
 
             modelBuilder.Entity("SpeakingClub.Entity.QuizResponse", b =>

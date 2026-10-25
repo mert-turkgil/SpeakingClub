@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using SpeakingClub.Data.Abstract;
@@ -13,6 +14,9 @@ using SpeakingClub.Entity;
 using SpeakingClub.Identity;
 using SpeakingClub.Models;
 using SpeakingClub.Services;
+using Quiz = SpeakingClub.Entity.Quiz;
+using Question = SpeakingClub.Entity.Question;
+using QuizAnswer = SpeakingClub.Entity.QuizAnswer;
 
 namespace SpeakingClub.Controllers
 {
@@ -29,6 +33,7 @@ namespace SpeakingClub.Controllers
         private readonly IEmailSender _emailSender;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<AccountController> _logger;
+        private readonly ExamService _examService;
 
         public AccountController(
             IUnitOfWork unitOfWork,
@@ -37,8 +42,10 @@ namespace SpeakingClub.Controllers
             IMemoryCache memoryCache,
             UserManager<User> userManager,
             SignInManager<User> signInManager,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            ExamService examService)
         {
+            _examService = examService;
             _configuration = configuration;
             _memoryCache = memoryCache;
             _unitOfWork = unitOfWork;
@@ -48,269 +55,422 @@ namespace SpeakingClub.Controllers
             _logger = logger;
         }
         #region Quiz
+        // Online exam flow:
+        //   StartQuiz (lobby: rules, pledge) → BeginQuiz (creates or resumes a QuizAttempt) → TakeQuiz (exam room)
+        //   → SaveQuizProgress (autosave + integrity events, every few seconds) → SubmitQuiz → ReviewQuiz (result).
+        // The server owns the clock: the deadline is fixed when the attempt starts, reloading resumes the attempt,
+        // and an attempt left after its deadline is graded from its autosaved answers.
+
+        private IGenericRepository<QuizAttempt> Attempts => _unitOfWork.GenericRepository<QuizAttempt>();
+
+        private bool IsGerman() => CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+        private string T(string tr, string de) => IsGerman() ? de : tr;
+        private string QuizzesPath(string? level = null) =>
+            (IsGerman() ? "/pruefungen" : "/sinavlar") + (string.IsNullOrWhiteSpace(level) ? "" : "/" + level.Trim().ToLowerInvariant());
+
         // Helper method to get teacher display name
         private async Task<string> GetTeacherDisplayName(string? userName)
         {
             if (string.IsNullOrEmpty(userName))
                 return "Unknown Instructor";
-            
+
             var teacher = await _userManager.FindByNameAsync(userName);
             if (teacher == null)
                 return userName; // Fallback to stored name
-            
+
             var fullName = string.Join(" ", new[] { teacher.FirstName, teacher.LastName }
                 .Where(s => !string.IsNullOrWhiteSpace(s)));
-            
+
             return !string.IsNullOrWhiteSpace(fullName) ? fullName : (userName ?? "Unknown Instructor");
         }
 
+        // The quiz list lives at /sinavlar (/pruefungen); old links to /Account/Quizzes forward there.
         [AllowAnonymous]
-        public async Task<IActionResult> Quizzes(string? level)
+        public IActionResult Quizzes(string? level) => RedirectPermanent(QuizzesPath(level));
+
+        private async Task<QuizAttempt?> GetOwnAttemptAsync(Guid attemptId, string userId) =>
+            (await Attempts.GetAllAsync(a => a.Id == attemptId && a.UserId == userId)).FirstOrDefault();
+
+        // The running attempt of this user on this quiz (not submitted, deadline + grace not passed)
+        private async Task<QuizAttempt?> FindActiveAttemptAsync(string userId, int quizId)
         {
-            if (Request.Query.TryGetValue("warning", out var warningValue))
-            {
-                string warning = warningValue.ToString(); // Convert to string
-                switch (warning)
-                {
-                    case "FullscreenExit":
-                        TempData["Warning"] = "Exam canceled because you exited fullscreen mode.";
-                        break;
-                    case "LeaveScreen":
-                        TempData["Warning"] = "Exam canceled because you left the screen.";
-                        break;
-                    case "Inactivity":
-                        TempData["Warning"] = "Exam canceled due to inactivity.";
-                        break;
-                }
-            }
-            // Retrieve all quizzes from your repository
-            var allQuizzes = await _unitOfWork.Quizzes.GetAllAsync();
-
-            // Filter by level if provided
-            if (!string.IsNullOrEmpty(level))
-            {
-                var filteredQuizzes = allQuizzes.Where(q => q.Tags != null && q.Tags.Any(t => t.Name.Equals(level, StringComparison.OrdinalIgnoreCase))).ToList();
-                // Only apply filter if it returns results, otherwise show all
-                if (filteredQuizzes.Any())
-                {
-                    allQuizzes = filteredQuizzes;
-                }
-                // Store the requested level for the view
-                ViewBag.SelectedLevel = level;
-            }
-
-            // Get the current user if logged in
-            var user = await _userManager.GetUserAsync(User);
-            var userSubmissions = new List<QuizSubmission>();
-
-            // Only fetch user submissions if logged in
-            if (user != null)
-            {
-                var submissions = await _unitOfWork.QuizSubmissions.GetAllAsync();
-                userSubmissions = submissions.Where(s => s.UserId == user.Id).ToList();
-            }
-
-            // Pre-fetch all teacher display names
-            var teacherUserNames = allQuizzes.Select(q => q.TeacherName).Where(t => !string.IsNullOrEmpty(t)).Distinct().ToList();
-            var teacherDisplayNames = new Dictionary<string, string>();
-            foreach (var teacherUserName in teacherUserNames)
-            {
-                if (!string.IsNullOrEmpty(teacherUserName))
-                {
-                    teacherDisplayNames[teacherUserName] = await GetTeacherDisplayName(teacherUserName);
-                }
-            }
-
-            // Map each quiz to a QuizSummaryViewModel.
-            Func<SpeakingClub.Entity.Quiz, QuizSummaryViewModel> mapQuiz = q =>
-            {
-                var lastSubmission = userSubmissions
-                    .Where(s => s.QuizId == q.Id)
-                    .OrderByDescending(s => s.SubmissionDate)
-                    .FirstOrDefault();
-
-                IEnumerable<AttemptDetailViewModel>? details = null;
-                if (lastSubmission != null && lastSubmission.QuizResponses != null)
-                {
-                    details = lastSubmission.QuizResponses.Select(r =>
-                    {
-                        var question = r.QuizAnswer?.Question;
-                        var correctAnswer = question?.Answers.FirstOrDefault(a => a.IsCorrect)?.AnswerText ?? "N/A";
-                        var yourAnswer = r.QuizAnswer?.AnswerText ?? r.AnswerText ?? "No answer";
-                        int timeTaken = 0; // Replace with actual timing info if available.
-                        bool isCorrect = r.QuizAnswer != null && r.QuizAnswer.IsCorrect;
-                        return new AttemptDetailViewModel
-                        {
-                            QuestionId = question?.Id ?? 0,
-                            QuestionText = question?.QuestionText ?? "N/A",
-                            YourAnswer = yourAnswer,
-                            CorrectAnswer = correctAnswer,
-                            TimeTakenSeconds = timeTaken,
-                            IsCorrect = isCorrect
-                        };
-                    });
-                }
-
-                return new QuizSummaryViewModel
-                {
-                    Tags = q.Tags?.ToList() ?? new List<Tag>(),
-                    AudioUrl = q.AudioUrl,
-                    YouTubeVideoUrl = q.YouTubeVideoUrl,
-                    QuizId = q.Id,
-                    QuizTitle = q.Title,
-                    QuizDescription = q.Description,
-                    ImageUrl = !string.IsNullOrEmpty(q.ImageUrl) ? q.ImageUrl : Url.Content("~/img/header_logo.png"),
-                    TeacherName = !string.IsNullOrEmpty(q.TeacherName) && teacherDisplayNames.ContainsKey(q.TeacherName) 
-                        ? teacherDisplayNames[q.TeacherName] 
-                        : "Unknown Instructor",
-                    CategoryName = q.Category != null ? q.Category.Name : "General",
-                    AttemptCount = userSubmissions.Count(s => s.QuizId == q.Id),
-                    LastScore = lastSubmission?.Score,
-                    LastAttemptDate = lastSubmission?.SubmissionDate,
-                    RecentAttemptDetails = details
-                };
-            };
-
-            var viewModel = new CombinedQuizzesViewModel
-            {
-                AvailableQuizzes = allQuizzes.Select(mapQuiz).ToList()
-            };
-
-            return View(viewModel);
+            var now = DateTime.UtcNow;
+            var open = await Attempts.GetAllAsync(a => a.UserId == userId && a.QuizId == quizId && a.SubmittedAt == null);
+            return open.Where(a => a.ExpiresAt.AddSeconds(ExamRules.GraceSeconds) > now)
+                .OrderByDescending(a => a.StartedAt)
+                .FirstOrDefault();
         }
 
-        [Authorize]
-        public async Task<IActionResult> ReviewQuiz(int id)
+        // Keeps only answers that belong to a question of this quiz
+        private static Dictionary<int, int> SanitizeAnswers(Quiz quiz, Dictionary<int, int>? answers)
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-                return NotFound("User not found.");
-
-            // Use a repository method that includes navigation properties
-            var submission = await _unitOfWork.QuizSubmissions
-                .GetLatestSubmissionByUserAndQuiz(user.Id, id); // Implement this method
-
-            if (submission == null)
-                return NotFound("No submission found.");
-
-            var details = submission.QuizResponses.Select(r =>
+            var result = new Dictionary<int, int>();
+            if (answers == null) return result;
+            foreach (var question in quiz.Questions)
             {
-                var question = r.QuizAnswer?.Question;
-                return new AttemptDetailViewModel
-                {
-                    QuestionId = question?.Id ?? 0,
-                    QuestionText = question?.QuestionText ?? "N/A",
-                    YourAnswer = r.QuizAnswer?.AnswerText ?? r.AnswerText ?? "No answer",
-                    CorrectAnswer = question?.Answers.FirstOrDefault(a => a.IsCorrect)?.AnswerText ?? "N/A",
-                    TimeTakenSeconds = r.TimeTakenSeconds,
-                    IsCorrect = r.QuizAnswer?.IsCorrect ?? false
-                };
-            }).ToList();
-
-            var viewModel = new QuizReviewViewModel
-            {
-                QuizId = submission.QuizId,
-                QuizTitle = submission.Quiz?.Title,
-                SubmissionDate = submission.SubmissionDate,
-                Score = submission.Score,
-                Details = details,
-                TotalTimeTaken = details.Sum(d => d.TimeTakenSeconds)
-            };
-
-            return View(viewModel);
+                if (answers.TryGetValue(question.Id, out var answerId) && question.Answers.Any(a => a.Id == answerId))
+                    result[question.Id] = answerId;
+            }
+            return result;
         }
 
+        // Id comes from the client so a retried autosave cannot count the same event twice
+        private sealed record IntegrityEvent(string Type, DateTime At, string? Id = null);
 
+        private static List<IntegrityEvent> ReadLog(QuizAttempt attempt)
+        {
+            try
+            {
+                return string.IsNullOrWhiteSpace(attempt.IntegrityLog)
+                    ? new List<IntegrityEvent>()
+                    : JsonSerializer.Deserialize<List<IntegrityEvent>>(attempt.IntegrityLog) ?? new List<IntegrityEvent>();
+            }
+            catch (JsonException)
+            {
+                return new List<IntegrityEvent>();
+            }
+        }
+
+        private IActionResult RedirectToResult(QuizAttempt attempt) =>
+            RedirectToAction(nameof(ReviewQuiz), new { id = attempt.QuizId, submission = attempt.QuizSubmissionId });
+
+        private string ResultUrl(QuizAttempt attempt) =>
+            Url.Action(nameof(ReviewQuiz), new { id = attempt.QuizId, submission = attempt.QuizSubmissionId }) ?? QuizzesPath();
+
+        // Exam lobby (/Account/StartQuiz/5; the old ?id=5 links keep working)
         [Authorize]
+        [HttpGet("{id:int?}")]
         public async Task<IActionResult> StartQuiz(int id)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
-                return NotFound("User not found.");
+                return Challenge();
 
-            // Optionally attach if needed:
-            _unitOfWork.Users.Attach(user);
-
-            var quiz = await _unitOfWork.Quizzes.GetByIdAsync(id);
+            var quiz = await _unitOfWork.Quizzes.GetForExamAsync(id);
             if (quiz == null)
                 return NotFound();
 
-            return View(quiz);
+            await _examService.FinalizeExpiredAttemptsAsync(user, quiz);
+
+            var submissions = (await _unitOfWork.QuizSubmissions.GetSubmissionsByUserIdAsync(user.Id))
+                .Where(s => s.QuizId == id)
+                .OrderByDescending(s => s.SubmissionDate)
+                .ToList();
+            var active = await FindActiveAttemptAsync(user.Id, id);
+
+            ViewData["Title"] = $"{quiz.Title} | {T("Sınav", "Prüfung")} | Almanca Konuş";
+            ViewData["Robots"] = "noindex, nofollow";
+
+            var model = new QuizLobbyViewModel
+            {
+                QuizId = quiz.Id,
+                Title = quiz.Title,
+                Description = quiz.Description,
+                ImageUrl = quiz.ImageUrl,
+                AudioUrl = quiz.AudioUrl,
+                YouTubeVideoUrl = ExamRules.VideoEmbedUrl(quiz.YouTubeVideoUrl),
+                TeacherName = await GetTeacherDisplayName(quiz.TeacherName),
+                CategoryName = quiz.Category?.Name,
+                Level = ExamRules.LevelOf(quiz),
+                QuestionCount = quiz.Questions.Count,
+                TimeLimitMinutes = ExamRules.TimeLimitSeconds(quiz) / 60,
+                MaxViolations = ExamRules.MaxViolations,
+                AttemptCount = submissions.Count,
+                BestScore = submissions.Count > 0 ? submissions.Max(s => s.Score) : null,
+                LastScore = submissions.FirstOrDefault()?.Score,
+                LastAttemptDate = submissions.FirstOrDefault()?.SubmissionDate,
+                ActiveAttemptId = active?.Id,
+                ActiveRemainingSeconds = active == null ? 0 : Math.Max(0, (int)(active.ExpiresAt - DateTime.UtcNow).TotalSeconds),
+                StudentName = ExamService.FullName(user)
+            };
+            return View(model);
         }
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> SubmitQuiz(string? QuizId, Dictionary<int, int>? responses, int ElapsedTime)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BeginQuiz(int quizId)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
+                return Challenge();
+
+            var quiz = await _unitOfWork.Quizzes.GetForExamAsync(quizId);
+            if (quiz == null)
+                return NotFound();
+            if (quiz.Questions.Count == 0)
             {
-                // This should stop everything!
-                return NotFound("User not found.");
-            }
-            if (string.IsNullOrEmpty(user.Id))
-            {
-                // Log this as a critical error
-                throw new Exception("Authenticated user has no Id!");
+                TempData["QuizNotice"] = T("Bu sınavda henüz soru yok.", "Diese Prüfung enthält noch keine Fragen.");
+                return RedirectToAction(nameof(StartQuiz), new { id = quizId });
             }
 
-            // If no responses were provided, redirect back to the quiz page
-            if (responses == null || responses.Count == 0)
+            var attempt = await FindActiveAttemptAsync(user.Id, quizId);
+            if (attempt == null)
             {
-                TempData["Warning"] = "You must answer at least one question!";
-                return RedirectToAction("Quizzes");
-            }
-            else
-            {
-                // Ensure QuizId is valid
-                if (string.IsNullOrEmpty(QuizId) || !int.TryParse(QuizId, out int quizId))
+                var now = DateTime.UtcNow;
+                attempt = new QuizAttempt
                 {
-                    return BadRequest("Invalid or missing Quiz ID.");
-                }
-
-                var quiz = await _unitOfWork.Quizzes.GetByIdAsync(quizId);
-                if (quiz == null)
-                    return NotFound("Quiz not found.");
-
-
-
-                var submission = new QuizSubmission
-                {
-                    UserId = user.Id,
+                    Id = Guid.NewGuid(),
                     QuizId = quizId,
-                    SubmissionDate = DateTime.UtcNow,
-                    Score = 0,
-                    AttemptNumber = 1
+                    UserId = user.Id,
+                    StartedAt = now,
+                    ExpiresAt = now.AddSeconds(ExamRules.TimeLimitSeconds(quiz)),
+                    Seed = Random.Shared.Next(),
+                    AnswersJson = "{}",
+                    IntegrityLog = "[]"
                 };
-
-                int score = 0;
-
-                foreach (var question in quiz.Questions)
-                {
-                    var selectedAnswerId = responses.ContainsKey(question.Id) ? responses[question.Id] : (int?)null;
-                    var correctAnswer = question.Answers.FirstOrDefault(a => a.IsCorrect);
-
-                    if (selectedAnswerId == correctAnswer?.Id)
-                        score++;
-
-                    submission.QuizResponses.Add(new QuizResponse
-                    {
-                        QuizAnswerId = selectedAnswerId,
-                        AnswerText = selectedAnswerId == null ? "No answer" : null,
-                        TimeTakenSeconds = ElapsedTime / Math.Max(1, quiz.Questions.Count)
-                    });
-                }
-
-                submission.Score = (int)((double)score / quiz.Questions.Count * 100);
-
-                await _unitOfWork.QuizSubmissions.AddAsync(submission);
+                await Attempts.AddAsync(attempt);
                 await _unitOfWork.SaveAsync();
-
-                TempData["Success"] = $"Quiz attempt recorded. Your score: {submission.Score}%";
-                return RedirectToAction(nameof(Quizzes));
             }
+            return RedirectToAction(nameof(TakeQuiz), new { attemptId = attempt.Id });
         }
 
+        // Exam room
+        [Authorize]
+        [HttpGet("{attemptId:guid}")]
+        public async Task<IActionResult> TakeQuiz(Guid attemptId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Challenge();
+
+            var attempt = await GetOwnAttemptAsync(attemptId, user.Id);
+            if (attempt == null)
+                return NotFound();
+            if (attempt.SubmittedAt != null)
+                return RedirectToResult(attempt);
+
+            var quiz = await _unitOfWork.Quizzes.GetForExamAsync(attempt.QuizId);
+            if (quiz == null)
+                return NotFound();
+
+            var now = DateTime.UtcNow;
+            if (now > attempt.ExpiresAt.AddSeconds(ExamRules.GraceSeconds))
+            {
+                var submission = await _examService.FinalizeAttemptAsync(attempt, quiz, ExamService.ReadAnswers(attempt), null, "timeout", user);
+                TempData["QuizNotice"] = T("Süre dolduğu için sınavınız kaydedilen cevaplarla otomatik olarak gönderildi.",
+                                           "Die Zeit ist abgelaufen – Ihre Prüfung wurde mit den gespeicherten Antworten abgegeben.");
+                return RedirectToAction(nameof(ReviewQuiz), new { id = quiz.Id, submission = submission.QuizSubmissionId });
+            }
+
+            // Never serve the exam from the browser cache (back button after submitting)
+            Response.Headers.CacheControl = "no-store, no-cache, must-revalidate";
+            ViewData["Title"] = $"{quiz.Title} | {T("Sınav", "Prüfung")}";
+            ViewData["Robots"] = "noindex, nofollow";
+
+            var questions = ExamRules.Shuffle(quiz.Questions.OrderBy(q => q.Id), attempt.Seed)
+                .Select((q, i) => new ExamQuestionViewModel
+                {
+                    Id = q.Id,
+                    Number = i + 1,
+                    Text = q.QuestionText,
+                    ImageUrl = q.ImageUrl,
+                    AudioUrl = q.AudioUrl,
+                    VideoUrl = ExamRules.VideoEmbedUrl(q.VideoUrl),
+                    Answers = ExamRules.Shuffle(q.Answers.OrderBy(a => a.Id), attempt.Seed ^ q.Id)
+                        .Select(a => new ExamAnswerViewModel { Id = a.Id, Text = a.AnswerText })
+                        .ToList()
+                })
+                .ToList();
+
+            var model = new QuizExamViewModel
+            {
+                AttemptId = attempt.Id,
+                QuizId = quiz.Id,
+                QuizTitle = quiz.Title,
+                TeacherName = await GetTeacherDisplayName(quiz.TeacherName),
+                StudentName = ExamService.FullName(user),
+                ExpiresAtUtc = DateTime.SpecifyKind(attempt.ExpiresAt, DateTimeKind.Utc),
+                ServerNowUtc = DateTime.SpecifyKind(now, DateTimeKind.Utc),
+                TimeLimitSeconds = (int)(attempt.ExpiresAt - attempt.StartedAt).TotalSeconds,
+                ViolationCount = attempt.ViolationCount,
+                MaxViolations = ExamRules.MaxViolations,
+                Questions = questions,
+                SavedAnswers = SanitizeAnswers(quiz, ExamService.ReadAnswers(attempt))
+            };
+            return View(model);
+        }
+
+        public class QuizProgressRequest
+        {
+            public Guid AttemptId { get; set; }
+            public Dictionary<int, int>? Answers { get; set; }
+            public List<QuizEventRequest>? Events { get; set; }
+        }
+
+        public class QuizEventRequest
+        {
+            public string? Id { get; set; }
+            public string? Type { get; set; }
+            public DateTime? At { get; set; }
+        }
+
+        // Autosave + integrity events from the exam room (JSON, anti-forgery token in the X-CSRF-TOKEN header)
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveQuizProgress([FromBody] QuizProgressRequest request)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Unauthorized();
+
+            var attempt = request == null ? null : await GetOwnAttemptAsync(request.AttemptId, user.Id);
+            if (attempt == null)
+                return NotFound();
+            if (attempt.SubmittedAt != null)
+                return Json(new { submitted = true, redirect = ResultUrl(attempt) });
+
+            var quiz = await _unitOfWork.Quizzes.GetForExamAsync(attempt.QuizId);
+            if (quiz == null)
+                return NotFound();
+
+            var now = DateTime.UtcNow;
+            var open = now <= attempt.ExpiresAt.AddSeconds(ExamRules.GraceSeconds);
+            if (open && request!.Answers != null)
+                attempt.AnswersJson = JsonSerializer.Serialize(SanitizeAnswers(quiz, request.Answers));
+
+            var log = ReadLog(attempt);
+            foreach (var e in (request!.Events ?? new List<QuizEventRequest>()).Take(50))
+            {
+                if (e.Type == null || !ExamRules.EventTypes.Contains(e.Type))
+                    continue;
+                var eventId = e.Id?.Length > 40 ? e.Id[..40] : e.Id;
+                if (eventId != null && log.Any(l => l.Id == eventId))
+                    continue;
+                log.Add(new IntegrityEvent(e.Type, now, eventId));
+                if (ExamRules.ViolationTypes.Contains(e.Type))
+                    attempt.ViolationCount++;
+            }
+            attempt.IntegrityLog = JsonSerializer.Serialize(log.TakeLast(300));
+
+            if (attempt.ViolationCount >= ExamRules.MaxViolations || !open)
+            {
+                var reason = attempt.ViolationCount >= ExamRules.MaxViolations ? "violations" : "timeout";
+                await _examService.FinalizeAttemptAsync(attempt, quiz, ExamService.ReadAnswers(attempt), null, reason, user);
+                return Json(new { submitted = true, reason, redirect = ResultUrl(attempt) });
+            }
+
+            await _unitOfWork.SaveAsync();
+            return Json(new
+            {
+                ok = true,
+                violations = attempt.ViolationCount,
+                remaining = Math.Max(0, (int)(attempt.ExpiresAt - now).TotalSeconds),
+                serverNow = DateTime.SpecifyKind(now, DateTimeKind.Utc)
+            });
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SubmitQuiz(Guid attemptId, Dictionary<int, int>? responses, Dictionary<int, int>? times, string? reason)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Challenge();
+
+            var attempt = await GetOwnAttemptAsync(attemptId, user.Id);
+            if (attempt == null)
+                return NotFound();
+            if (attempt.SubmittedAt != null)
+                return RedirectToResult(attempt); // second click, back button, auto-submit racing a manual one
+
+            var quiz = await _unitOfWork.Quizzes.GetForExamAsync(attempt.QuizId);
+            if (quiz == null)
+                return NotFound();
+
+            // After the deadline (plus grace) only what was autosaved in time counts
+            var late = DateTime.UtcNow > attempt.ExpiresAt.AddSeconds(ExamRules.GraceSeconds);
+            var answers = late ? SanitizeAnswers(quiz, ExamService.ReadAnswers(attempt)) : SanitizeAnswers(quiz, responses);
+            var endReason = late ? "timeout" : reason is "timeout" or "violations" ? reason : "submitted";
+
+            QuizSubmission submission;
+            try
+            {
+                submission = await _examService.FinalizeAttemptAsync(attempt, quiz, answers, times, endReason, user);
+            }
+            catch (DbUpdateException ex)
+            {
+                // A concurrent submit of the same attempt won the race (unique AttemptId): show that result
+                _logger.LogInformation(ex, "Attempt {AttemptId} was already submitted", attemptId);
+                var existing = (await _unitOfWork.QuizSubmissions.GetSubmissionsByUserIdAsync(user.Id))
+                    .FirstOrDefault(s => s.AttemptId == attemptId);
+                return RedirectToAction(nameof(ReviewQuiz), new { id = attempt.QuizId, submission = existing?.QuizSubmissionId });
+            }
+
+            TempData["QuizNotice"] = endReason switch
+            {
+                "timeout" => T("Süre doldu: sınavınız otomatik olarak gönderildi.", "Die Zeit ist abgelaufen: Ihre Prüfung wurde automatisch abgegeben."),
+                "violations" => T("Sınav, kural ihlalleri nedeniyle sonlandırıldı.", "Die Prüfung wurde wegen Regelverstößen beendet."),
+                _ => T("Sınavınız başarıyla gönderildi.", "Ihre Prüfung wurde erfolgreich abgegeben.")
+            };
+            return RedirectToAction(nameof(ReviewQuiz), new { id = quiz.Id, submission = submission.QuizSubmissionId });
+        }
+
+        // Result + per-question review of one submission (the latest one when no id is given)
+        [Authorize]
+        [HttpGet("{id:int?}")]
+        public async Task<IActionResult> ReviewQuiz(int id, int? submission)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Challenge();
+
+            var result = submission.HasValue
+                ? await _unitOfWork.QuizSubmissions.GetByIdWithResponsesAsync(submission.Value)
+                : await _unitOfWork.QuizSubmissions.GetLatestSubmissionByUserAndQuiz(user.Id, id);
+            if (result == null || result.UserId != user.Id)
+                return NotFound();
+
+            var quiz = await _unitOfWork.Quizzes.GetForExamAsync(result.QuizId);
+            var questionsById = quiz?.Questions.ToDictionary(q => q.Id) ?? new Dictionary<int, Question>();
+
+            var details = result.QuizResponses
+                .OrderBy(r => r.QuizResponseId)
+                .Select((r, i) =>
+                {
+                    var questionId = r.QuestionId ?? r.QuizAnswer?.QuestionId;
+                    var question = questionId.HasValue && questionsById.TryGetValue(questionId.Value, out var q) ? q : null;
+                    return new AttemptDetailViewModel
+                    {
+                        Number = i + 1,
+                        QuestionId = question?.Id ?? 0,
+                        QuestionText = question?.QuestionText ?? "—",
+                        YourAnswer = r.QuizAnswer?.AnswerText,
+                        CorrectAnswer = question?.Answers.FirstOrDefault(a => a.IsCorrect)?.AnswerText ?? "—",
+                        TimeTakenSeconds = r.TimeTakenSeconds,
+                        IsAnswered = r.QuizAnswerId != null,
+                        IsCorrect = r.QuizAnswer?.IsCorrect ?? false
+                    };
+                })
+                .ToList();
+
+            ViewData["Title"] = $"{result.Quiz?.Title ?? quiz?.Title} | {T("Sonuç", "Ergebnis")} | Almanca Konuş";
+            ViewData["Robots"] = "noindex, nofollow";
+
+            var viewModel = new QuizReviewViewModel
+            {
+                QuizId = result.QuizId,
+                QuizTitle = result.Quiz?.Title ?? quiz?.Title,
+                SubmissionDate = result.SubmissionDate,
+                Score = result.Score,
+                Details = details,
+                TotalTimeTaken = result.DurationSeconds > 0 ? result.DurationSeconds : details.Sum(d => d.TimeTakenSeconds),
+                SubmissionId = result.QuizSubmissionId,
+                AttemptId = result.AttemptId,
+                AttemptNumber = result.AttemptNumber,
+                CorrectCount = details.Count(d => d.IsCorrect),
+                AnsweredCount = details.Count(d => d.IsAnswered),
+                TotalQuestions = details.Count,
+                ViolationCount = result.ViolationCount,
+                EndReason = result.EndReason,
+                ImageUrl = quiz?.ImageUrl,
+                Level = quiz == null ? null : ExamRules.LevelOf(quiz)
+            };
+
+            return View(viewModel);
+        }
 
         #endregion
         #region Account

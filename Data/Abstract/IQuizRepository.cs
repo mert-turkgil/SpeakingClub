@@ -13,6 +13,7 @@ namespace SpeakingClub.Data.Abstract
         Task<IEnumerable<Quiz>> SearchQuizzesByKeywordAsync(string keyword);
         new Task<Quiz?> GetByIdAsync(int quizId);
         Task<Quiz?> GetByIdWithQuestions(int quizId);
+        Task<Quiz?> GetForExamAsync(int quizId);
         void Update(Quiz quiz, bool modifyTeacherName = true);
     }
 }

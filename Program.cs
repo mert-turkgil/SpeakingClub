@@ -214,13 +214,16 @@ var resourcesPath = Path.Combine(Directory.GetCurrentDirectory(), "Resources");
 builder.Services.AddSingleton<AliveResourceService>(p => new AliveResourceService(resourcesPath));
 builder.Services.AddSingleton<IManageResourceService>(sp => new ManageResourceService(resourcesPath));
 builder.Services.AddSingleton<LanguageService>();
+builder.Services.AddScoped<SpeakingClub.Services.ExamService>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddHttpClient<IDictionaryService, DictionaryService>();
 builder.Services.AddHttpClient<IDeeplService, DeeplService>()
     .AddTransientHttpErrorPolicy(policyBuilder =>
         policyBuilder.WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromSeconds(10)));
 builder.Services.AddSingleton<IFileProvider>(new PhysicalFileProvider(resourcesPath));
-builder.Services.AddSignalR();
+// PascalCase payloads: the QuizMonitor page reads the same property names as its server-rendered data
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options => options.PayloadSerializerOptions.PropertyNamingPolicy = null);
 builder.Services.AddMemoryCache();
 
 // Register background service for temp file cleanup

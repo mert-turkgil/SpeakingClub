@@ -1,0 +1,242 @@
+@model SpeakingClub.Models.QuizExamViewModel
+@{
+    Layout = "_ExamLayout";
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var total = Model.Questions.Count;
+    var initial = string.IsNullOrEmpty(Model.StudentName) ? "?" : Model.StudentName.Substring(0, 1).ToUpper();
+    var json = new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All) };
+
+    // UI strings for exam.js ({0}, {1} are filled in by the script)
+    var strings = new Dictionary<string, string>
+    {
+        ["saving"] = T("Kaydediliyor…", "Speichert…"),
+        ["saved"] = T("Kaydedildi", "Gespeichert"),
+        ["offline"] = T("Çevrimdışı – cihazda saklandı", "Offline – lokal gespeichert"),
+        ["answered"] = T("{0} / {1} cevaplandı", "{0} / {1} beantwortet"),
+        ["minutesLeft"] = T("{0} dakika kaldı", "Noch {0} Minuten"),
+        ["oneMinute"] = T("Son 1 dakika! Cevaplarınızı kontrol edin.", "Letzte Minute! Prüfen Sie Ihre Antworten."),
+        ["fiveMinutes"] = T("Son 5 dakika.", "Noch 5 Minuten."),
+        ["violationTitle"] = T("Kural ihlali kaydedildi", "Regelverstoß erfasst"),
+        ["violation.fullscreen-exit"] = T("Tam ekrandan çıktınız.", "Sie haben das Vollbild verlassen."),
+        ["violation.tab-hidden"] = T("Sınav sekmesinden ayrıldınız.", "Sie haben den Prüfungs-Tab verlassen."),
+        ["violation.copy"] = T("Kopyalama sınav sırasında yasaktır.", "Kopieren ist während der Prüfung nicht erlaubt."),
+        ["violation.cut"] = T("Kesme sınav sırasında yasaktır.", "Ausschneiden ist während der Prüfung nicht erlaubt."),
+        ["violation.paste"] = T("Yapıştırma sınav sırasında yasaktır.", "Einfügen ist während der Prüfung nicht erlaubt."),
+        ["violation.print"] = T("Yazdırma sınav sırasında yasaktır.", "Drucken ist während der Prüfung nicht erlaubt."),
+        ["violationCount"] = T("Bu, {0}. ihlaliniz ({1} hakkınız var). Bir sonraki ihlallerde sınavınız sona erebilir.", "Das ist Verstoß {0} von {1}. Weitere Verstöße können die Prüfung beenden."),
+        ["blocked"] = T("Bu işlem sınav sırasında kapalı.", "Diese Aktion ist während der Prüfung gesperrt."),
+        ["leaveWarning"] = T("Sınav devam ediyor. Sayfadan ayrılırsanız süre işlemeye devam eder.", "Die Prüfung läuft. Wenn Sie die Seite verlassen, läuft die Zeit weiter."),
+        ["submitFailed"] = T("Gönderilemedi, tekrar deneniyor…", "Abgabe fehlgeschlagen, neuer Versuch…")
+    };
+}
+@section Scripts {
+    <script src="~/js/exam.js" asp-append-version="true" defer></script>
+}
+
+<div class="quiz-page exam" id="exam"
+     data-attempt="@Model.AttemptId"
+     data-expires="@Model.ExpiresAtUtc.ToString("o")"
+     data-server-now="@Model.ServerNowUtc.ToString("o")"
+     data-limit="@Model.TimeLimitSeconds"
+     data-violations="@Model.ViolationCount"
+     data-max-violations="@Model.MaxViolations"
+     data-save-url="@Url.Action("SaveQuizProgress", "Account")"
+     data-student="@Model.StudentName"
+     data-total="@total">
+
+    <script type="application/json" id="examStrings">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(strings, json))</script>
+    <script type="application/json" id="examSaved">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SavedAnswers.ToDictionary(p => p.Key.ToString(), p => p.Value), json))</script>
+
+    <header class="exam-bar">
+        <div class="exam-bar__brand">
+            <span class="exam-bar__logo"><img src="~/img/logo.svg" alt="" width="26" height="26" /></span>
+            <div class="exam-bar__title">
+                <strong>@Model.QuizTitle</strong>
+                <small>@Model.TeacherName</small>
+            </div>
+        </div>
+        <div class="exam-bar__status">
+            <span class="exam-pill exam-pill--save" data-save-state="saved" id="saveState" role="status">
+                <i class="fa-solid fa-cloud" aria-hidden="true"></i><span>@T("Kaydedildi", "Gespeichert")</span>
+            </span>
+            <span class="exam-pill exam-pill--integrity" id="integrity" data-level="0" title="@T("İhlal sayısı", "Verstöße")">
+                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i><span><b id="violationCount">@Model.ViolationCount</b>/@Model.MaxViolations</span>
+            </span>
+            <span class="exam-timer" id="timer" data-state="ok" role="timer" aria-label="@T("Kalan süre", "Verbleibende Zeit")">
+                <i class="fa-regular fa-clock" aria-hidden="true"></i><b id="timeLeft">--:--</b>
+            </span>
+        </div>
+    </header>
+    <div class="exam-time-line" aria-hidden="true"><span id="timeLine"></span></div>
+    <p class="bp-sr-only" aria-live="polite" id="timeAnnounce"></p>
+
+    <main class="exam-main">
+        <form id="examForm" method="post" asp-action="SubmitQuiz" class="exam-stage" autocomplete="off">
+            <input type="hidden" name="attemptId" value="@Model.AttemptId" />
+            <input type="hidden" name="reason" value="submitted" id="submitReason" />
+            <div class="exam-watermark" id="watermark" aria-hidden="true"></div>
+
+            @foreach (var question in Model.Questions)
+            {
+                <article class="exam-q" data-q="@question.Id" data-index="@(question.Number - 1)" hidden="@(question.Number != 1 ? "hidden" : null)"
+                         aria-label="@T("Soru", "Frage") @question.Number / @total">
+                    <div class="exam-q__card">
+                        <div class="exam-q__head">
+                            <span class="exam-q__num">@T("Soru", "Frage") @question.Number <small>/ @total</small></span>
+                            <button type="button" class="exam-flag" data-flag aria-pressed="false">
+                                <i class="fa-solid fa-flag" aria-hidden="true"></i><span>@T("İşaretle", "Markieren")</span>
+                            </button>
+                        </div>
+                        <fieldset>
+                            <legend class="exam-q__text">@(string.IsNullOrWhiteSpace(question.Text) ? T("Aşağıdaki materyale göre cevaplayın.", "Beantworten Sie die Frage zum folgenden Material.") : question.Text)</legend>
+                            @if (!string.IsNullOrEmpty(question.ImageUrl) || !string.IsNullOrEmpty(question.AudioUrl) || !string.IsNullOrEmpty(question.VideoUrl))
+                            {
+                                <div class="exam-q__media">
+                                    @if (!string.IsNullOrEmpty(question.ImageUrl))
+                                    {
+                                        <img src="@Url.Content(question.ImageUrl)" alt="@T("Soru görseli", "Bild zur Frage")" loading="lazy" draggable="false" />
+                                    }
+                                    @if (!string.IsNullOrEmpty(question.AudioUrl))
+                                    {
+                                        <div class="exam-q__audio">
+                                            <i class="fa-solid fa-headphones" aria-hidden="true"></i>
+                                            <audio controls preload="none" controlsList="nodownload" src="@Url.Content("~/mp3/" + question.AudioUrl)"></audio>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(question.VideoUrl))
+                                    {
+                                        <iframe src="@question.VideoUrl" title="@T("Soru videosu", "Video zur Frage")" loading="lazy" allowfullscreen></iframe>
+                                    }
+                                </div>
+                            }
+                            <div class="exam-options">
+                                @for (var a = 0; a < question.Answers.Count; a++)
+                                {
+                                    var answer = question.Answers[a];
+                                    var inputId = $"q{question.Id}a{answer.Id}";
+                                    <div class="exam-option">
+                                        <input type="radio" id="@inputId" name="responses[@question.Id]" value="@answer.Id" />
+                                        <label class="exam-option__tile" for="@inputId">
+                                            <span class="exam-option__key" aria-hidden="true">@((char)('A' + a))</span>
+                                            <span class="exam-option__text">@answer.Text</span>
+                                            <span class="exam-option__check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </fieldset>
+                    </div>
+                </article>
+            }
+
+            <nav class="exam-nav" aria-label="@T("Soru gezinme", "Fragennavigation")">
+                <button type="button" class="bp-btn bp-btn--ghost" data-prev><i class="fa-solid fa-arrow-left" aria-hidden="true"></i>@T("Önceki", "Zurück")</button>
+                <button type="button" class="bp-btn bp-btn--ghost exam-open-nav" data-open-nav><i class="fa-solid fa-table-cells" aria-hidden="true"></i><span data-answered-short>0/@total</span></button>
+                <span class="exam-nav__hint"><kbd>A</kbd>–<kbd>D</kbd> @T("seç", "wählen") · <kbd>←</kbd><kbd>→</kbd> @T("gez", "blättern") · <kbd>F</kbd> @T("işaretle", "markieren")</span>
+                <button type="button" class="bp-btn" data-next>@T("Sonraki", "Weiter")<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+                <button type="button" class="bp-btn" data-review hidden><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>@T("Bitir ve gönder", "Beenden & abgeben")</button>
+            </nav>
+        </form>
+
+        <aside class="exam-side" id="examSide" aria-label="@T("Soru gezgini", "Fragenübersicht")">
+            <div class="exam-panel">
+                <h2>@T("Soru gezgini", "Fragenübersicht") <span data-answered-short>0/@total</span></h2>
+                <div class="exam-grid" id="examGrid">
+                    @foreach (var question in Model.Questions)
+                    {
+                        <button type="button" data-go="@(question.Number - 1)" aria-label="@T("Soru", "Frage") @question.Number">@question.Number</button>
+                    }
+                </div>
+                <ul class="exam-legend">
+                    <li class="is-answered">@T("Cevaplandı", "Beantwortet")</li>
+                    <li class="is-flagged">@T("İşaretli", "Markiert")</li>
+                    <li class="is-current">@T("Şu anki", "Aktuell")</li>
+                    <li>@T("Boş", "Offen")</li>
+                </ul>
+                <div class="exam-progress">
+                    <span data-answered-text>@string.Format(T("{0} / {1} cevaplandı", "{0} / {1} beantwortet"), 0, total)</span>
+                    <div class="exam-progress__bar"><span id="answeredBar"></span></div>
+                </div>
+            </div>
+            <div class="exam-panel exam-student">
+                <span class="ql-start__avatar" aria-hidden="true">@initial</span>
+                <div><small>@T("Sınava giren", "Prüfling")</small><strong>@Model.StudentName</strong></div>
+            </div>
+            <button type="button" class="bp-btn exam-finish" data-review-side><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>@T("Sınavı bitir…", "Prüfung beenden…")</button>
+        </aside>
+        <div class="exam-sheet-backdrop" id="sheetBackdrop"></div>
+    </main>
+
+    <div class="exam-toasts" id="toasts" aria-live="polite"></div>
+
+    @* Entry gate: fullscreen needs a click, and the clock is already running *@
+    <dialog class="exam-dialog exam-gate" id="gateDialog" aria-labelledby="gateTitle">
+        <div class="exam-dialog__body">
+            <div class="exam-dialog__icon"><i class="fa-solid fa-door-open" aria-hidden="true"></i></div>
+            <h2 id="gateTitle">@T("Sınav odasına hoş geldiniz", "Willkommen im Prüfungsraum")</h2>
+            <p>@T("Süreniz başladı. Tam ekrana geçerek sınava başlayın; kurallar sınav boyunca geçerlidir.", "Ihre Zeit läuft. Wechseln Sie ins Vollbild, um zu beginnen – die Regeln gelten während der gesamten Prüfung.")</p>
+            <span class="exam-gate__time" data-gate-time>--:--</span>
+            <p data-no-fullscreen hidden><small>@T("Tarayıcınız tam ekranı desteklemiyor; sekme değişiklikleri yine de kaydedilir.", "Ihr Browser unterstützt kein Vollbild; Tab-Wechsel werden trotzdem erfasst.")</small></p>
+            <div class="exam-dialog__actions">
+                <button type="button" class="bp-btn" data-enter><i class="fa-solid fa-expand" aria-hidden="true"></i>@T("Tam ekranda başla", "Im Vollbild starten")</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog class="exam-dialog exam-dialog--danger" id="fullscreenDialog" aria-labelledby="fsTitle">
+        <div class="exam-dialog__body">
+            <div class="exam-dialog__icon"><i class="fa-solid fa-compress" aria-hidden="true"></i></div>
+            <h2 id="fsTitle">@T("Tam ekrana geri dönün", "Zurück ins Vollbild")</h2>
+            <p>@T("Tam ekrandan çıktınız ve bu bir ihlal olarak kaydedildi. Devam etmek için tam ekrana dönün.", "Sie haben das Vollbild verlassen; das wurde als Verstoß erfasst. Kehren Sie ins Vollbild zurück, um fortzufahren.")</p>
+            <p data-violation-detail></p>
+            <div class="exam-dialog__actions">
+                <button type="button" class="bp-btn" data-reenter><i class="fa-solid fa-expand" aria-hidden="true"></i>@T("Tam ekrana dön", "Vollbild fortsetzen")</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog class="exam-dialog exam-dialog--warn" id="violationDialog" aria-labelledby="violationTitle">
+        <div class="exam-dialog__body">
+            <div class="exam-dialog__icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+            <h2 id="violationTitle">@T("Kural ihlali kaydedildi", "Regelverstoß erfasst")</h2>
+            <p data-violation-reason></p>
+            <p data-violation-detail></p>
+            <div class="exam-dialog__actions">
+                <button type="button" class="bp-btn" data-close>@T("Anladım, sınava dön", "Verstanden, weiter")</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog class="exam-dialog" id="reviewDialog" aria-labelledby="reviewTitle">
+        <div class="exam-dialog__body">
+            <div class="exam-dialog__icon"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i></div>
+            <h2 id="reviewTitle">@T("Sınavı göndermeye hazır mısınız?", "Bereit zur Abgabe?")</h2>
+            <div class="exam-summary">
+                <div><strong data-sum="answered">0</strong><span>@T("Cevaplanan", "Beantwortet")</span></div>
+                <div><strong data-sum="empty">0</strong><span>@T("Boş", "Offen")</span></div>
+                <div><strong data-sum="flagged">0</strong><span>@T("İşaretli", "Markiert")</span></div>
+            </div>
+            <p class="exam-jump__label" data-jump-empty-label>@T("Boş sorular", "Offene Fragen")</p>
+            <div class="exam-jump" data-jump="empty"></div>
+            <p class="exam-jump__label" data-jump-flagged-label>@T("İşaretli sorular", "Markierte Fragen")</p>
+            <div class="exam-jump" data-jump="flagged"></div>
+            <p style="margin-top: 1rem"><strong>@T("Gönderdikten sonra cevaplarınızı değiştiremezsiniz.", "Nach der Abgabe können Sie Ihre Antworten nicht mehr ändern.")</strong></p>
+            <div class="exam-dialog__actions">
+                <button type="button" class="bp-btn bp-btn--ghost" data-close>@T("Sınava dön", "Zurück zur Prüfung")</button>
+                <button type="button" class="bp-btn bp-btn--danger" data-submit><i class="fa-solid fa-paper-plane" aria-hidden="true"></i>@T("Gönder ve bitir", "Abgeben & beenden")</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog class="exam-dialog" id="busyDialog" aria-labelledby="busyTitle">
+        <div class="exam-busy">
+            <div class="exam-busy__spinner" aria-hidden="true"></div>
+            <h2 id="busyTitle" data-busy-title>@T("Sınavınız gönderiliyor…", "Ihre Prüfung wird abgegeben…")</h2>
+            <p data-busy-text>@T("Lütfen bu sayfayı kapatmayın.", "Bitte schließen Sie diese Seite nicht.")</p>
+        </div>
+    </dialog>
+
+    <template id="busyTimeout">@T("Süre doldu", "Zeit abgelaufen")|@T("Cevaplarınız otomatik olarak gönderiliyor…", "Ihre Antworten werden automatisch abgegeben…")</template>
+    <template id="busyViolations">@T("Sınav sonlandırıldı", "Prüfung beendet")|@T("İhlal sınırına ulaşıldı. Cevaplarınız gönderiliyor…", "Das Limit für Verstöße wurde erreicht. Ihre Antworten werden abgegeben…")</template>
+</div>

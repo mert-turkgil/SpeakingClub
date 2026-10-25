@@ -16,5 +16,7 @@ namespace SpeakingClub.Data.Abstract
         Task<IEnumerable<QuizSubmission>> GetAllAtOnceAsync();
 
         Task<QuizSubmission?> GetLatestSubmissionByUserAndQuiz(string userId, int quizId);
+
+        Task<QuizSubmission?> GetByIdWithResponsesAsync(int submissionId);
     }
 }

@@ -23,6 +23,7 @@ namespace SpeakingClub.Data.Concrete
                 .Include(q => q.Tags)
                 .Include(q => q.Category)
                 .Include(q => q.Words)
+                .AsSplitQuery() // one query per collection instead of a questions × tags × words cartesian product
                 .ToListAsync();
         }
         public async Task<IEnumerable<Quiz>> GetQuizzesByTeacherNameAsync(string teacherName)
@@ -61,10 +62,24 @@ namespace SpeakingClub.Data.Concrete
             return await _dbSet
                 .Include(q => q.Questions)
                 .ThenInclude(q => q.Answers)
-                .Include(q=>q.Category).Where(q=>q.CategoryId==q.Category.CategoryId)
+                .Include(q=>q.Category) // no filter on the category: a quiz without one must still load
                 .Include(q=>q.Blogs)
                 .Include(q=>q.Tags)
                 .Include(q=>q.Words)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(q => q.Id == quizId);
+        }
+
+        // What the exam pages need (questions, answers, category, level tags) — no blogs or words.
+        // Runs on every autosave, so it has to stay small.
+        public async Task<Quiz?> GetForExamAsync(int quizId)
+        {
+            return await _dbSet
+                .Include(q => q.Questions)
+                .ThenInclude(q => q.Answers)
+                .Include(q => q.Category)
+                .Include(q => q.Tags)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(q => q.Id == quizId);
         }
         public async Task<Quiz?> GetByIdWithQuestions(int quizId)

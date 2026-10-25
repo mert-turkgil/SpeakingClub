@@ -62,6 +62,9 @@ namespace SpeakingClub.Controllers
                 SubmissionDate = s.SubmissionDate,
                 SubmissionTimeFormatted = s.SubmissionDate.ToString("g"),
                 Age = userDict.ContainsKey(s.UserId) ? userDict[s.UserId].Age : 0,
+                DurationSeconds = s.DurationSeconds,
+                ViolationCount = s.ViolationCount,
+                EndReason = s.EndReason,
                 Responses = s.QuizResponses.Select(r => new UserResponseViewModel
                 {
                     Question = r.QuizAnswer?.Question?.QuestionText ?? "",
@@ -90,13 +93,16 @@ namespace SpeakingClub.Controllers
                     ? userDict[s.UserId].FirstName + " " + userDict[s.UserId].LastName
                     : "Unknown",
                 QuizTitle = s.Quiz?.Title,
-                Score = (s.Quiz == null || s.Quiz.Questions == null || s.Quiz.Questions.Count == 0) ? 0 :
-                    (int)Math.Round(s.Score * 100.0 / s.Quiz.Questions.Count),
+                // Score is stored as a percentage already (it used to be divided by the question count again)
+                Score = s.Score,
                 MaxScore = 100,
                 AttemptNumber = s.AttemptNumber,
                 SubmissionDate = s.SubmissionDate,
                 SubmissionTimeFormatted = s.SubmissionDate.ToString("g"),
-                Age = userDict.ContainsKey(s.UserId) ? userDict[s.UserId].Age : 0
+                Age = userDict.ContainsKey(s.UserId) ? userDict[s.UserId].Age : 0,
+                DurationSeconds = s.DurationSeconds,
+                ViolationCount = s.ViolationCount,
+                EndReason = s.EndReason
             }).ToList();
 
             return Json(data);

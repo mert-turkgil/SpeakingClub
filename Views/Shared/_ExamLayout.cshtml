@@ -1,0 +1,29 @@
+@* Layout for the exam room: no navigation or footer, nothing that leads away from the exam. *@
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName">
+<head>
+  <script>
+    (function () {
+      var t = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-bs-theme', t);
+    })();
+  </script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <title>@(ViewData["Title"] ?? "Almanca Konuş")</title>
+  <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@@400;600&family=Fraunces:opsz,wght@@9..144,600&display=swap" />
+  <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" />
+  <link rel="stylesheet" href="~/css/blog.css" asp-append-version="true" />
+  <link rel="stylesheet" href="~/css/quiz.css" asp-append-version="true" />
+  @await RenderSectionAsync("Css", required: false)
+</head>
+<body class="exam-body">
+  @RenderBody()
+  @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

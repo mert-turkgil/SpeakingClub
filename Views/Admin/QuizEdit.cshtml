@@ -123,6 +123,15 @@
                         <span asp-validation-for="AudioFile" class="text-danger"></span>
                     </div>
 
+                    <!-- Exam time limit -->
+                    <div class="col-12">
+                        <div class="form-floating">
+                            <input asp-for="TimeLimitMinutes" type="number" min="1" max="300" class="form-control" placeholder="Auto" />
+                            <label asp-for="TimeLimitMinutes">Time limit in minutes (empty = 90 seconds per question)</label>
+                        </div>
+                        <span asp-validation-for="TimeLimitMinutes" class="text-danger"></span>
+                    </div>
+
                     <!-- YouTube Video URL (text field) -->
                     <div class="col-12">
                         <div class="form-floating">
