@@ -91,7 +91,7 @@ print('code points from CSS content:', ' '.join(hex(p) for p in sorted(css_point
 for font in ('fa-solid-900', 'fa-regular-400', 'fa-brands-400'):
     src = os.path.join(FA, 'webfonts', font + '.woff2')
     dst = os.path.join(FA, 'webfonts', font + '-site.woff2')
-    f = TTFont(src)
+    f = TTFont(src, recalcTimestamp=False)   # same input → same bytes → same URL hash (no needless changes)
     options = subset.Options()
     options.flavor = 'woff2'
     options.layout_features = ['*']
@@ -106,7 +106,8 @@ for font in ('fa-solid-900', 'fa-regular-400', 'fa-brands-400'):
 # 4. The stylesheet. Font URLs carry a content hash (?v=…): Program.cs lets browsers keep ?v= files for a
 #    year, and a rebuilt font gets a new URL, so nobody keeps an old copy with missing icons.
 import hashlib
-out_css = ''.join(kept)
+# swap: icons never hold back text (the upstream file says "block", e.g. after npm run copy:libs)
+out_css = ''.join(kept).replace('font-display:block', 'font-display:swap')
 for font in ('fa-solid-900', 'fa-regular-400', 'fa-brands-400'):
     digest = hashlib.sha256(open(os.path.join(FA, 'webfonts', font + '-site.woff2'), 'rb').read()).hexdigest()[:12]
     out_css = re.sub(r'url\(\.\./webfonts/' + font + r'\.woff2\) format\("woff2"\),url\(\.\./webfonts/' + font + r'\.ttf\) format\("truetype"\)',
