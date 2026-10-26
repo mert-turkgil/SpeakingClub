@@ -86,7 +86,7 @@
 }
 .legal-toc__title::-webkit-details-marker { display: none; }
 .legal-toc__title i { display: none; transition: transform var(--bp-med) var(--bp-ease); }
-.legal-toc ol { margin: 0; padding: 0; list-style: none; counter-reset: toc; display: grid; gap: 0.1rem; }
+.legal-toc ol { margin: 0; padding: 0; list-style: none; counter-reset: toc; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
 .legal-toc li { counter-increment: toc; }
 .legal-toc a {
   position: relative;
@@ -256,6 +256,7 @@
 .legal-table tbody tr:hover td { background: var(--bp-surface-soft); }
 
 .legal-contact { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
+.legal-contact .bp-btn { overflow-wrap: anywhere; }   /* the e-mail address is one long word: let it wrap on small phones */
 
 /* "The other legal text" card at the end */
 .legal-next {
@@ -284,7 +285,7 @@
   background: var(--bp-blush);
   color: var(--bp-coral-deep);
 }
-.legal-next__text { display: grid; gap: 0.1rem; flex: 1; min-width: 0; }
+.legal-next__text { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.1rem; flex: 1; min-width: 0; }
 .legal-next__text small { color: var(--bp-muted); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
 .legal-next__text strong { color: var(--bp-ink); font-family: var(--bp-serif); font-size: 1.15rem; font-weight: 600; }
 .legal-next__text span { font-size: 0.9rem; }

@@ -645,7 +645,9 @@ Buttons are at least 44 px tall (12 px vertical padding); icon-only buttons are 
 ### Collapsing Strategy
 
 Grids collapse by themselves (`auto-fit` + `minmax(min(100%, …), 1fr)`). Side-by-side becomes stacked; sticky
-side panels become collapsible boxes above the content; wide tables scroll inside their own box.
+side panels become collapsible boxes above the content; wide tables scroll inside their own box, and admin tables
+become one card per row below 900 px. Columns are always `minmax(0, 1fr)`, so long words, inputs or the Turnstile
+box can't push a card past the screen. Check every page at 320 px and with the phone's text size at 125 %.
 
 ### Image Behavior
 

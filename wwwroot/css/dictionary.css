@@ -89,7 +89,7 @@ html[data-bs-theme="dark"] .dict-search input { color-scheme: dark; }
   font-weight: 700;
   font-size: 0.85rem;
 }
-.dict-step__text { display: grid; line-height: 1.2; }
+.dict-step__text { display: grid; grid-template-columns: minmax(0, 1fr); line-height: 1.2; }
 .dict-step__text b { color: var(--bp-ink); font-size: 0.85rem; font-weight: 600; }
 .dict-step__text b i { color: var(--bp-coral-deep); font-size: 0.8em; margin-right: 0.15rem; }
 .dict-step__text small { color: var(--bp-muted); font-size: 0.72rem; }
@@ -227,7 +227,7 @@ html[data-bs-theme="dark"] .dict-badge--own { background: rgba(46, 160, 98, 0.16
   text-transform: uppercase;
 }
 .dict-section h3 i { color: var(--bp-coral); }
-.dict-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 1.5rem; }
+.dict-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 0 1.5rem; }
 
 /* Rich text written in the admin editor */
 .dict-rich { color: var(--bp-body); font-size: 1.02rem; line-height: 1.7; overflow-wrap: anywhere; }
@@ -262,7 +262,7 @@ html[data-bs-theme="dark"] .dict-badge--own { background: rgba(46, 160, 98, 0.16
 html[data-bs-theme="dark"] .dict-translation { color: var(--bp-link); }
 
 /* PONS */
-.dict-meanings { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; counter-reset: meaning; }
+.dict-meanings { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; margin: 0; padding: 0; list-style: none; counter-reset: meaning; }
 .dict-meanings li {
   counter-increment: meaning;
   display: flex;
@@ -333,7 +333,7 @@ html[data-bs-theme="dark"] .dict-notice { background: rgba(240, 180, 60, 0.12); 
 .dict-empty { padding: 3rem 1.5rem; }
 .dict-empty h2 { overflow-wrap: anywhere; }
 .dict-tips {
-  display: grid;
+  display: grid; grid-template-columns: minmax(0, 1fr);
   gap: 0.6rem;
   max-width: 520px;
   margin: 1.25rem auto 1.75rem;
@@ -344,7 +344,7 @@ html[data-bs-theme="dark"] .dict-notice { background: rgba(240, 180, 60, 0.12); 
 .dict-tips li { display: flex; gap: 0.7rem; align-items: baseline; color: var(--bp-body); }
 .dict-tips i { flex: none; width: 1.2rem; font-size: 0.95rem !important; margin: 0 !important; animation: none !important; color: var(--bp-coral-deep) !important; }
 
-.dict-how { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.dict-how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
 .dict-how__card {
   padding: 1.5rem;
   border: 1px solid var(--bp-hairline);
@@ -372,7 +372,7 @@ html[data-bs-theme="dark"] .dict-notice { background: rgba(240, 180, 60, 0.12); 
    Phones
    --------------------------------------------------------------------- */
 @media (max-width: 760px) {
-  .dict-how { grid-template-columns: 1fr; }
+  .dict-how { grid-template-columns: minmax(0, 1fr); }
   .dict-steps { flex-direction: column; align-items: stretch; gap: 0.4rem; max-width: 340px; margin-top: 1.25rem; }
   .dict-step { padding: 0.35rem 0.8rem 0.35rem 0.35rem; }
   .dict-step + .dict-step::before { left: 1.3rem; top: -0.4rem; width: 2px; height: 0.4rem; }

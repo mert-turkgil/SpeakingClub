@@ -186,6 +186,15 @@ attribute, stores the choice and keeps every toggle in sync.
 - **No sideways scrolling, ever:** decorative elements that hang outside their box are clipped with
   `overflow-x: clip` on the page root (unlike `hidden`, `clip` doesn't create a scroll container, so
   `position: sticky` keeps working).
+- **Columns that can't be pushed wider:** every grid column is `minmax(0, 1fr)`, never a bare `1fr`, and stacked
+  grids get `grid-template-columns: minmax(0, 1fr)`. A bare `1fr` (or an undefined column) is at least as wide as
+  its widest content: the login card grew to fit the 300 px Turnstile box and an `<input>`'s default width, and
+  because the card hides overflow, its right side was simply cut off on phones. With large text (Android "font
+  size", which the Instagram browser applies) an e-mail address did the same to the About page. Pages also set
+  `overflow-wrap: break-word`, German titles hyphenate long words on phones, and Turnstile switches to its compact
+  size when the form is narrower than 300 px.
+- **Testing:** 320 px and 360 px wide, once with the default font size enlarged to 125 %, and 768 px (tablet).
+  Admin tables turn into cards below 900 px.
 - **Animated highlighter under the hero word:** a background gradient that grows from 0 to full width:
 
   ```css

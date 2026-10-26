@@ -214,7 +214,7 @@ html[data-bs-theme="dark"] .adm-body {
   background: var(--a-coral-deep);
 }
 
-.adm-side__foot { margin-top: auto; padding-top: 1.2rem; display: grid; gap: 0.6rem; }
+.adm-side__foot { margin-top: auto; padding-top: 1.2rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
 .adm-side__help {
   padding: 0.9rem 1rem;
   border-radius: var(--a-radius);
@@ -357,8 +357,10 @@ html[data-bs-theme="dark"] .adm-body {
 }
 
 @media (max-width: 1099.98px) {
-  .adm-side { transform: translateX(-104%); box-shadow: none; }
-  .adm.is-side-open .adm-side { transform: none; box-shadow: var(--a-shadow-pop); }
+  /* visibility: the closed menu waits off-screen; hidden, so the keyboard can't tab into it */
+  .adm-side { transform: translateX(-104%); box-shadow: none; visibility: hidden;
+              transition: transform var(--a-med) var(--a-ease), box-shadow var(--a-med) var(--a-ease), visibility 0s linear var(--a-med); }
+  .adm.is-side-open .adm-side { transform: none; box-shadow: var(--a-shadow-pop); visibility: visible; transition-delay: 0s; }
   .adm.is-side-open .adm-scrim { opacity: 1; visibility: visible; }
   .adm-main { margin-left: 0; }
   .adm-top .adm-top__burger { display: inline-flex; }
@@ -366,6 +368,12 @@ html[data-bs-theme="dark"] .adm-body {
 @media (max-width: 599.98px) {
   .adm-user > button span.adm-user__name, .adm-top__site span { display: none; }
   .adm-top__crumbs a, .adm-top__crumbs i { display: none; }
+}
+/* On a phone the bar has room for the menu, language, theme and account buttons only; the page title is
+   right below it anyway (it was cut to "Kelim…") */
+@media (max-width: 479.98px) {
+  .adm-top { gap: 0.5rem; padding-inline: 0.75rem; }
+  .adm-top__crumbs { display: none; }
 }
 
 /* ---------------------------------------------------------------------
@@ -511,7 +519,7 @@ html[data-bs-theme="dark"] .adm-guide__icon { color: #2a1d08; }
 .adm-guide__toggle .is-open, .adm-guide[open] .adm-guide__toggle .is-closed { display: none; }
 .adm-guide[open] .adm-guide__toggle .is-open { display: inline; }
 .adm-guide__body { padding: 0.2rem 1.1rem 1.1rem 1.1rem; animation: adm-rise 260ms var(--a-ease) both; }
-.adm-steps { counter-reset: step; margin: 0; padding: 0; list-style: none; display: grid; gap: 0.55rem; }
+.adm-steps { counter-reset: step; margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.55rem; }
 .adm-steps li {
   counter-increment: step;
   position: relative;
@@ -602,7 +610,7 @@ html[data-bs-theme="dark"] .adm-hello::after { background: #E36464; opacity: 0.2
 .adm-hello__date { display: inline-flex; align-items: center; gap: 0.45rem; margin-bottom: 0.6rem; padding: 0.3rem 0.75rem; border-radius: 999px; background: rgba(255, 255, 255, 0.6); font-size: 0.8rem; font-weight: 600; }
 html[data-bs-theme="dark"] .adm-hello__date { background: rgba(255, 255, 255, 0.1); }
 
-.adm-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.9rem; margin-bottom: 1.3rem; }
+.adm-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 0.9rem; margin-bottom: 1.3rem; }
 .adm-stat {
   display: flex;
   align-items: center;
@@ -644,7 +652,7 @@ a.adm-stat:hover .adm-stat__icon { transform: rotate(-6deg) scale(1.08); }
 .adm-section-title h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
 .adm-section-title p { margin: 0; color: var(--a-muted); font-size: 0.88rem; }
 
-.adm-quick { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.9rem; }
+.adm-quick { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 0.9rem; }
 .adm-tile {
   position: relative;
   display: flex;
@@ -700,7 +708,7 @@ a.adm-stat:hover .adm-stat__icon { transform: rotate(-6deg) scale(1.08); }
 
 .adm-grid-2 > .adm-card { margin-top: 0; }
 .adm-grid-2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 1.1rem; margin-top: 1.3rem; }
-@media (max-width: 991.98px) { .adm-grid-2 { grid-template-columns: 1fr; } }
+@media (max-width: 991.98px) { .adm-grid-2 { grid-template-columns: minmax(0, 1fr); } }
 
 .adm-list { margin: 0; padding: 0; list-style: none; }
 .adm-list li { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 0; border-top: 1px solid var(--a-hairline); }
@@ -753,7 +761,7 @@ a.adm-stat:hover .adm-stat__icon { transform: rotate(-6deg) scale(1.08); }
 .adm-toolbar__end { margin-left: auto; display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .adm-toolbar select { min-height: 46px; }
 
-.adm-table-wrap { border: 1px solid var(--a-hairline); border-radius: var(--a-radius); background: var(--a-surface); box-shadow: var(--a-shadow-1); overflow: hidden; }
+.adm-table-wrap { border: 1px solid var(--a-hairline); border-radius: var(--a-radius); background: var(--a-surface); box-shadow: var(--a-shadow-1); overflow-x: auto; }
 .adm-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
 .adm-table th {
   padding: 0.75rem 1rem;
@@ -840,11 +848,12 @@ a.adm-stat:hover .adm-stat__icon { transform: rotate(-6deg) scale(1.08); }
 .adm-empty h2 { margin: 0; font-size: 1.15rem; }
 .adm-empty p { margin: 0 0 0.6rem; max-width: 46ch; color: var(--a-muted); }
 
-@media (max-width: 759.98px) {
+/* Phones and tablets: each row becomes a card (at 768 px the table no longer fit and the Delete button was cut off) */
+@media (max-width: 899.98px) {
   .adm-table-wrap { border: 0; background: transparent; box-shadow: none; overflow: visible; }
   .adm-table thead { display: none; }
   .adm-table, .adm-table tbody, .adm-table tr, .adm-table td { display: block; width: 100%; }
-  .adm-table tbody { display: grid; gap: 0.75rem; }
+  .adm-table tbody { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
   .adm-table tbody tr {
     padding: 0.4rem 0.9rem;
     border: 1px solid var(--a-hairline);
@@ -858,10 +867,11 @@ a.adm-stat:hover .adm-stat__icon { transform: rotate(-6deg) scale(1.08); }
   .adm-table td[data-label=""]::before, .adm-table td:not([data-label])::before { display: none; }
   .adm-table td.is-primary { display: block; text-align: left; padding-top: 0.7rem; }
   .adm-table td.is-primary::before { display: none; }
-  .adm-table td.is-actions { width: 100%; justify-content: flex-end; border-bottom: 0; padding-bottom: 0.7rem; }
+  .adm-table td.is-actions { width: 100%; justify-content: flex-end; border-bottom: 0; padding-bottom: 0.7rem; white-space: normal; }
   .adm-table td.is-actions::before { display: none; }
-  .adm-row-actions { width: 100%; }
-  .adm-row-actions .adm-btn { flex: 1; }
+  /* wrap: with large text three buttons don't fit one row and used to stick out on the left */
+  .adm-row-actions { width: 100%; flex-wrap: wrap; }
+  .adm-row-actions .adm-btn { flex: 1 1 auto; }
   .adm-more { border: 0; }
 }
 
@@ -870,8 +880,8 @@ a.adm-stat:hover .adm-stat__icon { transform: rotate(-6deg) scale(1.08); }
    --------------------------------------------------------------------- */
 .adm-form { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 1.2rem; align-items: start; }
 .adm-form--single { grid-template-columns: minmax(0, 820px); }
-.adm-form__main { display: grid; gap: 1.1rem; min-width: 0; }
-.adm-form__aside { display: grid; gap: 1.1rem; align-content: start; }
+.adm-form__main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.1rem; min-width: 0; }
+.adm-form__aside { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.1rem; align-content: start; }
 .adm-form__aside .adm-savebar { position: static; box-shadow: var(--a-shadow-1); backdrop-filter: none; }
 @media (max-width: 1099.98px) {
   .adm-form { grid-template-columns: minmax(0, 1fr); }
@@ -901,12 +911,13 @@ a.adm-stat:hover .adm-stat__icon { transform: rotate(-6deg) scale(1.08); }
 }
 .adm-panel__head h2 { margin: 0.1rem 0 0.1rem; font-size: 1.04rem; font-weight: 600; }
 .adm-panel__head p { margin: 0; color: var(--a-muted); font-size: 0.86rem; }
-.adm-panel__body { padding: 0.9rem 1.25rem 1.25rem; display: grid; gap: 1.05rem; }
+.adm-panel__body { padding: 0.9rem 1.25rem 1.25rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.05rem; }
 .adm-panel__body--tight { gap: 0.7rem; }
 .adm-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-@media (max-width: 639.98px) { .adm-row { grid-template-columns: 1fr; } }
+@media (max-width: 639.98px) { .adm-row { grid-template-columns: minmax(0, 1fr); } }
 
-.adm-field { display: grid; gap: 0.35rem; min-width: 0; }
+/* minmax(0, 1fr): a wide child (the editor's toolbar) can't push the field past a phone screen */
+.adm-field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.35rem; min-width: 0; }
 .adm-field > label, .adm-label { display: flex; align-items: center; gap: 0.45rem; color: var(--a-ink); font-size: 0.9rem; font-weight: 600; }
 .adm-req { padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--a-coral-soft); color: var(--a-coral-ink); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.02em; }
 .adm-opt { color: var(--a-muted); font-size: 0.74rem; font-weight: 500; }
@@ -991,7 +1002,7 @@ html[data-bs-theme="dark"] .adm-body .form-select { --bs-form-select-bg-img: url
 
 /* Choices: checkbox/radio chips instead of Ctrl-click multi-selects */
 .adm-choices { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.adm-choices--grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.adm-choices--grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
 .adm-choice { position: relative; display: inline-flex; margin: 0; cursor: pointer; }
 .adm-choice input { position: absolute; opacity: 0; pointer-events: none; }
 .adm-choice span {
@@ -1060,16 +1071,16 @@ html[data-bs-theme="dark"] .adm-body .form-select { --bs-form-select-bg-img: url
 .adm-drop__preview { display: none; width: 100%; }
 .adm-drop.has-file .adm-drop__preview { display: block; }
 .adm-drop.has-file .adm-drop__empty { display: none; }
-.adm-drop__empty { display: grid; gap: 0.35rem; justify-items: center; }
+.adm-drop__empty { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.35rem; justify-items: center; }
 .adm-drop__preview img { width: 100%; max-height: 230px; object-fit: cover; border-radius: 10px; }
 .adm-drop__preview audio { width: 100%; }
 .adm-drop__name { display: block; margin-top: 0.45rem; color: var(--a-ink); font-size: 0.84rem; font-weight: 600; word-break: break-all; }
-.adm-current { display: grid; gap: 0.45rem; padding: 0.7rem; border: 1px solid var(--a-hairline); border-radius: 12px; background: var(--a-surface); }
+.adm-current { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.45rem; padding: 0.7rem; border: 1px solid var(--a-hairline); border-radius: 12px; background: var(--a-surface); }
 .adm-current img { width: 100%; max-height: 210px; object-fit: cover; border-radius: 9px; }
 .adm-current small { color: var(--a-muted); font-size: 0.78rem; }
 
 /* Answers (question form) */
-.adm-answers { display: grid; gap: 0.6rem; }
+.adm-answers { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
 .adm-answer {
   display: grid;
   grid-template-columns: 36px minmax(0, 1fr) auto auto;
@@ -1097,9 +1108,9 @@ html[data-bs-theme="dark"] .adm-body .form-select { --bs-form-select-bg-img: url
 }
 
 /* Question cards (quiz form) */
-.adm-qlist { display: grid; gap: 0.9rem; }
+.adm-qlist { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; }
 .adm-qcard {
-  display: grid;
+  display: grid; grid-template-columns: minmax(0, 1fr);
   gap: 0.8rem;
   padding: 1rem 1.1rem 1.1rem;
   border: 1px solid var(--a-hairline);
@@ -1115,7 +1126,7 @@ html[data-bs-theme="dark"] .adm-body .form-select { --bs-form-select-bg-img: url
 .adm-qcard__num b { display: inline-grid; place-items: center; min-width: 28px; height: 28px; padding: 0 0.4rem; border-radius: 8px; background: var(--a-ink); color: var(--a-canvas); font-size: 0.85rem; }
 .adm-qcard__tools { display: flex; gap: 0.3rem; }
 .adm-qcard__tools .adm-btn:disabled { opacity: 0.3; }
-.adm-qcard__foot { display: grid; gap: 0.6rem; justify-items: start; }
+.adm-qcard__foot { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; justify-items: start; }
 .adm-qcard__foot .adm-details { width: 100%; background: var(--a-surface); }
 details.adm-panel > summary { min-height: 56px; padding: 0.7rem 1.1rem; }
 
@@ -1139,6 +1150,14 @@ details.adm-panel > summary { min-height: 56px; padding: 0.7rem 1.1rem; }
 .adm-savebar__hint { color: var(--a-muted); font-size: 0.84rem; margin-right: auto; }
 .adm-savebar__hint.is-dirty { color: var(--a-amber); font-weight: 600; }
 .adm-savebar__hint.is-dirty::before { content: "●"; margin-right: 0.35rem; }
+/* Phones: one compact row (Cancel + Save) so the bar doesn't cover a fifth of the screen; the hint shows only
+   when there are unsaved changes */
+@media (max-width: 599.98px) {
+  .adm-savebar { flex-wrap: wrap; gap: 0.5rem; padding: 0.6rem 0.7rem; margin-inline: -0.25rem; }
+  .adm-savebar__hint { display: none; }
+  .adm-savebar__hint.is-dirty { display: block; flex-basis: 100%; font-size: 0.8rem; }
+  .adm-savebar > :is(a, button):last-child { flex: 1; justify-content: center; }
+}
 
 /* Error summary at the top of a form */
 .adm-alert {
@@ -1202,7 +1221,7 @@ details.adm-panel > summary { min-height: 56px; padding: 0.7rem 1.1rem; }
 .adm-tab[aria-selected="true"] .adm-tab__step { background: var(--a-coral); color: #2B2220; }
 .adm-tab.has-error::after { content: ""; position: absolute; top: 7px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--a-red); box-shadow: 0 0 0 2px var(--a-surface); }
 .adm-tabpanel { display: none; }
-.adm-tabpanel.is-active { display: grid; gap: 1.1rem; animation: adm-rise 280ms var(--a-ease) both; }
+.adm-tabpanel.is-active { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.1rem; animation: adm-rise 280ms var(--a-ease) both; }
 
 .adm-details { border: 1px solid var(--a-hairline); border-radius: 12px; background: var(--a-surface-2); }
 .adm-details > summary { display: flex; align-items: center; gap: 0.6rem; min-height: 48px; padding: 0.55rem 0.95rem; color: var(--a-ink); font-weight: 600; font-size: 0.9rem; cursor: pointer; list-style: none; }
@@ -1210,13 +1229,13 @@ details.adm-panel > summary { min-height: 56px; padding: 0.7rem 1.1rem; }
 .adm-details > summary::after { content: "\f078"; margin-left: auto; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: 0.75rem; color: var(--a-muted); transition: transform var(--a-med) var(--a-ease); }
 .adm-details[open] > summary::after { transform: rotate(180deg); }
 .adm-details > summary small { color: var(--a-muted); font-weight: 500; }
-.adm-details__body { display: grid; gap: 1rem; padding: 0.3rem 0.95rem 1rem; }
+.adm-details__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; padding: 0.3rem 0.95rem 1rem; }
 
 .adm-input--lg, .adm-body .adm-input--lg { min-height: 54px; font-size: 1.08rem; font-weight: 500; }
 .adm-meter li a { color: inherit; text-decoration: none; }
 .adm-meter li a:hover { color: var(--a-coral-ink); text-decoration: underline; }
 .adm-meter li.is-ok a { color: var(--a-body); }
-.adm-attach-names { display: grid; gap: 0.7rem; padding: 0.9rem; border-radius: 12px; background: var(--a-surface-2); border: 1px solid var(--a-hairline); }
+.adm-attach-names { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.7rem; padding: 0.9rem; border-radius: 12px; background: var(--a-surface-2); border: 1px solid var(--a-hairline); }
 .adm-attach-names label { font-size: 0.82rem; font-weight: 600; color: var(--a-ink); word-break: break-all; }
 .adm-preview-url { padding: 0.6rem 0.8rem; border-radius: 10px; background: var(--a-surface-2); border: 1px solid var(--a-hairline); color: var(--a-muted); font-size: 0.84rem; word-break: break-all; }
 .adm-preview-url b { color: var(--a-green); font-weight: 600; }
@@ -1267,7 +1286,7 @@ html[data-bs-theme="dark"] .adm-body .ck { --ck-color-base-background: #1f1a16; 
 /* ---------------------------------------------------------------------
    8. TOASTS + CONFIRM DIALOG
    --------------------------------------------------------------------- */
-.adm-toasts { position: fixed; top: calc(var(--a-top-h) + 0.6rem); right: 1rem; z-index: 2000; display: grid; gap: 0.6rem; width: min(400px, calc(100vw - 2rem)); pointer-events: none; }
+.adm-toasts { position: fixed; top: calc(var(--a-top-h) + 0.6rem); right: 1rem; z-index: 2000; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; width: min(400px, calc(100vw - 2rem)); pointer-events: none; }
 .adm-toast {
   display: flex;
   align-items: flex-start;
@@ -1316,7 +1335,7 @@ html[data-bs-theme="dark"] .adm-body .ck { --ck-color-base-background: #1f1a16; 
 .adm-dialog__head { padding: 1.4rem 1.5rem 0.4rem; }
 .adm-dialog__head h2 { display: flex; align-items: center; }
 .adm-dialog__head .adm-hint { word-break: break-all; }
-.adm-dialog__fields { display: grid; gap: 1rem; padding: 0.6rem 1.5rem 1.2rem; text-align: left; }
+.adm-dialog__fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; padding: 0.6rem 1.5rem 1.2rem; text-align: left; }
 .adm-dialog__fields textarea { min-height: 130px; }
 .adm-dialog--wide .adm-dialog__actions { justify-content: flex-end; }
 .adm-dialog--wide .adm-dialog__actions .adm-btn { flex: 0 1 auto; min-width: 140px; }

@@ -265,10 +265,12 @@
     <script src="~/js/about-chat.js" asp-append-version="true" defer></script>
     <script>
         window.onloadTurnstileAbout = function () {
-            if (!document.getElementById('turnstile-widget') || !window.turnstile) return;
-            turnstile.render('#turnstile-widget', {
+            var box = document.getElementById('turnstile-widget');
+            if (!box || !window.turnstile) return;
+            turnstile.render(box, {
                 sitekey: '@ViewBag.TurnstileSiteKey',
-                theme: document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light'
+                theme: document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light',
+                size: box.clientWidth < 300 ? 'compact' : 'normal'   // the normal widget is 300 px wide: too wide for small phones
             });
         };
         // Bot detection for the contact form: timestamp + honeypot

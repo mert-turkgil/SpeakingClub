@@ -129,14 +129,16 @@
         });
     }
 
-    // Cloudflare Turnstile, rendered in the site's current theme
+    // Cloudflare Turnstile, rendered in the site's current theme. The normal widget is a fixed 300 px wide; where
+    // the form is narrower (small phones, large text) the compact one (150 px) keeps it inside the card.
     window.onloadTurnstileAuth = function () {
         const box = document.getElementById('turnstile-widget');
         if (!box || !window.turnstile) return;
         window.turnstile.render(box, {
             sitekey: box.dataset.sitekey,
             theme: document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light',
-            language: document.documentElement.lang || 'auto'
+            language: document.documentElement.lang || 'auto',
+            size: box.clientWidth < 300 ? 'compact' : 'normal'
         });
     };
 })();

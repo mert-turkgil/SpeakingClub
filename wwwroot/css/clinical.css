@@ -115,6 +115,11 @@
     gap: 14px;
     margin-bottom: 1.6rem;
 }
+/* The title column may shrink, so a long German word ("Patientenvorstellung") wraps on a phone with large text */
+.clinical-section__head > div { min-width: 0; overflow-wrap: break-word; }
+@media (max-width: 575.98px) {
+    html[lang="de"] .clinical-section__head h2, html[lang="de"] .clinical-hero h1 { hyphens: auto; hyphenate-limit-chars: 14 6 6; }
+}
 .clinical-section__icon {
     flex: 0 0 auto;
     width: 52px;
@@ -178,7 +183,7 @@
 }
 .dialogue__turn {
     display: grid;
-    grid-template-columns: minmax(110px, 150px) 1fr;
+    grid-template-columns: minmax(110px, 150px) minmax(0, 1fr);
     gap: 12px;
     align-items: start;
 }
@@ -207,7 +212,7 @@
 /* ---------- Phrase / Redemittel boxes ---------- */
 .phrase-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: 1.1rem;
 }
 .phrase-box {
@@ -303,7 +308,7 @@
 /* ---------- Doc/Spoken split (Pflegedokumentation) ---------- */
 .docpair {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 1rem;
 }
 .docpair__col {
@@ -327,18 +332,18 @@
    ===================================================================== */
 @media (max-width: 768px) {
     .dialogue__turn {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         gap: 3px;
     }
     .dialogue__role { padding-top: 0; }
-    .docpair { grid-template-columns: 1fr; }
+    .docpair { grid-template-columns: minmax(0, 1fr); }
     .clinical-nav { top: 62px; }
     .clinical-section { scroll-margin-top: 118px; }
 }
 @media (max-width: 480px) {
     .clinical-section__head { gap: 10px; }
     .clinical-section__icon { width: 44px; height: 44px; font-size: 1.15rem; }
-    .phrase-grid { grid-template-columns: 1fr; }
+    .phrase-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* =====================================================================

@@ -121,7 +121,13 @@ The admin panel is used by someone with no computer experience. When you touch i
   `html[data-bs-theme="dark"]`.
 - **Motion must respect** `prefers-reduced-motion`. The shared rules in `blog.css` handle CSS. In JS, check the
   media query before you start loops.
-- Layouts must work from **320 px** up with no horizontal scrolling.
+- Layouts must work from **320 px** up with no horizontal scrolling, **also with the phone set to large text**
+  (in desktop Chrome: Settings → Appearance → Font size → Large, then a 320–360 px wide window or device mode).
+- **Grid columns:** write `minmax(0, 1fr)` instead of `1fr`, and `minmax(min(100%, 280px), 1fr)` in `auto-fill` /
+  `auto-fit`; give stacked grids (`display: grid; gap: …`) `grid-template-columns: minmax(0, 1fr)`. A plain `1fr`
+  column grows to its widest content (an `<input>`, the 300 px Turnstile box, an e-mail address) and pushes the
+  card past a phone screen; a parent with `overflow: hidden` then silently cuts the right side off.
+- Flex items that hold text or inputs need `min-width: 0`; long words and addresses wrap (`overflow-wrap`).
 
 - **Write like the site.** Almanca Konuş is Suna Koç's personal site, not a company: don't add "our team",
   "firmamız", "unser Unternehmen", invented numbers, reviews or prices. About texts are in her first person.

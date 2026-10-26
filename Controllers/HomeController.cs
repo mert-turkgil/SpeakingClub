@@ -1290,10 +1290,24 @@ namespace SpeakingClub.Controllers
         }
         #endregion
 
+        // Unhandled errors (UseExceptionHandler, no code) and empty error responses such as a missing page
+        // (UseStatusCodePagesWithReExecute, /Home/Error/404) both end here. Any method: a failed POST is re-executed as POST.
+        [Route("Home/Error/{code:int?}")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        public IActionResult Error(int? code)
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            var status = code ?? 500;
+            // Requests from scripts (fetch, images, JSON) keep their bare status; only pages opened in a browser get the page
+            if (code.HasValue && !Request.Headers.Accept.ToString().Contains("text/html", StringComparison.OrdinalIgnoreCase))
+                return StatusCode(status);
+
+            Response.StatusCode = status;
+            ViewData["Robots"] = "noindex, follow";
+            return View(new ErrorViewModel
+            {
+                StatusCode = status,
+                RequestId = status >= 500 ? Activity.Current?.Id ?? HttpContext.TraceIdentifier : null
+            });
         }
         
         private async Task<bool> RecaptchaIsValid(string recaptchaResponse)
