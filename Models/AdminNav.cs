@@ -51,7 +51,7 @@ namespace SpeakingClub.Models
                     "BlogCreate", T("Yeni yazı", "Neuer Beitrag"), false,
                     new(T("Yeni bir yazı nasıl eklenir?", "Wie füge ich einen neuen Beitrag hinzu?"), new[]
                     {
-                        T("Sağ üstteki <b>Yeni yazı</b> düğmesine basın.", "Klicken Sie oben rechts auf <b>Neuer Beitrag</b>."),
+                        T("<b>Yeni yazı</b> düğmesine basın.", "Klicken Sie auf <b>Neuer Beitrag</b>."),
                         T("<b>Başlık</b> ve <b>Yazar</b> kutularını doldurun. Bu ikisi zorunludur.", "Füllen Sie <b>Titel</b> und <b>Autor</b> aus. Diese beiden sind Pflicht."),
                         T("<b>İçerik</b> sekmesine geçip yazınızı yazın. Word'den kopyalayıp yapıştırabilirsiniz.", "Wechseln Sie zum Reiter <b>Inhalt</b> und schreiben Sie den Text. Sie können ihn auch aus Word kopieren."),
                         T("<b>Görseller ve dosyalar</b> sekmesinden bir kapak fotoğrafı seçin.", "Wählen Sie im Reiter <b>Bilder & Dateien</b> ein Titelbild."),
@@ -199,6 +199,9 @@ namespace SpeakingClub.Models
         }
 
         public static AdminSection? Find(string key, bool de) => Build(de).FirstOrDefault(s => s.Key == key);
+
+        // The guide shown on a "new …" page: its first step ("press the New … button") is already done there
+        public static AdminGuide ForForm(AdminGuide guide) => guide with { Steps = guide.Steps.Skip(1).ToArray() };
 
         // Older links (and the old single-page panel) jump to a section with ?scrollTo=…Management.
         public static string? FromLegacyAnchor(string? anchor) => anchor switch

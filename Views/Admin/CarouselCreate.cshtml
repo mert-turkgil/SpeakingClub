@@ -10,7 +10,7 @@
 @{
     var adminHeader = new AdminHeader("slide-form", T("Yeni slayt", "Neues Slider-Bild"),
     T("Ana sayfanın en üstünde kayan büyük görsellerden biri.", "Eines der großen Bilder oben auf der Startseite."),
-    ParentTitle: section.Title, ParentHref: Url.Action(section.Action), Guide: section.Guide);
+    ParentTitle: section.Title, ParentHref: Url.Action(section.Action), Guide: AdminNav.ForForm(section.Guide));
 }
 <partial name="_AdminHeader" model="adminHeader" />
 

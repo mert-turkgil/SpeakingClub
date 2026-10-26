@@ -36,11 +36,11 @@
         <partial name="_AdminErrors" />
 
         <div class="adm-tabs" role="tablist" data-tabs aria-label="@T("Yazının bölümleri", "Bereiche des Beitrags")">
-            <button type="button" role="tab" id="tab-basic" aria-controls="panel-basic"><span class="adm-tab__step">1</span>@T("Temel bilgiler", "Grunddaten")</button>
-            <button type="button" role="tab" id="tab-content" aria-controls="panel-content"><span class="adm-tab__step">2</span>@T("Yazı", "Text")</button>
-            <button type="button" role="tab" id="tab-media" aria-controls="panel-media"><span class="adm-tab__step">3</span>@T("Görseller ve dosyalar", "Bilder & Dateien")</button>
-            <button type="button" role="tab" id="tab-lang" aria-controls="panel-lang"><span class="adm-tab__step">4</span>@T("Türkçe / Almanca", "Türkisch / Deutsch")</button>
-            <button type="button" role="tab" id="tab-seo" aria-controls="panel-seo"><span class="adm-tab__step">5</span>@T("Google ve paylaşım", "Google & Teilen")</button>
+            <button type="button" class="adm-tab" role="tab" id="tab-basic" aria-controls="panel-basic"><span class="adm-tab__step">1</span>@T("Temel bilgiler", "Grunddaten")</button>
+            <button type="button" class="adm-tab" role="tab" id="tab-content" aria-controls="panel-content"><span class="adm-tab__step">2</span>@T("Yazı", "Text")</button>
+            <button type="button" class="adm-tab" role="tab" id="tab-media" aria-controls="panel-media"><span class="adm-tab__step">3</span>@T("Görseller ve dosyalar", "Bilder & Dateien")</button>
+            <button type="button" class="adm-tab" role="tab" id="tab-lang" aria-controls="panel-lang"><span class="adm-tab__step">4</span>@T("Türkçe / Almanca", "Türkisch / Deutsch")</button>
+            <button type="button" class="adm-tab" role="tab" id="tab-seo" aria-controls="panel-seo"><span class="adm-tab__step">5</span>@T("Google ve paylaşım", "Google & Teilen")</button>
         </div>
 
         @* ---------------- 1. Basics ---------------- *@
@@ -76,7 +76,7 @@
                         </div>
                         <div class="adm-field">
                             <label asp-for="Date">@T("Yayın tarihi", "Veröffentlichungsdatum")</label>
-                            <input asp-for="Date" type="datetime-local" class="adm-input" />
+                            <input asp-for="Date" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" class="adm-input" />
                             <p class="adm-hint">@T("Yazılar bu tarihe göre sıralanır.", "Beiträge werden nach diesem Datum sortiert.")</p>
                         </div>
                     </div>

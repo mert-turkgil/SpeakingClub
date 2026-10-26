@@ -253,7 +253,7 @@ html[data-bs-theme="dark"] .adm-body {
   transition: border-color var(--a-med) var(--a-ease), box-shadow var(--a-med) var(--a-ease);
 }
 .adm-top.is-scrolled { border-bottom-color: var(--a-hairline); box-shadow: 0 6px 20px -16px rgba(43, 34, 32, 0.4); }
-.adm-top__burger { display: none; }
+.adm-top .adm-top__burger { display: none; }
 .adm-top__crumbs { display: flex; align-items: center; gap: 0.5rem; min-width: 0; color: var(--a-muted); font-size: 0.86rem; }
 .adm-top__crumbs a { color: var(--a-muted) !important; text-decoration: none; }
 .adm-top__crumbs a:hover { color: var(--a-coral-ink) !important; }
@@ -361,7 +361,7 @@ html[data-bs-theme="dark"] .adm-body {
   .adm.is-side-open .adm-side { transform: none; box-shadow: var(--a-shadow-pop); }
   .adm.is-side-open .adm-scrim { opacity: 1; visibility: visible; }
   .adm-main { margin-left: 0; }
-  .adm-top__burger { display: inline-grid; }
+  .adm-top .adm-top__burger { display: inline-flex; }
 }
 @media (max-width: 599.98px) {
   .adm-user > button span.adm-user__name, .adm-top__site span { display: none; }
@@ -602,7 +602,7 @@ html[data-bs-theme="dark"] .adm-hello::after { background: #E36464; opacity: 0.2
 .adm-hello__date { display: inline-flex; align-items: center; gap: 0.45rem; margin-bottom: 0.6rem; padding: 0.3rem 0.75rem; border-radius: 999px; background: rgba(255, 255, 255, 0.6); font-size: 0.8rem; font-weight: 600; }
 html[data-bs-theme="dark"] .adm-hello__date { background: rgba(255, 255, 255, 0.1); }
 
-.adm-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0.9rem; margin-bottom: 1.3rem; }
+.adm-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.9rem; margin-bottom: 1.3rem; }
 .adm-stat {
   display: flex;
   align-items: center;
@@ -698,6 +698,7 @@ a.adm-stat:hover .adm-stat__icon { transform: rotate(-6deg) scale(1.08); }
 .adm-tile__go i { margin-left: 0.3rem; transition: transform var(--a-med) var(--a-ease); }
 .adm-tile:hover .adm-tile__go i { transform: translateX(4px); }
 
+.adm-grid-2 > .adm-card { margin-top: 0; }
 .adm-grid-2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 1.1rem; margin-top: 1.3rem; }
 @media (max-width: 991.98px) { .adm-grid-2 { grid-template-columns: 1fr; } }
 
@@ -774,6 +775,7 @@ a.adm-stat:hover .adm-stat__icon { transform: rotate(-6deg) scale(1.08); }
 .adm-table tbody tr { transition: background var(--a-fast) var(--a-ease); animation: adm-rise 360ms var(--a-ease) both; animation-delay: calc(min(var(--i, 0), 14) * 25ms); }
 .adm-table tbody tr:hover { background: var(--a-surface-2); }
 .adm-table tbody tr:last-child td { border-bottom: 0; }
+.adm-table td[data-label][data-value] { white-space: nowrap; }
 .adm-table .is-num { text-align: right; font-variant-numeric: tabular-nums; }
 .adm-table .is-actions { text-align: right; white-space: nowrap; width: 1%; }
 .adm-table mark { padding: 0 2px; border-radius: 3px; background: var(--a-amber-soft); color: inherit; }
@@ -869,7 +871,8 @@ a.adm-stat:hover .adm-stat__icon { transform: rotate(-6deg) scale(1.08); }
 .adm-form { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 1.2rem; align-items: start; }
 .adm-form--single { grid-template-columns: minmax(0, 820px); }
 .adm-form__main { display: grid; gap: 1.1rem; min-width: 0; }
-.adm-form__aside { display: grid; gap: 1.1rem; position: sticky; top: calc(var(--a-top-h) + 1rem); }
+.adm-form__aside { display: grid; gap: 1.1rem; align-content: start; }
+.adm-form__aside .adm-savebar { position: static; box-shadow: var(--a-shadow-1); backdrop-filter: none; }
 @media (max-width: 1099.98px) {
   .adm-form { grid-template-columns: minmax(0, 1fr); }
   .adm-form__aside { position: static; }
@@ -1057,6 +1060,7 @@ html[data-bs-theme="dark"] .adm-body .form-select { --bs-form-select-bg-img: url
 .adm-drop__preview { display: none; width: 100%; }
 .adm-drop.has-file .adm-drop__preview { display: block; }
 .adm-drop.has-file .adm-drop__empty { display: none; }
+.adm-drop__empty { display: grid; gap: 0.35rem; justify-items: center; }
 .adm-drop__preview img { width: 100%; max-height: 230px; object-fit: cover; border-radius: 10px; }
 .adm-drop__preview audio { width: 100%; }
 .adm-drop__name { display: block; margin-top: 0.45rem; color: var(--a-ink); font-size: 0.84rem; font-weight: 600; word-break: break-all; }

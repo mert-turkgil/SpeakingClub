@@ -1,6 +1,6 @@
 // ============================================================================
 // admin-quiz.js — the quiz form (Views/Admin/_QuizForm.cshtml).
-// Add / remove / reorder questions and answers, keep the posted names
+// Add / remove questions and answers, keep the posted names
 // (Questions[i].Answers[j].…) and the A, B, C letters in order, and check
 // every question before saving: text, at least two answers, one marked
 // correct. Completely empty question cards are dropped instead of refused.
@@ -31,8 +31,6 @@
                 text.placeholder = t('Cevap ', 'Antwort ') + letter;
                 text.setAttribute('aria-label', t('Soru ', 'Frage ') + (q + 1) + ', ' + t('cevap ', 'Antwort ') + letter);
             });
-            card.querySelector('[data-q-up]').disabled = q === 0;
-            card.querySelector('[data-q-down]').disabled = q === cards.length - 1;
         });
         const count = form.querySelector('[data-question-count]');
         if (count) count.textContent = cards.length;
@@ -83,8 +81,6 @@
             dirty();
             return;
         }
-        if (e.target.closest('[data-q-up]') && card.previousElementSibling) { list.insertBefore(card, card.previousElementSibling); renumber(); dirty(); return; }
-        if (e.target.closest('[data-q-down]') && card.nextElementSibling) { list.insertBefore(card.nextElementSibling, card); renumber(); dirty(); return; }
         if (e.target.closest('[data-q-remove]')) {
             const remove = () => {
                 card.remove();

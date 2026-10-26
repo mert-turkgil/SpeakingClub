@@ -21,7 +21,7 @@
 @{
     var adminHeader = new AdminHeader("question-form", isEdit ? T("Soruyu düzenle", "Frage bearbeiten") : T("Yeni soru", "Neue Frage"),
     T("Soruyu yazın, sınavını seçin, cevapları girin ve doğru olanı işaretleyin.", "Frage schreiben, Prüfung wählen, Antworten eintragen und die richtige markieren."),
-    ParentTitle: section.Title, ParentHref: Url.Action(section.Action), Guide: isEdit ? null : section.Guide);
+    ParentTitle: section.Title, ParentHref: Url.Action(section.Action), Guide: isEdit ? null : AdminNav.ForForm(section.Guide));
 }
 <partial name="_AdminHeader" model="adminHeader" />
 
@@ -165,6 +165,7 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.umd.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/translations/@(isGerman ? "de" : "tr").umd.js"></script>
     <script>
         // Answers: add / remove rows, keep the A, B, C… letters and the Answers[i] names in order
         (function () {

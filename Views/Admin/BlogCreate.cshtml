@@ -7,8 +7,8 @@
     ViewData["Title"] = T("Yeni yazı", "Neuer Beitrag");
     ViewData["AdminSection"] = section.Key;
     var adminHeader = new AdminHeader("blog-form", T("Yeni yazı", "Neuer Beitrag"),
-        T("Yukarıdaki adımları sırayla doldurun. Yalnızca başlık ve yazar zorunludur; gerisini sonra da ekleyebilirsiniz.", "Füllen Sie die Schritte der Reihe nach aus. Nur Titel und Autor sind Pflicht; den Rest können Sie später ergänzen."),
-        ParentTitle: section.Title, ParentHref: Url.Action(section.Action), Guide: section.Guide);
+        T("Aşağıdaki adımları sırayla doldurun. Yalnızca başlık ve yazar zorunludur; gerisini sonra da ekleyebilirsiniz.", "Füllen Sie die Schritte unten der Reihe nach aus. Nur Titel und Autor sind Pflicht; den Rest können Sie später ergänzen."),
+        ParentTitle: section.Title, ParentHref: Url.Action(section.Action), Guide: AdminNav.ForForm(section.Guide));
 }
 @section Css {
     <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.css" />
@@ -21,6 +21,7 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.umd.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/translations/@(isGerman ? "de" : "tr").umd.js"></script>
     <script src="~/js/ckeditor.js" asp-append-version="true"></script>
     <script src="~/js/admin-blog.js" asp-append-version="true"></script>
 }

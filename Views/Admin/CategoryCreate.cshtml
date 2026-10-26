@@ -10,7 +10,7 @@
 @{
     var adminHeader = new AdminHeader("category-form", T("Yeni kategori", "Neue Kategorie"),
     T("Bir ad yazın; isterseniz bu kategoriye girecek yazıları ve sınavları da hemen işaretleyin.", "Geben Sie einen Namen ein und markieren Sie auf Wunsch gleich die Beiträge und Prüfungen dafür."),
-    ParentTitle: section.Title, ParentHref: Url.Action(section.Action), Guide: section.Guide);
+    ParentTitle: section.Title, ParentHref: Url.Action(section.Action), Guide: AdminNav.ForForm(section.Guide));
 }
 <partial name="_AdminHeader" model="adminHeader" />
 

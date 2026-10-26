@@ -3986,7 +3986,7 @@ namespace SpeakingClub.Controllers
         {
             // [ValidateAtLeastOneCorrectAnswer] also fires for empty question cards, which are simply skipped
             // on save; the checks below replace its errors.
-            foreach (var key in ModelState.Keys.Where(k => System.Text.RegularExpressions.Regex.IsMatch(k, @"^Questions\[\d+\]\.Answers$")).ToList())
+            foreach (var key in ModelState.Keys.Where(k => System.Text.RegularExpressions.Regex.IsMatch(k, @"^Questions\[\d+\]\.(Answers|QuestionText|Answers\[\d+\]\.AnswerText)$")).ToList())
             {
                 ModelState.Remove(key);
             }
@@ -4466,7 +4466,12 @@ namespace SpeakingClub.Controllers
             {
                 answer.IsCorrect = answer.IsCorrect is "true" or "True" or "on" ? "true" : "false";
             }
-            ModelState.Remove(nameof(model.Answers));
+            // AnswerText and QuestionText are non-nullable strings, so MVC already marked empty rows as "required"
+            // (in English) before they could be dropped; the checks below replace those errors.
+            foreach (var key in ModelState.Keys.Where(k => k == nameof(model.Answers) || k.StartsWith("Answers[") || k == nameof(model.QuestionText)).ToList())
+            {
+                ModelState.Remove(key);
+            }
 
             if (string.IsNullOrWhiteSpace(HtmlUtility.StripHtml(model.QuestionText ?? string.Empty)))
                 ModelState.AddModelError(nameof(model.QuestionText), T("Lütfen soruyu yazın.", "Bitte schreiben Sie die Frage."));

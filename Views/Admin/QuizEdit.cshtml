@@ -7,7 +7,7 @@
     ViewData["Title"] = T("Sınavı düzenle", "Prüfung bearbeiten");
     ViewData["AdminSection"] = section.Key;
     var adminHeader = new AdminHeader("quiz-form", string.IsNullOrWhiteSpace(Model.Title) ? T("Sınavı düzenle", "Prüfung bearbeiten") : Model.Title,
-        T("Soruları düzeltin, yenilerini ekleyin ya da sıralarını değiştirin. Öğrencilerin daha önce aldığı puanlar değişmez.", "Korrigieren Sie Fragen, fügen Sie neue hinzu oder ändern Sie die Reihenfolge. Bisherige Punktzahlen bleiben gleich."),
+        T("Soruları düzeltin ya da yenilerini ekleyin. Öğrencilerin daha önce aldığı puanlar değişmez.", "Korrigieren Sie Fragen oder fügen Sie neue hinzu. Bisherige Punktzahlen bleiben gleich."),
         ParentTitle: section.Title, ParentHref: Url.Action(section.Action));
 }
 

@@ -22,6 +22,22 @@
     };
 
     // ------------------------------------------------------------------
+    // A picture whose file is missing becomes a neutral placeholder, not the browser's broken-image icon
+    // ------------------------------------------------------------------
+    const brokenSelector = 'img.adm-thumb, img.adm-list__thumb, .adm-current img';
+    function replaceBroken(img) {
+        const placeholder = document.createElement('span');
+        placeholder.className = (img.classList.contains('adm-thumb') ? 'adm-thumb adm-thumb--empty' : img.classList.contains('adm-list__thumb') ? 'adm-list__thumb' : 'adm-thumb adm-thumb--empty');
+        placeholder.setAttribute('aria-hidden', 'true');
+        placeholder.innerHTML = '<i class="fa-regular fa-image"></i>';
+        img.replaceWith(placeholder);
+    }
+    document.addEventListener('error', (e) => {
+        if (e.target instanceof HTMLImageElement && e.target.matches(brokenSelector)) replaceBroken(e.target);
+    }, true);
+    document.querySelectorAll(brokenSelector).forEach((img) => { if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) replaceBroken(img); });
+
+    // ------------------------------------------------------------------
     // Sidebar drawer (tablets and phones)
     // ------------------------------------------------------------------
     const openSide = () => { shell.classList.add('is-side-open'); document.querySelector('.adm-side a')?.focus({ preventScroll: true }); };

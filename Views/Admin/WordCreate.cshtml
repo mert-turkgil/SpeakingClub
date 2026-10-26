@@ -13,7 +13,7 @@
 @{
     var adminHeader = new AdminHeader("word-form", T("Yeni kelime", "Neues Wort"),
     T("Kelimeyi ve anlamını yazın; diğer alanlar isteğe bağlıdır.", "Geben Sie das Wort und seine Bedeutung ein; der Rest ist freiwillig."),
-    ParentTitle: section.Title, ParentHref: Url.Action(section.Action), Guide: section.Guide);
+    ParentTitle: section.Title, ParentHref: Url.Action(section.Action), Guide: AdminNav.ForForm(section.Guide));
 }
 <partial name="_AdminHeader" model="adminHeader" />
 
@@ -32,4 +32,5 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.umd.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/translations/@(isGerman ? "de" : "tr").umd.js"></script>
 }

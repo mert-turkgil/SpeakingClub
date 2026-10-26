@@ -87,7 +87,7 @@
                 <span class="adm-panel__num">2</span>
                 <div>
                     <h2>@T("Sorular", "Fragen") <span class="adm-badge adm-badge--plain" data-question-count></span></h2>
-                    <p>@T("Her soruya cevapları yazın ve doğru cevabın yanındaki kutuyu işaretleyin. Boş bıraktığınız cevap satırları kaydedilmez.", "Tragen Sie zu jeder Frage die Antworten ein und markieren Sie die richtige. Leere Antwortzeilen werden nicht gespeichert.")</p>
+                    <p>@T("Her soruya cevapları yazın ve doğru cevabın yanındaki kutuyu işaretleyin. Boş bıraktığınız cevap satırları kaydedilmez. Sorular sınavda her öğrenciye karışık sırayla gösterilir.", "Tragen Sie zu jeder Frage die Antworten ein und markieren Sie die richtige. Leere Antwortzeilen werden nicht gespeichert. In der Prüfung erscheinen die Fragen für jede Person in zufälliger Reihenfolge.")</p>
                 </div>
             </div>
             <div class="adm-panel__body">
@@ -105,8 +105,6 @@
                             <header class="adm-qcard__head">
                                 <span class="adm-qcard__num">@T("Soru", "Frage") <b data-qnum>@(q + 1)</b></span>
                                 <span class="adm-qcard__tools">
-                                    <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm adm-btn--icon" data-q-up aria-label="@T("Yukarı taşı", "Nach oben")" title="@T("Yukarı taşı", "Nach oben")"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
-                                    <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm adm-btn--icon" data-q-down aria-label="@T("Aşağı taşı", "Nach unten")" title="@T("Aşağı taşı", "Nach unten")"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>
                                     <button type="button" class="adm-btn adm-btn--danger adm-btn--sm adm-btn--icon" data-q-remove aria-label="@T("Soruyu kaldır", "Frage entfernen")" title="@T("Soruyu kaldır", "Frage entfernen")"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
                                 </span>
                             </header>
@@ -322,8 +320,6 @@
         <header class="adm-qcard__head">
             <span class="adm-qcard__num">@T("Soru", "Frage") <b data-qnum></b></span>
             <span class="adm-qcard__tools">
-                <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm adm-btn--icon" data-q-up aria-label="@T("Yukarı taşı", "Nach oben")" title="@T("Yukarı taşı", "Nach oben")"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
-                <button type="button" class="adm-btn adm-btn--ghost adm-btn--sm adm-btn--icon" data-q-down aria-label="@T("Aşağı taşı", "Nach unten")" title="@T("Aşağı taşı", "Nach unten")"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></button>
                 <button type="button" class="adm-btn adm-btn--danger adm-btn--sm adm-btn--icon" data-q-remove aria-label="@T("Soruyu kaldır", "Frage entfernen")" title="@T("Soruyu kaldır", "Frage entfernen")"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
             </span>
         </header>

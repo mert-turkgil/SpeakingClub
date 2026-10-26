@@ -262,7 +262,7 @@ window.CKEditorManager = (function() {
             TableToolbar,
             TextPartLanguage,
             TextTransformation,
-            Title,
+            // (Title removed: it added a second "Type your title" field inside the content, while the post has its own title)
             TodoList,
             Underline,
             WordCount,
@@ -407,7 +407,9 @@ window.CKEditorManager = (function() {
                 { name: 'Code (bright)', element: 'pre', classes: ['fancy-code', 'fancy-code-bright'] }
             ]
         },
-        placeholder: 'Type or paste your content here!',
+        placeholder: document.documentElement.lang === 'de' ? 'Schreiben Sie hier oder fügen Sie Ihren Text ein…' : 'Yazınızı buraya yazın ya da yapıştırın…',
+        // Menus in the panel's language (the page loads ckeditor5/translations/<lang>.umd.js)
+        language: document.documentElement.lang === 'de' ? 'de' : 'tr',
         licenseKey: LICENSE_KEY,
         menuBar: {
             isVisible: true
@@ -617,7 +619,6 @@ window.addEventListener('load', function () {
     ])
     .then(() => {
         console.log('✅ All editors initialized successfully');
-        window.CKEditorManager.showNotification('Editors ready!', 'success');
     })
     .catch(error => {
         console.error('❌ Failed to initialize editors:', error);

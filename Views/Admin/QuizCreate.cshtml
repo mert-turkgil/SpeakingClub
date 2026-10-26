@@ -8,7 +8,7 @@
     ViewData["AdminSection"] = section.Key;
     var adminHeader = new AdminHeader("quiz-form", T("Yeni sınav", "Neue Prüfung"),
         T("Sınava bir ad verin, soruları ekleyin ve her sorunun doğru cevabını işaretleyin.", "Geben Sie der Prüfung einen Namen, fügen Sie die Fragen hinzu und markieren Sie jeweils die richtige Antwort."),
-        ParentTitle: section.Title, ParentHref: Url.Action(section.Action), Guide: section.Guide);
+        ParentTitle: section.Title, ParentHref: Url.Action(section.Action), Guide: AdminNav.ForForm(section.Guide));
 }
 
 <partial name="_AdminHeader" model="adminHeader" />
