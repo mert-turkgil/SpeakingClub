@@ -1,96 +1,92 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace SpeakingClub.Services
 {
+    /// <summary>
+    /// DeepL API v2 (https://developers.deepl.com/docs/api-reference/translate).
+    /// The key goes in the Authorization header (query-string keys are no longer accepted),
+    /// and free keys (ending in ":fx") use api-free.deepl.com, paid keys api.deepl.com.
+    /// </summary>
     public class DeeplService : IDeeplService
     {
         private readonly HttpClient _httpClient;
-        private readonly string _apiKey;
+        private readonly string? _apiKey;
         private readonly ILogger<DeeplService> _logger;
-        public DeeplService(HttpClient httpClient, IConfiguration config,
-         ILogger<DeeplService> logger)
+
+        public DeeplService(HttpClient httpClient, IConfiguration config, ILogger<DeeplService> logger)
         {
             _httpClient = httpClient;
-            _apiKey = config["DeepL:ApiKey"]??"null";
             _logger = logger;
+            var key = config["DeepL:ApiKey"]?.Trim();
+            _apiKey = string.IsNullOrEmpty(key) || key == "null" ? null : key;
         }
 
-        public async Task<string?> GetDefinitionAsync(string term)
+        public bool IsConfigured => _apiKey != null;
+
+        private string Endpoint => _apiKey!.EndsWith(":fx", StringComparison.Ordinal)
+            ? "https://api-free.deepl.com/v2/translate"
+            : "https://api.deepl.com/v2/translate";
+
+        public async Task<DeeplTranslation?> TranslateAsync(string text, string targetLang, string? sourceLang = null, CancellationToken cancellationToken = default)
         {
+            if (!IsConfigured || string.IsNullOrWhiteSpace(text)) return null;
+
+            var form = new List<KeyValuePair<string, string>>
+            {
+                new("text", text),
+                new("target_lang", TargetCode(targetLang))
+            };
+            if (!string.IsNullOrEmpty(sourceLang))
+                form.Add(new("source_lang", sourceLang.ToUpperInvariant()));
+
             try
             {
-                // Build the request URL.
-                var requestUrl = $"https://api-free.deepl.com/v2/translate?auth_key={_apiKey}&text={Uri.EscapeDataString(term)}&target_lang=DE";
-
-                // Call the API.
-                var response = await _httpClient.GetAsync(requestUrl);
-                if (response.IsSuccessStatusCode)
+                using var request = new HttpRequestMessage(HttpMethod.Post, Endpoint)
                 {
-                    var json = await response.Content.ReadAsStringAsync();
+                    Content = new FormUrlEncodedContent(form)
+                };
+                request.Headers.Authorization = new AuthenticationHeaderValue("DeepL-Auth-Key", _apiKey);
 
-                    // Deserialize the JSON result.
-                    dynamic? result = JsonConvert.DeserializeObject(json);
-
-                    // Use a local variable for translations to help with nullability checks.
-                    var translations = result?.translations;
-                    if (translations?.Count > 0)
-                    {
-                        string definition = Convert.ToString(translations[0].text) ?? string.Empty;
-                        return definition;
-                    }
-                }
-                else
+                using var response = await _httpClient.SendAsync(request, cancellationToken);
+                if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogWarning("DeepL API returned a non-success status code: {StatusCode}", response.StatusCode);
+                    // 403 = wrong key, 456 = monthly character quota used up
+                    _logger.LogWarning("DeepL returned {StatusCode} for target {Target}", (int)response.StatusCode, targetLang);
+                    return null;
                 }
+
+                await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                using var json = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+                if (!json.RootElement.TryGetProperty("translations", out var translations) || translations.GetArrayLength() == 0)
+                    return null;
+
+                var first = translations[0];
+                var translated = first.GetProperty("text").GetString();
+                if (string.IsNullOrWhiteSpace(translated)) return null;
+                var detected = first.TryGetProperty("detected_source_language", out var d) ? d.GetString() : sourceLang;
+                return new DeeplTranslation(translated.Trim(), (detected ?? "").ToLowerInvariant(), targetLang.ToLowerInvariant());
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
             {
-                // Log the error along with the term for which the lookup failed.
-                _logger.LogError(ex, "Error fetching definition for term '{Term}' from DeepL API", term);
+                _logger.LogError(ex, "DeepL request failed for target {Target}", targetLang);
+                return null;
             }
-            return null;
         }
 
-        public async Task<string?> GetDefinitionByCultureAsync(string term, string culture)
+        // DeepL wants a regional variant for English and Portuguese targets
+        private static string TargetCode(string lang) => lang.ToLowerInvariant() switch
         {
-            try
-            {
-                // Build the request URL.
-                var requestUrl = $"https://api-free.deepl.com/v2/translate?auth_key={_apiKey}&text={Uri.EscapeDataString(term)}&target_lang=DE&source_lang={culture}";
-
-                // Call the API.
-                var response = await _httpClient.GetAsync(requestUrl);
-                if (response.IsSuccessStatusCode)
-                {
-                    var json = await response.Content.ReadAsStringAsync();
-
-                    // Deserialize the JSON result.
-                    dynamic? result = JsonConvert.DeserializeObject(json);
-
-                    // Use a local variable for translations to help with nullability checks.
-                    var translations = result?.translations;
-                    if (translations?.Count > 0)
-                    {
-                        string definition = Convert.ToString(translations[0].text) ?? string.Empty;
-                        return definition;
-                    }
-                }
-                else
-                {
-                    _logger.LogWarning("DeepL API returned a non-success status code: {StatusCode}", response.StatusCode);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log the error along with the term for which the lookup failed.
-                _logger.LogError(ex, "Error fetching definition for term '{Term}' from DeepL API", term);
-            }
-            return null;
-        }
+            "en" => "EN-GB",
+            "pt" => "PT-PT",
+            var other => other.ToUpperInvariant()
+        };
     }
 }

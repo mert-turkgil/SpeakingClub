@@ -27,8 +27,6 @@ namespace SpeakingClub.Controllers
         private readonly LanguageService _localization;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IEmailSender _emailSender;
-        private readonly IDictionaryService _dictionaryService;
-        private readonly IDeeplService _deeplService;
         private readonly UserManager<User> _userManager;
         private readonly ExamService _examService;
 
@@ -39,8 +37,6 @@ namespace SpeakingClub.Controllers
             IUnitOfWork unitOfWork,
             IMemoryCache memoryCache,
             IEmailSender emailSender,
-            IDeeplService deeplService,
-            IDictionaryService dictionaryService,
             UserManager<User> userManager,
             ExamService examService)
         {
@@ -51,8 +47,6 @@ namespace SpeakingClub.Controllers
             _localization = localization;
             _unitOfWork = unitOfWork;
             _emailSender = emailSender;
-            _deeplService = deeplService;
-            _dictionaryService = dictionaryService;
             _userManager = userManager;
         }
 
@@ -1076,110 +1070,69 @@ namespace SpeakingClub.Controllers
         [HttpGet("sozluk")]
         [HttpGet("woerterbuch")]
         [HttpGet("Home/Words", Order = 1)]
-        public async Task<IActionResult> Words(string searchTerm)
+        public async Task<IActionResult> Words(string? searchTerm, [FromServices] DictionaryLookupService dictionary)
         {
             if (RedirectToCanonical(GetLocalizedPath("/sozluk", "/woerterbuch", "/sozluk")) is { } redirect)
                 return redirect;
 
-            ViewBag.TurnstileSiteKey = _configuration["Turnstile:SiteKey"];
-            var currentCulture = CultureInfo.CurrentCulture.Name;
-            var langCode = currentCulture.Substring(0, 2).ToLower();
-            
-            // SEO metadata for dictionary
-            if (IsGerman())
+            var de = IsGerman();
+            string T(string tr, string deText) => de ? deText : tr;
+
+            if (de)
             {
                 SetSeoData(
                     "Wörterbuch | Almanca Konuşma Kulübü",
-                    "Deutsches Wörterbuch mit Definitionen, Aussprache, Synonymen und Beispielen. Suchen Sie jedes deutsche Wort!",
-                    "Wörterbuch, Deutsch, Definition, Aussprache, Synonyme, Übersetzung",
+                    "Deutsch–Türkisch Wörterbuch: unsere eigenen Einträge mit Beispielen, dazu Übersetzungen von DeepL und PONS.",
+                    "Wörterbuch, Deutsch, Türkisch, Übersetzung, Bedeutung, Aussprache",
                     "/woerterbuch");
             }
             else
             {
                 SetSeoData(
                     "Sözlük | Almanca Konuşma Kulübü",
-                    "Almanca sözlük - tanım, telaffuz, eş anlamlılar ve örneklerle her Almanca kelimeyi arayın!",
-                    "sözlük, almanca, tanım, telaffuz, eş anlamlı, çeviri",
+                    "Almanca–Türkçe sözlük: kendi hazırladığımız kelimeler, örnekler ve telaffuz; ayrıca DeepL ve PONS çevirileri.",
+                    "sözlük, almanca, türkçe, çeviri, anlam, telaffuz",
                     "/sozluk");
             }
             SetHreflang("/sozluk", "/woerterbuch");
 
-            var model = new WordViewModel
-            {
-                SearchTerm = searchTerm ?? string.Empty
-            };
+            var model = new WordViewModel { SearchTerm = Data.Concrete.WordRepository.NormalizeTerm(searchTerm) };
 
-            // Words GET action'ın başına ekle:
-            string userIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-            string key = $"WordsSearch:{userIp}";
-            int count = _memoryCache.GetOrCreate(key, entry =>
+            if (model.SearchTerm.Length == 0)
+            {
+                model.Suggestions = await dictionary.SuggestionsAsync(10);
+                return View(model);
+            }
+
+            // Search result pages are not worth indexing; the empty page is
+            ViewData["Robots"] = "noindex, follow";
+
+            if (model.SearchTerm.Length > DictionaryLookupService.MaxTermLength)
+            {
+                model.WarningMessage = T(
+                    $"Sözlük tek kelime ya da kısa ifadeler içindir (en fazla {DictionaryLookupService.MaxTermLength} karakter).",
+                    $"Das Wörterbuch ist für einzelne Wörter oder kurze Ausdrücke (höchstens {DictionaryLookupService.MaxTermLength} Zeichen).");
+                return View(model);
+            }
+
+            // At most 15 searches per minute and visitor (protects the DeepL / PONS quotas)
+            var key = $"WordsSearch:{HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"}";
+            var count = _memoryCache.GetOrCreate(key, entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1);
                 return 0;
             });
-            if (count >= 15) // 1 dakikada 15 aramadan fazlası engellenir
+            if (count >= 15)
             {
-                return Content("Çok fazla arama yaptınız, lütfen bir süre sonra tekrar deneyin.");
+                Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                model.WarningMessage = T(
+                    "Kısa sürede çok fazla arama yaptınız. Lütfen bir dakika bekleyip tekrar deneyin.",
+                    "Sie haben in kurzer Zeit sehr viele Suchen gestartet. Bitte warten Sie eine Minute und versuchen Sie es erneut.");
+                return View(model);
             }
             _memoryCache.Set(key, count + 1, TimeSpan.FromMinutes(1));
 
-
-            if (!string.IsNullOrEmpty(searchTerm))
-            {
-                // First, check your local database (case-insensitive search).
-                var wordFromDb = await _unitOfWork.Words.GetWordByTermAsync(searchTerm);
-
-                if (wordFromDb != null && !string.IsNullOrWhiteSpace(wordFromDb.Definition))
-                {
-                    var eksikolabilir = await _dictionaryService.GetWordDetailsAsync(wordFromDb.Term.ToLower(), langCode, "de");
-                    model.Word = new Word
-                    {
-                        Definition = wordFromDb.Definition ?? eksikolabilir?.Word?.Definition ?? "Error:404",
-                        Origin = wordFromDb.Origin ?? eksikolabilir?.Word?.Origin ?? "Error:404",
-                        Pronunciation = wordFromDb.Pronunciation ?? eksikolabilir?.Word?.Pronunciation ?? "Error404",
-                        Synonyms = wordFromDb.Synonyms ?? eksikolabilir?.Word?.Synonyms ?? "Error404",
-                        Example = wordFromDb.Example ?? eksikolabilir?.Word?.Example ?? "Error404",
-                        IsFromApi = false,
-                        Term = wordFromDb.Term ?? eksikolabilir?.Word?.Term ?? "Error404"
-                    };
-                }
-                else
-                {
-                    // Try fetching details from the Free Dictionary API.
-                    var dictionaryResult = await _dictionaryService.GetWordDetailsAsync(searchTerm, langCode, "de");
-
-                    if (dictionaryResult?.Word != null)
-                    {
-                        model.Word = new Word
-                        {
-                            Term = dictionaryResult.Word.Term,
-                            Definition = dictionaryResult.Word.Definition.ToString(),
-                            IsFromApi = true,
-                        };
-                    }
-                    else
-                    {
-
-                        // Use DeepL API as a fallback for translation.
-                        var deeplTranslation = await _deeplService.GetDefinitionByCultureAsync(searchTerm, langCode);
-
-                        if (!string.IsNullOrEmpty(deeplTranslation))
-                        {
-                            model.Word = new Word
-                            {
-                                Term = searchTerm,
-                                Definition = deeplTranslation.ToString(),
-                                IsFromApi = true
-                            };
-                        }
-                        else
-                        {
-                            model.WarningMessage = "We are working on it. No definition available at this time.";
-                        }
-                    }
-                }
-            }
-
+            await dictionary.LookupAsync(model, GetLangCode(), HttpContext.RequestAborted);
             return View(model);
         }
 

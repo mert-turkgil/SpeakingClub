@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 🔒 Report a security problem privately
+    url: https://github.com/mert-turkgil/SpeakingClub/security/advisories/new
+    about: Please don't post security problems in public issues.
+  - name: 🌐 Almanca Konuş (live site)
+    url: https://www.almanca-konus.com/
+    about: Questions about lessons go to the contact page on the site, not to GitHub.

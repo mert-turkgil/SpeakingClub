@@ -35,6 +35,10 @@ on:
     paths-ignore:
       - '**/*.md'
       - '.github/workflows/dotnet.yml'
+      # Documentation, README images, the license and GitHub forms don't change the site
+      - 'docs/**'
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
   workflow_dispatch:
 
 permissions:

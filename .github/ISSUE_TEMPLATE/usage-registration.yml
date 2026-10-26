@@ -1,0 +1,77 @@
+name: 📝 Usage registration
+description: Tell us where you use Almanca Konuş. Required by the license before others can reach your copy; free and quick.
+title: "[Usage] "
+labels: ["usage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for using Almanca Konuş! 💛
+        This short form is what the [license](https://github.com/mert-turkgil/SpeakingClub/blob/main/LICENSE) asks for
+        (section 2.1). It is only used to see who the project helps and to reach you about important fixes.
+
+        **This issue is public.** If you'd rather register privately, send the same answers through the contact
+        options on [github.com/mert-turkgil](https://github.com/mert-turkgil) instead.
+  - type: input
+    id: who
+    attributes:
+      label: Name or organisation
+      placeholder: e.g. "Deutschkurs Ankara" or "Jane Doe"
+    validations:
+      required: true
+  - type: input
+    id: contact
+    attributes:
+      label: How can we reach you?
+      description: An email address, a website contact page or a GitHub handle.
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: Where does it run?
+      description: The address of the site, or "private" / "internal" if it has none.
+      placeholder: https://example.com
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of use is it?
+      options:
+        - My own lessons (teacher or tutor)
+        - Language school or course
+        - School or university
+        - Company or hospital training
+        - Non-profit or volunteer project
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: how
+    attributes:
+      label: In one or two sentences, how do you use it?
+      placeholder: e.g. "Placement tests and a word list for our evening German classes."
+    validations:
+      required: true
+  - type: dropdown
+    id: changes
+    attributes:
+      label: Did you change the code?
+      options:
+        - No, I run it as it is
+        - Yes, small changes (texts, colours, settings)
+        - Yes, larger changes or new features
+    validations:
+      required: false
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have read the LICENSE and keep its copyright notice.
+          required: true
+        - label: My site shows a "Built with Almanca Konuş" credit with a link to this repository.
+          required: true
+        - label: I replaced the Almanca Konuş name, logo, photos and teaching content with my own.
+          required: true

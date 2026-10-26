@@ -1,0 +1,25 @@
+name: 💡 Feature request
+description: An idea that would help teachers or students.
+title: "[Idea] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would it solve?
+      description: Who is it for (students, teachers, admins) and what is hard today?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How could it work? Sketches and examples from other sites are welcome.
+    validations:
+      required: true
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contributing
+      options:
+        - label: I'd like to work on this myself (please read CONTRIBUTING.md first).

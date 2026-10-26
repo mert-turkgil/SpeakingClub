@@ -1,18 +1,21 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SpeakingClub.Services
 {
+    /// <summary>One DeepL translation: the text and the language DeepL detected (two-letter, lower case).</summary>
+    public record DeeplTranslation(string Text, string SourceLanguage, string TargetLanguage);
+
     public interface IDeeplService
     {
-        /// <summary>
-        /// Retrieves a definition (or translation) for the given term using DeepL API.
-        /// Returns null if no definition is found or an error occurs.
-        /// </summary>
-        Task<string?> GetDefinitionAsync(string term);
+        /// <summary>False when no API key is configured; lookups are then skipped.</summary>
+        bool IsConfigured { get; }
 
-        Task<string?> GetDefinitionByCultureAsync(string term ,string culture);
+        /// <summary>
+        /// Translates <paramref name="text"/> into <paramref name="targetLang"/> ("tr", "de", "en"…).
+        /// Without <paramref name="sourceLang"/> DeepL detects the language itself.
+        /// Returns null when nothing came back or the API failed (the error is logged).
+        /// </summary>
+        Task<DeeplTranslation?> TranslateAsync(string text, string targetLang, string? sourceLang = null, CancellationToken cancellationToken = default);
     }
 }

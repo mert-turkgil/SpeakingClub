@@ -233,10 +233,13 @@ builder.Services.AddSingleton<IManageResourceService>(sp => new ManageResourceSe
 builder.Services.AddSingleton<LanguageService>();
 builder.Services.AddScoped<SpeakingClub.Services.ExamService>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-builder.Services.AddHttpClient<IDictionaryService, DictionaryService>();
-builder.Services.AddHttpClient<IDeeplService, DeeplService>()
+// Dictionary page: our words → DeepL → PONS (Services/DictionaryLookupService.cs).
+// Short timeouts and quick retries: a visitor is waiting for the page.
+builder.Services.AddHttpClient<IDictionaryService, DictionaryService>(client => client.Timeout = TimeSpan.FromSeconds(8));
+builder.Services.AddHttpClient<IDeeplService, DeeplService>(client => client.Timeout = TimeSpan.FromSeconds(8))
     .AddTransientHttpErrorPolicy(policyBuilder =>
-        policyBuilder.WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromSeconds(10)));
+        policyBuilder.WaitAndRetryAsync(1, retryAttempt => TimeSpan.FromMilliseconds(600)));
+builder.Services.AddScoped<DictionaryLookupService>();
 builder.Services.AddSingleton<IFileProvider>(new PhysicalFileProvider(resourcesPath));
 // PascalCase payloads: the QuizMonitor page reads the same property names as its server-rendered data
 builder.Services.AddSignalR()

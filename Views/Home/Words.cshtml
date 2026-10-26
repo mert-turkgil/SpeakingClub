@@ -1,169 +1,331 @@
 @model SpeakingClub.Models.WordViewModel
+@using SpeakingClub.Models
 @using SpeakingClub.Services
 @inject LanguageService Localizer
-
+@*
+    Dictionary (/sozluk, /woerterbuch). The controller asks the sources in this order and shows the
+    first answer: our own dictionary → DeepL → PONS (Services/DictionaryLookupService.cs).
+    Only our own entries are rendered as HTML (they are written by the admins in the editor);
+    DeepL and PONS answers are always plain text.
+*@
 @{
-    ViewData["Title"] ??= Localizer.GetKey("PageTitleD").Value;
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    // Admin-editable texts (Admin → Site metinleri), with a fallback when a key is missing
+    string R(string key, string fallback)
+    {
+        var text = Localizer.GetKey(key);
+        return text.ResourceNotFound || string.IsNullOrWhiteSpace(text.Value) ? fallback : text.Value.Trim().TrimStart('*').TrimEnd(':').Trim();
+    }
+    string LanguageName(string? code) => code switch
+    {
+        "de" => T("Almanca", "Deutsch"),
+        "tr" => T("Türkçe", "Türkisch"),
+        "en" => T("İngilizce", "Englisch"),
+        _ => (code ?? "").ToUpperInvariant()
+    };
+
+    // PONS sends the word class in English
+    string WordClass(string wordClass) => wordClass.ToLowerInvariant() switch
+    {
+        "noun" => T("isim", "Substantiv"),
+        "verb" => T("fiil", "Verb"),
+        "adjective" => T("sıfat", "Adjektiv"),
+        "adverb" => T("zarf", "Adverb"),
+        "pronoun" => T("zamir", "Pronomen"),
+        "preposition" => T("edat", "Präposition"),
+        "conjunction" => T("bağlaç", "Konjunktion"),
+        "interjection" => T("ünlem", "Interjektion"),
+        _ => wordClass
+    };
+
+    var wordsPath = isGerman ? "/woerterbuch" : "/sozluk";
+    string SearchUrl(string term) => wordsPath + "?searchTerm=" + Uri.EscapeDataString(term);
+    ViewData["Title"] ??= R("PageTitleD", T("Sözlük", "Wörterbuch"));
+
+    var searched = Model.SearchTerm.Length > 0;
+    var source = Model.Source;
+    // Pipeline steps: which source answered, which were asked without an answer
+    string StepState(DictionarySource step) =>
+        !searched || !string.IsNullOrEmpty(Model.WarningMessage) ? "" :
+        source == step ? "is-active" :
+        source == DictionarySource.None || step < source ? "is-missed" : "";
+    var steps = new[]
+    {
+        (Step: DictionarySource.Database, Icon: "fa-book-bookmark", Title: T("Bizim sözlüğümüz", "Unser Wörterbuch"), Text: T("Hazırladığımız kelimeler", "Unsere eigenen Einträge")),
+        (Step: DictionarySource.DeepL, Icon: "fa-language", Title: "DeepL", Text: T("Türkçe ⇄ Almanca çeviri", "Türkisch ⇄ Deutsch")),
+        (Step: DictionarySource.Pons, Icon: "fa-book-open", Title: "PONS", Text: T("Almanca–Türkçe sözlük", "Wörterbuch Deutsch–Türkisch"))
+    };
+    var credit = R("ExternalSourceNote", T("Harici kaynaktan alındı", "Aus einer externen Quelle")).TrimEnd('.');
 }
 @section Css {
-    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #FFF5E4;
-        }
-        .dictionary-container {
-            max-width: 850px;
-            padding: 30px;
-            background: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-        .search-box input {
-            height: 55px;
-            border-radius: 50px 0 0 50px;
-            border-right: none;
-            font-size: 1.2rem;
-        }
-        .search-box button {
-            border-radius: 0 50px 50px 0;
-            font-size: 1.2rem;
-        }
-        .word-card {
-            background: linear-gradient(135deg, #8ec5fc, #e0c3fc);
-            border-radius: 15px;
-            padding: 25px;
-            margin-top: 25px;
-            color: #333;
-            animation: fadeInUp 1s ease;
-        }
-        .word-term {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-        }
-        .word-meta {
-            font-size: 1.2rem;
-            margin-top: 10px;
-            line-height: 1.6;
-        }
-        .word-meta strong {
-            display: inline-block;
-            margin-right: 5px;
-        }
-        .word-meta span {
-            display: inline;
-        }
-        .word-meta span p {
-            display: inline;
-            margin: 0;
-        }
-        .word-meta span ul,
-        .word-meta span ol {
-            margin-top: 5px;
-            margin-bottom: 5px;
-            padding-left: 25px;
-        }
-        .word-meta span li {
-            margin: 3px 0;
-        }
-        .warning-card {
-            background-color: #ffcdd2;
-            color: #c62828;
-            border-radius: 10px;
-            padding: 20px;
-            animation: shakeX 1s ease;
-            text-align: center;
-        }
-    </style>
+    <script>document.documentElement.classList.add('bp-js');</script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@@0,9..144,600;1,9..144,600&display=swap" />
+    <link rel="stylesheet" href="~/css/blog.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dictionary.css" asp-append-version="true" />
 }
 
-<section class="bg-first position-relative container-fluid" style="height: 80vh; background-image: url('@Url.Content("~/img/Library.jpg")'); background-position: center; background-size: cover;">
-    <div class="dictionary-container animate__animated animate__fadeIn position-absolute top-50 start-50 translate-middle w-100">
-        <h1 class="text-center fw-bold">@Localizer.GetKey("PageTitleD").Value</h1>
-        <p class="text-center text-muted">@Localizer.GetKey("PageSubtitle").Value</p>
+<div class="site-page dict">
 
-        @{
-            var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
-            var wordsPath = isGerman ? "/woerterbuch" : "/sozluk";
-        }
-        <form method="get" action="@wordsPath" class="search-box mt-4">
-            @Html.AntiForgeryToken()
-            <input type="text" name="honeypot" style="display:none" autocomplete="off" tabindex="-1" />
-            <div class="input-group">
-                <input type="text" class="form-control" placeholder="@Localizer.GetKey("SearchPlaceholder").Value" name="searchTerm" value="@Model.SearchTerm" required>
-                <button type="submit" class="btn btn-primary">@Localizer.GetKey("SearchButton").Value</button>
+    @* ---------------- Search ---------------- *@
+    <header class="bp-hero dict-hero">
+        <div class="bp-container">
+            <span class="bp-eyebrow bp-enter"><i class="fa-solid fa-book-open" aria-hidden="true"></i>@R("PageTitleD", T("Sözlük", "Wörterbuch"))</span>
+            <h1 class="bp-hero__title bp-enter" style="--bp-delay: 80ms">
+                @if (isGerman)
+                {
+                    <text>Deutsch ⇄ Türkisch <em>Wörterbuch</em></text>
+                }
+                else
+                {
+                    <text>Almanca ⇄ Türkçe <em>Sözlük</em></text>
+                }
+            </h1>
+            <p class="bp-hero__lead bp-enter" style="--bp-delay: 160ms">@R("PageSubtitle", T("Anlamları, telaffuzları ve örnekleri keşfedin.", "Entdecken Sie Bedeutungen, Aussprache und Beispiele."))</p>
+
+            <form class="bp-search dict-search bp-enter" style="--bp-delay: 240ms" method="get" action="@wordsPath" role="search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <label for="dict-q" class="bp-sr-only">@T("Aranacak kelime", "Gesuchtes Wort")</label>
+                <input id="dict-q" type="search" name="searchTerm" value="@Model.SearchTerm" required
+                       maxlength="@DictionaryLookupService.MaxTermLength" autocomplete="off" autocapitalize="off" spellcheck="false"
+                       placeholder="@R("SearchPlaceholder", T("Bir kelime ara…", "Ein Wort suchen…"))" />
+                <button type="submit" class="bp-btn">
+                    <span>@R("SearchButton", T("Ara", "Suchen"))</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                </button>
+            </form>
+
+            @* Turkish keyboards have no ä and ß: one tap puts the letter where the cursor is (dictionary.js) *@
+            <div class="dict-keys bp-enter" style="--bp-delay: 300ms" data-dict-keys hidden>
+                <span>@T("Almanca harfler:", "Sonderzeichen:")</span>
+                @foreach (var letter in new[] { "ä", "ö", "ü", "ß", "Ä", "Ö", "Ü" })
+                {
+                    <button type="button" class="dict-key" data-letter="@letter" aria-label="@T("Ekle:", "Einfügen:") @letter">@letter</button>
+                }
             </div>
-        </form>
 
-        @if (!string.IsNullOrEmpty(Model.SearchTerm))
+            <ol class="dict-steps bp-enter" style="--bp-delay: 360ms" aria-label="@T("Arama sırası", "Suchreihenfolge")">
+                @for (var i = 0; i < steps.Length; i++)
+                {
+                    var step = steps[i];
+                    var state = StepState(step.Step);
+                    <li class="dict-step @state" aria-current="@(state == "is-active" ? "step" : null)">
+                        <span class="dict-step__num" aria-hidden="true">
+                            @if (state == "is-active")
+                            {
+                                <i class="fa-solid fa-check"></i>
+                            }
+                            else
+                            {
+                                @(i + 1)
+                            }
+                        </span>
+                        <span class="dict-step__text">
+                            <b><i class="fa-solid @step.Icon" aria-hidden="true"></i> @step.Title</b>
+                            <small>@step.Text</small>
+                        </span>
+                    </li>
+                }
+            </ol>
+        </div>
+    </header>
+
+    <div class="bp-container dict-body" aria-live="polite">
+
+        @if (!string.IsNullOrEmpty(Model.WarningMessage))
         {
-            if (Model.Word != null)
-            {
-                <div class="word-card" data-aos="fade-up">
-                    <div class="word-term">@Model.Word.Term</div>
-                    <div class="word-meta">
-                        <strong>@Localizer.GetKey("DefinitionLabel").Value: </strong>
-                        <span>@Html.Raw(Model.Word.Definition)</span>
+            <div class="dict-notice" role="alert">
+                <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
+                <p>@Model.WarningMessage</p>
+            </div>
+        }
+        else if (Model.HasResult)
+        {
+            @* ---------------- Result ---------------- *@
+            <article class="dict-card dict-card--@source.ToString().ToLowerInvariant() bp-enter" style="--bp-delay: 120ms">
+                @if (source == DictionarySource.Database && Model.Word != null)
+                {
+                    var word = Model.Word;
+                    <header class="dict-card__head">
+                        <div>
+                            <span class="dict-badge dict-badge--own"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>@T("Bizim sözlüğümüzden", "Aus unserem Wörterbuch")</span>
+                            <h2 class="dict-term" lang="de">@word.Term</h2>
+                            @if (!string.IsNullOrWhiteSpace(word.Pronunciation))
+                            {
+                                <p class="dict-phonetic"><span class="bp-sr-only">@R("PronunciationLabel", T("Telaffuz", "Aussprache")): </span>@Html.Raw(word.Pronunciation)</p>
+                            }
+                        </div>
+                        <button type="button" class="dict-speak" data-speak="@word.Term" data-speak-lang="de-DE" hidden>
+                            <i class="fa-solid fa-volume-high" aria-hidden="true"></i><span>@T("Dinle", "Anhören")</span>
+                        </button>
+                    </header>
+
+                    <div class="dict-section dict-section--main">
+                        <h3>@R("DefinitionLabel", T("Anlamı", "Bedeutung"))</h3>
+                        <div class="dict-rich">@Html.Raw(word.Definition)</div>
                     </div>
-
-                    @if (!string.IsNullOrEmpty(Model.Word.Pronunciation))
+                    @if (!string.IsNullOrWhiteSpace(word.Example))
                     {
-                        <div class="word-meta">
-                            <strong>@Localizer.GetKey("PronunciationLabel").Value: </strong>
-                            <span>@Html.Raw(Model.Word.Pronunciation)</span>
+                        <div class="dict-section">
+                            <h3><i class="fa-solid fa-quote-left" aria-hidden="true"></i>@R("ExampleLabel", T("Örnek", "Beispiel"))</h3>
+                            <blockquote class="dict-rich dict-example" lang="de">@Html.Raw(word.Example)</blockquote>
                         </div>
                     }
-
-                    @if (!string.IsNullOrEmpty(Model.Word.Example))
-                    {
-                        <div class="word-meta">
-                            <strong>@Localizer.GetKey("ExampleLabel").Value: </strong>
-                            <span>@Html.Raw(Model.Word.Example)</span>
+                    <div class="dict-grid">
+                        @if (!string.IsNullOrWhiteSpace(word.Synonyms))
+                        {
+                            <div class="dict-section">
+                                <h3><i class="fa-solid fa-equals" aria-hidden="true"></i>@R("SynonymsLabel", T("Eş anlamlılar", "Synonyme"))</h3>
+                                <div class="dict-rich">@Html.Raw(word.Synonyms)</div>
+                            </div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(word.Origin))
+                        {
+                            <div class="dict-section">
+                                <h3><i class="fa-solid fa-seedling" aria-hidden="true"></i>@R("OriginLabel", T("Kökeni", "Herkunft"))</h3>
+                                <div class="dict-rich">@Html.Raw(word.Origin)</div>
+                            </div>
+                        }
+                    </div>
+                }
+                else if (source == DictionarySource.DeepL)
+                {
+                    var germanSide = Model.FromLanguage == "de" ? Model.SearchTerm : Model.ToLanguage == "de" ? Model.Translation : null;
+                    <header class="dict-card__head">
+                        <div>
+                            <span class="dict-badge"><i class="fa-solid fa-language" aria-hidden="true"></i>@T("DeepL çevirisi", "DeepL-Übersetzung")</span>
+                            <h2 class="dict-term" lang="@Model.FromLanguage">@Model.SearchTerm</h2>
+                            <p class="dict-direction">@LanguageName(Model.FromLanguage) <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i><span class="bp-sr-only">→</span> @LanguageName(Model.ToLanguage)</p>
                         </div>
-                    }
-
-                    @if (!string.IsNullOrEmpty(Model.Word.Origin))
-                    {
-                        <div class="word-meta">
-                            <strong>@Localizer.GetKey("OriginLabel").Value: </strong>
-                            <span>@Html.Raw(Model.Word.Origin)</span>
+                        @if (!string.IsNullOrEmpty(germanSide))
+                        {
+                            <button type="button" class="dict-speak" data-speak="@germanSide" data-speak-lang="de-DE" hidden>
+                                <i class="fa-solid fa-volume-high" aria-hidden="true"></i><span>@T("Dinle", "Anhören")</span>
+                            </button>
+                        }
+                    </header>
+                    <p class="dict-translation" lang="@Model.ToLanguage">@Model.Translation</p>
+                    <p class="dict-credit">
+                        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                        @credit · <a href="https://www.deepl.com/translator" target="_blank" rel="noopener">DeepL</a>.
+                        @T("Makine çevirisi; kelimenin her anlamını göstermeyebilir.", "Maschinelle Übersetzung; sie zeigt nicht unbedingt jede Bedeutung des Wortes.")
+                    </p>
+                }
+                else if (source == DictionarySource.Pons && Model.Pons != null)
+                {
+                    var entry = Model.Pons;
+                    <header class="dict-card__head">
+                        <div>
+                            <span class="dict-badge"><i class="fa-solid fa-book-open" aria-hidden="true"></i>@T("PONS sözlüğü", "PONS-Wörterbuch")</span>
+                            <h2 class="dict-term" lang="@Model.FromLanguage">@entry.Headword</h2>
+                            <p class="dict-direction">
+                                @LanguageName(Model.FromLanguage) <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i><span class="bp-sr-only">→</span> @LanguageName(Model.ToLanguage)
+                                @if (!string.IsNullOrEmpty(entry.WordClass))
+                                {
+                                    <span class="dict-wordclass">@WordClass(entry.WordClass)</span>
+                                }
+                            </p>
                         </div>
-                    }
+                        @if (Model.FromLanguage == "de")
+                        {
+                            <button type="button" class="dict-speak" data-speak="@entry.Headword" data-speak-lang="de-DE" hidden>
+                                <i class="fa-solid fa-volume-high" aria-hidden="true"></i><span>@T("Dinle", "Anhören")</span>
+                            </button>
+                        }
+                    </header>
+                    <ol class="dict-meanings">
+                        @foreach (var meaning in entry.Meanings)
+                        {
+                            <li>
+                                @if (!string.IsNullOrEmpty(meaning.Source))
+                                {
+                                    <span class="dict-meanings__src" lang="@Model.FromLanguage">@meaning.Source</span>
+                                    <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i>
+                                }
+                                <span class="dict-meanings__dst" lang="@Model.ToLanguage">@meaning.Target</span>
+                            </li>
+                        }
+                    </ol>
+                    <p class="dict-credit">
+                        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                        @credit · <a href="https://www.pons.com" target="_blank" rel="noopener">PONS</a>
+                    </p>
+                }
+            </article>
 
-                    @if (!string.IsNullOrEmpty(Model.Word.Synonyms))
-                    {
-                        <div class="word-meta">
-                            <strong>@Localizer.GetKey("SynonymsLabel").Value: </strong>
-                            <span>@Html.Raw(Model.Word.Synonyms)</span>
-                        </div>
-                    }
-
-                    @if (Model.Word.IsFromApi)
-                    {
-                        <small class="text-muted">* @Localizer.GetKey("ExternalSourceNote").Value</small>
-                    }
-
-                </div>
-            }
-            else if (!string.IsNullOrEmpty(Model.WarningMessage))
+            @if (Model.Related.Count > 0)
             {
-                <div class="warning-card">
-                    @Model.WarningMessage
-                </div>
+                <section class="dict-related bp-enter" style="--bp-delay: 220ms" aria-labelledby="dict-related-title">
+                    <h2 id="dict-related-title">@T("Sözlüğümüzde ayrıca", "Außerdem in unserem Wörterbuch")</h2>
+                    <ul class="bp-chips">
+                        @foreach (var related in Model.Related)
+                        {
+                            <li><a class="bp-chip" href="@SearchUrl(related.Term)" lang="de"><i class="fa-solid fa-book-bookmark" aria-hidden="true"></i>@related.Term</a></li>
+                        }
+                    </ul>
+                </section>
             }
+        }
+        else if (searched)
+        {
+            @* ---------------- Nothing found ---------------- *@
+            <div class="bp-empty dict-empty bp-enter" style="--bp-delay: 120ms">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <h2>@T($"“{Model.SearchTerm}” için bir sonuç bulamadık", $"Für „{Model.SearchTerm}“ haben wir nichts gefunden")</h2>
+                <ul class="dict-tips">
+                    <li><i class="fa-solid fa-spell-check" aria-hidden="true"></i>@T("Yazımı kontrol edin; Almanca harfleri (ä, ö, ü, ß) kullanmayı deneyin.", "Prüfen Sie die Schreibweise und die Sonderzeichen (ä, ö, ü, ß).")</li>
+                    <li><i class="fa-solid fa-font" aria-hidden="true"></i>@T("Tek bir kelime arayın, çekimsiz hâliyle: “gegangen” yerine “gehen”.", "Suchen Sie ein einzelnes Wort in der Grundform: „gehen“ statt „gegangen“.")</li>
+                    <li><i class="fa-solid fa-comments" aria-hidden="true"></i>@T("Bulamadığınız kelimeyi derste Suna Hoca'ya sorabilirsiniz.", "Fragen Sie Suna im Unterricht nach dem Wort.")</li>
+                </ul>
+                @if (Model.Related.Count > 0)
+                {
+                    <p class="dict-empty__maybe">@T("Bunlardan biri olabilir mi?", "Meinten Sie vielleicht:")</p>
+                    <ul class="bp-chips">
+                        @foreach (var related in Model.Related)
+                        {
+                            <li><a class="bp-chip" href="@SearchUrl(related.Term)" lang="de">@related.Term</a></li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+        else
+        {
+            @* ---------------- Start page ---------------- *@
+            @if (Model.Suggestions.Count > 0)
+            {
+                <section class="dict-related dict-related--start reveal" aria-labelledby="dict-start-title">
+                    <h2 id="dict-start-title">@T("Sözlüğümüzden kelimeler", "Wörter aus unserem Wörterbuch")</h2>
+                    <ul class="bp-chips">
+                        @foreach (var term in Model.Suggestions)
+                        {
+                            <li><a class="bp-chip" href="@SearchUrl(term)" lang="de">@term</a></li>
+                        }
+                    </ul>
+                </section>
+            }
+            <section class="dict-how" aria-labelledby="dict-how-title">
+                <h2 id="dict-how-title" class="bp-sr-only">@T("Nasıl çalışır?", "So funktioniert es")</h2>
+                <div class="dict-how__card reveal">
+                    <span class="dict-how__icon"><i class="fa-solid fa-book-bookmark" aria-hidden="true"></i></span>
+                    <h3>@T("1 · Önce bizim sözlüğümüz", "1 · Zuerst unser Wörterbuch")</h3>
+                    <p>@T("Derslerde kullandığımız kelimeler; anlamı, örnek cümlesi ve telaffuzuyla. “Hand” ya da “die Hand” yazmanız fark etmez.", "Wörter aus dem Unterricht – mit Bedeutung, Beispielsatz und Aussprache. Ob Sie „Hand“ oder „die Hand“ eingeben, ist egal.")</p>
+                </div>
+                <div class="dict-how__card reveal" style="--bp-delay: 90ms">
+                    <span class="dict-how__icon"><i class="fa-solid fa-language" aria-hidden="true"></i></span>
+                    <h3>@T("2 · Sonra DeepL", "2 · Dann DeepL")</h3>
+                    <p>@T("Kelime bizde yoksa DeepL çevirir: Almanca yazarsanız Türkçesini, Türkçe yazarsanız Almancasını gösterir.", "Fehlt das Wort bei uns, übersetzt DeepL: Deutsch wird ins Türkische übersetzt, Türkisch ins Deutsche.")</p>
+                </div>
+                <div class="dict-how__card reveal" style="--bp-delay: 180ms">
+                    <span class="dict-how__icon"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span>
+                    <h3>@T("3 · En son PONS", "3 · Zuletzt PONS")</h3>
+                    <p>@T("DeepL de bulamazsa PONS Almanca–Türkçe sözlüğüne bakarız ve kelimenin farklı anlamlarını listeleriz.", "Findet auch DeepL nichts, fragen wir das PONS-Wörterbuch Deutsch–Türkisch und zeigen die verschiedenen Bedeutungen.")</p>
+                </div>
+            </section>
         }
     </div>
-</section>
+</div>
 
 @section Scripts {
-    <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
-    <script>
-        AOS.init({
-            duration: 800,
-            once: true
-        });
-    </script>
+    <script src="~/js/blog.js" asp-append-version="true" defer></script>
+    <script src="~/js/dictionary.js" asp-append-version="true" defer></script>
 }

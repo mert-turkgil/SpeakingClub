@@ -259,7 +259,7 @@
     <value>Suche nach einem Wort...</value>
   </data>
   <data name="SearchButton" xml:space="preserve">
-    <value>Übersetzen Sie</value>
+    <value>Suchen</value>
   </data>
   <data name="DefinitionLabel" xml:space="preserve">
     <value>Definition:</value>

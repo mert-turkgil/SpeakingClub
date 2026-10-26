@@ -1,131 +1,149 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using SpeakingClub.Models;
 
 namespace SpeakingClub.Services
 {
+    /// <summary>
+    /// PONS dictionary API (https://en.pons.com/p/files/uploads/pons/api/api-documentation.pdf).
+    /// Always asks the German–Turkish dictionary ("detr"); the old code built "dede" on the German
+    /// site, which PONS does not have. PONS returns small HTML fragments, which are turned into
+    /// plain text here so the page never has to render them as HTML.
+    /// </summary>
     public class DictionaryService : IDictionaryService
     {
+        private const string DictionaryCode = "detr";
+        private const int MaxMeanings = 8;
+        private static readonly Regex Tags = new("<[^>]+>", RegexOptions.Compiled);
+        private static readonly Regex Spaces = new(@"\s+", RegexOptions.Compiled);
+
         private readonly HttpClient _httpClient;
-        private readonly string _apiKey;
+        private readonly string? _apiKey;
         private readonly ILogger<DictionaryService> _logger;
 
         public DictionaryService(HttpClient httpClient, IConfiguration config, ILogger<DictionaryService> logger)
         {
             _httpClient = httpClient;
-            _apiKey = config["Pons:ApiKey"] ?? throw new ArgumentNullException(nameof(config), "PONS API Key is missing");
             _logger = logger;
+            // A missing key used to throw here, which broke every page of HomeController
+            var key = config["Pons:ApiKey"]?.Trim();
+            _apiKey = string.IsNullOrEmpty(key) || key == "null" ? null : key;
         }
 
-        public async Task<WordViewModel?> GetWordDetailsAsync(string word, string sourceLang, string targetLang)
+        public bool IsConfigured => _apiKey != null;
+
+        public async Task<PonsEntry?> LookupAsync(string term, string? sourceLang = null, CancellationToken cancellationToken = default)
         {
+            if (!IsConfigured || string.IsNullOrWhiteSpace(term)) return null;
+
+            var url = $"https://api.pons.com/v1/dictionary?q={Uri.EscapeDataString(term)}&l={DictionaryCode}";
+            if (sourceLang is "de" or "tr") url += "&in=" + sourceLang;
+
             try
             {
-                // Construct the dictionary code: the documentation shows the code is the concatenation
-                // of the two-letter codes, e.g. for an English-to-German lookup, targetLang = "de" and sourceLang = "en"
-                // produces "deen".
-                string dictionaryCode = $"{targetLang}{sourceLang}";
-                string requestUrl = $"https://api.pons.com/v1/dictionary?q={Uri.EscapeDataString(word)}&l={dictionaryCode}";
+                // Per-request header: HttpClient.DefaultRequestHeaders is shared and not thread-safe
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("X-Secret", _apiKey);
 
-                _httpClient.DefaultRequestHeaders.Clear();
-                _httpClient.DefaultRequestHeaders.Add("X-Secret", _apiKey);
-
-                var response = await _httpClient.GetAsync(requestUrl);
+                using var response = await _httpClient.SendAsync(request, cancellationToken);
+                if (response.StatusCode == HttpStatusCode.NoContent) return null; // no entry
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogWarning("PONS API returned an error: {StatusCode}", response.StatusCode);
+                    _logger.LogWarning("PONS returned {StatusCode}", (int)response.StatusCode);
                     return null;
                 }
 
-                var jsonResponse = await response.Content.ReadAsStringAsync();
-                if (string.IsNullOrWhiteSpace(jsonResponse) || response.StatusCode == System.Net.HttpStatusCode.NoContent)
-                {
-                    return null;
-                }
-
-                // Deserialize using our updated model classes
-                var ponsResults = JsonSerializer.Deserialize<PonsResponse[]>(jsonResponse, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                var firstResult = ponsResults?.FirstOrDefault();
-                if (firstResult == null || firstResult.hits == null || firstResult.hits.Length == 0)
-                    return null;
-
-                var firstHit = firstResult.hits.FirstOrDefault();
-                if (firstHit == null || firstHit.roms == null || firstHit.roms.Length == 0)
-                    return null;
-
-                var firstRom = firstHit.roms.FirstOrDefault();
-                if (firstRom == null || firstRom.arabs == null || firstRom.arabs.Length == 0)
-                    return null;
-
-                var firstArab = firstRom.arabs.FirstOrDefault();
-                if (firstArab == null || firstArab.translations == null || firstArab.translations.Length == 0)
-                    return null;
-
-                var firstTranslation = firstArab.translations.FirstOrDefault();
-
-                return new WordViewModel
-                {
-                    SearchTerm = word,
-                    Word = new Entity.Word
-                    {
-                        // You can choose to use the headword from the response or simply the original search term.
-                        Term = firstRom.headword ?? word,
-                        // Use the target of the first translation as the definition.
-                        Definition = firstTranslation?.target ?? "No definition available",
-                        // Since PONS doesn't provide these in this response, they are left empty.
-                        Pronunciation = string.Empty,
-                        Example = string.Empty,
-                        Synonyms = string.Empty,
-                        Origin = string.Empty,
-                        IsFromApi = true
-                    }
-                };
+                await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                var results = await JsonSerializer.DeserializeAsync<PonsLanguage[]>(stream,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }, cancellationToken);
+                return ToEntry(term, results);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
             {
-                _logger.LogError(ex, "Error fetching definition for word {Word} from PONS API", word);
+                _logger.LogError(ex, "PONS request failed");
                 return null;
             }
         }
 
-        // Updated response model classes matching the JSON returned by PONS
-
-        private class PonsResponse
+        private static PonsEntry? ToEntry(string term, PonsLanguage[]? results)
         {
-            public string? lang { get; set; } 
-            public Hit[] hits { get; set; } = Array.Empty<Hit>();
+            var language = results?.FirstOrDefault(r => r.Hits.Length > 0);
+            if (language == null) return null;
+
+            string? headword = null;
+            string? wordClass = null;
+            var meanings = new List<PonsMeaning>();
+
+            foreach (var hit in language.Hits)
+            {
+                // "translation" hits carry the pair directly, "entry" hits nest it in roms → arabs
+                if (hit.Source != null && hit.Target != null)
+                    Add(meanings, hit.Source, hit.Target);
+
+                foreach (var rom in hit.Roms)
+                {
+                    headword ??= Plain(rom.Headword);
+                    wordClass ??= string.IsNullOrWhiteSpace(rom.Wordclass) ? null : rom.Wordclass;
+                    foreach (var translation in rom.Arabs.SelectMany(a => a.Translations))
+                        Add(meanings, translation.Source, translation.Target);
+                }
+            }
+
+            if (meanings.Count == 0) return null;
+            return new PonsEntry(string.IsNullOrEmpty(headword) ? term : headword, wordClass, language.Lang ?? "", meanings.Take(MaxMeanings).ToList());
         }
 
-        private class Hit
+        private static void Add(List<PonsMeaning> meanings, string source, string target)
         {
-            public string? type { get; set; }
-            public bool opendict { get; set; }
-            public Rom[] roms { get; set; } = Array.Empty<Rom>();
+            var meaning = new PonsMeaning(Plain(source), Plain(target));
+            if (meaning.Target.Length == 0) return;
+            if (meanings.Any(m => string.Equals(m.Target, meaning.Target, StringComparison.OrdinalIgnoreCase))) return;
+            meanings.Add(meaning);
         }
 
-        private class Rom
+        /// <summary>"&lt;strong class=headword&gt;Hand&lt;/strong&gt; &lt;span&gt;f&lt;/span&gt;" → "Hand f"</summary>
+        private static string Plain(string? html) =>
+            string.IsNullOrEmpty(html) ? "" : Spaces.Replace(WebUtility.HtmlDecode(Tags.Replace(html, " ")), " ").Trim();
+
+        // Response shape: [{ lang, hits: [{ type, source?, target?, roms: [{ headword, wordclass, arabs: [{ translations: [{ source, target }] }] }] }] }]
+        private sealed class PonsLanguage
         {
-            public string headword { get; set; } = "";
-            public string headword_full { get; set; } = "";
-            public string wordclass { get; set; } = "";
-            public Arab[] arabs { get; set; } = Array.Empty<Arab>();
+            public string? Lang { get; set; }
+            public PonsHit[] Hits { get; set; } = Array.Empty<PonsHit>();
         }
 
-        private class Arab
+        private sealed class PonsHit
         {
-            public string header { get; set; } = "";
-            public Translation[] translations { get; set; } = Array.Empty<Translation>();
+            public string? Type { get; set; }
+            public string? Source { get; set; }
+            public string? Target { get; set; }
+            public PonsRom[] Roms { get; set; } = Array.Empty<PonsRom>();
         }
 
-        private class Translation
+        private sealed class PonsRom
         {
-            public string source { get; set; } = "";
-            public string target { get; set; } = "";
+            public string? Headword { get; set; }
+            public string? Wordclass { get; set; }
+            public PonsArab[] Arabs { get; set; } = Array.Empty<PonsArab>();
+        }
+
+        private sealed class PonsArab
+        {
+            public PonsTranslation[] Translations { get; set; } = Array.Empty<PonsTranslation>();
+        }
+
+        private sealed class PonsTranslation
+        {
+            public string Source { get; set; } = "";
+            public string Target { get; set; } = "";
         }
     }
 }

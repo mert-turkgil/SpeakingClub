@@ -1,0 +1,104 @@
+Almanca Konuş Source License
+Version 1.0, 26 October 2026
+
+Copyright (c) 2025-2026 Mert Türkgil
+
+This license applies to the source code in this repository (the "Software"): the C# code, Razor views,
+stylesheets, scripts, SQL, workflow files and technical documentation written for this project.
+
+
+1. PERMISSIONS
+
+Subject to the conditions in section 2, you may, free of charge:
+
+  a) use, copy and modify the Software;
+  b) run the Software, or a modified version of it, as a website or service, including one for which you
+     charge your own students or customers;
+  c) publish or share the Software or a modified version of it, as long as this license goes with it.
+
+
+2. CONDITIONS
+
+2.1 Register your use.
+    Before a copy of the Software (modified or not) becomes reachable by anyone other than you, whether as
+    a public or private website, an intranet, a hosted service or a published copy of the code, register
+    that use by opening an issue with the "Usage registration" form at
+
+        https://github.com/mert-turkgil/SpeakingClub/issues/new?template=usage-registration.yml
+
+    and giving:
+      - your name or the name of your organisation;
+      - a way to contact you;
+      - the address (URL) of the deployment, or "private" / "internal" if it has none;
+      - one or two sentences on how you use it.
+
+    If you would rather not register publicly, send the same information privately to the copyright holder
+    through the contact options on https://github.com/mert-turkgil. Update the registration if this
+    information changes significantly.
+
+    Running the Software only on your own computer, where nobody else can reach it (for example to try it
+    out or to develop a change), does not need to be registered.
+
+2.2 Keep the notices.
+    Keep the copyright notice above and this license file in every copy, and in every substantial portion,
+    of the Software.
+
+2.3 Give credit.
+    Every deployment that other people can reach must show a visible credit, for example in the footer or
+    on an About or credits page, reading "Built with Almanca Konuş" (or the equivalent in the site's
+    language) with a link to https://github.com/mert-turkgil/SpeakingClub.
+
+2.4 Use your own identity.
+    Do not present your deployment as the original Almanca Konuş website, or as run, endorsed or
+    supervised by Suna Koç or Mert Türkgil, unless they have agreed to it in writing.
+
+
+3. NOT COVERED BY THIS LICENSE
+
+The following are not licensed to you. All rights in them are reserved, and you must remove or replace
+them before you deploy the Software:
+
+  a) the names "Almanca Konuş" and "Almanca Konuşma Kulübü", the logos, favicons and other brand
+     artwork, except for the credit required by section 2.3;
+  b) photographs, videos, voices and likenesses of people, in particular of Suna Koç;
+  c) teaching and personal content: the biography, course descriptions, prices, contact details and
+     frequently asked questions about the teacher and her lessons (for example in
+     Models/AboutFaqContent.cs, in the views and in the Resources/*.resx files), and all content stored
+     in a database, such as blog posts, quizzes, questions, answers, dictionary entries and slides;
+  d) third-party components included in or loaded by the Software (for example in wwwroot/lib, or from a
+     CDN). Each stays under its own license, which you must follow. Among them, CKEditor 5 requires a
+     license of its own. External services such as DeepL, PONS, Google sign-in and Cloudflare Turnstile
+     require your own accounts and keys and are governed by their providers' terms.
+
+
+4. TERMINATION
+
+If you fail to meet a condition of this license, your rights under it end automatically. They are
+restored if you put the failure right within 30 days of becoming aware of it or of being notified of it
+by the copyright holder.
+
+
+5. NO WARRANTY
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+
+6. LIMITATION OF LIABILITY
+
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+7. EARLIER VERSIONS
+
+Versions of this repository published before the date of this license said, in the README, that they
+were available under the MIT License. This license applies to every version published on or after the
+date above.
+
+
+8. OTHER PERMISSIONS
+
+For permissions beyond this license, open an issue in the repository or contact the copyright holder
+through https://github.com/mert-turkgil.
