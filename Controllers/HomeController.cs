@@ -188,6 +188,9 @@ namespace SpeakingClub.Controllers
                 ["/privacy"]     = ("/gizlilik",    "/datenschutz"),
                 ["/gizlilik"]    = ("/gizlilik",    "/datenschutz"),
                 ["/datenschutz"] = ("/gizlilik",    "/datenschutz"),
+                ["/terms"]               = ("/kullanim-kosullari", "/nutzungsbedingungen"),
+                ["/kullanim-kosullari"]  = ("/kullanim-kosullari", "/nutzungsbedingungen"),
+                ["/nutzungsbedingungen"] = ("/kullanim-kosullari", "/nutzungsbedingungen"),
                 ["/blog"]        = ("/yazilar",     "/beitraege"),
                 ["/yazilar"]     = ("/yazilar",     "/beitraege"),
                 ["/beitraege"]   = ("/yazilar",     "/beitraege"),
@@ -316,6 +319,34 @@ namespace SpeakingClub.Controllers
                     "/gizlilik");
             }
             SetHreflang("/gizlilik", "/datenschutz");
+            return View();
+        }
+
+        [HttpGet("terms")]
+        [HttpGet("kullanim-kosullari")]
+        [HttpGet("nutzungsbedingungen")]
+        public IActionResult Terms()
+        {
+            if (RedirectToCanonical(GetLocalizedPath("/kullanim-kosullari", "/nutzungsbedingungen", "/kullanim-kosullari")) is { } redirect)
+                return redirect;
+
+            if (IsGerman())
+            {
+                SetSeoData(
+                    "Nutzungsbedingungen | Almanca Konuş",
+                    "Regeln für die Nutzung von Almanca Konuş: Konto, Online-Prüfungen, Wörterbuch, Inhalte und Haftung.",
+                    "Nutzungsbedingungen, AGB, Regeln",
+                    "/nutzungsbedingungen");
+            }
+            else
+            {
+                SetSeoData(
+                    "Kullanım Koşulları | Almanca Konuş",
+                    "Almanca Konuş'u kullanma kuralları: hesap, online sınavlar, sözlük, içerikler ve sorumluluk.",
+                    "kullanım koşulları, hizmet şartları, kurallar",
+                    "/kullanim-kosullari");
+            }
+            SetHreflang("/kullanim-kosullari", "/nutzungsbedingungen");
             return View();
         }
         #endregion

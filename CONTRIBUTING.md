@@ -71,7 +71,8 @@ Models/        View models. Models/AdminNav.cs lists every admin section and its
 Views/         Razor views; Views/Shared/_Layout.cshtml (site) and _AdminLayout.cshtml (admin)
 wwwroot/css/   One stylesheet per area: blog.css holds the shared design tokens
 wwwroot/js/    One script per area, no framework
-docs/          DESIGN.md explains the visual system and the techniques behind it
+DESIGN.md      The design system: tokens, components and voice (start here for anything visual)
+docs/          DESIGN.md explains the techniques behind it, with code
 ```
 
 Request flow: controller → service (if there is real logic) → `IUnitOfWork` repositories → EF Core. Repository
@@ -122,7 +123,11 @@ The admin panel is used by someone with no computer experience. When you touch i
   media query before you start loops.
 - Layouts must work from **320 px** up with no horizontal scrolling.
 
-[docs/DESIGN.md](docs/DESIGN.md) explains the system in detail.
+- **Write like the site.** Almanca Konuş is Suna Koç's personal site, not a company: don't add "our team",
+  "firmamız", "unser Unternehmen", invented numbers, reviews or prices. About texts are in her first person.
+
+[DESIGN.md](DESIGN.md) is the design system (tokens, components, voice); [docs/DESIGN.md](docs/DESIGN.md)
+explains how it is built.
 
 ### JavaScript
 

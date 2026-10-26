@@ -22,7 +22,8 @@
   <a href="#-features">Features</a> ·
   <a href="#-getting-started">Getting started</a> ·
   <a href="#-configuration">Configuration</a> ·
-  <a href="docs/DESIGN.md">Design notes</a> ·
+  <a href="DESIGN.md">Design system</a> ·
+  <a href="docs/DESIGN.md">Engineering notes</a> ·
   <a href="CONTRIBUTING.md">Contributing</a> ·
   <a href="#-using-this-project">Using this project</a>
 </p>
@@ -275,7 +276,8 @@ Services/            Exam rules and grading, dictionary lookup (DB → DeepL →
 ViewComponents/      Admin lists, language selector, slides
 Views/               Razor views (Home, Account, Admin, Shared layouts)
 wwwroot/css|js/      Hand-written styles and scripts, one pair per area (home, quiz, exam, admin, …)
-docs/                Design notes (DESIGN.md) and the README images
+DESIGN.md            Design system: tokens, components, voice (DESIGN.md format)
+docs/                Engineering notes (docs/DESIGN.md) and the README images
 .github/             CI, deployment to Plesk, database backup tool, restore guide
 ```
 
@@ -297,8 +299,11 @@ How to restore a backup: [`.github/deploy/RESTORE.md`](.github/deploy/RESTORE.md
 
 ## 🎨 Design and engineering notes
 
-How the shader slider, the 3D scene, the design tokens, dark mode, the motion system, the exam room and the admin
-panel are built, with code: **[docs/DESIGN.md](docs/DESIGN.md)**.
+- **[DESIGN.md](DESIGN.md)**: the design system in the [DESIGN.md format](https://github.com/VoltAgent/awesome-design-md):
+  colours, type, spacing, components and the voice of the site (a teacher's personal site, not a company). Hand it
+  to a designer or an AI design tool before building a new page.
+- **[docs/DESIGN.md](docs/DESIGN.md)**: how the shader slider, the 3D scene, the design tokens, dark mode, the
+  motion system, the exam room, the legal pages and the admin panel are built, with code.
 
 ---
 

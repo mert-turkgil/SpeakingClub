@@ -7,6 +7,7 @@
     var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
     string T(string tr, string de) => isGerman ? de : tr;
     var privacyPath = isGerman ? "/datenschutz" : "/gizlilik";
+    var termsPath = isGerman ? "/nutzungsbedingungen" : "/kullanim-kosullari";
     var error = TempData["Error"] as string;
 }
 @section Css {
@@ -135,7 +136,7 @@
 
                 <p class="auth__switch">@Localizer.GetKey("AlreadyHaveAccount") <a asp-action="Login" asp-route-returnUrl="@returnUrl">@T("Giriş yapın", "Anmelden")</a></p>
             </div>
-            <p class="auth__legal">@T("Kayıt olarak", "Mit der Registrierung akzeptieren Sie unsere") <a href="@privacyPath">@T("gizlilik politikamızı", "Datenschutzerklärung")</a>@T(" kabul etmiş olursunuz. Hesabınızı e-postanıza gelen bağlantıyla onaylarsınız.", ". Sie bestätigen Ihr Konto über den Link in der E-Mail, die wir Ihnen senden.")</p>
+            <p class="auth__legal">@T("Kayıt olarak", "Mit der Registrierung akzeptieren Sie unsere") <a href="@termsPath">@T("kullanım koşullarını", "Nutzungsbedingungen")</a> @T("kabul etmiş ve", "und bestätigen, die") <a href="@privacyPath">@T("gizlilik politikasını", "Datenschutzerklärung")</a>@T(" okumuş olursunuz. Hesabınızı e-postanıza gelen bağlantıyla onaylarsınız.", " gelesen zu haben. Sie bestätigen Ihr Konto über den Link in der E-Mail, die wir Ihnen senden.")</p>
         </section>
     </div>
 </div>

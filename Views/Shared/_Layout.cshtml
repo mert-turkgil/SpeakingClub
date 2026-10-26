@@ -234,6 +234,7 @@
     string? aboutPath = isGerman ? "/ueber-uns" : "/hakkimizda";
     string? wordsPath = isGerman ? "/woerterbuch" : "/sozluk";
     string? privacyPath = isGerman ? "/datenschutz" : "/gizlilik";
+    string? termsPath = isGerman ? "/nutzungsbedingungen" : "/kullanim-kosullari";
     string? doctorsPath = isGerman ? "/aerztedeutsch" : "/hekim-almancasi";
     string? nursesPath = isGerman ? "/pflegedeutsch" : "/hemsirelik-almancasi";
     bool isHome = currentController == "Home" && currentAction == "Index";
@@ -630,6 +631,7 @@
                               <span>@copyrightText</span>
                               <ul class="site-footer__bottom-links">
                                 <li><a href="@privacyPath">@T("Gizlilik", "Datenschutz")</a></li>
+                                <li><a href="@termsPath">@T("Kullanım Koşulları", "Nutzungsbedingungen")</a></li>
                                 <li><a href="/sitemap.xml"><i class="fa-solid fa-sitemap me-1" aria-hidden="true"></i>Sitemap</a></li>
                                 <li><a href="/robots.txt"><i class="fa-solid fa-robot me-1" aria-hidden="true"></i>Robots.txt</a></li>
                                 <li class="site-footer__theme">

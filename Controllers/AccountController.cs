@@ -603,10 +603,22 @@ namespace SpeakingClub.Controllers
                 return RedirectToAction(nameof(Account));
             }
 
-            var result = await _userManager.DeleteAsync(user!);
+            var userId = user!.Id;
+            var result = await _userManager.DeleteAsync(user);
 
             if (result.Succeeded)
             {
+                // The download log keeps a copy of the name and e-mail: remove them, as the privacy policy promises.
+                // Exam results stay for the statistics, but only with the account id, which no longer points to a person.
+                var downloads = await _unitOfWork.GenericRepository<DownloadLog>().GetAllAsync(d => d.UserId == userId);
+                foreach (var download in downloads)
+                {
+                    download.UserEmail = string.Empty;
+                    download.UserFullName = string.Empty;
+                    _unitOfWork.GenericRepository<DownloadLog>().Update(download);
+                }
+                await _unitOfWork.SaveAsync();
+
                 await _signInManager.SignOutAsync();
                 return RedirectToAction("Index", "Home");
             }

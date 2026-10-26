@@ -99,7 +99,38 @@ namespace SpeakingClub.Services
                 _logger.LogError(ex, "Error during temp file cleanup");
             }
 
+            CleanupOldLogs();
             return Task.CompletedTask;
+        }
+
+        // Server logs (logs/stdout_*.log written by IIS) can contain IP addresses. The privacy policy says they are
+        // kept for at most 30 days, so older log files are deleted here.
+        private void CleanupOldLogs()
+        {
+            try
+            {
+                var logPath = Path.Combine(_env.ContentRootPath, "logs");
+                if (!Directory.Exists(logPath))
+                    return;
+
+                var cutoff = DateTime.Now.AddDays(-30);
+                foreach (var file in Directory.GetFiles(logPath, "*.log"))
+                {
+                    try
+                    {
+                        if (File.GetLastWriteTime(file) < cutoff)
+                            File.Delete(file);
+                    }
+                    catch (IOException)
+                    {
+                        // The log currently being written is locked; it is young anyway
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error during log cleanup");
+            }
         }
     }
 }

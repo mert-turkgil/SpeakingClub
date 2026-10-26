@@ -1,0 +1,155 @@
+@using SpeakingClub.Models
+@*
+    Terms of use (/kullanim-kosullari, /nutzungsbedingungen). Frame: _LegalLayout.cshtml.
+    Almanca Konuş is Suna Koç's personal website, not a company: rights belong to her as a person.
+    Keep the exam rules in step with Services/ExamRules.cs and the exam room.
+*@
+@{
+    Layout = "_LegalLayout";
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var contactEmail = "almancakonus.info@gmail.com";
+    var aboutPath = isGerman ? "/ueber-uns" : "/hakkimizda";
+    var privacyPath = isGerman ? "/datenschutz" : "/gizlilik";
+    var sections = new (string Id, string Title)[]
+    {
+        ("kapsam", T("Kapsam ve site hakkında", "Geltungsbereich und Betreiberin")),
+        ("hizmetler", T("Sitede neler var?", "Was die Website bietet")),
+        ("hesap", T("Hesabınız", "Ihr Konto")),
+        ("sinavlar", T("Online sınavlar", "Online-Prüfungen")),
+        ("sozluk", T("Sözlük ve çeviriler", "Wörterbuch und Übersetzungen")),
+        ("klinik", T("Klinik Almanca içerikleri", "Inhalte zum klinischen Deutsch")),
+        ("icerik", T("İçerikler ve telif hakları", "Inhalte und Urheberrecht")),
+        ("kurallar", T("Kullanım kuralları", "Verhaltensregeln")),
+        ("ucuncu-taraf", T("Bağlantılar ve diğer hizmetler", "Links und Dienste Dritter")),
+        ("sorumluluk", T("Sorumluluk", "Haftung")),
+        ("degisiklikler", T("Değişiklikler ve uygulanacak hukuk", "Änderungen und anwendbares Recht"))
+    };
+    ViewData["Legal"] = new LegalPage(
+        Eyebrow: T("Kurallar", "Regeln"),
+        EyebrowIcon: "fa-file-lines",
+        Title: T("Kullanım Koşulları", "Nutzungsbedingungen"),
+        Lead: T("Almanca Konuş'u kullanırken geçerli olan kurallar: hesabınız, online sınavlar, sözlük, içerikler ve sorumluluk.",
+                "Die Regeln für die Nutzung von Almanca Konuş: Ihr Konto, Online-Prüfungen, Wörterbuch, Inhalte und Haftung."),
+        Updated: T("26 Ekim 2026", "26. Oktober 2026"),
+        Sections: sections,
+        OtherTitle: T("Gizlilik Politikası", "Datenschutzerklärung"),
+        OtherText: T("Hangi verilerin neden işlendiği ve haklarınız", "Welche Daten wir verarbeiten und Ihre Rechte"),
+        OtherPath: privacyPath,
+        OtherIcon: "fa-shield-halved");
+}
+
+<section class="legal-summary" aria-labelledby="terms-summary-title">
+    <h2 id="terms-summary-title"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>@T("Kısaca", "Das Wichtigste in Kürze")</h2>
+    <ul>
+        <li>@T("Almanca Konuş bir şirket değil; Almanca öğretmeni Suna Koç'un kişisel sitesidir.", "Almanca Konuş ist kein Unternehmen, sondern die persönliche Website der Deutschlehrerin Suna Koç.")</li>
+        <li>@T("Sitedeki blog, sözlük ve seviye sınavları ücretsizdir.", "Blog, Wörterbuch und Einstufungstests auf der Website sind kostenlos.")</li>
+        <li>@T("Sınav sonuçları kendinizi ölçmeniz içindir; resmî bir belge değildir.", "Prüfungsergebnisse dienen der Selbsteinschätzung; sie sind kein offizielles Zertifikat.")</li>
+        <li>@T("Makine çevirileri hatalı olabilir; tıbbi veya resmî metinlerde tek başına güvenmeyin.", "Maschinelle Übersetzungen können falsch sein; verlassen Sie sich bei medizinischen oder amtlichen Texten nicht allein darauf.")</li>
+        <li>@T("İçerikleri kendi öğreniminiz için kullanabilirsiniz; başka yerde yayımlamak için izin gerekir.", "Sie dürfen die Inhalte für Ihr eigenes Lernen nutzen; für eine Veröffentlichung anderswo brauchen Sie eine Erlaubnis.")</li>
+        <li>@Html.Raw(T($"Sorularınız için: <a href=\"mailto:{contactEmail}\">{contactEmail}</a>", $"Bei Fragen: <a href=\"mailto:{contactEmail}\">{contactEmail}</a>"))</li>
+    </ul>
+</section>
+
+<section id="kapsam">
+    <h2><span>1</span>@sections[0].Title</h2>
+    <p>@T("Almanca Konuş bir şirket değildir. www.almanca-konus.com, Almanca öğretmeni Suna Koç'un kişisel olarak yürüttüğü bir web sitesidir. Bu koşullar sitenin kullanımı için geçerlidir; siteyi kullanarak veya bir hesap oluşturarak bu koşulları kabul etmiş olursunuz.",
+          "Almanca Konuş ist kein Unternehmen. www.almanca-konus.com ist eine Website, die die Deutschlehrerin Suna Koç persönlich betreibt. Diese Bedingungen gelten für die Nutzung der Website; mit der Nutzung oder der Eröffnung eines Kontos akzeptieren Sie sie.")</p>
+    <p>@T("Bu metinde geçen \"biz\", Suna Koç'u ve siteyi onun adına teknik olarak yöneten kişiyi ifade eder.",
+          "\"Wir\" bezeichnet in diesem Text Suna Koç und die Person, die die Website in ihrem Auftrag technisch betreut.")</p>
+    <p>@T("Suna Koç'un verdiği ücretli birebir ve grup derslerinin koşulları (ücret, saatler, iptal) bu koşulların parçası değildir; ders öncesinde sizinle ayrıca, e-posta veya WhatsApp üzerinden yazılı olarak kararlaştırılır.",
+          "Die Bedingungen für die bezahlten Einzel- und Gruppenstunden von Suna Koç (Preis, Termine, Absage) sind nicht Teil dieser Bedingungen; sie werden vor dem Unterricht gesondert schriftlich per E-Mail oder WhatsApp mit Ihnen vereinbart.")</p>
+</section>
+
+<section id="hizmetler">
+    <h2><span>2</span>@sections[1].Title</h2>
+    <p>@T("Sitede şunları ücretsiz sunuyoruz: blog yazıları ve indirilebilir materyaller, Almanca–Türkçe sözlük, online seviye sınavları, sonuçlarınızı gösteren hesap sayfası ve iletişim formu.",
+          "Kostenlos bieten wir: Blogbeiträge und herunterladbare Materialien, ein Wörterbuch Deutsch–Türkisch, Online-Einstufungstests, eine Kontoseite mit Ihren Ergebnissen und ein Kontaktformular.")</p>
+    <p>@T("Site kişisel bir proje olarak sürdürülür. Özellikleri geliştirebilir, değiştirebilir veya kaldırabiliriz. Sitenin her zaman kesintisiz çalışacağını garanti edemeyiz; bakım veya teknik sorunlar nedeniyle zaman zaman erişilemeyebilir.",
+          "Die Website wird als persönliches Projekt betrieben. Wir können Funktionen erweitern, ändern oder einstellen. Einen unterbrechungsfreien Betrieb können wir nicht garantieren; wegen Wartung oder technischer Probleme kann die Website zeitweise nicht erreichbar sein.")</p>
+</section>
+
+<section id="hesap">
+    <h2><span>3</span>@sections[2].Title</h2>
+    <ul>
+        <li>@T("Hesap açarken doğru bilgiler verin. Her hesap tek bir kişiye aittir ve başkasıyla paylaşılamaz.", "Machen Sie bei der Registrierung wahre Angaben. Jedes Konto gehört einer Person und darf nicht geteilt werden.")</li>
+        <li>@T("Şifrenizi kimseyle paylaşmayın. Hesabınızın izinsiz kullanıldığını fark ederseniz bize hemen haber verin.", "Geben Sie Ihr Passwort nicht weiter. Bemerken Sie eine fremde Nutzung Ihres Kontos, sagen Sie uns sofort Bescheid.")</li>
+        <li>@T("16 yaşından küçükseniz yalnızca anne, baba veya vasinizin izniyle hesap açın.", "Wenn Sie jünger als 16 Jahre sind, eröffnen Sie ein Konto nur mit Zustimmung Ihrer Eltern oder Erziehungsberechtigten.")</li>
+        <li>@T("Bu koşulları ciddi biçimde ihlal eden hesapları, mümkünse önceden haber vererek, askıya alabilir veya silebiliriz.", "Konten, die erheblich gegen diese Bedingungen verstoßen, können wir – wenn möglich nach vorheriger Mitteilung – sperren oder löschen.")</li>
+        <li>@T("Hesabınızı istediğiniz an \"Hesabım\" sayfasından kendiniz silebilirsiniz.", "Ihr Konto können Sie jederzeit selbst auf der Seite \"Mein Konto\" löschen.")</li>
+    </ul>
+</section>
+
+<section id="sinavlar">
+    <h2><span>4</span>@sections[3].Title</h2>
+    <p>@T("Online sınavlar, seviyenizi görmeniz ve pratik yapmanız içindir. Sonuçlar resmî bir sertifika değildir ve Goethe, telc veya ÖSD gibi sınavların ya da bir denklik işleminin yerine geçmez.",
+          "Die Online-Prüfungen dienen der Selbsteinschätzung und Übung. Die Ergebnisse sind kein offizielles Zertifikat und ersetzen weder Prüfungen wie Goethe, telc oder ÖSD noch ein Anerkennungsverfahren.")</p>
+    <p>@T("Sınavların adil olması için şu kurallar geçerlidir:", "Damit die Prüfungen fair bleiben, gelten diese Regeln:")</p>
+    <ul>
+        <li>@T("Süre, Başla'ya bastığınızda başlar ve sunucuda ölçülür; sayfayı yenilemek süreyi sıfırlamaz. Süre bitince cevaplarınız otomatik olarak gönderilir.", "Die Zeit beginnt mit dem Klick auf \"Starten\" und wird auf dem Server gemessen; Neuladen setzt sie nicht zurück. Bei Zeitablauf werden Ihre Antworten automatisch abgegeben.")</li>
+        <li>@T("Sınav tam ekranda yapılır. Tam ekrandan çıkmak, başka sekmeye veya pencereye geçmek, kopyalamak, yapıştırmak veya yazdırmak ihlal sayılır ve her seferinde uyarılırsınız; üçüncü ihlalde sınav sona erer.", "Die Prüfung läuft im Vollbild. Verlassen des Vollbilds, Wechsel in einen anderen Tab oder ein anderes Fenster, Kopieren, Einfügen und Drucken gelten als Verstoß, mit einer Warnung bei jedem Mal; beim dritten Verstoß endet die Prüfung.")</li>
+        <li>@T("İzinsiz yardım almak, soruları paylaşmak veya sınavı teknik olarak manipüle etmek yasaktır. Bu yolla alınan sonuçları geçersiz sayabiliriz.", "Unerlaubte Hilfsmittel, das Weitergeben von Fragen oder technische Manipulation sind nicht erlaubt. So erzielte Ergebnisse können wir für ungültig erklären.")</li>
+    </ul>
+</section>
+
+<section id="sozluk">
+    <h2><span>5</span>@sections[4].Title</h2>
+    <p>@T("Kendi sözlüğümüzdeki kelimeleri özenle hazırlıyoruz, ancak hata içerebilirler. Sözlükte bulunmayan kelimeler DeepL ve PONS ile otomatik çevrilir; bu çeviriler yanlış veya eksik olabilir. Tıbbi, hukuki veya resmî metinlerde yalnızca bu çevirilere güvenmeyin.",
+          "Die Einträge in unserem eigenen Wörterbuch erstellen wir sorgfältig, sie können aber Fehler enthalten. Wörter, die dort fehlen, werden automatisch mit DeepL und PONS übersetzt; diese Übersetzungen können falsch oder unvollständig sein. Verlassen Sie sich bei medizinischen, rechtlichen oder amtlichen Texten nicht allein darauf.")</p>
+</section>
+
+<section id="klinik">
+    <h2><span>6</span>@sections[5].Title</h2>
+    <p>@T("Hekim ve hemşire Almancası sayfaları, yazılar ve örnek diyaloglar dil öğrenimi içindir; tıbbi tavsiye değildir. FSP, Kenntnisprüfung veya bir denklik başvurusunda başarı garantisi vermez.",
+          "Die Seiten zum Deutsch für Ärzte und Pflege, die Beiträge und Beispieldialoge dienen dem Sprachenlernen; sie sind keine medizinische Beratung. Sie garantieren keinen Erfolg in der FSP, der Kenntnisprüfung oder einem Anerkennungsverfahren.")</p>
+</section>
+
+<section id="icerik">
+    <h2><span>7</span>@sections[6].Title</h2>
+    <p>@T("Sitedeki yazılar, sınav soruları, sözlük maddeleri, fotoğraflar, videolar ve logo telif hakkıyla korunur; hakları Suna Koç'a aittir.",
+          "Texte, Prüfungsfragen, Wörterbucheinträge, Fotos, Videos und Logo der Website sind urheberrechtlich geschützt; die Rechte liegen bei Suna Koç.")</p>
+    <ul>
+        <li>@T("Kendi öğreniminiz için okuyabilir, materyalleri indirebilir ve yazdırabilirsiniz.", "Für Ihr eigenes Lernen dürfen Sie lesen, Materialien herunterladen und ausdrucken.")</li>
+        <li>@T("İçerikleri başka sitelerde, sosyal medyada veya kendi derslerinizde yayımlamak, çoğaltmak ya da satmak için Suna Koç'un önceden yazılı izni gerekir.", "Für Veröffentlichung, Vervielfältigung oder Verkauf – auf anderen Websites, in sozialen Medien oder im eigenen Unterricht – brauchen Sie vorher die schriftliche Erlaubnis von Suna Koç.")</li>
+        <li>@T("Kaynak göstererek kısa alıntı yapmak serbesttir.", "Kurze Zitate mit Quellenangabe sind erlaubt.")</li>
+    </ul>
+    <p class="legal-note">@T("Sitenin yazılım kaynak kodu GitHub'da kendi lisansıyla ayrıca yayımlanır; bu lisans sitedeki içerikleri, fotoğrafları ve \"Almanca Konuş\" adını kapsamaz.",
+                             "Der Quellcode der Website wird separat auf GitHub unter einer eigenen Lizenz veröffentlicht; diese Lizenz gilt nicht für Inhalte, Fotos und den Namen \"Almanca Konuş\".")</p>
+</section>
+
+<section id="kurallar">
+    <h2><span>8</span>@sections[7].Title</h2>
+    <p>@T("Siteyi kullanırken şunları yapmayın:", "Bei der Nutzung der Website ist nicht erlaubt:")</p>
+    <ul>
+        <li>@T("Robotlar veya programlarla otomatik erişim, içerik toplama (scraping) ya da sözlükte toplu sorgu", "automatisierter Zugriff mit Bots oder Programmen, das Abgreifen von Inhalten (Scraping) oder Massenabfragen im Wörterbuch")</li>
+        <li>@T("Sitenin güvenliğini aşmaya, sistemi aşırı yüklemeye veya başkalarının hesaplarına erişmeye çalışmak", "Versuche, die Sicherheit zu umgehen, das System zu überlasten oder auf fremde Konten zuzugreifen")</li>
+        <li>@T("İletişim formu üzerinden hakaret, spam veya hukuka aykırı içerik göndermek", "über das Kontaktformular beleidigende, werbliche (Spam) oder rechtswidrige Inhalte zu senden")</li>
+        <li>@T("Başka biri adına hesap açmak veya sınav kurallarını aşmaya çalışmak", "ein Konto im Namen einer anderen Person zu eröffnen oder die Prüfungsregeln zu umgehen")</li>
+    </ul>
+</section>
+
+<section id="ucuncu-taraf">
+    <h2><span>9</span>@sections[8].Title</h2>
+    <p>@T("Sitede YouTube videoları, WhatsApp ve sosyal medya bağlantıları ile \"Google ile devam et\" seçeneği bulunur. Bu hizmetlerin kendi kullanım koşulları geçerlidir. Bağlantı verdiğimiz başka sitelerin içeriğinden sorumlu değiliz.",
+          "Die Website enthält YouTube-Videos, Links zu WhatsApp und sozialen Netzwerken sowie die Option \"Mit Google fortfahren\". Für diese Dienste gelten deren eigene Nutzungsbedingungen. Für die Inhalte verlinkter fremder Websites sind wir nicht verantwortlich.")</p>
+</section>
+
+<section id="sorumluluk">
+    <h2><span>10</span>@sections[9].Title</h2>
+    <p>@T("Site ücretsiz olarak, olduğu gibi sunulur. İçeriklerin doğru ve güncel olması, sitenin de erişilebilir olması için özen gösteririz, ancak bunu garanti etmeyiz.",
+          "Die Website wird kostenlos und so, wie sie ist, angeboten. Wir bemühen uns um richtige und aktuelle Inhalte und eine gute Erreichbarkeit, können das aber nicht garantieren.")</p>
+    <p>@T("Kasıt ve ağır ihmal hâlinde ve hayata, vücut bütünlüğüne veya sağlığa verilen zararlarda kanuni sorumluluk saklıdır. Bunun dışında, ücretsiz kullanımdan doğan zararlar için sorumluluk kanunun izin verdiği ölçüde sınırlıdır. Tüketici olarak sahip olduğunuz zorunlu yasal haklar bu maddeden etkilenmez.",
+          "Für Vorsatz und grobe Fahrlässigkeit sowie für Schäden an Leben, Körper oder Gesundheit wird nach den gesetzlichen Vorschriften gehaftet. Im Übrigen ist die Haftung für die kostenlose Nutzung soweit gesetzlich zulässig ausgeschlossen. Ihre zwingenden Verbraucherrechte bleiben unberührt.")</p>
+</section>
+
+<section id="degisiklikler">
+    <h2><span>11</span>@sections[10].Title</h2>
+    <p>@T("Bu koşulları site geliştikçe güncelleyebiliriz. Geçerli sürüm her zaman bu sayfadadır; tarihi en üstte görürsünüz. Değişiklikten sonra siteyi kullanmaya devam etmeniz, güncel koşulları kabul ettiğiniz anlamına gelir.",
+          "Wir können diese Bedingungen anpassen, wenn sich die Website weiterentwickelt. Es gilt immer die Fassung auf dieser Seite; das Datum steht oben. Wenn Sie die Website nach einer Änderung weiter nutzen, gelten die aktuellen Bedingungen.")</p>
+    <p>@T("Bu koşullara Türkiye Cumhuriyeti hukuku uygulanır. Başka bir ülkede tüketici olarak yaşıyorsanız, o ülkenin zorunlu tüketici koruma kuralları saklıdır.",
+          "Für diese Bedingungen gilt das Recht der Republik Türkei. Wenn Sie als Verbraucher in einem anderen Land leben, bleiben die zwingenden Verbraucherschutzvorschriften dieses Landes unberührt.")</p>
+    <div class="legal-contact">
+        <a class="bp-btn" href="mailto:@contactEmail"><i class="fa-solid fa-envelope" aria-hidden="true"></i>@contactEmail</a>
+        <a class="bp-btn bp-btn--ghost" href="@aboutPath#contact-form">@T("İletişim formu", "Kontaktformular")<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+    </div>
+</section>

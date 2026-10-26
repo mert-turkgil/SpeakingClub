@@ -6,6 +6,10 @@ decisions behind it, so you can change things later without breaking them.
 
 > **Where things live:** styles in `wwwroot/css/`, scripts in `wwwroot/js/`, one pair per area. `blog.css` holds
 > the shared design tokens for the public site, `admin.css` the tokens for the admin panel.
+>
+> **Designing something new?** Start with the [DESIGN.md](../DESIGN.md) in the repository root: the tokens, the
+> components and the voice (a personal teacher's site, not a company) in the DESIGN.md format that people and AI
+> design tools can follow. This file explains how it is built.
 
 **Contents**
 
@@ -813,6 +817,23 @@ at a capped device pixel ratio of 2 and removed when the last piece leaves the s
   turns the top third of the screen into the "reading zone". It sits beside the article on wide screens and
   collapses into a `<details>` above it on smaller ones.
 
+### The legal pages (privacy, terms)
+
+*Files: `Views/Home/_LegalLayout.cshtml`, `Models/LegalPage.cs`, `wwwroot/css/legal.css`, `wwwroot/js/legal.js`*
+
+Both texts share one nested layout. The page sets `ViewData["Legal"]` (eyebrow, title, lead, date, the list of
+sections, the link to the other text) and renders only its numbered `<section id="…">` blocks; the frame adds the
+hero, a meta row ("personal site of Suna Koç, not a company", date, reading time, *Print / PDF*), the table of
+contents, the reading progress, a "copy link to this section" button on every heading and the card that leads to
+the other text.
+
+- The marked section is the **last one whose top has passed a line 150 px below the top** of the window (and the
+  last section at the very bottom of the page). This is simpler and steadier than an `IntersectionObserver` when
+  sections are short.
+- The `@media print` block hides all chrome, prints black on white and writes the address after external links,
+  so *Print / PDF* gives a clean document.
+- To add a section: add a `<section id="…">` with a numbered `<h2>` to the page and an entry to `Sections`.
+
 ### Buttons and chips
 
 `.bp-btn` is a pill in ink colour that turns coral and lifts on hover. An arrow icon inside nudges in its direction
@@ -1131,7 +1152,7 @@ What every page follows, and what to keep when changing things:
 }
 @section Css {
     <script>document.documentElement.classList.add('bp-js');</script>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@@0,9..144,600;1,9..144,600&display=swap" />
+    @* Fonts are already loaded by _Layout (partial _Fonts), no font link here *@
     <link rel="stylesheet" href="~/css/blog.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/my-page.css" asp-append-version="true" />
 }
@@ -1191,6 +1212,7 @@ value to `DictionarySource` and a step to the pipeline in `Words.cshtml`.
 | Login, sign-up | `auth.css` | `auth.js` | Balloons, password rules, Turnstile |
 | My account | `account.css` | `account.js` | Score chart, rings |
 | Clinical German pages | `clinical.css` | n/a | Doctors / nurses |
+| Privacy, terms | `legal.css` | `legal.js` | Shared frame `_LegalLayout.cshtml` |
 | Admin panel | `admin.css` | `admin.js`, `admin-blog.js`, `admin-quiz.js`, `admin-texts.js`, `ckeditor.js` | Guides in `AdminNav.cs` |
 | Older global layers | `custom.css` (brand utility classes only, from `custom.scss`), `site.css`, `universe.css`, `dark-mode.css` | | Loaded site-wide; new pages don't depend on them |
 | Not in use | `splash.css` | `splash.js`, `anime.js` | Early experiments, not referenced by any view |

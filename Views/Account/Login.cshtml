@@ -7,6 +7,7 @@
     var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
     string T(string tr, string de) => isGerman ? de : tr;
     var privacyPath = isGerman ? "/datenschutz" : "/gizlilik";
+    var termsPath = isGerman ? "/nutzungsbedingungen" : "/kullanim-kosullari";
     var success = (TempData["SplashMessage"] ?? TempData["Success"]) as string;
     var error = TempData["Error"] as string;
 }
@@ -94,7 +95,7 @@
 
                 <p class="auth__switch">@Localizer.GetKey("NoAccountYet") <a asp-action="Register" asp-route-returnUrl="@returnUrl">@T("Ücretsiz kayıt olun", "Kostenlos registrieren")</a></p>
             </div>
-            <p class="auth__legal">@T("Devam ederek", "Mit der Anmeldung akzeptieren Sie unsere") <a href="@privacyPath">@T("gizlilik politikamızı", "Datenschutzerklärung")</a>@T(" kabul etmiş olursunuz.", ".")</p>
+            <p class="auth__legal">@T("Devam ederek", "Mit der Anmeldung akzeptieren Sie unsere") <a href="@termsPath">@T("kullanım koşullarını", "Nutzungsbedingungen")</a> @T("kabul etmiş ve", "und bestätigen, die") <a href="@privacyPath">@T("gizlilik politikasını", "Datenschutzerklärung")</a>@T(" okumuş olursunuz.", " gelesen zu haben.")</p>
         </section>
     </div>
 </div>

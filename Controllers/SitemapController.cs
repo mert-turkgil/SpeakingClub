@@ -34,6 +34,7 @@ namespace SpeakingClub.Controllers
             ("/sozluk",               "/woerterbuch",   "0.7", "weekly"),
             ("/hakkimizda",           "/ueber-uns",     "0.6", "monthly"),
             ("/gizlilik",             "/datenschutz",   "0.2", "yearly"),
+            ("/kullanim-kosullari",   "/nutzungsbedingungen", "0.2", "yearly"),
         };
 
         public SitemapController(ILogger<SitemapController> logger, SpeakingClubContext context)

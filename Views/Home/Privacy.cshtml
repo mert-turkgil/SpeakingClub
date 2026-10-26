@@ -1,6 +1,237 @@
-﻿@{
-    ViewData["Title"] ??= "Privacy Policy";
+﻿@using SpeakingClub.Models
+@*
+    Privacy policy (/gizlilik, /datenschutz). Written from what the code actually does; keep it in step when a
+    feature that touches personal data changes (sign-in, exams, downloads, contact form, dictionary, cookies,
+    third-party services). Also linked from the Google sign-in consent screen.
+    Almanca Konuş is Suna Koç's personal website, not a company: the text says so and names her as the person
+    responsible. Frame (hero, contents, progress, print): _LegalLayout.cshtml.
+*@
+@{
+    Layout = "_LegalLayout";
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var contactEmail = "almancakonus.info@gmail.com";
+    var aboutPath = isGerman ? "/ueber-uns" : "/hakkimizda";
+    var termsPath = isGerman ? "/nutzungsbedingungen" : "/kullanim-kosullari";
+    var sections = new (string Id, string Title)[]
+    {
+        ("sorumlu", T("Sorumlu kim?", "Wer ist verantwortlich?")),
+        ("veriler", T("Hangi verileri, neden işliyoruz?", "Welche Daten wir verarbeiten und warum")),
+        ("hukuki-sebep", T("Hukuki sebepler", "Rechtsgrundlagen")),
+        ("cerezler", T("Çerezler ve tarayıcı depolama", "Cookies und Speicher im Browser")),
+        ("hizmet-saglayicilar", T("Hizmet sağlayıcılar ve aktarım", "Dienstleister und Übermittlung")),
+        ("google", T("Google ile giriş ve Google verileri", "Anmeldung mit Google und Google-Daten")),
+        ("saklama", T("Ne kadar süre saklıyoruz?", "Wie lange wir Daten speichern")),
+        ("haklar", T("Haklarınız", "Ihre Rechte")),
+        ("guvenlik", T("Güvenlik", "Sicherheit")),
+        ("cocuklar", T("Çocuklar", "Kinder")),
+        ("degisiklikler", T("Değişiklikler ve iletişim", "Änderungen und Kontakt"))
+    };
+    ViewData["Legal"] = new LegalPage(
+        Eyebrow: T("Gizlilik", "Datenschutz"),
+        EyebrowIcon: "fa-shield-halved",
+        Title: T("Gizlilik Politikası", "Datenschutzerklärung"),
+        Lead: T("Almanca Konuş'u kullanırken hangi bilgilerinizin işlendiğini, neden işlendiğini ve bunlar üzerinde hangi haklara sahip olduğunuzu açık bir dille anlatıyoruz.",
+                "Hier erklären wir verständlich, welche Daten bei der Nutzung von Almanca Konuş verarbeitet werden, warum, und welche Rechte Sie haben."),
+        Updated: T("26 Ekim 2026", "26. Oktober 2026"),
+        Sections: sections,
+        OtherTitle: T("Kullanım Koşulları", "Nutzungsbedingungen"),
+        OtherText: T("Hesap, sınavlar, sözlük ve içeriklerle ilgili kurallar", "Regeln zu Konto, Prüfungen, Wörterbuch und Inhalten"),
+        OtherPath: termsPath,
+        OtherIcon: "fa-file-lines");
 }
-<h1>@(ViewData["Title"]?.ToString()?.Split(" | ")[0])</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<section class="legal-summary" aria-labelledby="legal-summary-title">
+    <h2 id="legal-summary-title"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>@T("Kısaca", "Das Wichtigste in Kürze")</h2>
+    <ul>
+        <li>@T("Almanca Konuş bir şirket değil; Almanca öğretmeni Suna Koç'un kişisel sitesidir.", "Almanca Konuş ist kein Unternehmen, sondern die persönliche Website der Deutschlehrerin Suna Koç.")</li>
+        <li>@T("Yalnızca dersler, sınavlar ve iletişim için gereken bilgileri işliyoruz.", "Wir verarbeiten nur, was für Unterricht, Prüfungen und Kontakt nötig ist.")</li>
+        <li>@T("Verilerinizi satmıyoruz, reklam için kullanmıyoruz; reklam ve takip çerezi yok.", "Wir verkaufen Ihre Daten nicht, nutzen sie nicht für Werbung und setzen keine Werbe- oder Tracking-Cookies.")</li>
+        <li>@T("Şifreniz geri çevrilemez biçimde şifrelenerek saklanır; biz bile göremeyiz.", "Ihr Passwort wird unumkehrbar verschlüsselt gespeichert; auch wir können es nicht sehen.")</li>
+        <li>@T("Hesabınızı istediğiniz an \"Hesabım\" sayfasından kendiniz silebilirsiniz.", "Sie können Ihr Konto jederzeit selbst auf der Seite \"Mein Konto\" löschen.")</li>
+        <li>@Html.Raw(T($"Her soru ve talep için: <a href=\"mailto:{contactEmail}\">{contactEmail}</a>", $"Für alle Fragen und Anliegen: <a href=\"mailto:{contactEmail}\">{contactEmail}</a>"))</li>
+    </ul>
+</section>
+
+<section id="sorumlu">
+    <h2><span>1</span>@sections[0].Title</h2>
+    <p>@T("Almanca Konuş bir şirket değildir. Almanca öğretmeni Suna Koç'un kişisel olarak yürüttüğü bir web sitesidir. Kişisel verilerinizden sorumlu olan kişi (KVKK'daki adıyla \"veri sorumlusu\", DSGVO'daki adıyla \"Verantwortlicher\") Suna Koç'tur:",
+          "Almanca Konuş ist kein Unternehmen, sondern eine Website, die die Deutschlehrerin Suna Koç persönlich betreibt. Verantwortlich für die Verarbeitung Ihrer personenbezogenen Daten (Verantwortliche im Sinne der DSGVO, \"veri sorumlusu\" im Sinne des türkischen KVKK) ist Suna Koç:")</p>
+    <address class="legal-card">
+        <strong>Suna Koç</strong><br />
+        @T("Almanca öğretmeni – www.almanca-konus.com", "Deutschlehrerin – www.almanca-konus.com")<br />
+        @T("E-posta", "E-Mail"): <a href="mailto:@contactEmail">@contactEmail</a><br />
+        @T("İletişim formu", "Kontaktformular"): <a href="@aboutPath#contact-form">@T("Hakkımda sayfası", "Seite „Vita“")</a>
+    </address>
+    <p>@T("Bu metinde geçen \"biz\", Suna Koç'u ve siteyi onun adına teknik olarak yöneten kişiyi ifade eder. Sitenin yönetim paneline yalnızca Suna Koç'un yetki verdiği kişiler girebilir.",
+          "\"Wir\" bezeichnet in diesem Text Suna Koç und die Person, die die Website in ihrem Auftrag technisch betreut. In den Verwaltungsbereich der Website kommen nur Personen, die Suna Koç dazu berechtigt hat.")</p>
+</section>
+
+<section id="veriler">
+    <h2><span>2</span>@sections[1].Title</h2>
+
+    <h3><i class="fa-solid fa-globe" aria-hidden="true"></i>@T("Siteyi ziyaret ettiğinizde", "Beim Besuch der Website")</h3>
+    <p>@T("Her web sitesinde olduğu gibi, sayfayı size gönderebilmek için tarayıcınızın IP adresi ve isteğin teknik bilgileri (zaman, istenen sayfa, tarayıcı türü) sunucuya ulaşır. Bunları yalnızca siteyi çalıştırmak ve kötüye kullanımı (örneğin çok sayıda otomatik deneme) engellemek için kullanıyoruz:",
+          "Wie bei jeder Website erreichen unseren Server die IP-Adresse Ihres Browsers und technische Angaben zur Anfrage (Zeitpunkt, aufgerufene Seite, Browsertyp), damit wir Ihnen die Seite ausliefern können. Wir nutzen sie nur für den Betrieb und gegen Missbrauch (z. B. massenhafte automatische Versuche):")</p>
+    <ul>
+        <li>@T("Giriş, kayıt, iletişim formu ve sözlükte aşırı denemeleri sınırlamak için IP adresi birkaç dakikalığına yalnızca sunucunun belleğinde tutulur.",
+              "Um zu viele Versuche bei Anmeldung, Registrierung, Kontaktformular und Wörterbuch zu begrenzen, wird die IP-Adresse für wenige Minuten nur im Arbeitsspeicher des Servers gehalten.")</li>
+        <li>@T("Hata ve güvenlik kayıtlarında IP adresi geçebilir; bu kayıtlar en geç 30 gün sonra otomatik olarak silinir.",
+              "In Fehler- und Sicherheitsprotokollen kann die IP-Adresse vorkommen; diese Protokolle werden nach spätestens 30 Tagen automatisch gelöscht.")</li>
+        <li>@T("Ziyaretçi sayılarını görmek için Cloudflare Web Analytics kullanıyoruz. Bu hizmet çerez kullanmaz ve sizi tanımlamaz.",
+              "Für Besucherzahlen nutzen wir Cloudflare Web Analytics. Der Dienst setzt keine Cookies und identifiziert Sie nicht.")</li>
+    </ul>
+
+    <h3><i class="fa-solid fa-user-plus" aria-hidden="true"></i>@T("Hesap oluşturduğunuzda", "Bei der Registrierung")</h3>
+    <p>@T("Adınız, soyadınız, yaşınız, e-posta adresiniz ve şifreniz. E-posta adresinizi doğrulamak için size bir onay e-postası gönderiyoruz. Şifreniz geri çevrilemez biçimde (hash) saklanır. Yaşınızı yalnızca derslerin ve seviyelerin size uygunluğu için soruyoruz.",
+          "Vorname, Nachname, Alter, E-Mail-Adresse und Passwort. Zur Bestätigung Ihrer E-Mail-Adresse senden wir Ihnen eine E-Mail. Ihr Passwort wird unumkehrbar (als Hash) gespeichert. Ihr Alter fragen wir nur, damit Unterricht und Niveau zu Ihnen passen.")</p>
+
+    <h3><i class="fa-brands fa-google" aria-hidden="true"></i>@T("Google ile giriş yaptığınızda", "Bei der Anmeldung mit Google")</h3>
+    <p>@T("Google'dan yalnızca adınızı, soyadınızı, e-posta adresinizi ve bu adresin doğrulanmış olup olmadığını alırız. Google şifrenizi hiçbir zaman görmeyiz. Ayrıntılar aşağıda, 6. bölümde.",
+          "Von Google erhalten wir nur Vorname, Nachname, E-Mail-Adresse und die Angabe, ob diese bestätigt ist. Ihr Google-Passwort sehen wir nie. Einzelheiten in Abschnitt 6.")</p>
+
+    <h3><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>@T("Sınavlara girdiğinizde", "Bei Prüfungen")</h3>
+    <p>@T("Verdiğiniz cevaplar, puanınız, başlama ve bitiş zamanı, süre ve deneme sayısı. Sınavın adil olması için sınav sırasında şu olaylar zamanlarıyla birlikte kaydedilir: tam ekrandan çıkma, başka sekmeye veya pencereye geçme, kopyalama, yapıştırma ve yazdırma. Bağlantı koparsa cevaplarınız kaybolmasın diye tarayıcınızda geçici bir kopya tutulur; sonuç sayfası açıldığında silinir.",
+          "Ihre Antworten, Ihre Punktzahl, Beginn und Ende, Dauer und Zahl der Versuche. Damit die Prüfung fair bleibt, werden während der Prüfung folgende Ereignisse mit Zeitpunkt protokolliert: Verlassen des Vollbilds, Wechsel in einen anderen Tab oder ein anderes Fenster, Kopieren, Einfügen und Drucken. Damit bei einem Verbindungsabbruch nichts verloren geht, liegt eine vorläufige Kopie Ihrer Antworten in Ihrem Browser; sie wird gelöscht, sobald die Ergebnisseite öffnet.")</p>
+
+    <h3><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i>@T("Dosya indirdiğinizde", "Beim Herunterladen von Dateien")</h3>
+    <p>@T("Yazılardaki dosyaları indirmek için giriş yapmanız gerekir. Hangi dosyayı ne zaman indirdiğinizi adınız ve e-posta adresinizle birlikte kaydederiz; böylece hangi materyallerin işe yaradığını görür ve kötüye kullanımı engelleriz.",
+          "Zum Herunterladen von Dateien aus Beiträgen müssen Sie angemeldet sein. Wir speichern, welche Datei Sie wann heruntergeladen haben, zusammen mit Ihrem Namen und Ihrer E-Mail-Adresse – so sehen wir, welche Materialien helfen, und verhindern Missbrauch.")</p>
+
+    <h3><i class="fa-solid fa-envelope" aria-hidden="true"></i>@T("İletişim formunu kullandığınızda", "Beim Kontaktformular")</h3>
+    <p>@T("Adınız, e-posta adresiniz ve mesajınız bize e-posta olarak iletilir ve size bir alındı e-postası gönderilir. Mesajlar sitenin veritabanına kaydedilmez; yalnızca yazışma için gerektiği sürece e-posta kutumuzda kalır.",
+          "Name, E-Mail-Adresse und Nachricht werden uns per E-Mail zugestellt, und Sie erhalten eine Eingangsbestätigung. Nachrichten werden nicht in der Datenbank der Website gespeichert; sie bleiben nur so lange in unserem Postfach, wie es für die Korrespondenz nötig ist.")</p>
+
+    <h3><i class="fa-solid fa-book-open" aria-hidden="true"></i>@T("Sözlüğü kullandığınızda", "Beim Wörterbuch")</h3>
+    <p>@T("Aradığınız kelime önce kendi sözlüğümüzde aranır. Bulunamazsa yalnızca kelimenin kendisi çeviri için DeepL'e, gerekirse PONS'a gönderilir; hesabınız veya IP adresiniz bu hizmetlere iletilmez. Aynı kelime tekrar sorulduğunda hızlı cevap vermek için sonuç en fazla 12 saat sunucunun belleğinde tutulur.",
+          "Das gesuchte Wort wird zuerst in unserem eigenen Wörterbuch gesucht. Wird es nicht gefunden, geht nur das Wort selbst zur Übersetzung an DeepL und bei Bedarf an PONS; Ihr Konto oder Ihre IP-Adresse werden nicht übermittelt. Das Ergebnis bleibt bis zu 12 Stunden im Arbeitsspeicher des Servers, damit dieselbe Suche schneller beantwortet wird.")</p>
+
+    <h3><i class="fa-solid fa-robot" aria-hidden="true"></i>@T("Robot koruması", "Schutz vor Bots")</h3>
+    <p>@T("Giriş, kayıt ve iletişim formlarında Cloudflare Turnstile kullanıyoruz. Turnstile, formu bir insanın gönderdiğini tarayıcı bilgileri üzerinden doğrular; reklam amacıyla kullanılmaz.",
+          "Bei Anmeldung, Registrierung und Kontaktformular nutzen wir Cloudflare Turnstile. Turnstile prüft anhand von Browserinformationen, ob ein Mensch das Formular sendet; die Daten werden nicht für Werbung genutzt.")</p>
+</section>
+
+<section id="hukuki-sebep">
+    <h2><span>3</span>@sections[2].Title</h2>
+    <div class="legal-table" role="region" aria-label="@sections[2].Title" tabindex="0">
+        <table>
+            <thead>
+                <tr><th>@T("İşleme", "Verarbeitung")</th><th>KVKK</th><th>DSGVO</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>@T("Hesap, sınavlar, dosya indirme", "Konto, Prüfungen, Downloads")</td><td>@T("Sözleşmenin kurulması ve ifası (md. 5/2-c)", "Vertragserfüllung (Art. 5 Abs. 2 lit. c)")</td><td>Art. 6 Abs. 1 lit. b</td></tr>
+                <tr><td>@T("İletişim formu ve e-postalar", "Kontaktformular und E-Mails")</td><td>@T("Sözleşme öncesi talebiniz (md. 5/2-c)", "Vorvertragliche Anfrage (Art. 5 Abs. 2 lit. c)")</td><td>Art. 6 Abs. 1 lit. b</td></tr>
+                <tr><td>@T("Güvenlik, robot koruması, kayıtlar, anonim istatistik", "Sicherheit, Bot-Schutz, Protokolle, anonyme Statistik")</td><td>@T("Meşru menfaat (md. 5/2-f)", "Berechtigtes Interesse (Art. 5 Abs. 2 lit. f)")</td><td>Art. 6 Abs. 1 lit. f</td></tr>
+                <tr><td>@T("Google ile giriş, yurt dışındaki hizmetlere aktarım", "Anmeldung mit Google, Übermittlung ins Ausland")</td><td>@T("Açık rıza (md. 5/1, md. 9)", "Ausdrückliche Einwilligung (Art. 5 Abs. 1, Art. 9)")</td><td>@T("Art. 6 Abs. 1 lit. a / b, Art. 44 vd.", "Art. 6 Abs. 1 lit. a / b, Art. 44 ff.")</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p>@T("Açık rızanızı her zaman geri alabilirsiniz; bu, geri almadan önceki işlemlerin hukuka uygunluğunu etkilemez.",
+          "Eine Einwilligung können Sie jederzeit widerrufen; das berührt die Rechtmäßigkeit der Verarbeitung bis zum Widerruf nicht.")</p>
+</section>
+
+<section id="cerezler">
+    <h2><span>4</span>@sections[3].Title</h2>
+    <p>@T("Yalnızca sitenin çalışması için gerekli çerezleri kullanıyoruz. Reklam, analiz veya takip çerezi yoktur; bu yüzden çerez onayı sormuyoruz.",
+          "Wir verwenden nur Cookies, die für den Betrieb der Website notwendig sind. Es gibt keine Werbe-, Analyse- oder Tracking-Cookies; deshalb fragen wir nicht nach einer Cookie-Einwilligung.")</p>
+    <div class="legal-table" role="region" aria-label="@sections[3].Title" tabindex="0">
+        <table>
+            <thead>
+                <tr><th>@T("Ad", "Name")</th><th>@T("Amaç", "Zweck")</th><th>@T("Süre", "Dauer")</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>SpeakingClubAuth</code></td><td>@T("Giriş yaptığınızı hatırlar", "Merkt sich, dass Sie angemeldet sind")</td><td>@T("Çıkış yapana kadar, en fazla 7 gün", "Bis zur Abmeldung, höchstens 7 Tage")</td></tr>
+                <tr><td><code>SpeakingClubCSRF</code></td><td>@T("Formları sahte isteklere karşı korur", "Schützt Formulare vor gefälschten Anfragen")</td><td>@T("Tarayıcı oturumu", "Browsersitzung")</td></tr>
+                <tr><td><code>.AspNetCore.Culture</code></td><td>@T("Seçtiğiniz dili (Türkçe/Almanca) hatırlar", "Merkt sich die gewählte Sprache (Türkisch/Deutsch)")</td><td>@T("1 yıl", "1 Jahr")</td></tr>
+                <tr><td><code>.AspNetCore.Correlation.*</code>, <code>Identity.External</code></td><td>@T("Google ile giriş sırasında güvenlik", "Sicherheit während der Anmeldung mit Google")</td><td>@T("Birkaç dakika", "Wenige Minuten")</td></tr>
+                <tr><td><code>__cf_bm</code>, <code>cf_clearance</code> (Cloudflare)</td><td>@T("Robot ve saldırı koruması", "Schutz vor Bots und Angriffen")</td><td>@T("30 dakika – 1 yıl", "30 Minuten – 1 Jahr")</td></tr>
+                <tr><td>@T("Tarayıcı deposu:", "Browserspeicher:") <code>theme</code></td><td>@T("Açık/koyu tema tercihiniz", "Ihre Wahl zwischen hellem und dunklem Design")</td><td>@T("Siz silene kadar", "Bis Sie ihn löschen")</td></tr>
+                <tr><td>@T("Tarayıcı deposu:", "Browserspeicher:") <code>exam:…</code></td><td>@T("Sınav cevaplarınızın geçici yedeği", "Vorläufige Sicherung Ihrer Prüfungsantworten")</td><td>@T("Sonuç sayfası açılana kadar", "Bis die Ergebnisseite öffnet")</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section id="hizmet-saglayicilar">
+    <h2><span>5</span>@sections[4].Title</h2>
+    <p>@T("Siteyi çalıştırmak için aşağıdaki hizmetlerden yararlanıyoruz. Her biri yalnızca kendi işi için gereken veriyi alır.",
+          "Für den Betrieb der Website nutzen wir die folgenden Dienste. Jeder erhält nur die Daten, die er für seine Aufgabe braucht.")</p>
+    <ul class="legal-providers">
+        <li><strong>@T("Barındırma (hosting)", "Hosting")</strong> – @T("web sunucusu ve veritabanı; hesap, sınav ve indirme verileri burada saklanır.", "Webserver und Datenbank; hier liegen Konto-, Prüfungs- und Download-Daten.")</li>
+        <li><strong>Cloudflare, Inc. (@T("ABD", "USA"))</strong> – @T("sitenin önünde çalışan ağ ve güvenlik hizmeti, robot koruması (Turnstile), çerezsiz ziyaretçi istatistiği. Her istek Cloudflare üzerinden geçer.", "Netzwerk- und Sicherheitsdienst vor der Website, Bot-Schutz (Turnstile), cookiefreie Besucherstatistik. Jede Anfrage läuft über Cloudflare.")</li>
+        <li><strong>Google (@T("Google ile giriş, Gmail", "Anmeldung mit Google, Gmail"))</strong> – @T("Google ile girişi seçerseniz kimlik doğrulama; sitenin gönderdiği e-postalar (onay e-postası, iletişim formu) Gmail üzerinden iletilir.", "Anmeldung, falls Sie \"Mit Google anmelden\" wählen; die E-Mails der Website (Bestätigung, Kontaktformular) werden über Gmail versendet.")</li>
+        <li><strong>YouTube (Google)</strong> – @T("ana sayfadaki kısa videoların önizleme resimleri YouTube'dan yüklenir; video ancak siz tıkladığınızda oynatılır (youtube-nocookie.com). Yazılara ve sorulara eklenen videolar YouTube oynatıcısıyla gösterilir.", "Die Vorschaubilder der Kurzvideos auf der Startseite werden von YouTube geladen; das Video startet erst nach Ihrem Klick (youtube-nocookie.com). In Beiträge und Fragen eingebettete Videos zeigt der YouTube-Player.")</li>
+        <li><strong>DeepL SE (@T("Almanya", "Deutschland")), PONS GmbH (@T("Almanya", "Deutschland"))</strong> – @T("sözlükte yalnızca aranan kelime.", "im Wörterbuch nur das gesuchte Wort.")</li>
+        <li><strong>CKSource (cdn.ckeditor.com), unpkg.com</strong> – @T("iletişim formundaki metin editörünün ve klinik Almanca sayfalarındaki animasyonların dosyaları bu sunuculardan yüklenir; bu sırada IP adresiniz onlara ulaşır.", "Dateien des Texteditors im Kontaktformular und der Animationen auf den Seiten zum klinischen Deutsch werden von diesen Servern geladen; dabei erreicht sie Ihre IP-Adresse.")</li>
+        <li><strong>WhatsApp (Meta)</strong> – @T("yalnızca bir WhatsApp bağlantısına tıklarsanız; mesaj WhatsApp'ta sizin göndermenizle iletilir.", "nur wenn Sie auf einen WhatsApp-Link klicken; die Nachricht senden Sie selbst in WhatsApp.")</li>
+    </ul>
+    <p>@T("Bu hizmetlerin bir kısmı Türkiye ve Avrupa Birliği dışında (örneğin ABD'de) veri işler. Bu aktarımlar, sağlayıcıların sunduğu standart sözleşme hükümleri ve benzeri güvenceler ile KVKK kapsamında açık rızanıza dayanır. Verilerinizi satmıyor ve reklam için kimseyle paylaşmıyoruz. Yasal bir zorunluluk olmadıkça resmî makamlarla da paylaşmıyoruz.",
+          "Ein Teil dieser Dienste verarbeitet Daten außerhalb der Türkei und der EU (z. B. in den USA). Diese Übermittlungen stützen sich auf Standardvertragsklauseln bzw. das EU-US Data Privacy Framework der Anbieter und, nach türkischem Recht, auf Ihre ausdrückliche Einwilligung. Wir verkaufen Ihre Daten nicht und geben sie nicht für Werbung weiter. An Behörden geben wir sie nur bei gesetzlicher Pflicht weiter.")</p>
+</section>
+
+<section id="google">
+    <h2><span>6</span>@sections[5].Title</h2>
+    <p>@T("\"Google ile devam et\" düğmesi isteğe bağlıdır; e-posta ve şifreyle de hesap açabilirsiniz. Google ile giriş yaptığınızda:",
+          "Die Schaltfläche \"Mit Google fortfahren\" ist freiwillig; Sie können sich auch mit E-Mail und Passwort registrieren. Bei der Anmeldung mit Google gilt:")</p>
+    <ul>
+        <li><strong>@T("Aldığımız bilgiler:", "Was wir erhalten:")</strong> @T("adınız, soyadınız, e-posta adresiniz ve e-postanın Google tarafından doğrulanmış olup olmadığı (openid, email, profile izinleri). Kişilerinize, Gmail'inize, Drive'ınıza veya başka bir Google verinize erişmeyiz.", "Vorname, Nachname, E-Mail-Adresse und ob Google die E-Mail bestätigt hat (Berechtigungen openid, email, profile). Auf Kontakte, Gmail, Drive oder andere Google-Daten greifen wir nicht zu.")</li>
+        <li><strong>@T("Kullanım:", "Verwendung:")</strong> @T("yalnızca hesabınızı oluşturmak veya mevcut hesabınıza bağlamak ve sizi giriş yaptırmak için. E-posta yalnızca doğrulanmışsa hesaba bağlanır.", "nur um Ihr Konto anzulegen oder mit einem bestehenden Konto zu verbinden und Sie anzumelden. Eine E-Mail wird nur verknüpft, wenn sie bestätigt ist.")</li>
+        <li><strong>@T("Paylaşım:", "Weitergabe:")</strong> @T("Google'dan gelen bilgileri satmayız, reklam için kullanmayız, başkalarına aktarmayız ve yapay zekâ modellerini eğitmek için kullanmayız.", "Daten von Google verkaufen wir nicht, nutzen sie nicht für Werbung, geben sie nicht weiter und verwenden sie nicht zum Training von KI-Modellen.")</li>
+        <li><strong>@T("Silme:", "Löschung:")</strong> @T("hesabınızı sildiğinizde bu bilgiler de silinir. Bağlantıyı Google Hesabınızın \"Üçüncü taraf bağlantıları\" sayfasından da kaldırabilirsiniz.", "Mit dem Löschen Ihres Kontos werden auch diese Daten gelöscht. Die Verbindung können Sie zusätzlich in Ihrem Google-Konto unter \"Drittanbieter-Verbindungen\" entfernen.")</li>
+    </ul>
+    <p class="legal-note" lang="en">Almanca Konuş's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+</section>
+
+<section id="saklama">
+    <h2><span>7</span>@sections[6].Title</h2>
+    <ul>
+        <li><strong>@T("Hesap bilgileri:", "Kontodaten:")</strong> @T("hesabınızı silene kadar.", "bis Sie Ihr Konto löschen.")</li>
+        <li><strong>@T("Sınav sonuçları:", "Prüfungsergebnisse:")</strong> @T("hesabınız durduğu sürece. Hesabınızı silerseniz sonuçlar istatistik için adınız olmadan, size bağlanamayacak şekilde kalır.", "solange Ihr Konto besteht. Löschen Sie Ihr Konto, bleiben die Ergebnisse für Statistiken ohne Namen und nicht mehr Ihnen zuordenbar erhalten.")</li>
+        <li><strong>@T("İndirme kayıtları:", "Download-Protokoll:")</strong> @T("hesabınızı sildiğinizde adınız ve e-postanız kayıtlardan silinir.", "beim Löschen Ihres Kontos werden Name und E-Mail-Adresse daraus entfernt.")</li>
+        <li><strong>@T("İletişim mesajları:", "Kontaktnachrichten:")</strong> @T("yazışma bitene kadar, e-posta kutumuzda.", "bis die Korrespondenz abgeschlossen ist, in unserem Postfach.")</li>
+        <li><strong>@T("Sunucu kayıtları:", "Server-Protokolle:")</strong> @T("en fazla 30 gün.", "höchstens 30 Tage.")</li>
+        <li><strong>@T("Deneme sınırları ve sözlük önbelleği:", "Versuchszähler und Wörterbuch-Cache:")</strong> @T("birkaç dakikadan 12 saate kadar, yalnızca bellekte.", "wenige Minuten bis 12 Stunden, nur im Arbeitsspeicher.")</li>
+    </ul>
+    <p>@T("Kanunen daha uzun saklamamız gereken durumlar (örneğin bir hukuki uyuşmazlık) saklıdır.", "Gesetzliche Aufbewahrungspflichten (etwa bei einem Rechtsstreit) bleiben unberührt.")</p>
+</section>
+
+<section id="haklar">
+    <h2><span>8</span>@sections[7].Title</h2>
+    <p>@T("KVKK'nın 11. maddesi ve DSGVO uyarınca şu haklara sahipsiniz:", "Nach der DSGVO (Art. 15–21) und dem türkischen KVKK (Art. 11) haben Sie das Recht auf:")</p>
+    <ul class="legal-rights">
+        <li>@T("Verilerinizin işlenip işlenmediğini öğrenme ve bir kopyasını isteme", "Auskunft und eine Kopie Ihrer Daten")</li>
+        <li>@T("Yanlış veya eksik verilerin düzeltilmesini isteme", "Berichtigung unrichtiger oder unvollständiger Daten")</li>
+        <li>@T("Verilerinizin silinmesini isteme", "Löschung Ihrer Daten")</li>
+        <li>@T("İşlemenin kısıtlanmasını isteme ve itiraz etme", "Einschränkung der Verarbeitung und Widerspruch")</li>
+        <li>@T("Verilerinizi taşınabilir biçimde alma", "Datenübertragbarkeit")</li>
+        <li>@T("Verilerin kimlere aktarıldığını öğrenme", "Auskunft, an wen Daten übermittelt wurden")</li>
+        <li>@T("Açık rızanızı geri alma", "Widerruf einer Einwilligung")</li>
+        <li>@T("Zarara uğradıysanız zararın giderilmesini talep etme", "Ersatz eines Ihnen entstandenen Schadens")</li>
+    </ul>
+    <p>@Html.Raw(T($"Hesabınızı istediğiniz an <strong>Hesabım → Hesabımı sil</strong> ile kendiniz silebilirsiniz. Diğer talepleriniz için <a href=\"mailto:{contactEmail}\">{contactEmail}</a> adresine yazın; en geç 30 gün içinde ücretsiz yanıt veririz.",
+                   $"Ihr Konto können Sie jederzeit selbst unter <strong>Mein Konto → Mein Konto löschen</strong> entfernen. Für alle anderen Anliegen schreiben Sie an <a href=\"mailto:{contactEmail}\">{contactEmail}</a>; wir antworten kostenlos innerhalb von 30 Tagen."))</p>
+    <p>@T("Şikâyet hakkı: Türkiye'de Kişisel Verileri Koruma Kurulu'na (kvkk.gov.tr), Avrupa Birliği'nde ise yaşadığınız ülkenin veri koruma otoritesine başvurabilirsiniz.",
+          "Beschwerderecht: Sie können sich an eine Datenschutz-Aufsichtsbehörde wenden, insbesondere in dem EU-Land, in dem Sie leben; in der Türkei an die Datenschutzbehörde KVKK (kvkk.gov.tr).")</p>
+</section>
+
+<section id="guvenlik">
+    <h2><span>9</span>@sections[8].Title</h2>
+    <p>@T("Site yalnızca şifreli bağlantıyla (HTTPS) çalışır. Şifreler geri çevrilemez biçimde saklanır, yönetim paneline yalnızca yetkili kişiler girebilir ve formlar robotlara ve sahte isteklere karşı korunur. Hiçbir sistem kusursuz değildir; bir güvenlik sorunu fark ederseniz lütfen bize bildirin.",
+          "Die Website läuft nur über verschlüsselte Verbindungen (HTTPS). Passwörter werden unumkehrbar gespeichert, in den Verwaltungsbereich kommen nur berechtigte Personen, und Formulare sind gegen Bots und gefälschte Anfragen geschützt. Kein System ist perfekt: Wenn Sie ein Sicherheitsproblem bemerken, sagen Sie uns bitte Bescheid.")</p>
+</section>
+
+<section id="cocuklar">
+    <h2><span>10</span>@sections[9].Title</h2>
+    <p>@T("Derslerimiz ve sitemiz öncelikle yetişkinlere yöneliktir. 16 yaşından küçükseniz lütfen yalnızca anne, baba veya vasinizin izniyle hesap açın. İzinsiz açılmış bir hesap fark edersek siliyoruz.",
+          "Unser Unterricht und unsere Website richten sich vor allem an Erwachsene. Wenn Sie jünger als 16 Jahre sind, eröffnen Sie bitte nur mit Zustimmung Ihrer Eltern oder Erziehungsberechtigten ein Konto. Ohne Zustimmung eröffnete Konten löschen wir, sobald wir davon erfahren.")</p>
+</section>
+
+<section id="degisiklikler">
+    <h2><span>11</span>@sections[10].Title</h2>
+    <p>@T("Site yeni özellikler kazandıkça bu metni güncelleyebiliriz. Geçerli sürüm her zaman bu sayfadadır; tarihi en üstte görürsünüz.",
+          "Wenn die Website neue Funktionen bekommt, passen wir diesen Text an. Es gilt immer die Fassung auf dieser Seite; das Datum steht oben.")</p>
+    <div class="legal-contact">
+        <a class="bp-btn" href="mailto:@contactEmail"><i class="fa-solid fa-envelope" aria-hidden="true"></i>@contactEmail</a>
+        <a class="bp-btn bp-btn--ghost" href="@aboutPath#contact-form">@T("İletişim formu", "Kontaktformular")<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+    </div>
+</section>

@@ -229,12 +229,12 @@
                     <div class="ab-form__row">
                         <div class="ab-field">
                             <label asp-for="ContactForm.Name">@Model.ContactSection.NameLabel</label>
-                            <div class="ab-input"><i class="fa-regular fa-user" aria-hidden="true"></i><input asp-for="ContactForm.Name" autocomplete="name" required /></div>
+                            <div class="ab-input"><i class="fa-regular fa-user" aria-hidden="true"></i><input asp-for="ContactForm.Name" autocomplete="name" required placeholder="@T("Adınız ve soyadınız", "Ihr Vor- und Nachname")" /></div>
                             <span asp-validation-for="ContactForm.Name" class="ab-error"></span>
                         </div>
                         <div class="ab-field">
                             <label asp-for="ContactForm.Email">@Model.ContactSection.EmailLabel</label>
-                            <div class="ab-input"><i class="fa-regular fa-envelope" aria-hidden="true"></i><input asp-for="ContactForm.Email" type="email" autocomplete="email" required /></div>
+                            <div class="ab-input"><i class="fa-regular fa-envelope" aria-hidden="true"></i><input asp-for="ContactForm.Email" type="email" autocomplete="email" required placeholder="@T("ornek@eposta.com", "beispiel@email.de")" /></div>
                             <span asp-validation-for="ContactForm.Email" class="ab-error"></span>
                         </div>
                     </div>

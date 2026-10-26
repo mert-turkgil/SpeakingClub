@@ -1,0 +1,82 @@
+@using SpeakingClub.Models
+@*
+    Frame shared by the legal pages (Privacy.cshtml, Terms.cshtml): hero, actions (reading time, print),
+    table of contents, reading progress, back-to-top and the link to the other legal text.
+    The page sets ViewData["Legal"] (a LegalPage) and renders its numbered <section id="…"> blocks as the body.
+    Behaviour: wwwroot/js/legal.js · styles: wwwroot/css/legal.css (on top of blog.css).
+*@
+@{
+    Layout = "_Layout";
+    var legal = (LegalPage)ViewData["Legal"]!;
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+}
+@section Css {
+    <script>document.documentElement.classList.add('bp-js');</script>
+    <link rel="stylesheet" href="~/css/blog.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/legal.css" asp-append-version="true" />
+}
+
+<div class="bp-progress" aria-hidden="true"></div>
+
+<div class="site-page legal"
+     data-reading="@T("≈ {0} dk okuma", "≈ {0} Min. Lesezeit")"
+     data-copied="@T("Bölüm bağlantısı kopyalandı", "Link zum Abschnitt kopiert")"
+     data-copy-label="@T("Bu bölümün bağlantısını kopyala", "Link zu diesem Abschnitt kopieren")">
+    <header class="bp-hero legal-hero">
+        <div class="bp-container">
+            <span class="bp-eyebrow bp-enter"><i class="fa-solid @legal.EyebrowIcon" aria-hidden="true"></i>@legal.Eyebrow</span>
+            <h1 class="bp-hero__title bp-enter" style="--bp-delay: 80ms">@legal.Title</h1>
+            <p class="bp-hero__lead bp-enter" style="--bp-delay: 160ms">@legal.Lead</p>
+            <ul class="legal-meta bp-enter" style="--bp-delay: 220ms">
+                <li><i class="fa-solid fa-user" aria-hidden="true"></i>@T("Suna Koç'un kişisel sitesi, şirket değildir", "Persönliche Website von Suna Koç, kein Unternehmen")</li>
+                <li><i class="fa-regular fa-calendar" aria-hidden="true"></i>@T("Son güncelleme:", "Stand:") @legal.Updated</li>
+                <li data-reading-time hidden><i class="fa-regular fa-clock" aria-hidden="true"></i><span></span></li>
+                <li class="legal-meta__action">
+                    <button type="button" class="legal-print" data-print>
+                        <i class="fa-solid fa-print" aria-hidden="true"></i>@T("Yazdır / PDF", "Drucken / PDF")
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </header>
+
+    <div class="bp-container legal-layout">
+        <details class="legal-toc" open data-legal-toc>
+            <summary class="legal-toc__title">
+                <span>@T("İçindekiler", "Inhalt")</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </summary>
+            <nav aria-label="@T("İçindekiler", "Inhalt")">
+                <ol>
+                    @foreach (var item in legal.Sections)
+                    {
+                        <li><a href="#@item.Id">@item.Title</a></li>
+                    }
+                </ol>
+            </nav>
+        </details>
+
+        <article class="legal-body">
+            @RenderBody()
+
+            <a class="legal-next" href="@legal.OtherPath">
+                <span class="legal-next__icon" aria-hidden="true"><i class="fa-solid @legal.OtherIcon"></i></span>
+                <span class="legal-next__text">
+                    <small>@T("Diğer metin", "Weiterer Text")</small>
+                    <strong>@legal.OtherTitle</strong>
+                    <span>@legal.OtherText</span>
+                </span>
+                <i class="fa-solid fa-arrow-right legal-next__arrow" aria-hidden="true"></i>
+            </a>
+        </article>
+    </div>
+</div>
+
+<button type="button" class="bp-top" aria-label="@T("Başa dön", "Nach oben")"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></button>
+<div class="bp-toast" role="status" aria-live="polite"></div>
+
+@section Scripts {
+    <script src="~/js/blog.js" asp-append-version="true" defer></script>
+    <script src="~/js/legal.js" asp-append-version="true" defer></script>
+}
