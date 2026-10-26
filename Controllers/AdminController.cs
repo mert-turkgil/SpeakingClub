@@ -4131,17 +4131,12 @@ namespace SpeakingClub.Controllers
             try
             {
                 // Validate and upload images
-                carousel.CarouselImage = await ValidateAndUploadCarouselImage(model.CarouselImage, "Primary");
+                carousel.CarouselImage = await ValidateAndUploadCarouselImage(model.CarouselImage, "Primary", SlideMainWidth);
                 if (carousel.CarouselImage == null)
                     return View(model);
 
-                carousel.CarouselImage600w = model.CarouselImage600w != null 
-                    ? await ValidateAndUploadCarouselImage(model.CarouselImage600w, "600w") ?? string.Empty
-                    : string.Empty;
-                    
-                carousel.CarouselImage1200w = model.CarouselImage1200w != null 
-                    ? await ValidateAndUploadCarouselImage(model.CarouselImage1200w, "1200w") ?? string.Empty
-                    : string.Empty;
+                carousel.CarouselImage600w = await UpdateSlideCopyAsync(model.CarouselImage600w, null, "CarouselImage600w", 600, true, carousel.CarouselImage);
+                carousel.CarouselImage1200w = await UpdateSlideCopyAsync(model.CarouselImage1200w, null, "CarouselImage1200w", 1200, true, carousel.CarouselImage);
 
                 // Save to database and retrieve entity with assigned ID
                 carousel = await _unitOfWork.Slides.CreateAndReturn(carousel);
@@ -4279,37 +4274,33 @@ namespace SpeakingClub.Controllers
                 // Log after assignment
                 _logger.LogInformation($"[CarouselEdit] After assignment - carousel.CarouselLink: '{carousel.CarouselLink}'");
 
-                // Update images only if new ones are uploaded
+                // Images. A new main photo replaces the old one; an oversized old main photo is shrunk.
+                // The phone / tablet copies follow the main photo unless the admin uploads their own.
+                var mainChanged = false;
+                var oldMain = carousel.CarouselImage;
                 if (model.CarouselImage != null)
                 {
-                    var newImage = await ValidateAndUploadCarouselImage(model.CarouselImage, "Primary");
+                    var newImage = await ValidateAndUploadCarouselImage(model.CarouselImage, "Primary", SlideMainWidth);
                     if (newImage != null)
                     {
-                        // Delete old image
-                        DeleteFile(carousel.CarouselImage, "CarouselImage");
                         carousel.CarouselImage = newImage;
+                        mainChanged = true;
+                    }
+                }
+                else if (SlideImageTooWide(carousel.CarouselImage, SlideMainWidth))
+                {
+                    var smaller = ResizedImageCopy(carousel.CarouselImage, SlideMainWidth);
+                    if (smaller != null)
+                    {
+                        carousel.CarouselImage = smaller;
+                        mainChanged = true;
                     }
                 }
 
-                if (model.CarouselImage600w != null)
-                {
-                    var newImage = await ValidateAndUploadCarouselImage(model.CarouselImage600w, "600w");
-                    if (newImage != null)
-                    {
-                        DeleteFile(carousel.CarouselImage600w, "CarouselImage600w");
-                        carousel.CarouselImage600w = newImage;
-                    }
-                }
-
-                if (model.CarouselImage1200w != null)
-                {
-                    var newImage = await ValidateAndUploadCarouselImage(model.CarouselImage1200w, "1200w");
-                    if (newImage != null)
-                    {
-                        DeleteFile(carousel.CarouselImage1200w, "CarouselImage1200w");
-                        carousel.CarouselImage1200w = newImage;
-                    }
-                }
+                carousel.CarouselImage600w = await UpdateSlideCopyAsync(model.CarouselImage600w, carousel.CarouselImage600w, "CarouselImage600w", 600, mainChanged, carousel.CarouselImage);
+                carousel.CarouselImage1200w = await UpdateSlideCopyAsync(model.CarouselImage1200w, carousel.CarouselImage1200w, "CarouselImage1200w", 1200, mainChanged, carousel.CarouselImage);
+                if (mainChanged && oldMain != carousel.CarouselImage600w && oldMain != carousel.CarouselImage1200w)
+                    DeleteFile(oldMain, "CarouselImage");
 
                 // Update translations. The Turkish texts of the form are both the base text and the Turkish translation.
                 model.CarouselTitleTR = model.CarouselTitle;
@@ -4379,7 +4370,11 @@ namespace SpeakingClub.Controllers
 
         #region Carousel Helper Methods
         
-        private async Task<string?> ValidateAndUploadCarouselImage(IFormFile file, string imageName)
+        // Home page slider images: the main photo is kept at most 1920 px wide; the phone (600 px) and tablet
+        // (1200 px) copies are made from it, unless the admin uploads their own (which are resized as well).
+        private const int SlideMainWidth = 1920;
+
+        private async Task<string?> ValidateAndUploadCarouselImage(IFormFile file, string imageName, int maxWidth)
         {
             if (file == null || file.Length == 0)
                 return null;
@@ -4401,7 +4396,59 @@ namespace SpeakingClub.Controllers
                 return null;
             }
 
+            return await SaveWebImageAsync(file, maxWidth);
+        }
+
+        // Saves an upload as a web-sized JPEG (wwwroot/img). An image SkiaSharp can't read is stored as uploaded.
+        private async Task<string> SaveWebImageAsync(IFormFile file, int maxWidth)
+        {
+            var folder = Path.Combine(_env.WebRootPath, "img");
+            Directory.CreateDirectory(folder);
+            using var memory = new MemoryStream();   // the decoder needs a seekable stream (uploads are ≤ 5 MB)
+            await file.CopyToAsync(memory);
+            memory.Position = 0;
+            var fileName = $"{Guid.NewGuid()}.jpg";
+            if (ImageOptimizer.TrySaveJpeg(memory, Path.Combine(folder, fileName), maxWidth))
+                return fileName;
+            _logger.LogWarning("Image {Name} could not be resized; stored as uploaded", file.FileName);
             return await SaveFile(file);
+        }
+
+        // A resized JPEG copy of an image already in wwwroot/img, or null
+        private string? ResizedImageCopy(string? sourceFileName, int maxWidth)
+        {
+            if (string.IsNullOrEmpty(sourceFileName)) return null;
+            var folder = Path.Combine(_env.WebRootPath, "img");
+            var source = Path.Combine(folder, sourceFileName);
+            if (!System.IO.File.Exists(source)) return null;
+            var fileName = $"{Guid.NewGuid()}.jpg";
+            return ImageOptimizer.TrySaveJpeg(source, Path.Combine(folder, fileName), maxWidth) ? fileName : null;
+        }
+
+        // True when the file is missing or much wider than it should be (e.g. a 4000 px photo stored as "600 px")
+        private bool SlideImageTooWide(string? fileName, int width)
+        {
+            if (string.IsNullOrEmpty(fileName)) return false;
+            var path = Path.Combine(_env.WebRootPath, "img", fileName);
+            return System.IO.File.Exists(path) && ImageOptimizer.GetWidth(path) > width * 1.25;
+        }
+
+        // Phone / tablet copy of a slide: the admin's own upload if there is one; otherwise made from the main photo
+        // when the main photo changed, or the current copy is missing or too wide.
+        private async Task<string> UpdateSlideCopyAsync(IFormFile? upload, string? current, string label, int width, bool mainChanged, string? mainImage)
+        {
+            string? replacement = null;
+            if (upload != null)
+                replacement = await ValidateAndUploadCarouselImage(upload, label, width);
+            else if (mainChanged || string.IsNullOrEmpty(current) || SlideImageTooWide(current, width)
+                     || !System.IO.File.Exists(Path.Combine(_env.WebRootPath, "img", current)))
+                replacement = ResizedImageCopy(mainImage, width);
+
+            if (replacement == null)
+                return current ?? string.Empty;
+            if (!string.IsNullOrEmpty(current) && current != mainImage)
+                DeleteFile(current, label);
+            return replacement;
         }
 
         private void UpdateCarouselTranslations(int carouselId, CarouselEditModel model)

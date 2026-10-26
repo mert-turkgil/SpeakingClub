@@ -171,9 +171,8 @@
     @Html.Raw(ViewData["ArticleSchema"])
   }
 
-  <!-- Preconnect to external resources for performance -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Fonts (served from this site) -->
+  <partial name="_Fonts" />
   <!-- Every local file carries asp-append-version: Program.cs lets browsers keep versioned files for a year.
        Animate.css, Swiper and the DataTables scripts used to load here on every page; no page used them. -->
   <!-- Brand utility classes (.bg-first, .btn-fourth…); must stay before Bootstrap, as before -->
@@ -183,7 +182,8 @@
   <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
 
   <!-- Font Awesome (all icons) -->
-  <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" asp-append-version="true" />
+  <!-- Font Awesome, trimmed to the icons the site uses (fa-site.min.css; rebuild it after adding an icon) -->
+  <link rel="stylesheet" href="~/lib/fontawesome/css/fa-site.min.css" asp-append-version="true" />
 
   <!-- Site-specific CSS -->
   <link rel="stylesheet" href="~/css/universe.css" asp-append-version="true" />
@@ -192,8 +192,6 @@
   <link rel="stylesheet" href="~/css/dark-mode.css" asp-append-version="true" />
   <!-- Header, mobile menu and footer -->
   <link rel="stylesheet" href="~/css/site-chrome.css" asp-append-version="true" />
-  <!-- Poppins (text) and Varela Round (logo) in one request -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Varela+Round&display=swap" />
 
   @await RenderSectionAsync("Css", required: false)
   <style>

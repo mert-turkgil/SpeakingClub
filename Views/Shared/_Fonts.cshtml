@@ -1,0 +1,21 @@
+@inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider FileVersion
+@* Web fonts, served from this site (wwwroot/fonts) instead of Google Fonts: no extra connections to
+   fonts.googleapis.com / fonts.gstatic.com on the first visit. The files are Google's own, subset to the
+   characters Turkish and German pages use (ASCII, Latin-1, ğ ı İ ş, typographic quotes and dashes);
+   .github/tools/frontend/fetch_fonts.py downloads them again.
+   Poppins = text, Fraunces = headlines (variable optical size), Varela Round = the logo.
+   URLs carry a content hash (?v=…), so browsers may keep them for a year and still get a changed font.
+   The two fonts every page needs first are preloaded (the preload URL must equal the @font-face URL);
+   font-display: swap never hides text. *@
+@{
+    string Font(string file) => FileVersion.AddFileVersionToPath(Context.Request.PathBase, "/fonts/" + file);
+}
+<link rel="preload" href="@Font("poppins-400.woff2")" as="font" type="font/woff2" crossorigin />
+<link rel="preload" href="@Font("fraunces-600.woff2")" as="font" type="font/woff2" crossorigin />
+<style>
+  @@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 400; font-display: swap; src: url('@Font("poppins-400.woff2")') format('woff2'); }
+  @@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 600; font-display: swap; src: url('@Font("poppins-600.woff2")') format('woff2'); }
+  @@font-face { font-family: 'Fraunces'; font-style: normal; font-weight: 600; font-display: swap; src: url('@Font("fraunces-600.woff2")') format('woff2'); }
+  @@font-face { font-family: 'Fraunces'; font-style: italic; font-weight: 600; font-display: swap; src: url('@Font("fraunces-600-italic.woff2")') format('woff2'); }
+  @@font-face { font-family: 'Varela Round'; font-style: normal; font-weight: 400; font-display: swap; src: url('@Font("varela-round-400.woff2")') format('woff2'); }
+</style>

@@ -107,6 +107,7 @@
                 <details class="adm-details">
                     <summary><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i>@T("Telefon ve tablet görselleri", "Bilder für Handy und Tablet") <small>@T("isteğe bağlı", "freiwillig")</small></summary>
                     <div class="adm-details__body">
+                        <p class="adm-hint">@T("Boş bırakırsanız ana görselden otomatik hazırlanır. Kaydet'e bastığınızda eksik ya da çok büyük olanlar da yeniden hazırlanır.", "Bleiben die Felder leer, werden die Bilder aus dem Hauptbild erstellt. Beim Speichern werden fehlende oder zu große Bilder neu erstellt.")</p>
                         <div class="adm-field">
                             <label asp-for="CarouselImage600w">@T("Telefon (600 px)", "Handy (600 px)")</label>
                             @if (!string.IsNullOrEmpty(Model.CarouselImage600wPath))

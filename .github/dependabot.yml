@@ -1,6 +1,11 @@
 # Dependabot opens a pull request when a NuGet package or a GitHub Action has an update.
 # Security fixes come right away (when "Dependabot security updates" is on in Settings → Advanced Security);
-# the routine version updates below are grouped and come once a month, so they don't flood the inbox.
+# the routine version updates below come once a month.
+#
+# NuGet updates are deliberately one pull request per package, not grouped: the grouped NuGet run failed
+# while creating its pull request (GroupUpdateAllVersionsHandler), and single-package PRs are also easier
+# to test and to roll back. The root directory covers the whole solution (SpeakingClub.slnx), including
+# .github/tools/DbBackup.
 version: 2
 updates:
   - package-ecosystem: "nuget"
@@ -8,19 +13,13 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 5
-    groups:
-      # All Microsoft.* / System.* packages move together (they share the .NET release)
-      dotnet:
-        patterns: ["Microsoft.*", "System.*"]
-      other:
-        patterns: ["*"]
-        exclude-patterns: ["Microsoft.*", "System.*"]
-
-  - package-ecosystem: "nuget"
-    directory: "/.github/tools/DbBackup"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 2
+    ignore:
+      # The site targets .NET 10. A new major version of a Microsoft / System package belongs to the next
+      # .NET release and needs a new SDK, so it is a planned upgrade, not a routine update.
+      - dependency-name: "Microsoft.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "System.*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"

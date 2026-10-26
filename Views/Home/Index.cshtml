@@ -28,8 +28,10 @@
 }
 @section Css {
     <script>document.documentElement.classList.add('bp-js');</script>
-    <link rel="preload" as="image" href="~/img/FirstImageThatGoesForTheIndex.jpeg" fetchpriority="high" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@@0,9..144,600;1,9..144,600&display=swap" />
+    @* The hero photo is the LCP image on phones: fetch the right size at once. Must match the <picture> below. *@
+    <link rel="preload" as="image" type="image/webp" fetchpriority="high"
+          imagesrcset="/img/suna-hero-480.webp 480w, /img/suna-hero-800.webp 800w, /img/suna-hero-1200.webp 1200w"
+          imagesizes="(min-width: 480px) 440px, calc(100vw - 2rem)" />
     <link rel="stylesheet" href="~/css/blog.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
     @* Three.js for the slider transitions and the 3D clinical band (home-3d.js loads it only when needed).

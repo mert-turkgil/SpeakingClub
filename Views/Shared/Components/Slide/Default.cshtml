@@ -16,20 +16,25 @@
             @for (var i = 0; i < count; i++)
             {
                 var slide = Model.SlideItems[i];
+                // Only sizes that exist go into srcset (an empty one used to become "/img/ 600w")
                 var imageDefault = Url.Content($"/img/{slide.CarouselImage}");
-                var image600w = Url.Content($"/img/{slide.CarouselImage600w}");
-                var image1200w = Url.Content($"/img/{slide.CarouselImage1200w}");
+                var sources = new List<string>();
+                if (!string.IsNullOrEmpty(slide.CarouselImage600w)) sources.Add(Url.Content($"/img/{slide.CarouselImage600w}") + " 600w");
+                if (!string.IsNullOrEmpty(slide.CarouselImage1200w)) sources.Add(Url.Content($"/img/{slide.CarouselImage1200w}") + " 1200w");
+                sources.Add(imageDefault + " 1920w");
+                var imageSrc = !string.IsNullOrEmpty(slide.CarouselImage1200w) ? Url.Content($"/img/{slide.CarouselImage1200w}") : imageDefault;
                 var words = (slide.CarouselTitle ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
                 <div class="hp-gl-slide @(i == 0 ? "is-active" : "")" data-index="@i"
                      role="group" aria-roledescription="@T("slayt", "Folie")" aria-label="@(i + 1) / @count"
                      aria-hidden="@(i == 0 ? "false" : "true")">
                     <img class="hp-gl-slide__img"
-                         src="@image1200w"
-                         srcset="@image600w 600w, @image1200w 1200w, @imageDefault 1920w"
+                         src="@imageSrc"
+                         srcset="@string.Join(", ", sources)"
                          sizes="(max-width: 1180px) 100vw, 1180px"
                          alt=""
-                         loading="@(i == 0 ? "eager" : "lazy")"
+                         loading="lazy"
+                         fetchpriority="low"
                          decoding="async" />
                     <div class="hp-gl-slide__shade" aria-hidden="true"></div>
                     <div class="hp-gl-slide__content">

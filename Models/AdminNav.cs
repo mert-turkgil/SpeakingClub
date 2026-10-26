@@ -108,7 +108,7 @@ namespace SpeakingClub.Models
                     {
                         T("<b>Yeni slayt</b> düğmesine basın.", "Klicken Sie auf <b>Neues Bild</b>."),
                         T("Bir başlık ve kısa bir açıklama yazın.", "Geben Sie einen Titel und eine kurze Beschreibung ein."),
-                        T("Bir görsel yükleyin. Geniş, yatay bir fotoğraf en iyi sonucu verir.", "Laden Sie ein Bild hoch. Ein breites Querformat-Foto wirkt am besten."),
+                        T("Bir görsel yükleyin. Geniş, yatay bir fotoğraf en iyi sonucu verir; telefon ve tablet boyutları otomatik hazırlanır.", "Laden Sie ein Bild hoch. Ein breites Querformat-Foto wirkt am besten; die Größen für Handy und Tablet entstehen automatisch."),
                         T("Türkçe ve Almanca metinleri doldurun, sonra <b>Kaydet</b> düğmesine basın.", "Füllen Sie die türkischen und deutschen Texte aus und klicken Sie dann auf <b>Speichern</b>.")
                     })),
 

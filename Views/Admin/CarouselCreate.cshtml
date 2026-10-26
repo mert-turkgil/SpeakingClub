@@ -82,7 +82,7 @@
                 <span class="adm-panel__num">3</span>
                 <div>
                     <h2>@T("Görsel", "Bild")</h2>
-                    <p>@T("Geniş, yatay bir fotoğraf seçin (en az 1600 piksel genişlik). JPG, PNG veya WEBP, en fazla 5 MB.", "Wählen Sie ein breites Querformat (mind. 1600 Pixel breit). JPG, PNG oder WEBP, höchstens 5 MB.")</p>
+                    <p>@T("Geniş, yatay bir fotoğraf seçin (en az 1600 piksel genişlik). JPG, PNG veya WEBP, en fazla 5 MB. Küçültmenize gerek yok: site, telefon ve tablet için uygun boyutları kendisi hazırlar.", "Wählen Sie ein breites Querformat (mind. 1600 Pixel breit). JPG, PNG oder WEBP, höchstens 5 MB. Verkleinern ist nicht nötig: Die Website erstellt die Größen für Handy und Tablet selbst.")</p>
                 </div>
             </div>
             <div class="adm-panel__body">
@@ -99,7 +99,7 @@
                 <details class="adm-details">
                     <summary><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i>@T("Telefon ve tablet için ayrı görsel", "Eigene Bilder für Handy und Tablet") <small>@T("isteğe bağlı", "freiwillig")</small></summary>
                     <div class="adm-details__body">
-                        <p class="adm-hint">@T("Genelde gerekmez. Telefonda görselin farklı bir kesimini göstermek isterseniz kullanın.", "Meist nicht nötig. Nutzen Sie es, wenn das Handy einen anderen Bildausschnitt zeigen soll.")</p>
+                        <p class="adm-hint">@T("Genelde gerekmez: boş bırakırsanız bu boyutlar ana görselden otomatik hazırlanır. Telefonda görselin farklı bir kesimini göstermek isterseniz kullanın.", "Meist nicht nötig: Bleiben die Felder leer, werden diese Größen aus dem Hauptbild erstellt. Nutzen Sie sie, wenn das Handy einen anderen Bildausschnitt zeigen soll.")</p>
                         <div class="adm-field">
                             <label asp-for="CarouselImage600w">@T("Telefon (600 px)", "Handy (600 px)")</label>
                             <input type="file" asp-for="CarouselImage600w" class="form-control" accept="image/*" />

@@ -170,6 +170,7 @@ with filters and Excel/PDF export.
 | Front end | Hand-written CSS with design tokens (light/dark), vanilla JavaScript, Bootstrap 5 (grid and base components) |
 | 3D / motion | **Three.js r174** (custom GLSL shaders, physical materials), IntersectionObserver, CSS animations |
 | Editors | CKEditor 5 (blog), small rich-text fields in the admin panel |
+| Images | SkiaSharp: uploaded slider photos are resized automatically (1920 / 1200 / 600 px) |
 | Services | DeepL API, PONS dictionary API, SMTP mail |
 | Charts & export | Chart.js, DataTables, EPPlus / SheetJS (Excel), jsPDF (PDF) |
 | Delivery | GitHub Actions → Plesk (IIS) over FTP, with a database backup before migrations |

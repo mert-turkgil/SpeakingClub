@@ -110,6 +110,10 @@ The admin panel is used by someone with no computer experience. When you touch i
 
 - **Use the design tokens.** Public pages use `--bp-*` (defined in `blog.css`), the admin panel uses `--a-*`
   (in `admin.css`). Don't hard-code colours that already exist as tokens.
+- **Icons:** the site ships only the Font Awesome icons it uses. After adding an icon you haven't used before,
+  rebuild the subset: `pip install fonttools brotli`, then `python .github/tools/frontend/fa_subset.py`, and commit
+  the changed files in `wwwroot/lib/fontawesome`. Otherwise the new icon shows as an empty box.
+- **Fonts** come from `wwwroot/fonts` (see `Views/Shared/_Fonts.cshtml`). Don't add Google Fonts links to pages.
 - **Scope page styles** under the page's root class (`.site-page.dict`, `.quiz-page`, `.home-page` …) in a file
   for that area, so nothing leaks into other pages.
 - **Dark mode is required.** Most components get it for free from the tokens. When it doesn't, add a rule under

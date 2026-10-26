@@ -1102,7 +1102,21 @@ What every page follows, and what to keep when changing things:
 - Photos come in 480/800/1200 px WebP + JPEG copies (`suna-hero-*.webp` …) inside `<picture>` with `sizes`,
   so a phone downloads about 40 KB instead of the 240 KB original. The `<picture>` gets `display: contents` so
   it doesn't change the layout.
-- Font Awesome uses `font-display: swap` (edited in `lib/fontawesome/css/all.min.css`), so icons never delay text.
+- **Icons:** the site loads `lib/fontawesome/css/fa-site.min.css`, a Font Awesome trimmed to the ~190 icons the
+  code uses (fonts 293 KB → 25 KB, CSS 72 KB → 16 KB). `.github/tools/frontend/fa_subset.py` builds it by scanning
+  the source for `fa-…` class names and for code points written in CSS (`content: "\f111"`). **After adding an
+  icon, run it again** (`pip install fonttools brotli`, then `python .github/tools/frontend/fa_subset.py`); an
+  icon that isn't in the subset shows as an empty box. Font URLs carry a content hash, so a rebuild is never
+  stuck in a browser cache. `font-display: swap` means icons never delay text.
+- **Web fonts are served from the site** (`wwwroot/fonts`, `Views/Shared/_Fonts.cshtml`): Google's own files for
+  Poppins 400/600, Fraunces 600 (roman + italic, variable optical size) and Varela Round, subset to the characters
+  Turkish and German pages use (≈120 KB in total instead of ≈190 KB, and no connections to Google's servers). The
+  two first-needed files are preloaded. `.github/tools/frontend/fetch_fonts.py` downloads them again.
+- **Slider photos are resized on upload** (`Services/ImageOptimizer.cs`, SkiaSharp): the admin uploads one photo,
+  and the server stores it at most 1920 px wide plus 1200 px and 600 px JPEG copies (quality 80), turned upright
+  from the EXIF orientation. Saving an existing slide also replaces copies that are missing or far too large.
+  A 4098 px, 570 KB upload becomes 147 KB / 72 KB / 25 KB. The slider images load lazily and at low priority:
+  they are below the fold on phones.
 
 ---
 
