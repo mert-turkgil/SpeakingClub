@@ -3,6 +3,7 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] ??= Model.PageTitle;
+    ViewData["jQuery"] = true;   // jQuery Validation (the layout loads jQuery only when asked)
     var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
     string T(string tr, string de) => isGerman ? de : tr;
     var quizzesPath = isGerman ? "/pruefungen" : "/sinavlar";

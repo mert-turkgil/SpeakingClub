@@ -1137,7 +1137,15 @@ What every page follows, and what to keep when changing things:
   and the server stores it at most 1920 px wide plus 1200 px and 600 px JPEG copies (quality 80), turned upright
   from the EXIF orientation. Saving an existing slide also replaces copies that are missing or far too large.
   A 4098 px, 570 KB upload becomes 147 KB / 72 KB / 25 KB. The slider images load lazily and at low priority:
-  they are below the fold on phones.
+  they are below the fold on phones. `Services/SlideImageMaintenanceService.cs` runs once, 20 s after the site
+  starts, and does the same for slides that still point at full-size files (it logs the reason when SkiaSharp
+  can't read or write a photo, and leaves the original files in place).
+- **No render-blocking scripts on most pages:** jQuery loads only where jQuery Validation runs
+  (`ViewData["jQuery"] = true`), and Bootstrap's bundle is `defer`red. The sticky header and the Shorts rail use
+  `IntersectionObserver` instead of measuring the page while it loads (PageSpeed's "forced reflow").
+- **For AI agents:** `/llms.txt` (SitemapController, Markdown: what the site is, its pages and the latest 30 posts)
+  and WebMCP attributes on the dictionary and blog search forms. PageSpeed's "agentic browsing" category checks
+  both; until they existed it showed them as *not applicable*, not as errors.
 
 ---
 

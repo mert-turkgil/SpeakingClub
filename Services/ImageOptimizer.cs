@@ -13,9 +13,18 @@ namespace SpeakingClub.Services
     {
         public const int JpegQuality = 80;
 
+        [ThreadStatic] private static Exception? _lastError;
+
+        /// <summary>
+        /// Why the last <see cref="GetWidth"/> / <see cref="TrySaveJpeg(Stream, string, int)"/> call on this thread
+        /// failed (for example SkiaSharp's native library missing on the server), or null.
+        /// </summary>
+        public static Exception? LastError => _lastError;
+
         /// <summary>Width in pixels of an image file, or null if it can't be read.</summary>
         public static int? GetWidth(string path)
         {
+            _lastError = null;
             try
             {
                 using var codec = SKCodec.Create(path);
@@ -23,8 +32,9 @@ namespace SpeakingClub.Services
                 var swap = SwapsSides(codec.EncodedOrigin);
                 return swap ? codec.Info.Height : codec.Info.Width;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _lastError = ex;
                 return null;
             }
         }
@@ -35,6 +45,7 @@ namespace SpeakingClub.Services
         /// </summary>
         public static bool TrySaveJpeg(Stream source, string targetPath, int maxWidth)
         {
+            _lastError = null;
             try
             {
                 using var codec = SKCodec.Create(source);
@@ -63,8 +74,9 @@ namespace SpeakingClub.Services
                 data.SaveTo(output);
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _lastError = ex;
                 return false;
             }
         }

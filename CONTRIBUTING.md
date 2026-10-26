@@ -136,6 +136,14 @@ explains how it is built.
 - **Progressive enhancement:** the page must be usable before the script runs. Scripts add behaviour.
 - Hook behaviour to `data-*` attributes, not to styling classes.
 - Wrap `localStorage` access in `try/catch`, because private mode can throw.
+- **No jQuery in new code.** The public layout loads jQuery only for pages that use jQuery Validation: such a view
+  sets `ViewData["jQuery"] = true;` (About, Login, Register, ChangePassword do). Bootstrap's script is deferred, so
+  inline scripts must not call `bootstrap.*` while the page is still loading (inside event handlers is fine).
+- Don't read layout (`scrollY`, `offsetWidth`, `getBoundingClientRect`) while the page loads; use an
+  `IntersectionObserver` or wait for the element to come into view. PageSpeed reports it as a forced reflow.
+- Read-only search forms get WebMCP attributes (`toolname`, `tooldescription`, `toolautosubmit`,
+  `toolparamdescription` on the field) so AI agents in the browser can use them. Never add them to forms that sign
+  in, send messages or change data.
 
 ### C#
 

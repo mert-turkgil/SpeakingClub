@@ -4410,7 +4410,7 @@ namespace SpeakingClub.Controllers
             var fileName = $"{Guid.NewGuid()}.jpg";
             if (ImageOptimizer.TrySaveJpeg(memory, Path.Combine(folder, fileName), maxWidth))
                 return fileName;
-            _logger.LogWarning("Image {Name} could not be resized; stored as uploaded", file.FileName);
+            _logger.LogWarning(ImageOptimizer.LastError, "Image {Name} could not be resized; stored as uploaded", file.FileName);
             return await SaveFile(file);
         }
 
@@ -4422,7 +4422,10 @@ namespace SpeakingClub.Controllers
             var source = Path.Combine(folder, sourceFileName);
             if (!System.IO.File.Exists(source)) return null;
             var fileName = $"{Guid.NewGuid()}.jpg";
-            return ImageOptimizer.TrySaveJpeg(source, Path.Combine(folder, fileName), maxWidth) ? fileName : null;
+            if (ImageOptimizer.TrySaveJpeg(source, Path.Combine(folder, fileName), maxWidth))
+                return fileName;
+            _logger.LogWarning(ImageOptimizer.LastError, "Image {Name} could not be resized to {Width} px", sourceFileName, maxWidth);
+            return null;
         }
 
         // True when the file is missing or much wider than it should be (e.g. a 4000 px photo stored as "600 px")

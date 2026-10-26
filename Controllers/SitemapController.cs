@@ -212,6 +212,102 @@ namespace SpeakingClub.Controllers
         }
 
         /// <summary>
+        /// llms.txt (https://llmstxt.org): a short Markdown guide to the site for AI assistants and agents.
+        /// Lighthouse's agentic browsing check wants an H1, enough text and at least one Markdown link.
+        /// </summary>
+        [HttpGet("/llms.txt")]
+        [ResponseCache(Duration = 3600)]
+        public async Task<IActionResult> LlmsTxt()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("# Almanca Konuş");
+            sb.AppendLine();
+            sb.AppendLine("> The personal website of Suna Koç, a German teacher who grew up in Bremen (German is her native");
+            sb.AppendLine("> language) and teaches Turkish speakers online: one-to-one and small-group (4–6 people) German");
+            sb.AppendLine("> conversation lessons, free level tests, a German–Turkish dictionary and clinical German for");
+            sb.AppendLine("> doctors and nurses. It is not a company or a school.");
+            sb.AppendLine();
+            sb.AppendLine("Every page exists in Turkish and German; the Turkish address is listed first. Lessons are arranged");
+            sb.AppendLine("personally by e-mail (almancakonus.info@gmail.com) or WhatsApp; the site has no shop or checkout.");
+            sb.AppendLine();
+            sb.AppendLine("## Pages");
+            sb.AppendLine();
+            sb.AppendLine(Pair("/", "/de", "Home: Almanca konuşma dersleri / Deutsch sprechen lernen", "lessons, how they work, contact"));
+            sb.AppendLine(Pair("/hakkimizda", "/ueber-uns", "About Suna Koç / Über Suna Koç", "her background, teaching style, FAQ and contact form"));
+            sb.AppendLine(Pair("/sinavlar", "/pruefungen", "Level tests / Einstufungstests", "free online German tests from A1 to C1 (an account is needed to take them)"));
+            sb.AppendLine(Pair("/sozluk", "/woerterbuch", "German–Turkish dictionary / Wörterbuch", "word meanings with examples; search with ?searchTerm=word"));
+            sb.AppendLine(Pair("/yazilar", "/beitraege", "Blog / Beiträge", "articles on learning German and living and working in Germany"));
+            sb.AppendLine();
+            sb.AppendLine("## Clinical German");
+            sb.AppendLine();
+            sb.AppendLine(Pair("/hekim-almancasi", "/aerztedeutsch", "German for doctors / Ärztedeutsch", "FSP exam, anamnesis, doctor's letters"));
+            sb.AppendLine(Pair("/hemsirelik-almancasi", "/pflegedeutsch", "German for nurses / Pflegedeutsch", "handover, care documentation, everyday ward German"));
+
+            var posts = await _context.Blogs
+                .Where(b => b.IsPublished && !b.NoIndex)
+                .OrderByDescending(b => b.Date)
+                .Take(30)
+                .Select(b => new
+                {
+                    b.Title,
+                    b.Slug,
+                    b.Url,
+                    b.MetaDescription,
+                    b.Description,
+                    Translations = b.Translations
+                        .Select(t => new { t.LanguageCode, t.Title, t.Slug, t.MetaDescription, t.Description })
+                        .ToList()
+                })
+                .ToListAsync();
+
+            if (posts.Count > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("## Latest articles");
+                sb.AppendLine();
+                foreach (var post in posts)
+                {
+                    // Same URL rules as the sitemap: a language gets a link only when the post exists in it
+                    var tr = post.Translations.FirstOrDefault(t => t.LanguageCode == "tr");
+                    var de = post.Translations.FirstOrDefault(t => t.LanguageCode == "de");
+                    var baseSlug = FirstNonEmpty(post.Slug, post.Url);
+                    var trSlug = tr != null ? FirstNonEmpty(tr.Slug, baseSlug) : de == null ? baseSlug : null;
+                    var deSlug = de != null ? FirstNonEmpty(de.Slug, baseSlug) : null;
+
+                    if (!string.IsNullOrEmpty(trSlug))
+                        sb.AppendLine(Link(FirstNonEmpty(tr?.Title, post.Title), $"{SITE_URL}/yazilar/{trSlug}",
+                            FirstNonEmpty(tr?.MetaDescription, tr?.Description, post.MetaDescription, post.Description)));
+                    if (!string.IsNullOrEmpty(deSlug))
+                        sb.AppendLine(Link(FirstNonEmpty(de?.Title, post.Title), $"{SITE_URL}/beitraege/{deSlug}",
+                            FirstNonEmpty(de?.MetaDescription, de?.Description)));
+                }
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("## Optional");
+            sb.AppendLine();
+            sb.AppendLine(Pair("/gizlilik", "/datenschutz", "Privacy policy / Datenschutz", "what personal data the site processes"));
+            sb.AppendLine(Pair("/kullanim-kosullari", "/nutzungsbedingungen", "Terms of use / Nutzungsbedingungen", "rules for accounts, exams and content"));
+            sb.AppendLine($"- [Sitemap]({SITE_URL}/sitemap.xml): every public page");
+
+            return Content(sb.ToString(), "text/plain", Encoding.UTF8);  // Markdown, served as text so browsers show it
+        }
+
+        private static string Pair(string trPath, string dePath, string title, string notes) =>
+            $"- [{title}]({SITE_URL}{trPath}): {notes}. German: {SITE_URL}{dePath}";
+
+        private static string Link(string title, string url, string notes)
+        {
+            var line = $"- [{EscapeMarkdown(title)}]({url})";
+            notes = System.Text.RegularExpressions.Regex.Replace(notes ?? string.Empty, @"<[^>]+>|\s+", " ").Trim();
+            if (notes.Length > 160) notes = notes[..157].TrimEnd() + "…";
+            return notes.Length > 0 ? $"{line}: {notes}" : line;
+        }
+
+        private static string EscapeMarkdown(string text) =>
+            text.Replace("[", "\\[").Replace("]", "\\]").Replace("\r", " ").Replace("\n", " ").Trim();
+
+        /// <summary>
         /// robots.txt. Paths are case-sensitive for crawlers, so both spellings of the MVC areas are listed.
         /// </summary>
         [HttpGet("/robots.txt")]

@@ -658,11 +658,15 @@
                           </div>
                         </div>
                       </footer>
-                      <!-- jQuery (served from the site itself: no extra connection to a CDN) -->
-                      <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
+                      @* jQuery only where jQuery Validation runs (the view sets ViewData["jQuery"] = true): the contact
+                         form, sign-in, sign-up, password change. Other pages don't use it; it was 43 KB of render-blocking script. *@
+                      @if (ViewData["jQuery"] is true)
+                      {
+                        <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
+                      }
 
-                      <!-- Bootstrap Bundle (includes Popper) -->
-                      <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+                      <!-- Bootstrap Bundle (includes Popper). Deferred: it only wires up menus, dropdowns and dialogs. -->
+                      <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true" defer></script>
 
                       <!-- Dark/light theme toggle (footer + off-canvas, kept in sync, persisted) -->
                       <script>
@@ -691,13 +695,16 @@
                       <script>
                         (function () {
                           var header = document.querySelector('.site-header');
-                          if (!header) return;
-                          var ticking = false;
-                          function update() { ticking = false; header.classList.toggle('is-scrolled', window.scrollY > 8); }
-                          window.addEventListener('scroll', function () {
-                            if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
-                          }, { passive: true });
-                          update();
+                          if (!header || !('IntersectionObserver' in window)) return;
+                          // A 1 px marker 8 px down the page: once it leaves the screen, the page has scrolled.
+                          // Reading window.scrollY instead forced an extra layout while the page was loading.
+                          var marker = document.createElement('div');
+                          marker.setAttribute('aria-hidden', 'true');
+                          marker.style.cssText = 'position:absolute;top:8px;left:0;width:1px;height:1px;pointer-events:none';
+                          document.body.prepend(marker);
+                          new IntersectionObserver(function (entries) {
+                            header.classList.toggle('is-scrolled', !entries[0].isIntersecting);
+                          }).observe(marker);
                         })();
                       </script>
 

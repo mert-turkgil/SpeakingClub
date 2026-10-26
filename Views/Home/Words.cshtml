@@ -82,10 +82,15 @@
             </h1>
             <p class="bp-hero__lead bp-enter" style="--bp-delay: 160ms">@R("PageSubtitle", T("Anlamları, telaffuzları ve örnekleri keşfedin.", "Entdecken Sie Bedeutungen, Aussprache und Beispiele."))</p>
 
-            <form class="bp-search dict-search bp-enter" style="--bp-delay: 240ms" method="get" action="@wordsPath" role="search">
+            @* toolname / tooldescription / toolautosubmit: WebMCP, so AI agents in the browser can use the search as a tool
+               (read-only, so submitting on their own is safe). Browsers without WebMCP ignore the attributes. *@
+            <form class="bp-search dict-search bp-enter" style="--bp-delay: 240ms" method="get" action="@wordsPath" role="search"
+                  toolname="search_dictionary" toolautosubmit
+                  tooldescription="Look up a German or Turkish word in the German–Turkish dictionary and open its meanings and examples.">
                 <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
                 <label for="dict-q" class="bp-sr-only">@T("Aranacak kelime", "Gesuchtes Wort")</label>
                 <input id="dict-q" type="search" name="searchTerm" value="@Model.SearchTerm" required
+                       toolparamdescription="One German or Turkish word or short phrase, for example 'Gesundheit' or 'teşekkür'."
                        maxlength="@DictionaryLookupService.MaxTermLength" autocomplete="off" autocapitalize="off" spellcheck="false"
                        placeholder="@R("SearchPlaceholder", T("Bir kelime ara…", "Ein Wort suchen…"))" />
                 <button type="submit" class="bp-btn">

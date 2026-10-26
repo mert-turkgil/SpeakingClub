@@ -87,10 +87,14 @@
                 <p class="bp-hero__lead bp-enter" style="--bp-delay: 160ms">@Model.BlogList_Description</p>
             }
 
-            <form class="bp-search bp-enter" style="--bp-delay: 240ms" method="get" action="@Model.BlogListPath" role="search">
+            @* WebMCP attributes: AI agents in the browser can use the search as a read-only tool (see Words.cshtml) *@
+            <form class="bp-search bp-enter" style="--bp-delay: 240ms" method="get" action="@Model.BlogListPath" role="search"
+                  toolname="search_articles" toolautosubmit
+                  tooldescription="Search Suna Koç's articles about learning German, German exams and working in Germany as a doctor or nurse.">
                 <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
                 <label for="blog-search" class="bp-sr-only">@Model.BlogList_SearchLabel</label>
                 <input id="blog-search" type="search" name="searchTerm" value="@Model.SearchTerm"
+                       toolparamdescription="Words to search for in article titles and text, in Turkish or German."
                        placeholder="@T("Yazılarda ara…", "Beiträge durchsuchen…")" autocomplete="off" />
                 @if (!string.IsNullOrWhiteSpace(Model.Category))
                 {

@@ -184,7 +184,15 @@
             if (!ticking) { ticking = true; window.requestAnimationFrame(function () { ticking = false; update(); }); }
         }, { passive: true });
         window.addEventListener('resize', update, { passive: true });
-        update();
+        // First measurement once the rail comes into view: measuring during page load forced a layout
+        if ('IntersectionObserver' in window) {
+            var seen = new IntersectionObserver(function (entries) {
+                if (entries[0].isIntersecting) { seen.disconnect(); update(); }
+            });
+            seen.observe(rail);
+        } else {
+            update();
+        }
 
         // Mouse drag (touch devices scroll natively)
         var startX = 0, startScroll = 0, dragging = false, moved = false;
