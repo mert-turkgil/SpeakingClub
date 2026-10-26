@@ -78,7 +78,11 @@
             <figure class="ab-hero__media bp-enter" style="--bp-delay: 120ms">
                 <span class="ab-hero__ring" aria-hidden="true"></span>
                 <div class="ab-hero__frame">
-                    <img src="~/img/SecondImageGoesForAboutMe.jpeg" alt="@Model.HeroSection.ImageAlt" width="420" height="560" fetchpriority="high" />
+                    <picture>
+                        <source type="image/webp" srcset="/img/suna-about-480.webp 480w, /img/suna-about-800.webp 800w, /img/suna-about-1200.webp 1200w" sizes="(min-width: 576px) 420px, calc(100vw - 2rem)" />
+                        <img src="/img/suna-about-800.jpg" srcset="/img/suna-about-480.jpg 480w, /img/suna-about-800.jpg 800w, /img/suna-about-1200.jpg 1200w" sizes="(min-width: 576px) 420px, calc(100vw - 2rem)"
+                             alt="@Model.HeroSection.ImageAlt" width="1200" height="1600" fetchpriority="high" decoding="async" />
+                    </picture>
                 </div>
                 <span class="ab-float ab-float--a"><i class="fa-solid fa-language" aria-hidden="true"></i>@T("Ana dili Almanca", "Muttersprache Deutsch")</span>
                 <span class="ab-float ab-float--b"><i class="fa-solid fa-microphone-lines" aria-hidden="true"></i>@T("Konuşma odaklı", "Sprechen im Fokus")</span>
@@ -151,7 +155,7 @@
             <div class="concierge reveal" data-concierge style="--bp-delay: 120ms">
                 <script type="application/json" id="conciergeData">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(chatData, json))</script>
                 <header class="concierge__head">
-                    <span class="concierge__avatar"><img src="~/img/SecondImageGoesForAboutMe.jpeg" alt="" width="44" height="44" loading="lazy" /></span>
+                    <span class="concierge__avatar"><picture><source type="image/webp" srcset="/img/suna-avatar-96.webp" /><img src="/img/suna-avatar-96.jpg" alt="" width="44" height="44" loading="lazy" /></picture></span>
                     <div class="concierge__who">
                         <strong>@T("Almanca Konuş", "Sprich Deutsch")</strong>
                         <small><span class="concierge__dot" aria-hidden="true"></span>@T("Sık sorulan sorular · anında yanıt", "Häufige Fragen · sofortige Antwort")</small>
@@ -283,8 +287,8 @@
         });
     </script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileAbout&render=explicit" defer></script>
-    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
-    <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js" asp-append-version="true"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js" asp-append-version="true"></script>
 
     <script src="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.umd.js"></script>
     <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/44.3.0/ckeditor5.css" />

@@ -5,6 +5,81 @@
 @inject UserManager<User> UserManager
 @inject IConfiguration Configuration
 @inject LanguageService Localizer
+@{
+    // Site-wide SEO: defaults in the page language and the organization's structured data (one @graph,
+    // serialized so that no text can break the JSON). Pages override title, description, image… via ViewData.
+    var seoGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string ST(string tr, string de) => seoGerman ? de : tr;
+    var seoSite = SeoHelper.SiteUrl;
+    var seoPath = Context.Request.Path.Value ?? "/";
+    var seoIsHome = seoPath == "/" || seoPath.Equals("/de", StringComparison.OrdinalIgnoreCase);
+    var seoDefaultTitle = ST("Online Almanca Konuşma Dersleri | Almanca Konuş", "Online-Deutschunterricht mit Sprechfokus | Almanca Konuş");
+    var seoDefaultDescription = ST(
+        "Anadili Almanca olan Suna Koç ile online birebir ve grup Almanca konuşma dersleri, seviye testleri, Almanca–Türkçe sözlük ve klinik Almanca.",
+        "Online-Deutschunterricht mit Muttersprachlerin Suna Koç: Einzel- und Gruppenstunden, Einstufungstests, ein Wörterbuch Deutsch–Türkisch und klinisches Deutsch.");
+    var seoOgImage = ViewData["OgImage"] as string;
+    var seoGraph = new List<object>
+    {
+        new Dictionary<string, object>
+        {
+            ["@type"] = "EducationalOrganization",
+            ["@id"] = seoSite + "/#organization",
+            ["name"] = "Almanca Konuş",
+            ["alternateName"] = "Almanca Konuşma Kulübü",
+            ["url"] = seoSite + "/",
+            ["logo"] = new Dictionary<string, object> { ["@type"] = "ImageObject", ["url"] = seoSite + "/img/logo-512.png", ["width"] = 512, ["height"] = 512 },
+            ["image"] = seoSite + "/img/og-image.jpg",
+            ["description"] = seoDefaultDescription,
+            ["email"] = "almancakonus.info@gmail.com",
+            ["telephone"] = "+49 160 3866222",
+            ["founder"] = new Dictionary<string, object> { ["@id"] = seoSite + "/#suna" },
+            ["knowsLanguage"] = new[] { "de", "tr" },
+            ["sameAs"] = new[]
+            {
+                "https://www.facebook.com/AlmancaKonusmaKulubu.Suna/",
+                "https://www.instagram.com/almanca_konusma_kulubu_",
+                "https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg",
+                "https://www.linkedin.com/in/almanca-konuş-suna-koç-2a9684407"
+            },
+            ["contactPoint"] = new Dictionary<string, object>
+            {
+                ["@type"] = "ContactPoint",
+                ["contactType"] = "customer service",
+                ["email"] = "almancakonus.info@gmail.com",
+                ["telephone"] = "+49 160 3866222",
+                ["availableLanguage"] = new[] { "Turkish", "German" }
+            }
+        },
+        new Dictionary<string, object>
+        {
+            ["@type"] = "Person",
+            ["@id"] = seoSite + "/#suna",
+            ["name"] = "Suna Koç",
+            ["jobTitle"] = ST("Almanca konuşma koçu", "Deutsch-Sprechcoach"),
+            ["image"] = seoSite + "/img/suna-about-800.jpg",
+            ["url"] = seoSite + ST("/hakkimizda", "/ueber-uns"),
+            ["knowsLanguage"] = new[] { "de", "tr" },
+            ["worksFor"] = new Dictionary<string, object> { ["@id"] = seoSite + "/#organization" }
+        }
+    };
+    // WebSite (the site name Google shows in results) belongs on the home page
+    if (seoIsHome)
+    {
+        seoGraph.Add(new Dictionary<string, object>
+        {
+            ["@type"] = "WebSite",
+            ["@id"] = seoSite + "/#website",
+            ["url"] = seoSite + "/",
+            ["name"] = "Almanca Konuş",
+            ["alternateName"] = new[] { "Almanca Konuşma Kulübü", "almanca-konus.com" },
+            ["inLanguage"] = seoGerman ? "de" : "tr",
+            ["publisher"] = new Dictionary<string, object> { ["@id"] = seoSite + "/#organization" }
+        });
+    }
+    var seoSchema = System.Text.Json.JsonSerializer.Serialize(
+        new Dictionary<string, object> { ["@context"] = "https://schema.org", ["@graph"] = seoGraph },
+        new System.Text.Json.JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All) });
+}
 <!DOCTYPE html>
 <html lang="@System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName">
 
@@ -21,15 +96,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-  <meta name="ck-license-key" content="@Configuration["License:CKEditor"]" />
 
   <!-- SEO Meta Tags -->
-  <title>@(ViewData["Title"] ?? "SpeakingClub - Learn German Online")</title>
-  <meta name="description"
-        content="@(ViewData["Description"] ?? "SpeakingClub - Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
-  <meta name="keywords"
-        content="@(ViewData["Keywords"] ?? "German learning, Almanca öğren, German language, quiz, dictionary, speaking club")" />
-  <meta name="author" content="Suna Türkgil" />
+  <title>@(ViewData["Title"] ?? seoDefaultTitle)</title>
+  <meta name="description" content="@(ViewData["Description"] ?? seoDefaultDescription)" />
+  @if (ViewData["Keywords"] != null)
+  {
+    <meta name="keywords" content="@ViewData["Keywords"]" />
+  }
+  <meta name="author" content="Suna Koç" />
   <meta name="robots" content="@(ViewData["Robots"] ?? "index, follow, max-image-preview:large")" />
   <meta name="language" content="@System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName" />
   <link rel="canonical" href="@(ViewData["Canonical"] ?? SeoHelper.SiteUrl + Context.Request.Path)" />
@@ -52,21 +127,23 @@
   <!-- Open Graph Meta Tags (Facebook, LinkedIn, WhatsApp) -->
   <meta property="og:type" content="@(ViewData["OgType"] ?? "website")" />
   <meta property="og:site_name" content="Almanca Konuş" />
-  <meta property="og:title" content="@(ViewData["OgTitle"] ?? ViewData["Title"] ?? "almanca-konus - Learn German Online")" />
-  <meta property="og:description"
-        content="@(ViewData["OgDescription"] ?? ViewData["Description"] ?? "Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
+  <meta property="og:title" content="@(ViewData["OgTitle"] ?? ViewData["Title"] ?? seoDefaultTitle)" />
+  <meta property="og:description" content="@(ViewData["OgDescription"] ?? ViewData["Description"] ?? seoDefaultDescription)" />
   <meta property="og:url" content="@(ViewData["Canonical"] ?? SeoHelper.SiteUrl + Context.Request.Path)" />
-  <meta property="og:image" content="@(ViewData["OgImage"] ?? SeoHelper.SiteUrl + "/img/header_logo.png")" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
+  <meta property="og:image" content="@(seoOgImage ?? seoSite + ST("/img/og-image.jpg", "/img/og-image-de.jpg"))" />
+  @if (seoOgImage == null)
+  {
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="@ST("Almanca Konuş – Suna Koç ile online Almanca konuşma dersleri", "Almanca Konuş – Online-Deutschunterricht mit Suna Koç")" />
+  }
   <meta property="og:locale" content="@System.Globalization.CultureInfo.CurrentCulture.Name.Replace("-", "_")" />
 
   <!-- Twitter Card Meta Tags -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="@(ViewData["OgTitle"] ?? ViewData["Title"] ?? "almanca-konus - Learn German Online")" />
-  <meta name="twitter:description"
-        content="@(ViewData["OgDescription"] ?? ViewData["Description"] ?? "Interactive German language learning platform with quizzes, dictionary, and engaging content.")" />
-  <meta name="twitter:image" content="@(ViewData["OgImage"] ?? SeoHelper.SiteUrl + "/img/header_logo.png")" />
+  <meta name="twitter:title" content="@(ViewData["OgTitle"] ?? ViewData["Title"] ?? seoDefaultTitle)" />
+  <meta name="twitter:description" content="@(ViewData["OgDescription"] ?? ViewData["Description"] ?? seoDefaultDescription)" />
+  <meta name="twitter:image" content="@(seoOgImage ?? seoSite + ST("/img/og-image.jpg", "/img/og-image-de.jpg"))" />
   <!-- <meta name="twitter:site" content="@@yourtwitterhandle" /> -->
   <!-- <meta name="twitter:creator" content="@@yourtwitterhandle" /> -->
 
@@ -79,31 +156,14 @@
   <link rel="me" href="https://linktr.ee/almancakonus.info" />
   <!-- Favicon and App Icons -->
   <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/img/logo-512.png" />
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
   <!-- <link rel="apple-touch-icon" sizes="180x180" href="~/apple-touch-icon.png" /> -->
   <!-- <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png" /> -->
   <!-- <link rel="icon" type="image/png" sizes="16x16" href="~/favicon-16x16.png" /> -->
 
-  <!-- Schema.org Structured Data (JSON-LD) -->
-  <script type="application/ld+json">
-                                                      {
-                                                          "@@context": "https://schema.org",
-                                                          "@@type": "EducationalOrganization",
-                                                          "name": "almanca-konus",
-                                                          "description": "Interactive German language learning platform",
-                                                          "url": "@SeoHelper.SiteUrl/",
-                                                          "logo": "@SeoHelper.SiteUrl/img/header_logo.png",
-                                                          "sameAs": [
-                                                              "https://www.facebook.com/AlmancaKonusmaKulubu.Suna/",
-                                                              "https://www.instagram.com/almanca_konusma_kulubu_",
-                                                              "https://www.youtube.com/channel/UCP0ZwNE7FazB7ndyiH_Knjg"
-                                                          ],
-                                                          "contactPoint": {
-                                                              "@@type": "ContactPoint",
-                                                              "contactType": "Customer Service",
-                                                              "availableLanguage": ["German", "Turkish"]
-                                                          }
-                                                      }
-  </script>
+  <!-- Schema.org structured data: organization, teacher and (on the home page) the website -->
+  <script type="application/ld+json">@Html.Raw(seoSchema)</script>
 
   <!-- Blog Article Schema (Uncomment when blog is ready) -->
   @if (ViewData["ArticleSchema"] != null)
@@ -114,32 +174,26 @@
   <!-- Preconnect to external resources for performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-  <!-- Site-specific CSS -->
-  <link rel="stylesheet" href="~/css/custom.css">
-  <!-- Animate.css -->
-  <link rel="stylesheet" href="~/lib/animate/animate.min.css" />
+  <!-- Every local file carries asp-append-version: Program.cs lets browsers keep versioned files for a year.
+       Animate.css, Swiper and the DataTables scripts used to load here on every page; no page used them. -->
+  <!-- Brand utility classes (.bg-first, .btn-fourth…); must stay before Bootstrap, as before -->
+  <link rel="stylesheet" href="~/css/custom.css" asp-append-version="true" />
 
   <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
 
   <!-- Font Awesome (all icons) -->
-  <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" />
-
-  <!-- Swiper CSS -->
-  <link rel="stylesheet" href="~/lib/swiper/swiper-bundle.min.css" />
+  <link rel="stylesheet" href="~/lib/fontawesome/css/all.min.css" asp-append-version="true" />
 
   <!-- Site-specific CSS -->
-  <link rel="stylesheet" href="~/css/universe.css" />
-  <link rel="stylesheet" href="~/css/site.css" />
+  <link rel="stylesheet" href="~/css/universe.css" asp-append-version="true" />
+  <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
   <!-- Dark mode (must load last so it overrides the above) -->
-  <link rel="stylesheet" href="~/css/dark-mode.css" />
+  <link rel="stylesheet" href="~/css/dark-mode.css" asp-append-version="true" />
   <!-- Header, mobile menu and footer -->
   <link rel="stylesheet" href="~/css/site-chrome.css" asp-append-version="true" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
+  <!-- Poppins (text) and Varela Round (logo) in one request -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Varela+Round&display=swap" />
 
   @await RenderSectionAsync("Css", required: false)
   <style>
@@ -185,6 +239,7 @@
     string? doctorsPath = isGerman ? "/aerztedeutsch" : "/hekim-almancasi";
     string? nursesPath = isGerman ? "/pflegedeutsch" : "/hemsirelik-almancasi";
     bool isHome = currentController == "Home" && currentAction == "Index";
+    string homePath = isGerman ? "/de" : "/";
     bool isAbout = currentController == "Home" && currentAction == "About";
     bool isBlog = currentController == "Home" && (currentAction == "Blog" || currentAction == "BlogDetail");
     bool isClinical = currentController == "Home" && (currentAction == "DoctorsGerman" || currentAction == "NursesGerman");
@@ -208,7 +263,7 @@
     <nav class="navbar navbar-expand-lg site-nav" aria-label="@T("Ana menü", "Hauptmenü")">
       <div class="container-xxl">
         <!-- Brand (Left) -->
-        <a class="navbar-brand site-brand" href="/">
+        <a class="navbar-brand site-brand" href="@homePath">
           <span class="site-brand__logo"><img src="~/img/logo.svg" alt="" width="30" height="30"></span>
           <span class="site-brand__name varela-round-regular">@Logo</span>
         </a>
@@ -221,7 +276,7 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
             <li class="nav-item d-none d-xxl-block">
-              <a class="nav-link @(isHome ? "active" : "")" aria-current="@Current(isHome)" href="/">
+              <a class="nav-link @(isHome ? "active" : "")" aria-current="@Current(isHome)" href="@homePath">
                 <i class="fa-solid fa-house" aria-hidden="true"></i>@Home
               </a>
             </li>
@@ -344,7 +399,7 @@
     <div class="offcanvas offcanvas-end site-offcanvas" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
       <div class="offcanvas-header">
         @* Not an <h1>: this menu is on every page, and each page's own title must be its only h1 *@
-        <a class="site-brand varela-round-regular" href="/" id="offcanvasNavbarLabel">
+        <a class="site-brand varela-round-regular" href="@homePath" id="offcanvasNavbarLabel">
           <span class="site-brand__logo"><img src="~/img/logo.svg" alt="" width="30" height="30"></span>
           @Logo
         </a>
@@ -355,7 +410,7 @@
       <div class="offcanvas-body">
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link @(isHome ? "active" : "")" aria-current="@Current(isHome)" href="/">
+            <a class="nav-link @(isHome ? "active" : "")" aria-current="@Current(isHome)" href="@homePath">
               <i class="fa-solid fa-house" aria-hidden="true"></i>@Home
             </a>
           </li>
@@ -479,8 +534,8 @@
                             <div class="site-footer__grid">
                               <!-- Brand, description, social -->
                               <div class="site-footer__brand">
-                                <a href="/" class="site-footer__logo">
-                                  <img src="~/img/footer_logo.png" alt="" width="48" height="40" />
+                                <a href="@homePath" class="site-footer__logo">
+                                  <img src="~/img/footer-logo-96.png" alt="" width="48" height="44" loading="lazy" />
                                   <span class="varela-round-regular">@Logo</span>
                                 </a>
                                 <p class="site-footer__text">@FooterDescription</p>
@@ -525,7 +580,7 @@
                               <nav aria-labelledby="footer-explore">
                                 <h2 class="site-footer__title" id="footer-explore">@T("Keşfet", "Entdecken")</h2>
                                 <ul class="site-footer__links">
-                                  <li><a class="site-footer__link" href="/">@Home</a></li>
+                                  <li><a class="site-footer__link" href="@homePath">@Home</a></li>
                                   <li><a class="site-footer__link" href="@aboutPath">@About</a></li>
                                   <li><a class="site-footer__link" href="@blogListPath">@Blog</a></li>
                                   <li><a class="site-footer__link" href="@wordsPath">@Sözlük</a></li>
@@ -603,11 +658,11 @@
                           </div>
                         </div>
                       </footer>
-                      <!-- 1. jQuery FIRST -->
-                      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                      <!-- jQuery (served from the site itself: no extra connection to a CDN) -->
+                      <script src="~/lib/jquery/dist/jquery.min.js" asp-append-version="true"></script>
 
-                      <!-- 2. Bootstrap Bundle (uses jQuery) -->
-                      <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+                      <!-- Bootstrap Bundle (includes Popper) -->
+                      <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
 
                       <!-- Dark/light theme toggle (footer + off-canvas, kept in sync, persisted) -->
                       <script>
@@ -645,30 +700,6 @@
                           update();
                         })();
                       </script>
-
-                      <!-- 3. DataTables Core (requires jQuery) -->
-                      <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-
-                      <!-- 4. DataTables Bootstrap 5 Integration -->
-                      <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-                      <!-- mark.js core -->
-                      <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js"></script>
-
-                      <!-- DataTables mark plugin -->
-                      <script src="https://cdn.jsdelivr.net/npm/datatables.mark.js@2.1.0/dist/datatables.mark.min.js"></script>
-                      <!-- 5. DataTables Responsive -->
-                      <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-                      <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
-                      <!-- Swiper JS -->
-                      <script src="~/lib/swiper/swiper-bundle.min.js"></script>
-                      <!-- If you need separate Popper (only if not using the bundle) -->
-                      <!-- Bootstrap Bundle (includes Popper) -->
-                      <!-- REMOVE THESE LINES: -->
-                      <!-- <script src="~/lib/popper/popper.min.js"></script> -->
-                      <!-- <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script> -->
-
-                      <!-- Site-specific JS -->
-                      <script src="~/js/site.js"></script>
 
                       @await RenderSectionAsync("Scripts", required: false)
                     </body>

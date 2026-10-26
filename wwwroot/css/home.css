@@ -695,6 +695,9 @@ html[data-bs-theme="dark"] .hp-band { border: 1px solid var(--bp-hairline); }
 }
 .hp-quote:hover .hp-quote__media { transform: rotate(0); }
 .hp-quote__media img { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
+/* <picture> wrappers (responsive photos) must not change the layout: the <img> sizes against the frame */
+.hp-portrait picture,
+.hp-quote__media picture { display: contents; }
 .hp-quote__mark { font-size: 2.6rem; color: var(--bp-pink); }
 .hp-quote__text {
   margin: 0.75rem 0 1.5rem;

@@ -39,6 +39,8 @@ on:
       - 'docs/**'
       - 'LICENSE'
       - '.github/ISSUE_TEMPLATE/**'
+      - '.github/dependabot.yml'
+      - '.github/CODEOWNERS'
   workflow_dispatch:
 
 permissions:
@@ -420,7 +422,7 @@ jobs:
 #   FTP_PASSWORD            Plesk FTP password
 #   PROD_CONNECTION_STRING  ConnectionStrings:DefaultConnection. Used by the app AND by this
 #                           workflow's backup/migration steps, so it must name the server by its
-#                           public address (104.247.167.202\MSSQLSERVER2022), not ".\…", which only
+#                           public address (<server-ip>\MSSQLSERVER2022), not ".\…", which only
 #                           works on the server itself.
 #   SMTP_USERNAME           EmailSender:Username (the Gmail address that sends)
 #   SMTP_PASSWORD           EmailSender:Password (that address's Gmail app password)

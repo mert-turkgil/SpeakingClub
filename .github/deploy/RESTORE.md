@@ -91,7 +91,7 @@ themselves are rebuilt from the EF migrations first, then `data.sql` fills them.
 4. Fill the tables, from your PC:
 
    ```
-   sqlcmd -S "104.247.167.202\MSSQLSERVER2022" -d alma6203_db -U "<login>" -P "<password>" -b -f 65001 -i data.sql
+   sqlcmd -S "<server-ip>\MSSQLSERVER2022" -d alma6203_db -U "<login>" -P "<password>" -b -f 65001 -i data.sql
    ```
 
    (Or open `data.sql` in SSMS, connected to `alma6203_db`, and press Execute.) It deletes the rows

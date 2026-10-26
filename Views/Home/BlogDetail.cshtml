@@ -50,7 +50,7 @@
         <header class="post-hero bp-container">
             <nav aria-label="@T("Sayfa yolu", "Brotkrumen")">
                 <ol class="bp-breadcrumb bp-enter">
-                    <li><a href="/">@T("Ana Sayfa", "Startseite")</a></li>
+                    <li><a href="@(isGerman ? "/de" : "/")">@T("Ana Sayfa", "Startseite")</a></li>
                     <li><a href="@Model.BlogListPath">Blog</a></li>
                     <li aria-current="page">@Model.Title</li>
                 </ol>

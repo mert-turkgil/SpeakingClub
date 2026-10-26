@@ -282,6 +282,11 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.RequestCultureProviders.Insert(0, new PathRequestCultureProvider());
 });
 
+// Write Turkish and German letters as they are (ş, ü, ß) instead of &#x15F; entities: smaller pages and
+// readable titles in the source. HTML-sensitive characters (< > & " ') are still encoded.
+builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(options =>
+    options.TextEncoderSettings = new System.Text.Encodings.Web.TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All));
+
 builder.Services.AddControllersWithViews()
     .AddNewtonsoftJson()
     .AddViewLocalization()
@@ -431,7 +436,21 @@ app.UseWhen(
     branch => branch.UseStaticFiles(new StaticFileOptions
     {
         ContentTypeProvider = provider,
-        ServeUnknownFileTypes = true
+        ServeUnknownFileTypes = true,
+        // Browser (and Cloudflare) caching. A file linked with asp-append-version has ?v=<content hash>, so a
+        // changed file gets a new URL and the old one can be kept for a year. Other files (images, fonts) for
+        // a week. Data files (.json, .html) are always revalidated.
+        OnPrepareResponse = context =>
+        {
+            var headers = context.Context.Response.Headers;
+            var extension = Path.GetExtension(context.File.Name);
+            if (extension.Equals(".json", StringComparison.OrdinalIgnoreCase) || extension.Equals(".html", StringComparison.OrdinalIgnoreCase))
+                headers.CacheControl = "no-cache";
+            else if (context.Context.Request.Query.ContainsKey("v"))
+                headers.CacheControl = "public, max-age=31536000, immutable";
+            else
+                headers.CacheControl = "public, max-age=604800";
+        }
     }));
 
 // IMPORTANT: Cookie policy must come before authentication

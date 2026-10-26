@@ -180,7 +180,8 @@ namespace SpeakingClub.Controllers
             // Static page map: any alias → canonical target-culture URL
             var staticMap = new Dictionary<string, (string tr, string de)>(StringComparer.OrdinalIgnoreCase)
             {
-                ["/"]            = ("/",            "/"),
+                ["/"]            = ("/",            "/de"),
+                ["/de"]          = ("/",            "/de"),
                 ["/about"]       = ("/hakkimizda",  "/ueber-uns"),
                 ["/hakkimizda"]  = ("/hakkimizda",  "/ueber-uns"),
                 ["/ueber-uns"]   = ("/hakkimizda",  "/ueber-uns"),
@@ -238,31 +239,38 @@ namespace SpeakingClub.Controllers
 
         #region Anasayfa
         [HttpGet("")]
+        [HttpGet("de")]
         // "Home…" aliases have Order = 1 so generated links (asp-action, RedirectToAction) use "/" and never a redirect
         [HttpGet("Home", Order = 1)]
         [HttpGet("Home/Index", Order = 1)]
         public async Task<IActionResult> Index()
         {
-            if (RedirectToCanonical("/") is { } redirect)
+            // The home page has a Turkish (/) and a German (/de) URL. "/" follows the visitor's language: a German
+            // visitor is sent on to /de with a temporary redirect (a permanent one would be cached by the browser
+            // and keep Turkish visitors away from "/"). Crawlers have no language cookie and get the Turkish page.
+            var homePath = IsGerman() ? "/de" : "/";
+            if (Request.Path == "/" && homePath == "/de")
+                return Redirect("/de" + Request.QueryString);
+            if (RedirectToCanonical(homePath) is { } redirect)
                 return redirect;
 
             if (IsGerman())
             {
                 SetSeoData(
-                    "Almanca Konuşma Kulübü | Deutsch Sprechen Lernen",
-                    "Lernen Sie Deutsch sprechen mit interaktiven Quizzen, Wörterbuch und spannenden Inhalten. Kostenlos üben!",
-                    "Deutsch lernen, Deutsch sprechen, Sprachclub, Quiz, Wörterbuch, Online Deutsch",
-                    "/");
+                    "Deutsch sprechen lernen – online | Almanca Konuş – Suna Koç",
+                    "Online-Deutschunterricht mit Muttersprachlerin Suna Koç: Einzel- und Gruppenstunden (4–6 Personen), Einstufungstest und klinisches Deutsch für die Pflege.",
+                    "Deutsch sprechen lernen, Online Deutschkurs, Deutschunterricht, Konversation, klinisches Deutsch, Pflegedeutsch",
+                    "/de");
             }
             else
             {
                 SetSeoData(
-                    "Almanca Konuşma Kulübü | Online Almanca Öğren",
-                    "Almanca Konuşma Kulübü - İnteraktif sınavlar, sözlük ve ilgi çekici içeriklerle Almanca öğrenin. Ücretsiz pratik yapın!",
-                    "almanca öğren, almanca konuşma, almanca kulüp, almanca quiz, almanca sözlük, online almanca",
+                    "Online Almanca Konuşma Dersleri | Almanca Konuş – Suna Koç",
+                    "Anadili Almanca Suna Koç ile online birebir ve grup (4–6 kişi) Almanca konuşma dersleri. Ücretsiz seviye testi, Almanca sözlük ve klinik Almanca.",
+                    "online almanca dersi, almanca konuşma kursu, almanca özel ders, almanca konuşma pratiği, klinik almanca",
                     "/");
             }
-            // No hreflang: the home page has one URL for both languages (an alternate pointing to itself is ignored).
+            SetHreflang("/", "/de");
 
             // Posts marked "show on home" first, then the newest; same cards (translation, URL) as the blog list
             var entityBlogs = await _unitOfWork.Blogs.GetPublishedAsync();
@@ -294,16 +302,16 @@ namespace SpeakingClub.Controllers
             if (IsGerman())
             {
                 SetSeoData(
-                    "Datenschutzerklärung | Almanca Konuşma Kulübü",
-                    "Datenschutzerklärung der Almanca Konuşma Kulübü Plattform.",
+                    "Datenschutzerklärung | Almanca Konuş",
+                    "Welche personenbezogenen Daten Almanca Konuş verarbeitet, wofür und welche Rechte Sie nach der DSGVO haben.",
                     "Datenschutz, Privatsphäre, DSGVO",
                     "/datenschutz");
             }
             else
             {
                 SetSeoData(
-                    "Gizlilik Politikası | Almanca Konuşma Kulübü",
-                    "Almanca Konuşma Kulübü gizlilik politikası ve kişisel verilerin korunması.",
+                    "Gizlilik Politikası | Almanca Konuş",
+                    "Almanca Konuş hangi kişisel verileri, hangi amaçla işliyor ve KVKK kapsamında hangi haklara sahipsiniz?",
                     "gizlilik, kişisel veri, KVKK",
                     "/gizlilik");
             }
@@ -320,16 +328,16 @@ namespace SpeakingClub.Controllers
             if (IsGerman())
             {
                 SetSeoData(
-                    "Deutsch für Ärzte – FSP, Anamnese, Arztbrief | Almanca Konuş",
-                    "Klinisches Deutsch für Ärztinnen und Ärzte: FSP-Vorbereitung, Anamnese, Patientenvorstellung, Arztbrief, klinische Kommunikation, Redemittel und medizinische Abkürzungen – mit echten Beispieldialogen.",
+                    "Deutsch für Ärzte: FSP, Anamnese, Arztbrief | Almanca Konuş",
+                    "Klinisches Deutsch für Ärztinnen und Ärzte: FSP-Vorbereitung, Anamnese, Patientenvorstellung, Arztbrief und Redemittel – mit echten Beispieldialogen.",
                     "Deutsch für Ärzte, FSP, Fachsprachprüfung, Anamnese, Arztbrief, Patientenvorstellung, klinische Kommunikation, medizinische Abkürzungen, Redemittel",
                     "/aerztedeutsch");
             }
             else
             {
                 SetSeoData(
-                    "Hekimler için Klinik Almanca – FSP, Anamnez, Arztbrief | Almanca Konuş",
-                    "Doktorlar için klinik Almanca: FSP hazırlığı, anamnez, hasta sunumu (Patientenvorstellung), Arztbrief, klinik iletişim, kalıp ifadeler ve tıbbi kısaltmalar – gerçek örnek diyaloglarla.",
+                    "Hekim Almancası: FSP, Anamnez, Arztbrief | Almanca Konuş",
+                    "Doktorlar için klinik Almanca: FSP hazırlığı, anamnez, hasta sunumu (Patientenvorstellung), Arztbrief ve kalıp ifadeler – gerçek örnek diyaloglarla.",
                     "hekimler için almanca, FSP, Fachsprachprüfung, anamnez, Arztbrief, hasta sunumu, klinik iletişim, tıbbi kısaltmalar, Redemittel",
                     "/hekim-almancasi");
             }
@@ -346,16 +354,16 @@ namespace SpeakingClub.Controllers
             if (IsGerman())
             {
                 SetSeoData(
-                    "Pflegedeutsch – Übergabe, Kommunikation, Dokumentation | Almanca Konuş",
-                    "Deutsch für Pflegekräfte: Pflegekommunikation, Patientenübergabe, Pflegedokumentation, Redemittel und medizinische Abkürzungen – mit praxisnahen Beispieldialogen aus dem Klinikalltag.",
+                    "Pflegedeutsch: Übergabe & Dokumentation | Almanca Konuş",
+                    "Deutsch für Pflegekräfte: Patientenübergabe, Pflegekommunikation, Pflegedokumentation und Redemittel – mit Beispieldialogen aus dem Klinikalltag.",
                     "Pflegedeutsch, Deutsch für Pflegekräfte, Patientenübergabe, Pflegekommunikation, Pflegedokumentation, medizinische Abkürzungen, Redemittel für Pflegekräfte",
                     "/pflegedeutsch");
             }
             else
             {
                 SetSeoData(
-                    "Hemşirelik Almancası – Hasta Devri, İletişim, Dokümantasyon | Almanca Konuş",
-                    "Hemşireler için Almanca: hasta ile iletişim (Pflegekommunikation), hasta devri (Patientenübergabe), dokümantasyon, kalıp ifadeler ve tıbbi kısaltmalar – klinik günlük yaşamdan örnek diyaloglarla.",
+                    "Hemşirelik Almancası: Hasta Devri, İletişim | Almanca Konuş",
+                    "Hemşireler için Almanca: hastayla iletişim, hasta devri (Patientenübergabe), bakım dokümantasyonu ve kalıp ifadeler – klinikten örnek diyaloglarla.",
                     "hemşirelik almancası, hemşireler için almanca, hasta devri, Pflegekommunikation, Pflegedokumentation, tıbbi kısaltmalar, Redemittel",
                     "/hemsirelik-almancasi");
             }
@@ -380,17 +388,17 @@ namespace SpeakingClub.Controllers
             if (IsGerman())
             {
                 SetSeoData(
-                    "Über Uns | Almanca Konuşma Kulübü",
-                    "Erfahren Sie mehr über unser Team und unsere Mission, Deutsch-Lernenden zu helfen. Kontaktieren Sie uns!",
-                    "über uns, Kontakt, Deutsch lernen, Sprachschule, Team",
+                    "Über Suna Koç – Deutsch-Sprechcoach | Almanca Konuş",
+                    "Suna Koç ist in Bremen aufgewachsen, Deutsch ist ihre Muttersprache. Seit über 20 Jahren unterrichtet sie, heute online und mit Fokus aufs Sprechen.",
+                    "Suna Koç, Deutschlehrerin, Muttersprachlerin, Deutsch sprechen lernen, Online-Deutschunterricht, Kontakt",
                     "/ueber-uns");
             }
             else
             {
                 SetSeoData(
-                    "Hakkımızda | Almanca Konuşma Kulübü",
-                    "Ekibimiz ve Almanca öğrenenlere yardımcı olma misyonumuz hakkında bilgi alın. Bizimle iletişime geçin!",
-                    "hakkımızda, iletişim, almanca öğren, dil okulu, ekip",
+                    "Suna Koç Kimdir? Almanca Konuşma Koçu | Almanca Konuş",
+                    "Bremen'de büyüyen, Almanca ana dili olan Suna Koç 20 yılı aşkın deneyimiyle online Almanca konuşma dersleri veriyor. Sık sorulan sorular ve iletişim.",
+                    "Suna Koç, almanca öğretmeni, anadili almanca öğretmen, almanca konuşma dersi, online almanca, iletişim",
                     "/hakkimizda");
             }
             SetHreflang("/hakkimizda", "/ueber-uns");
@@ -673,16 +681,16 @@ namespace SpeakingClub.Controllers
             if (isGerman)
             {
                 SetSeoData(
-                    "Blog & Artikel | Almanca Konuşma Kulübü",
-                    "Entdecken Sie unsere Artikel und Beiträge rund ums Deutschlernen. Tipps, Grammatik, Vokabeln und mehr.",
+                    "Blog: Deutsch lernen & klinisches Deutsch | Almanca Konuş",
+                    "Tipps zum Deutschsprechen, Grammatik und klinisches Deutsch für Pflege und Ärzte: Artikel von Suna Koç auf Deutsch und Türkisch.",
                     "Blog, Deutsch lernen, Artikel, Grammatik, Vokabeln, Tipps, Deutschkurs",
                     "/beitraege");
             }
             else
             {
                 SetSeoData(
-                    "Blog & Yazılar | Almanca Konuşma Kulübü",
-                    "Almanca öğrenme ile ilgili yazılarımızı keşfedin. İpuçları, gramer, kelime bilgisi ve daha fazlası.",
+                    "Blog: Almanca Konuşma ve Klinik Almanca | Almanca Konuş",
+                    "Almanca konuşma ipuçları, gramer ve sağlık çalışanları için klinik Almanca: Suna Koç'un Türkçe ve Almanca yazıları.",
                     "blog, almanca öğren, yazılar, gramer, kelime, ipuçları, almanca kursu",
                     "/yazilar");
             }
@@ -886,18 +894,22 @@ namespace SpeakingClub.Controllers
                             ["author"] = new Dictionary<string, object?>
                             {
                                 ["@type"] = "Person",
-                                ["name"] = FirstNonEmpty(blog.Author, "Suna Türkgil"),
+                                ["name"] = FirstNonEmpty(blog.Author, "Suna Koç"),
                                 ["url"] = AbsoluteUrl(isGerman ? "/ueber-uns" : "/hakkimizda")
                             },
+                            // The organization itself is described once, in _Layout (same @id)
                             ["publisher"] = new Dictionary<string, object?>
                             {
-                                ["@type"] = "Organization",
-                                ["name"] = "Almanca Konuşma Kulübü",
+                                ["@type"] = "EducationalOrganization",
+                                ["@id"] = SeoHelper.SiteUrl + "/#organization",
+                                ["name"] = "Almanca Konuş",
                                 ["url"] = SeoHelper.SiteUrl + "/",
                                 ["logo"] = new Dictionary<string, object?>
                                 {
                                     ["@type"] = "ImageObject",
-                                    ["url"] = AbsoluteUrl("/img/header_logo.png")
+                                    ["url"] = AbsoluteUrl("/img/logo-512.png"),
+                                    ["width"] = 512,
+                                    ["height"] = 512
                                 }
                             }
                         },
@@ -906,7 +918,7 @@ namespace SpeakingClub.Controllers
                             ["@type"] = "BreadcrumbList",
                             ["itemListElement"] = new object[]
                             {
-                                BreadcrumbItem(1, isGerman ? "Startseite" : "Ana Sayfa", SeoHelper.SiteUrl + "/"),
+                                BreadcrumbItem(1, isGerman ? "Startseite" : "Ana Sayfa", SeoHelper.SiteUrl + (isGerman ? "/de" : "/")),
                                 BreadcrumbItem(2, "Blog", AbsoluteUrl(blogListPath)),
                                 BreadcrumbItem(3, title, canonicalUrl)
                             }
@@ -1081,7 +1093,7 @@ namespace SpeakingClub.Controllers
             if (de)
             {
                 SetSeoData(
-                    "Wörterbuch | Almanca Konuşma Kulübü",
+                    "Wörterbuch Deutsch–Türkisch | Almanca Konuş",
                     "Deutsch–Türkisch Wörterbuch: unsere eigenen Einträge mit Beispielen, dazu Übersetzungen von DeepL und PONS.",
                     "Wörterbuch, Deutsch, Türkisch, Übersetzung, Bedeutung, Aussprache",
                     "/woerterbuch");
@@ -1089,8 +1101,8 @@ namespace SpeakingClub.Controllers
             else
             {
                 SetSeoData(
-                    "Sözlük | Almanca Konuşma Kulübü",
-                    "Almanca–Türkçe sözlük: kendi hazırladığımız kelimeler, örnekler ve telaffuz; ayrıca DeepL ve PONS çevirileri.",
+                    "Almanca–Türkçe Sözlük | Almanca Konuş",
+                    "Almanca–Türkçe sözlük: hazırladığımız kelimeler anlamı, örnek cümlesi ve telaffuzuyla. Bulunamayan kelimeler için DeepL ve PONS çevirisi.",
                     "sözlük, almanca, türkçe, çeviri, anlam, telaffuz",
                     "/sozluk");
             }
@@ -1157,7 +1169,7 @@ namespace SpeakingClub.Controllers
             if (IsGerman())
             {
                 SetSeoData(
-                    $"Deutsch-Einstufungstests{levelText} | Almanca Konuşma Kulübü",
+                    $"Deutsch-Einstufungstest online{levelText} | Almanca Konuş",
                     "Testen Sie Ihr Deutsch mit zeitgesteuerten Online-Prüfungen von A1 bis C1 – mit sofortiger Auswertung und Fragen-Review.",
                     "Deutsch-Quiz, Prüfung, Deutschtest, Einstufungstest, A1, A2, B1, B2, C1, Grammatik-Quiz, Vokabel-Quiz",
                     "/pruefungen");
@@ -1165,8 +1177,8 @@ namespace SpeakingClub.Controllers
             else
             {
                 SetSeoData(
-                    $"Almanca Seviye Sınavları{levelText} | Almanca Konuşma Kulübü",
-                    "A1'den C1'e süreli online Almanca sınavlarıyla seviyenizi ölçün; anında puan ve soru soru değerlendirme.",
+                    $"Almanca Seviye Testi{levelText} | Almanca Konuş",
+                    "A1'den C1'e süreli online Almanca seviye testleriyle seviyenizi ölçün; anında puan, doğru cevaplar ve soru soru değerlendirme.",
                     "almanca quiz, sınav, almanca test, seviye tespit sınavı, A1, A2, B1, B2, C1, gramer quiz, kelime quiz",
                     "/sinavlar");
             }

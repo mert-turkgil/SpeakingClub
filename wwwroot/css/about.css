@@ -133,6 +133,9 @@ html[data-bs-theme="dark"] .concierge { --c-ink: #DCEADF; --c-paper: #221d18; --
 .concierge__head { position: relative; display: grid; grid-template-columns: auto 1fr auto; gap: 0.85rem; align-items: center; padding: 1.1rem 1.25rem 1.4rem; background: var(--c-paper); border-bottom: 1px solid var(--bp-hairline); }
 .concierge__avatar { position: relative; width: 46px; height: 46px; border-radius: 50%; padding: 2px; background: linear-gradient(135deg, var(--bp-coral), var(--c-accent)); }
 .concierge__avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--c-paper); }
+/* <picture> wrappers (responsive photos) must not change the layout: the <img> sizes against the frame */
+.ab-hero__frame picture,
+.concierge__avatar picture { display: contents; }
 .concierge__who strong { display: block; color: var(--bp-ink); font-size: 1rem; }
 .concierge__who small { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--bp-muted); font-size: 0.78rem; }
 .concierge__dot { width: 8px; height: 8px; border-radius: 50%; background: #2E8B57; box-shadow: 0 0 0 0 rgba(46, 139, 87, 0.6); animation: ab-online 2.2s infinite; }

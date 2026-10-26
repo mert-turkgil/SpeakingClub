@@ -13,6 +13,7 @@ namespace SpeakingClub.Services
     /// Without this the language came only from the culture cookie, so a crawler (which has no cookie)
     /// got Turkish content on every German URL, with a canonical pointing back to the Turkish page —
     /// and Google reported all German pages as "Alternate page with proper canonical tag".
+    /// The home page is / (Turkish) and /de (German).
     /// Paths that exist in one language only (/, /blog, /Account/…) fall through to the
     /// query string / cookie / Accept-Language providers as before.
     /// </summary>
@@ -28,6 +29,7 @@ namespace SpeakingClub.Services
             ["hekim-almancasi"] = "tr-TR",
             ["hemsirelik-almancasi"] = "tr-TR",
 
+            ["de"] = "de-DE",               // German home page
             ["beitraege"] = "de-DE",
             ["ueber-uns"] = "de-DE",
             ["datenschutz"] = "de-DE",

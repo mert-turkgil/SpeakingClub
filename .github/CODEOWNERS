@@ -1,0 +1,7 @@
+# Every change needs the owner's review before it can be merged (with the "Require review from Code Owners"
+# rule on the main branch). The workflows and deployment files are listed separately on purpose: a change
+# there could read the deployment secrets, so it must never slip through.
+*                 @mert-turkgil
+/.github/         @mert-turkgil
+/Program.cs       @mert-turkgil
+/appsettings*.json @mert-turkgil

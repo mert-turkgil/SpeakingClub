@@ -1,0 +1,31 @@
+# Dependabot opens a pull request when a NuGet package or a GitHub Action has an update.
+# Security fixes come right away (when "Dependabot security updates" is on in Settings → Advanced Security);
+# the routine version updates below are grouped and come once a month, so they don't flood the inbox.
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    groups:
+      # All Microsoft.* / System.* packages move together (they share the .NET release)
+      dotnet:
+        patterns: ["Microsoft.*", "System.*"]
+      other:
+        patterns: ["*"]
+        exclude-patterns: ["Microsoft.*", "System.*"]
+
+  - package-ecosystem: "nuget"
+    directory: "/.github/tools/DbBackup"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      actions:
+        patterns: ["*"]

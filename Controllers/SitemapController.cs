@@ -26,6 +26,7 @@ namespace SpeakingClub.Controllers
         // Pages that exist as a Turkish/German pair: (Turkish path, German path, priority, changefreq).
         private static readonly (string Tr, string De, string Priority, string ChangeFreq)[] LocalizedPages =
         {
+            ("/",                     "/de",            "1.0", "daily"),
             ("/yazilar",              "/beitraege",     "0.9", "daily"),
             ("/hekim-almancasi",      "/aerztedeutsch", "0.8", "monthly"),
             ("/hemsirelik-almancasi", "/pflegedeutsch", "0.8", "monthly"),
@@ -41,6 +42,10 @@ namespace SpeakingClub.Controllers
             _logger = logger;
         }
 
+        // An old address of the sitemap that is still listed in Search Console (it returned 404)
+        [HttpGet("Sitemap")]
+        public IActionResult LegacySitemap() => RedirectPermanent("/sitemap.xml");
+
         [HttpGet]
         [Route("sitemap.xml")]
         [ResponseCache(Duration = 3600)] // Cache for 1 hour
@@ -49,9 +54,6 @@ namespace SpeakingClub.Controllers
             try
             {
                 var urls = new List<XElement>();
-
-                // The home page has a single URL (its language follows the visitor), so it has no alternates.
-                urls.Add(CreateUrl(SITE_URL + "/", null, "1.0", "daily"));
 
                 foreach (var page in LocalizedPages)
                 {

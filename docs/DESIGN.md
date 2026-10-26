@@ -1096,7 +1096,13 @@ What every page follows, and what to keep when changing things:
   layout shift.
 - DeepL / PONS answers are cached in memory (12 h; misses 10 min), with 8-second HTTP timeouts and one quick
   retry.
-- No front-end build: what's in `wwwroot/` is what ships, with `asp-append-version` hashes for cache-busting.
+- No front-end build: what's in `wwwroot/` is what ships. Every local CSS/JS link has `asp-append-version`, and
+  `Program.cs` serves files with a `?v=` hash as `Cache-Control: public, max-age=31536000, immutable` (other
+  static files: one week). A changed file gets a new hash, so visitors never see a stale copy.
+- Photos come in 480/800/1200 px WebP + JPEG copies (`suna-hero-*.webp` …) inside `<picture>` with `sizes`,
+  so a phone downloads about 40 KB instead of the 240 KB original. The `<picture>` gets `display: contents` so
+  it doesn't change the layout.
+- Font Awesome uses `font-display: swap` (edited in `lib/fontawesome/css/all.min.css`), so icons never delay text.
 
 ---
 
@@ -1172,5 +1178,5 @@ value to `DictionarySource` and a step to the pipeline in `Words.cshtml`.
 | My account | `account.css` | `account.js` | Score chart, rings |
 | Clinical German pages | `clinical.css` | n/a | Doctors / nurses |
 | Admin panel | `admin.css` | `admin.js`, `admin-blog.js`, `admin-quiz.js`, `admin-texts.js`, `ckeditor.js` | Guides in `AdminNav.cs` |
-| Older global layers | `custom.css` (compiled Bootstrap SCSS), `site.css`, `universe.css`, `dark-mode.css` | | Loaded site-wide; new pages don't depend on them |
+| Older global layers | `custom.css` (brand utility classes only, from `custom.scss`), `site.css`, `universe.css`, `dark-mode.css` | | Loaded site-wide; new pages don't depend on them |
 | Not in use | `splash.css` | `splash.js`, `anime.js` | Early experiments, not referenced by any view |

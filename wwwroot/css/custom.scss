@@ -1,29 +1,21 @@
 /*
  * custom.scss
  *
- * This file loads Bootstrap with custom color overrides and defines additional classes
- * using your color palette:
+ * Brand utility classes (.btn-first … .border-fourth) in the logo palette:
  *   - Light Peach:  #FFF5E4
  *   - Soft Peach:   #FFE3E1
  *   - Light Pink:   #FFD1D1
  *   - Soft Red:     #FF9494
  *
- * Note: Many deprecation warnings come from Bootstrap’s own SCSS.
- *       To suppress them during compilation, run:
- *         sass --quiet-deps wwwroot/css/custom.scss wwwroot/css/custom.css
+ * Compile: sass --no-source-map wwwroot/css/custom.scss wwwroot/css/custom.css
  */
 
 // 1. Import Sass's color module for color manipulation.
 @use "sass:color";
 
-// 2. Load Bootstrap as a module and override key variables with your palette.
-//    Adjust the relative path as needed.
-@use "../lib/bootstrap/scss/bootstrap" with (
-  $primary:   #FF9494,   // Soft Red for primary elements
-  $secondary: #FFD1D1,   // Light Pink for secondary elements
-  $body-bg:   #FFF5E4    // Light Peach for the body background
-  // Additional overrides can be added here.
-);
+// 2. Bootstrap is NOT compiled in here any more: _Layout loads lib/bootstrap/dist/css/bootstrap.min.css right
+//    after this file, and it overrode a compiled copy completely. Only the brand classes below remain.
+
 
 // 3. Define your full custom color palette.
 $first:  #FFF5E4;  // Light Peach
