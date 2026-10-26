@@ -11,6 +11,6 @@
   <ItemGroup>
     <!-- Same versions as SpeakingClub.csproj (the Pkcs pin is there for the same advisories). -->
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.7" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
   </ItemGroup>
 </Project>
