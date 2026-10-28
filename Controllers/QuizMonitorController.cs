@@ -1,153 +1,124 @@
 using System;
-using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
-using OfficeOpenXml;
-using SpeakingClub.Data.Abstract;
-using SpeakingClub.Hubs;
-using SpeakingClub.Identity;
-using SpeakingClub.Models;
+using SpeakingClub.Models.Reports;
+using SpeakingClub.Services.Reports;
 
 namespace SpeakingClub.Controllers
 {
+    /// <summary>
+    /// Admin → Sınav sonuçları. The page is rendered on the server with only the current filter's page of results
+    /// (it used to load every submission with every answer and filter in the browser). The analysis tabs load their
+    /// figures as JSON when opened (Stats); one attempt opens in a side panel (Attempt). Teachers see it too.
+    /// </summary>
     [Authorize(Roles = "Root,Admin,Teacher")]
     [Route("[controller]")]
     public class QuizMonitorController : Controller
     {
-        private readonly UserManager<User> _userManager;
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IHubContext<QuizMonitorHub> _hubContext;
-        private readonly ILogger<QuizMonitorController> _logger;
+        private readonly ExamReportService _reports;
 
-        public QuizMonitorController(
-            ILogger<QuizMonitorController> logger,
-            IUnitOfWork unitOfWork,
-            UserManager<User> userManager,
-            IHubContext<QuizMonitorHub> hubContext)
-        {
-            _unitOfWork = unitOfWork;
-            _hubContext = hubContext;
-            _logger = logger;
-            _userManager = userManager;
-        }
+        public QuizMonitorController(ExamReportService reports) => _reports = reports;
+
+        private static bool IsGerman => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de";
+        private static string T(string tr, string de) => IsGerman ? de : tr;
 
         [HttpGet("")]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index([FromQuery] ExamReportFilter filter)
         {
-            var submissions = await _unitOfWork.QuizSubmissions.GetAllWithIncludesAsync();
-
-            // 1. Tüm UserId’leri topla
-            var userIds = submissions.Select(s => s.UserId).Distinct().ToList();
-
-            // 2. Userları UserManager üzerinden çek
-            var users = _userManager.Users.Where(u => userIds.Contains(u.Id)).ToList();
-            var userDict = users.ToDictionary(u => u.Id);
-
-            // 3. ViewModel oluştur
-            var model = submissions.Select(s => new QuizMonitorViewModel
+            filter.Normalize();
+            var (from, to) = filter.Range();
+            var previous = filter.PreviousRange();
+            var (rows, total) = await _reports.ResultsAsync(filter);
+            var model = new ExamReportPage
             {
-                SubmissionId = s.QuizSubmissionId,
-                UserName = userDict.ContainsKey(s.UserId) 
-                    ? userDict[s.UserId].FirstName + " " + userDict[s.UserId].LastName
-                    : (System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de" ? "Gelöschtes Konto" : "Silinmiş hesap"),
-                QuizTitle = s.Quiz?.Title,
-                Score = s.Score,
-                MaxScore = 100,
-                AttemptNumber = s.AttemptNumber,
-                SubmissionDate = s.SubmissionDate,
-                SubmissionTimeFormatted = s.SubmissionDate.ToString("g"),
-                Age = userDict.ContainsKey(s.UserId) ? userDict[s.UserId].Age : 0,
-                DurationSeconds = s.DurationSeconds,
-                ViolationCount = s.ViolationCount,
-                EndReason = s.EndReason,
-                Responses = s.QuizResponses.Select(r => new UserResponseViewModel
-                {
-                    Question = r.QuizAnswer?.Question?.QuestionText ?? "",
-                    Answer = r.QuizAnswer?.AnswerText ?? r.AnswerText,
-                    IsCorrect = r.QuizAnswer?.IsCorrect ?? false,
-                    TimeTakenSeconds = r.TimeTakenSeconds
-                }).ToList()
-            }).ToList();
-
+                Filter = filter,
+                Kpis = await _reports.KpisAsync(filter, from, to),
+                Previous = previous is { } p ? await _reports.KpisAsync(filter, p.From, p.To) : null,
+                Rows = rows,
+                TotalRows = total,
+                Quizzes = await _reports.QuizOptionsAsync(),
+                Categories = await _reports.CategoryOptionsAsync(),
+                ActiveNow = await _reports.ActiveNowAsync()
+            };
             return View(model);
         }
 
-        [HttpGet("GetSubmissions")]
-        public async Task<IActionResult> GetSubmissions()
+        /// <summary>One attempt: the side panel's content (fetch) or a page of its own (opened in a new tab).</summary>
+        [HttpGet("attempt/{id:int}")]
+        public async Task<IActionResult> Attempt(int id, bool panel = false)
         {
-            var submissions = await _unitOfWork.QuizSubmissions.GetAllWithIncludesAsync();
-
-            var userIds = submissions.Select(s => s.UserId).Distinct().ToList();
-            var users = _userManager.Users.Where(u => userIds.Contains(u.Id)).ToList();
-            var userDict = users.ToDictionary(u => u.Id);
-
-            var data = submissions.Select(s => new
-            {
-                SubmissionId = s.QuizSubmissionId,
-                UserName = userDict.ContainsKey(s.UserId)
-                    ? userDict[s.UserId].FirstName + " " + userDict[s.UserId].LastName
-                    : "Unknown",
-                QuizTitle = s.Quiz?.Title,
-                // Score is stored as a percentage already (it used to be divided by the question count again)
-                Score = s.Score,
-                MaxScore = 100,
-                AttemptNumber = s.AttemptNumber,
-                SubmissionDate = s.SubmissionDate,
-                SubmissionTimeFormatted = s.SubmissionDate.ToString("g"),
-                Age = userDict.ContainsKey(s.UserId) ? userDict[s.UserId].Age : 0,
-                DurationSeconds = s.DurationSeconds,
-                ViolationCount = s.ViolationCount,
-                EndReason = s.EndReason
-            }).ToList();
-
-            return Json(data);
-        }
-        
-        [Route("ExportExcel")]
-        [HttpGet]
-        public async Task<IActionResult> ExportExcel()
-        {
-            var submissions = await _unitOfWork.QuizSubmissions.GetAllWithIncludesAsync();
-
-            var userIds = submissions.Select(s => s.UserId).Distinct().ToList();
-            var users = _userManager.Users.Where(u => userIds.Contains(u.Id)).ToList();
-            var userDict = users.ToDictionary(u => u.Id);
-
-            using var package = new ExcelPackage();
-            var ws = package.Workbook.Worksheets.Add("QuizSubmissions");
-            ws.Cells["A1"].Value = "Kullanıcı";
-            ws.Cells["B1"].Value = "Quiz";
-            ws.Cells["C1"].Value = "Puan";
-            ws.Cells["D1"].Value = "Deneme";
-            ws.Cells["E1"].Value = "Tarih";
-
-            int row = 2;
-            foreach (var sub in submissions)
-            {
-                ws.Cells[row, 1].Value = userDict.ContainsKey(sub.UserId)
-                    ? userDict[sub.UserId].FirstName + " " + userDict[sub.UserId].LastName
-                    : "Unknown";
-                ws.Cells[row, 2].Value = sub.Quiz?.Title;
-                ws.Cells[row, 3].Value = sub.Score;
-                ws.Cells[row, 4].Value = sub.AttemptNumber;
-                ws.Cells[row, 5].Value = sub.SubmissionDate.ToString("g");
-                row++;
-            }
-
-            return File(package.GetAsByteArray(),
-                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        "QuizSubmissions.xlsx");
+            var detail = await _reports.AttemptAsync(id);
+            if (detail == null) return NotFound();
+            return panel ? PartialView("_Attempt", detail) : View("Attempt", detail);
         }
 
+        /// <summary>Figures for one analysis tab, as JSON (wwwroot/js/admin-reports.js draws them).</summary>
+        [HttpGet("stats/{tab}")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        public async Task<IActionResult> Stats(string tab, [FromQuery] ExamReportFilter filter, string? mode, bool effort = false)
         {
-            return View("Error!");
+            filter.Normalize();
+            switch (tab)
+            {
+                case "overview": return Json(await _reports.OverviewAsync(filter));
+                case "activity": return Json(await _reports.ActivityAsync(filter));
+                case "progress": return Json(await _reports.ProgressAsync(filter));
+                case "integrity": return Json(await _reports.IntegrityAsync(filter));
+                case "items":
+                    var items = await _reports.ItemsAsync(filter, mode, effort);
+                    if (items is not { } found) return Json(new { needsQuiz = true });
+                    return Json(new
+                    {
+                        found.Result.Attempts, found.Result.Excluded, found.Result.Questions, found.Result.MeanPercent, found.Result.MedianPercent,
+                        found.Result.SdPercent, found.Result.Kr20, found.Result.SemPercent, found.Result.LowEffortShare, found.Result.Items,
+                        minAttempts = ItemAnalysis.MinAttemptsForStatistics,
+                        rows = found.Result.Rows.OrderByDescending(r => r.Total).Take(300).Select(r => new
+                        {
+                            r.SubmissionId, name = found.Names.GetValueOrDefault(r.UserId, ""), r.Total, r.Cells, r.GuttmanErrors,
+                            r.Rte, r.RapidAnswers, r.TimedAnswers
+                        })
+                    });
+                default:
+                    return NotFound();
+            }
         }
+
+        /// <summary>
+        /// The filtered results as a CSV file for Excel (ReportCsv), dates in Turkish time. Streamed, so a long list
+        /// doesn't sit in memory.
+        /// </summary>
+        [HttpGet("export.csv")]
+        public async Task ExportCsv([FromQuery] ExamReportFilter filter)
+        {
+            filter.Normalize();
+            await using var writer = ReportCsv.Start(Response, T("sinav-sonuclari", "pruefungsergebnisse"));
+            await ReportCsv.WriteRowAsync(writer, new[]
+            {
+                T("Tarih", "Datum"), T("Öğrenci", "Lernende"), T("E-posta", "E-Mail"), T("Sınav", "Prüfung"), T("Seviye", "Niveau"),
+                T("Deneme", "Versuch"), T("Puan (%)", "Punkte (%)"), T("Doğru", "Richtig"), T("Cevaplanan", "Beantwortet"),
+                T("Soru", "Fragen"), T("Süre (sn)", "Dauer (s)"), T("Uyarı", "Warnungen"), T("Nasıl bitti", "Ende")
+            });
+            await foreach (var r in _reports.ExportAsync(filter))
+            {
+                await ReportCsv.WriteRowAsync(writer, new[]
+                {
+                    r.SubmittedLocal.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture), r.StudentName, r.Email ?? "", r.QuizTitle,
+                    r.Level ?? "", r.Attempt.ToString(CultureInfo.InvariantCulture), r.Score.ToString(CultureInfo.InvariantCulture),
+                    r.Correct.ToString(CultureInfo.InvariantCulture), r.Answered.ToString(CultureInfo.InvariantCulture),
+                    r.Total.ToString(CultureInfo.InvariantCulture), r.DurationSeconds.ToString(CultureInfo.InvariantCulture),
+                    r.Violations.ToString(CultureInfo.InvariantCulture), EndLabel(r.EndReason)
+                });
+            }
+        }
+
+        private static string EndLabel(string end) => end switch
+        {
+            "timeout" => T("Süre doldu", "Zeit abgelaufen"),
+            "violations" => T("Kural ihlaliyle bitti", "Wegen Verstößen beendet"),
+            _ => T("Gönderildi", "Abgegeben")
+        };
     }
 }

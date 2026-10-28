@@ -17,7 +17,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -526,7 +526,208 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 
                     b.HasIndex("BlogFileId");
 
+                    b.HasIndex("UserId", "DownloadedAt");
+
                     b.ToTable("DownloadLogs");
+                });
+
+            modelBuilder.Entity("SpeakingClub.Entity.EmailCampaign", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Cursor")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("EntityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("Recipients")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Kind", "EntityId")
+                        .IsUnique();
+
+                    b.ToTable("EmailCampaigns");
+                });
+
+            modelBuilder.Entity("SpeakingClub.Entity.EmailLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("CampaignId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int?>("RelatedId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RelatedType")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("ResentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Template")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("SentAt");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Status", "CreatedAt");
+
+                    b.ToTable("EmailLogs");
+                });
+
+            modelBuilder.Entity("SpeakingClub.Entity.EmailOutbox", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CampaignId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Culture")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("DedupeKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ModelJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("NextAttemptAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int?>("RelatedId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RelatedType")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Template")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId");
+
+                    b.HasIndex("DedupeKey")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Category", "NextAttemptAt")
+                        .HasFilter("[ProcessedAt] IS NULL");
+
+                    b.ToTable("EmailOutbox");
                 });
 
             modelBuilder.Entity("SpeakingClub.Entity.Question", b =>
@@ -839,6 +1040,9 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.Property<DateTime?>("SubmittedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("TimesJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasMaxLength(450)
@@ -850,6 +1054,8 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.HasKey("Id");
 
                     b.HasIndex("QuizId");
+
+                    b.HasIndex("SubmittedAt", "ExpiresAt");
 
                     b.HasIndex("UserId", "QuizId", "SubmittedAt");
 
@@ -867,6 +1073,9 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.Property<string>("AnswerText")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool?>("IsCorrect")
+                        .HasColumnType("bit");
+
                     b.Property<int?>("QuestionId")
                         .HasColumnType("int");
 
@@ -881,9 +1090,13 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
 
                     b.HasKey("QuizResponseId");
 
+                    b.HasIndex("QuestionId");
+
                     b.HasIndex("QuizAnswerId");
 
                     b.HasIndex("QuizSubmissionId");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("QuizSubmissionId"), new[] { "QuestionId", "QuizAnswerId", "IsCorrect", "TimeTakenSeconds" });
 
                     b.ToTable("QuizResponses");
 
@@ -1019,9 +1232,13 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.Property<DateTime>("SubmissionDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("TimesRecorded")
+                        .HasColumnType("bit");
+
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("ViolationCount")
                         .HasColumnType("int");
@@ -1032,7 +1249,17 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                         .IsUnique()
                         .HasFilter("[AttemptId] IS NOT NULL");
 
-                    b.HasIndex("QuizId");
+                    b.HasIndex("SubmissionDate");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("SubmissionDate"), new[] { "QuizId", "UserId", "Score", "DurationSeconds", "ViolationCount", "EndReason", "AttemptNumber" });
+
+                    b.HasIndex("QuizId", "SubmissionDate");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("QuizId", "SubmissionDate"), new[] { "UserId", "Score", "AttemptNumber" });
+
+                    b.HasIndex("UserId", "QuizId", "SubmissionDate");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("UserId", "QuizId", "SubmissionDate"), new[] { "Score" });
 
                     b.ToTable("QuizSubmissions");
 
@@ -1045,6 +1272,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             QuizId = 1,
                             Score = 100,
                             SubmissionDate = new DateTime(2026, 3, 8, 12, 0, 0, 0, DateTimeKind.Utc),
+                            TimesRecorded = false,
                             UserId = "user1-id",
                             ViolationCount = 0
                         },
@@ -1056,6 +1284,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             QuizId = 1,
                             Score = 50,
                             SubmissionDate = new DateTime(2026, 3, 9, 12, 0, 0, 0, DateTimeKind.Utc),
+                            TimesRecorded = false,
                             UserId = "user1-id",
                             ViolationCount = 0
                         },
@@ -1067,6 +1296,7 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                             QuizId = 1,
                             Score = 40,
                             SubmissionDate = new DateTime(2026, 3, 9, 12, 0, 0, 0, DateTimeKind.Utc),
+                            TimesRecorded = false,
                             UserId = "user2-id",
                             ViolationCount = 0
                         });
@@ -1104,6 +1334,26 @@ namespace SpeakingClub.Data.Migrations.SpeakingClubMigrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Ratings");
+                });
+
+            modelBuilder.Entity("SpeakingClub.Entity.ReportUser", b =>
+                {
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FirstName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.ToTable((string)null);
+
+                    b.ToSqlQuery("SELECT Id AS UserId, FirstName, LastName, Email FROM AspNetUsers");
                 });
 
             modelBuilder.Entity("SpeakingClub.Entity.SlideShow", b =>

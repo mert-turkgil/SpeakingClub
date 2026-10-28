@@ -94,5 +94,8 @@ public string? AudioUrl { get; set; }    [Display(Name = "YouTube Video URL")]
     public string TeacherName { get; set; } = string.Empty;
     public IEnumerable<SelectListItem> TeacherOptions { get; set; } = new List<SelectListItem>();
     public bool IsAnonymous { get; set; } = false;
+
+    // "Abonelere e-postayla duyur" (Services/Email, EmailCampaign)
+    public bool AnnounceByEmail { get; set; } = true;
     }
 }

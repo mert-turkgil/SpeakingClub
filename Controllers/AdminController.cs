@@ -9,18 +9,22 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SpeakingClub.Data;
 using SpeakingClub.Data.Abstract;
 using SpeakingClub.Entity;
 using SpeakingClub.Identity;
 using SpeakingClub.Models;
 using SpeakingClub.Services;
+using SpeakingClub.Services.Email;
 
 namespace SpeakingClub.Controllers
 {
     [Authorize(Roles = "Root,Admin,Teacher")]
     [Route("[controller]")]
-    public class AdminController : Controller
+    public partial class AdminController : Controller   // member report: AdminController.Members.cs
     {
         private readonly UserManager<User> _userManager;
         private readonly IUnitOfWork _unitOfWork;
@@ -29,10 +33,13 @@ namespace SpeakingClub.Controllers
         private readonly IManageResourceService _manageResourceService;
         private readonly IWebHostEnvironment _env;
         private readonly AliveResourceService _dynamicResourceService;
+        // For counts and projections that must run in SQL (the repositories return whole entities)
+        private readonly SpeakingClubContext _db;
 
         public AdminController(ILogger<AdminController> logger, UserManager<User> userManager, RoleManager<IdentityRole> roleManager, IUnitOfWork unitOfWork, IWebHostEnvironment env,
-        IManageResourceService manageResourceService, AliveResourceService dynamicResourceService)
+        IManageResourceService manageResourceService, AliveResourceService dynamicResourceService, SpeakingClubContext db)
         {
+            _db = db;
             _env = env;
             _dynamicResourceService = dynamicResourceService;
             _manageResourceService = manageResourceService;
@@ -41,6 +48,26 @@ namespace SpeakingClub.Controllers
             _userManager = userManager;
             _logger = logger;
         }
+        /// <summary>
+        /// "Abonelere e-postayla duyur": starts the announcement once per post/quiz (EmailCampaign); the e-mail worker
+        /// sends it at the allowed pace. Never fails the save.
+        /// </summary>
+        private async Task AnnounceAsync(string kind, int entityId, string title, bool announce)
+        {
+            if (!announce) return;
+            try
+            {
+                var started = await HttpContext.RequestServices.GetRequiredService<EmailQueue>()
+                    .StartCampaignAsync(kind, entityId, title, _userManager.GetUserId(User));
+                if (started != null)
+                    TempData["AnnounceMessage"] = T($"Duyuru e-postaları {started.Recipients} kişiye gönderilmeye başlandı.", $"Die Ankündigung wird an {started.Recipients} Personen verschickt.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not start the announcement for {Kind} {Id}", kind, entityId);
+            }
+        }
+
         private static bool IsGerman => System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
         private static string T(string tr, string de) => IsGerman ? de : tr;
 
@@ -59,49 +86,48 @@ namespace SpeakingClub.Controllers
 
             var me = await _userManager.GetUserAsync(User);
             var isAdmin = User.IsInRole("Admin") || User.IsInRole("Root");
-            var blogs = (await _unitOfWork.Blogs.GetAllAsync()).ToList();
-            var quizzes = (await _unitOfWork.Quizzes.GetAllAsync()).ToList();
-            var weekAgo = DateTime.Now.AddDays(-7);
-            var monthAgo = DateTime.Now.AddDays(-30);
-            var recent = (await _unitOfWork.QuizSubmissions.GetAllAsync(s => s.SubmissionDate >= monthAgo))
-                .OrderByDescending(s => s.SubmissionDate)
-                .ToList();
-            var thisWeek = recent.Where(s => s.SubmissionDate >= weekAgo).ToList();
+            // Everything below is counted or projected in SQL; nothing loads whole tables (submission dates are UTC)
+            var weekAgo = DateTime.UtcNow.AddDays(-7);
+            var week = await _db.QuizSubmissions.Where(s => s.SubmissionDate >= weekAgo)
+                .GroupBy(_ => 1)
+                .Select(g => new { Count = g.Count(), Average = g.Average(s => (double)s.Score) })
+                .FirstOrDefaultAsync();
 
-            var latest = recent.Take(6).ToList();
+            var latest = await _db.QuizSubmissions.AsNoTracking()
+                .OrderByDescending(s => s.SubmissionDate)
+                .Take(6)
+                .Select(s => new { s.QuizSubmissionId, s.UserId, s.Score, s.SubmissionDate, s.EndReason, QuizTitle = s.Quiz.Title })
+                .ToListAsync();
             var studentIds = latest.Select(s => s.UserId).Distinct().ToList();
-            var students = _userManager.Users.Where(u => studentIds.Contains(u.Id))
+            var students = await _userManager.Users.Where(u => studentIds.Contains(u.Id))
                 .Select(u => new { u.Id, u.FirstName, u.LastName, u.Email })
-                .ToList()
-                .ToDictionary(u => u.Id);
-            var quizTitles = quizzes.ToDictionary(q => q.Id, q => q.Title ?? string.Empty);
+                .ToDictionaryAsync(u => u.Id);
 
             var model = new AdminDashboardViewModel
             {
                 FirstName = me?.FirstName ?? string.Empty,
                 IsAdmin = isAdmin,
-                BlogCount = blogs.Count,
-                DraftBlogCount = blogs.Count(b => !b.IsPublished),
-                QuizCount = quizzes.Count,
-                QuestionCount = quizzes.Sum(q => q.Questions?.Count ?? 0),
-                WordCount = (await _unitOfWork.Words.GetAllAsync()).Count(),
-                SlideCount = (await _unitOfWork.Slides.GetAllAsync()).Count(),
-                UserCount = isAdmin ? _userManager.Users.Count() : 0,
-                SubmissionsThisWeek = thisWeek.Count,
-                AverageScoreThisWeek = thisWeek.Count > 0 ? (int)Math.Round(thisWeek.Average(s => s.Score)) : null,
+                BlogCount = await _db.Blogs.CountAsync(),
+                DraftBlogCount = await _db.Blogs.CountAsync(b => !b.IsPublished),
+                QuizCount = await _db.Quizzes.CountAsync(),
+                QuestionCount = await _db.Questions.CountAsync(),
+                WordCount = await _db.Words.CountAsync(),
+                SlideCount = await _db.Slide.CountAsync(),
+                UserCount = isAdmin ? await _userManager.Users.CountAsync() : 0,
+                SubmissionsThisWeek = week?.Count ?? 0,
+                AverageScoreThisWeek = week is { Count: > 0 } ? (int)Math.Round(week.Average) : null,
                 RecentSubmissions = latest.Select(s =>
                 {
                     var name = students.TryGetValue(s.UserId, out var u)
                         ? string.Join(' ', new[] { u.FirstName, u.LastName }.Where(p => !string.IsNullOrWhiteSpace(p)))
                         : string.Empty;
                     if (string.IsNullOrWhiteSpace(name)) name = u?.Email ?? T("Bilinmeyen öğrenci", "Unbekannt");
-                    return new AdminRecentSubmission(s.QuizSubmissionId, name,
-                        quizTitles.TryGetValue(s.QuizId, out var title) ? title : "—", s.Score, s.SubmissionDate, s.EndReason);
+                    return new AdminRecentSubmission(s.QuizSubmissionId, name, s.QuizTitle ?? "—", s.Score, Services.Reports.ReportTime.ToLocal(s.SubmissionDate), s.EndReason);   // stored in UTC, shown in Turkish time
                 }).ToList(),
-                RecentBlogs = blogs.OrderByDescending(b => b.Date).Take(4)
-                    .Select(b => new AdminRecentBlog(b.BlogId, b.Title, b.Date, b.IsPublished, b.Image)).ToList(),
-                QuizzesWithoutQuestions = quizzes.Where(q => (q.Questions?.Count ?? 0) == 0)
-                    .Select(q => new AdminQuizNotice(q.Id, q.Title ?? string.Empty)).ToList()
+                RecentBlogs = await _db.Blogs.AsNoTracking().OrderByDescending(b => b.Date).Take(4)
+                    .Select(b => new AdminRecentBlog(b.BlogId, b.Title, b.Date, b.IsPublished, b.Image)).ToListAsync(),
+                QuizzesWithoutQuestions = await _db.Quizzes.AsNoTracking().Where(q => !q.Questions.Any())
+                    .Select(q => new AdminQuizNotice(q.Id, q.Title ?? string.Empty)).ToListAsync()
             };
             return View(model);
         }
@@ -114,7 +140,6 @@ namespace SpeakingClub.Controllers
         [HttpGet("Slides")] public IActionResult Slides() => View("Section", "slides");
         [HttpGet("Categories")] public IActionResult Categories() => View("Section", "categories");
         [HttpGet("Tags")] public IActionResult Tags() => View("Section", "tags");
-        [HttpGet("Users"), Authorize(Roles = "Admin,Root")] public IActionResult Users() => View("Section", "users");
         [HttpGet("Roles"), Authorize(Roles = "Admin,Root")] public IActionResult Roles() => View("Section", "roles");
         [HttpGet("Texts"), Authorize(Roles = "Admin,Root")] public IActionResult Texts() => View("Section", "texts");
         #endregion
@@ -170,7 +195,12 @@ namespace SpeakingClub.Controllers
                 EmailConfirmed = model.EmailConfirmed,
                 // Lockout after repeated wrong passwords stays on for every account (Identity's default);
                 // locking someone out on purpose is done from the edit page.
-                LockoutEnabled = true
+                LockoutEnabled = true,
+                CreatedAt = DateTime.UtcNow,
+                PreferredCulture = UserLanguage.Current,
+                // The person didn't choose announcements themselves: off until they turn them on in their account
+                EmailOptOuts = EmailTopics.All,
+                PromoConsentSource = ConsentSource.Admin
             };
 
             var createResult = await _userManager.CreateAsync(user, model.Password);
@@ -212,7 +242,7 @@ namespace SpeakingClub.Controllers
         [Authorize(Roles = "Admin,Root")]
         [HttpPost("UserDelete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UserDelete(string id)
+        public async Task<IActionResult> UserDelete(string id, [FromServices] EmailQueue mail)
         {
             // Find the user by ID
             var user = await _userManager.FindByIdAsync(id);
@@ -256,6 +286,7 @@ namespace SpeakingClub.Controllers
             var result = await _userManager.DeleteAsync(user);
             if (result.Succeeded)
             {
+                await mail.ForgetUserAsync(user.Id);   // e-mail log: address and any kept copy
                 TempData["SuccessMessage"] = T("Kullanıcı silindi.", "Der Benutzer wurde gelöscht.");
             }
             else
@@ -1074,6 +1105,7 @@ namespace SpeakingClub.Controllers
                 _unitOfWork.Blogs.Update(blog);
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();
+                await AnnounceAsync(EmailTemplates.NewPost, blog.BlogId, blog.Title, blog.IsPublished && model.AnnounceByEmail);
 
                 TempData["SuccessMessage"] = T("Yazı kaydedildi.", "Der Beitrag wurde gespeichert.");
                 _logger.LogInformation("Blog {BlogId} '{Title}' created successfully", blog.BlogId, blog.Title);
@@ -1139,6 +1171,7 @@ namespace SpeakingClub.Controllers
                 Date = blog.Date,
                 IsHome = blog.isHome,
                 IsPublished = blog.IsPublished,
+                AnnounceByEmail = !blog.IsPublished,   // published posts were announced already, or predate the e-mails
                 RawYT = blog.RawYT,
                 RawMaps = blog.RawMaps,
                 CoverImageUrl = blog.Image,
@@ -1381,6 +1414,7 @@ namespace SpeakingClub.Controllers
                 _unitOfWork.Blogs.Update(blog);
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();
+                await AnnounceAsync(EmailTemplates.NewPost, blog.BlogId, blog.Title, blog.IsPublished && model.AnnounceByEmail);
 
                 if (replacedCover != null && !await IsBlogImageInUseAsync(replacedCover))
                 {
@@ -3306,6 +3340,7 @@ namespace SpeakingClub.Controllers
                     await _unitOfWork.Quizzes.AddAsync(quiz);
                     await _unitOfWork.SaveAsync();
                     await transaction.CommitAsync();
+                    await AnnounceAsync(EmailTemplates.NewQuiz, quiz.Id, quiz.Title, model.AnnounceByEmail);
 
                     TempData["SuccessMessage"] = T("Sınav kaydedildi.", "Die Prüfung wurde gespeichert.");
                     return RedirectToAction(nameof(Quizzes));
@@ -3601,6 +3636,7 @@ namespace SpeakingClub.Controllers
                 await _unitOfWork.SaveAsync();
                 await transaction.CommitAsync();
 
+                await AnnounceAsync(EmailTemplates.NewQuiz, model.QuizId, model.Title ?? "", model.AnnounceByEmail);
                 TempData["SuccessMessage"] = T("Sınavdaki değişiklikler kaydedildi.", "Die Änderungen an der Prüfung wurden gespeichert.");
                 return RedirectToAction(nameof(Quizzes));
             }
@@ -4939,16 +4975,14 @@ namespace SpeakingClub.Controllers
         [HttpGet("DownloadLogs")]
         public async Task<IActionResult> DownloadLogs(string? searchTerm, string? sortBy, int page = 1)
         {
-            var logs = await _unitOfWork.GenericRepository<DownloadLog>().GetAllAsync();
-            var query = logs.AsQueryable();
+            // Filtered, sorted and paged in SQL (it used to load the whole log; the database collation already
+            // ignores case, so a plain Contains matches like before)
+            IQueryable<DownloadLog> query = _db.DownloadLogs.AsNoTracking();
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 var term = searchTerm.Trim();
-                query = query.Where(l =>
-                    (l.UserEmail ?? string.Empty).Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
-                    (l.UserFullName ?? string.Empty).Contains(term, StringComparison.CurrentCultureIgnoreCase) ||
-                    (l.FileName ?? string.Empty).Contains(term, StringComparison.CurrentCultureIgnoreCase));
+                query = query.Where(l => l.UserEmail.Contains(term) || l.UserFullName.Contains(term) || l.FileName.Contains(term));
             }
 
             query = sortBy switch
@@ -4960,10 +4994,10 @@ namespace SpeakingClub.Controllers
             };
 
             const int pageSize = 50;
-            var totalItems = query.Count();
+            var totalItems = await query.CountAsync();
             var totalPages = Math.Max(1, (int)Math.Ceiling(totalItems / (double)pageSize));
             page = Math.Clamp(page, 1, totalPages);   // ?page=0 or a page past the end threw / showed nothing
-            var items = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
             ViewBag.CurrentPage = page;
             ViewBag.TotalPages = totalPages;

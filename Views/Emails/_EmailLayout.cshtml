@@ -1,0 +1,72 @@
+@model SpeakingClub.Services.Email.EmailModel
+@*
+    Frame of every e-mail (Services/Email/EmailRenderer.cs). E-mail clients ignore stylesheets and most CSS:
+    tables for layout, inline styles, system fonts, no images needed to read it. The templates set
+    ViewData["Subject"], ["Preheader"] (the grey line inboxes show after the subject) and ["Promotional"].
+    Written by Suna herself; the site is her own, not a company.
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var promotional = ViewData["Promotional"] as bool? == true;
+    var site = SpeakingClub.Services.SeoHelper.SiteUrl;
+    const string Ink = "#2B2220", Body = "#4A3F3B", Muted = "#85766F", Line = "#F0E0D2", Link = "#C2413F";
+}
+<!DOCTYPE html>
+<html lang="@(isGerman ? "de" : "tr")">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>@ViewData["Subject"]</title>
+</head>
+<body style="margin:0; padding:0; background:#FFF5E9; color:@Body; font-family:-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size:16px; line-height:1.6;">
+    <div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent;">@ViewData["Preheader"]&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#FFF5E9;">
+        <tr>
+            <td align="center" style="padding:28px 12px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+                    <tr>
+                        <td style="padding:0 6px 16px; font-family:Georgia, 'Times New Roman', serif; font-size:22px; font-weight:bold; color:@Ink;">
+                            <a href="@site@(isGerman ? "/de" : "/")" style="color:@Ink; text-decoration:none;">Almanca Konuş</a>
+                            <span style="font-family:-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size:13px; font-weight:normal; color:@Muted;">&nbsp;· Suna Koç</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background:#FFFFFF; border:1px solid @Line; border-radius:16px; padding:28px 26px; color:@Body;">
+                            @RenderBody()
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:18px 8px 0; font-size:12.5px; line-height:1.55; color:@Muted;">
+                            @if (promotional)
+                            {
+                                @if (Model.LegacyConsent)
+                                {
+                                    <p style="margin:0 0 8px;">@T("Yeni yazı ve sınav duyurularını yeni başlattım. Siteye daha önce üye olduğunuz için size de gönderiyorum; istemezseniz aşağıdan tek tıkla çıkabilirsiniz.",
+                                        "Ich verschicke neu Ankündigungen zu Beiträgen und Prüfungen. Weil Sie schon vorher registriert waren, bekommen Sie sie auch; wenn nicht gewünscht, können Sie sich unten mit einem Klick abmelden.")</p>
+                                }
+                                else
+                                {
+                                    <p style="margin:0 0 8px;">@T("Bu e-postayı, almanca-konus.com'da yeni yazı ve sınav duyurularını almak istediğiniz için alıyorsunuz.",
+                                        "Sie erhalten diese E-Mail, weil Sie auf almanca-konus.com Ankündigungen zu neuen Beiträgen und Prüfungen erhalten möchten.")</p>
+                                }
+                                @if (Model.UnsubscribeUrl != null)
+                                {
+                                    <p style="margin:0 0 8px;"><a href="@Model.UnsubscribeUrl" style="color:@Link;">@T("Duyurulardan çık", "Ankündigungen abbestellen")</a>@if (Model.PreferencesUrl != null) { <text> · </text><a href="@Model.PreferencesUrl" style="color:@Link;">@T("E-posta ayarlarım", "Meine E-Mail-Einstellungen")</a> }</p>
+                                }
+                            }
+                            else
+                            {
+                                <p style="margin:0 0 8px;">@T("Bu e-posta almanca-konus.com'daki hesabınızla ya da bana yazdığınız mesajla ilgili olduğu için gönderildi.",
+                                    "Diese E-Mail betrifft Ihr Konto auf almanca-konus.com oder Ihre Nachricht an mich.")</p>
+                            }
+                            <p style="margin:0;"><a href="@site@(isGerman ? "/de" : "/")" style="color:@Muted;">almanca-konus.com</a> · @T("Suna Koç ile Almanca", "Deutsch mit Suna Koç") · <a href="@site@(isGerman ? "/datenschutz" : "/gizlilik")" style="color:@Muted;">@T("Gizlilik", "Datenschutz")</a></p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

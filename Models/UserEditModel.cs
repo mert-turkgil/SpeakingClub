@@ -14,10 +14,12 @@ namespace SpeakingClub.Models
         // Basic Information
         [Required(ErrorMessage = "First name is required")]
         [Display(Name = "First Name")]
+        [StringLength(SpeakingClub.Identity.User.NameMaxLength)]
         public required string FirstName { get; set; }
 
         [Required(ErrorMessage = "Last name is required")]
         [Display(Name = "Last Name")]
+        [StringLength(SpeakingClub.Identity.User.NameMaxLength)]
         public required string LastName { get; set; }
 
         [Required(ErrorMessage = "Age is required")]

@@ -29,6 +29,7 @@ namespace SpeakingClub.Services
             ["sinavlar"] = "tr-TR",
             ["hekim-almancasi"] = "tr-TR",
             ["hemsirelik-almancasi"] = "tr-TR",
+            ["eposta"] = "tr-TR",           // e-mail settings (EmailPreferencesController)
 
             ["de"] = "de-DE",               // German home page
             ["beitraege"] = "de-DE",
@@ -39,6 +40,7 @@ namespace SpeakingClub.Services
             ["pruefungen"] = "de-DE",
             ["aerztedeutsch"] = "de-DE",
             ["pflegedeutsch"] = "de-DE",
+            ["e-mail"] = "de-DE",
         };
 
         public override Task<ProviderCultureResult?> DetermineProviderCultureResult(HttpContext httpContext)

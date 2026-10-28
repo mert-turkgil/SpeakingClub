@@ -27,6 +27,10 @@ namespace SpeakingClub.Entity
         // "submitted", "timeout" (auto-submitted when time ran out) or "violations" (ended by integrity rules)
         public string EndReason { get; set; }
 
+        // True when the per-question times of this attempt were recorded, so a 0 in TimeTakenSeconds means
+        // "answered at once" and not "not measured" (older attempts and early timeouts have no times)
+        public bool TimesRecorded { get; set; }
+
         public ICollection<QuizResponse> QuizResponses { get; set; } = new List<QuizResponse>();
     }
 }

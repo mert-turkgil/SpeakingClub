@@ -172,6 +172,23 @@ html[data-bs-theme="dark"] .acct-badge--warn { color: #F2C14E; }
 .acct-row-action span { color: var(--bp-muted); font-size: 0.8rem; }
 .acct-row-action .bp-btn { padding: 0.5rem 1rem; font-size: 0.85rem; white-space: nowrap; }
 
+/* E-mail settings (Account → E-posta bildirimleri): two switches and a save button */
+.acct-email { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.85rem; }
+.acct-email .bp-btn { justify-self: start; padding: 0.5rem 1.1rem; font-size: 0.85rem; }
+.acct-switch { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 0.75rem; cursor: pointer; }
+.acct-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.acct-switch__track { position: relative; width: 2.6rem; height: 1.5rem; margin-top: 0.1rem; border-radius: 99px; background: var(--bp-hairline); transition: background 0.2s ease; }
+.acct-switch__track::after { content: ""; position: absolute; top: 0.2rem; left: 0.2rem; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(43, 34, 32, 0.25); transition: transform 0.2s ease; }
+.acct-switch input:checked + .acct-switch__track { background: var(--bp-coral-deep, #E36464); }
+.acct-switch input:checked + .acct-switch__track::after { transform: translateX(1.1rem); }
+.acct-switch input:focus-visible + .acct-switch__track { outline: 2px solid var(--bp-link, #C2413F); outline-offset: 2px; }
+.acct-switch strong { display: block; color: var(--bp-ink); font-size: 0.92rem; }
+.acct-switch small { display: block; color: var(--bp-muted); font-size: 0.8rem; line-height: 1.45; }
+.acct-note { display: flex; align-items: flex-start; gap: 0.45rem; margin: 0; color: var(--bp-muted); font-size: 0.8rem; line-height: 1.45; }
+.acct-note i { margin-top: 0.15rem; color: var(--bp-success, #2E8B57); }
+.acct-note--ask { margin-bottom: 0.9rem; padding: 0.7rem 0.85rem; border-radius: 12px; background: var(--bp-blush, #FFE3E1); color: var(--bp-ink); }
+@media (prefers-reduced-motion: reduce) { .acct-switch__track, .acct-switch__track::after { transition: none; } }
+
 /* Staff shortcuts */
 .acct-tools { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
 .acct-tool {

@@ -51,7 +51,7 @@
                             <label asp-for="FirstName">@Localizer.GetKey("Label_FirstName")</label>
                             <div class="auth-input">
                                 <i class="fa-regular fa-user" aria-hidden="true"></i>
-                                <input asp-for="FirstName" autocomplete="given-name" placeholder="@T("Adınız", "Vorname")"
+                                <input asp-for="FirstName" maxlength="100" autocomplete="given-name" placeholder="@T("Adınız", "Vorname")"
                                        data-val-required="@T("Adınızı girin.", "Bitte geben Sie Ihren Vornamen ein.")" />
                             </div>
                             <span asp-validation-for="FirstName" class="auth-error"></span>
@@ -60,7 +60,7 @@
                             <label asp-for="LastName">@Localizer.GetKey("Label_LastName")</label>
                             <div class="auth-input">
                                 <i class="fa-regular fa-id-badge" aria-hidden="true"></i>
-                                <input asp-for="LastName" autocomplete="family-name" placeholder="@T("Soyadınız", "Nachname")"
+                                <input asp-for="LastName" maxlength="100" autocomplete="family-name" placeholder="@T("Soyadınız", "Nachname")"
                                        data-val-required="@T("Soyadınızı girin.", "Bitte geben Sie Ihren Nachnamen ein.")" />
                             </div>
                             <span asp-validation-for="LastName" class="auth-error"></span>
@@ -125,6 +125,16 @@
                         </div>
                         <span asp-validation-for="ConfirmPassword" class="auth-error"></span>
                     </div>
+
+                    @* Announcements of new posts and quizzes: only with consent (unchecked). Exam results are always e-mailed. *@
+                    <label class="auth-check auth-check--consent">
+                        <input asp-for="PromoEmails" />
+                        <span class="auth-check__box" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                        <span>
+                            @T("Yeni yazılar ve sınavlar yayınlandığında bana e-posta gönderilsin.", "Ich möchte per E-Mail erfahren, wenn neue Beiträge und Prüfungen erscheinen.")
+                            <small>@T("İstediğiniz zaman Hesabım sayfasından ya da e-postadaki bağlantıdan vazgeçebilirsiniz.", "Sie können sich jederzeit auf der Seite „Mein Konto“ oder über den Link in der E-Mail abmelden.")</small>
+                        </span>
+                    </label>
 
                     <div id="turnstile-widget" class="auth-turnstile" data-sitekey="@ViewBag.TurnstileSiteKey"></div>
 

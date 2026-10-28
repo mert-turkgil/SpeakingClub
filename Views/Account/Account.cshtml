@@ -247,6 +247,31 @@
                     </div>
                 </section>
 
+                @* Announcements by e-mail (AccountController.EmailPreferences); exam results always come *@
+                <section class="acct-card reveal" id="email" aria-labelledby="email-title">
+                    <div class="acct-card__head">
+                        <h2 class="acct-card__title" id="email-title"><i class="fa-regular fa-envelope" aria-hidden="true"></i>@T("E-posta bildirimleri", "E-Mail-Benachrichtigungen")</h2>
+                    </div>
+                    @if (Model.EmailChoicePending)
+                    {
+                        <p class="acct-note acct-note--ask">@T("Google ile kayıt oldunuz. Yeni yazı ve sınavlardan e-postayla haberdar olmak ister misiniz? Seçip kaydedin.", "Sie haben sich mit Google registriert. Möchten Sie per E-Mail von neuen Beiträgen und Prüfungen erfahren? Wählen Sie und speichern Sie.")</p>
+                    }
+                    <form method="post" asp-action="EmailPreferences" class="acct-email">
+                        <label class="acct-switch">
+                            <input type="checkbox" name="newPosts" value="true" checked="@(Model.NewPostEmails && !Model.EmailChoicePending)" />
+                            <span class="acct-switch__track" aria-hidden="true"></span>
+                            <span><strong>@T("Yeni yazılar", "Neue Beiträge")</strong><small>@T("Yeni bir yazı paylaştığımda haber veririm.", "Ich sage Bescheid, wenn ich einen neuen Beitrag veröffentliche.")</small></span>
+                        </label>
+                        <label class="acct-switch">
+                            <input type="checkbox" name="newQuizzes" value="true" checked="@(Model.NewQuizEmails && !Model.EmailChoicePending)" />
+                            <span class="acct-switch__track" aria-hidden="true"></span>
+                            <span><strong>@T("Yeni sınavlar", "Neue Prüfungen")</strong><small>@T("Yeni bir sınav hazırladığımda haber veririm.", "Ich sage Bescheid, wenn es eine neue Prüfung gibt.")</small></span>
+                        </label>
+                        <p class="acct-note"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>@T("Sınav sonuçlarınız her zaman e-postayla gelir.", "Ihre Prüfungsergebnisse kommen immer per E-Mail.")</p>
+                        <button type="submit" class="bp-btn bp-btn--ghost"><i class="fa-solid fa-check" aria-hidden="true"></i>@T("Kaydet", "Speichern")</button>
+                    </form>
+                </section>
+
                 @if (Model.IsStaff)
                 {
                     <section class="acct-card reveal" aria-labelledby="tools-title">

@@ -40,6 +40,10 @@ jobs:
       - name: Build
         run: dotnet build SpeakingClub.csproj --configuration Release --no-restore
 
+      # Unit tests for the report statistics (tests/SpeakingClub.Tests)
+      - name: Test
+        run: dotnet test tests/SpeakingClub.Tests --configuration Release
+
       # The deploy runs this tool only when a migration is pending, so a break in it would otherwise
       # surface in the middle of a deploy.
       - name: Build database backup tool

@@ -1,0 +1,17 @@
+@model SpeakingClub.Models.Reports.AttemptDetail
+@* One attempt as a page of its own (opened in a new tab from the side panel, or a shared link) *@
+@{
+    Layout = "_AdminLayout";
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var section = AdminNav.Find("results", isGerman)!;
+    ViewData["Title"] = T("Deneme ayrıntısı", "Versuchsdetails") + " · " + Model.StudentName;
+    ViewData["AdminSection"] = section.Key;
+    var adminHeader = new AdminHeader(section.Key, T("Deneme ayrıntısı", "Versuchsdetails"), Model.QuizTitle,
+        ParentTitle: section.Title, ParentHref: Url.Action("Index"));
+}
+
+<partial name="_AdminHeader" model="adminHeader" />
+<div class="adm-card">
+    <partial name="_Attempt" model="Model" />
+</div>

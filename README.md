@@ -252,13 +252,16 @@ roles and users from `Data:Users`. Sign in with that user and open `/Admin`.
 | `Data:Roles`, `Data:Users` | First start: the roles and the first admin account |
 | `DeepL:ApiKey` | Dictionary step 2. Free keys end in `:fx` and use `api-free.deepl.com` automatically |
 | `Pons:ApiKey` | Dictionary step 3 |
-| `EmailSender:*` (`SMTPMail`, `Port`, `Username`, `Password`, `FromEmail`, `FromName`, `ReplyToEmail`) | Sign-up confirmation emails and the contact form |
+| `EmailSender:*` (`SMTPMail`, `Port`, `Username`, `Password`, `FromEmail`, `FromName`, `ReplyToEmail`) | All e-mails: exam results, sign-up confirmations, announcements, the contact form (Gmail: an app password) |
+| `Email:PerMinute`, `Email:DailyCap`, `Email:MaxAttempts` | Optional pace of the e-mail worker (defaults 6 announcements a minute, 400 e-mails a day, 6 tries) |
+| `Email:IncludeLegacyOptIns`, `Email:ContactTo`, `Email:Enabled` | Optional: announcements to members from before the e-mails (default yes), the contact-form inbox, a switch that holds every e-mail in the queue |
 | `Turnstile:SiteKey`, `Turnstile:SecretKey` | Bot protection on sign-up, login and contact |
 | `Authentication:Google:ClientId`, `…:ClientSecret` | "Continue with Google" (optional) |
 | `License:CKEditor` | Blog editor license key ([CKEditor licensing](https://ckeditor.com/pricing/)) |
 | `ContentSecurityPolicy` | The site's CSP header |
 
-Leaving `DeepL` or `Pons` empty simply skips that step.
+Leaving `DeepL` or `Pons` empty simply skips that step. For local e-mail tests point `EmailSender` at a local SMTP
+catcher (for example smtp4dev on port 2525 with `UseSsl=false`) and preview the templates at `/dev/emails`.
 
 ---
 
@@ -294,6 +297,12 @@ Every push to `main` runs [`.github/workflows/plesk-deploy.yml`](.github/workflo
 5. Smoke-tests `/health` and the home page.
 
 How to restore a backup: [`.github/deploy/RESTORE.md`](.github/deploy/RESTORE.md).
+
+The unit tests (`tests/SpeakingClub.Tests`) run before publishing; a failing test stops the deploy.
+
+**Keep the site awake.** IIS stops an idle site after a while, and the e-mail worker with it: announcements then
+wait for the next visitor. Turn on "Always running" / disable the idle timeout in Plesk if the plan allows it, or
+let a free uptime monitor (e.g. UptimeRobot) open `/health` every 5 minutes.
 
 ---
 

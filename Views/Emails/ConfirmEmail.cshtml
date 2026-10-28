@@ -1,0 +1,22 @@
+@model SpeakingClub.Services.Email.ConfirmEmailEmail
+@* After registering: confirm the address (AccountController.Register). *@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    ViewData["Subject"] = T("E-posta adresinizi onaylayın", "Bitte bestätigen Sie Ihre E-Mail-Adresse");
+    ViewData["Preheader"] = T("Bir tıkla hesabınızı açın.", "Mit einem Klick ist Ihr Konto bereit.");
+}
+<p style="margin:0 0 14px; font-size:17px; color:#2B2220;">@T($"Merhaba {Model.Name},", $"Hallo {Model.Name},")</p>
+<p style="margin:0 0 18px;">@T("Almanca Konuş'a hoş geldiniz! Hesabınızı kullanmaya başlamak için e-posta adresinizi onaylamanız yeterli:",
+    "willkommen bei Almanca Konuş! Bestätigen Sie nur noch Ihre E-Mail-Adresse, dann können Sie loslegen:")</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 22px;">
+    <tr>
+        <td style="border-radius:999px; background:#C2413F;">
+            <a href="@Model.ConfirmUrl" style="display:inline-block; padding:12px 24px; color:#FFFFFF; font-weight:bold; text-decoration:none; border-radius:999px;">@T("E-postamı onayla", "E-Mail bestätigen")</a>
+        </td>
+    </tr>
+</table>
+<p style="margin:0 0 14px; font-size:14px; color:#85766F;">@T("Düğme çalışmazsa bu adresi tarayıcınıza yapıştırın:", "Falls der Knopf nicht funktioniert, kopieren Sie diese Adresse in Ihren Browser:")<br>
+    <a href="@Model.ConfirmUrl" style="color:#C2413F; word-break:break-all;">@Model.ConfirmUrl</a></p>
+<p style="margin:0 0 18px; font-size:14px; color:#85766F;">@T("Bu hesabı siz açmadıysanız bu e-postayı silebilirsiniz; hiçbir şey yapmanız gerekmez.", "Wenn Sie kein Konto angelegt haben, können Sie diese E-Mail einfach löschen.")</p>
+<p style="margin:0;">@T("Sevgiler,", "Herzliche Grüße,")<br>Suna</p>

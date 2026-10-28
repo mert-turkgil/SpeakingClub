@@ -10,10 +10,12 @@ namespace SpeakingClub.Models
     {
         [Required(ErrorMessage = "First Name is required.")]
         [Display(Name = "First Name")]
+        [StringLength(SpeakingClub.Identity.User.NameMaxLength)]
         public required string FirstName { get; set; }
         
         [Required(ErrorMessage = "Last Name is required.")]
         [Display(Name = "Last Name")]
+        [StringLength(SpeakingClub.Identity.User.NameMaxLength)]
         public required string LastName { get; set; }
         
         [Required(ErrorMessage = "Age is required.")]
@@ -34,5 +36,8 @@ namespace SpeakingClub.Models
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         [Display(Name = "Confirm Password")]
         public required string ConfirmPassword { get; set; }
+
+        // "Tell me about new posts and quizzes by e-mail": unchecked unless the visitor ticks it
+        public bool PromoEmails { get; set; }
     }
 }

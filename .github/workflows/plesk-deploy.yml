@@ -145,6 +145,11 @@ jobs:
       - name: Restore
         run: dotnet restore SpeakingClub.csproj
 
+      # The report statistics (difficulty, discrimination, KR-20…) must stay right: a failing test stops the deploy
+      # before anything is published or migrated.
+      - name: Test
+        run: dotnet test tests/SpeakingClub.Tests --configuration Release
+
       # Written before publish so the Web SDK picks it up like any other appsettings*.json, and so
       # the dotnet ef steps below (ASPNETCORE_ENVIRONMENT=Production) see the same configuration.
       # jq --arg does the JSON escaping, so passwords with quotes/backslashes/% survive intact.

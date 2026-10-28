@@ -14,6 +14,7 @@ using SpeakingClub.Entity;
 using SpeakingClub.Identity;
 using SpeakingClub.Models;
 using SpeakingClub.Services;
+using SpeakingClub.Services.Email;
 
 namespace SpeakingClub.Controllers
 {
@@ -26,7 +27,8 @@ namespace SpeakingClub.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly LanguageService _localization;
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IEmailSender _emailSender;
+        private readonly EmailQueue _mail;
+        private readonly EmailOptions _emailOptions;
         private readonly UserManager<User> _userManager;
         private readonly ExamService _examService;
 
@@ -36,7 +38,8 @@ namespace SpeakingClub.Controllers
             LanguageService localization,
             IUnitOfWork unitOfWork,
             IMemoryCache memoryCache,
-            IEmailSender emailSender,
+            EmailQueue mail,
+            Microsoft.Extensions.Options.IOptions<EmailOptions> emailOptions,
             UserManager<User> userManager,
             ExamService examService)
         {
@@ -46,7 +49,8 @@ namespace SpeakingClub.Controllers
             _logger = logger;
             _localization = localization;
             _unitOfWork = unitOfWork;
-            _emailSender = emailSender;
+            _mail = mail;
+            _emailOptions = emailOptions.Value;
             _userManager = userManager;
         }
 
@@ -112,19 +116,9 @@ namespace SpeakingClub.Controllers
                 : "/" + image;
         }
 
-        // Helper: the URL paths a post exists at. A language has a URL only when the post is translated into it;
-        // a post without translations is served from its base fields at the Turkish URL. (SitemapController
-        // lists the same URLs.)
-        private static (string? TrPath, string? DePath) BlogPaths(SpeakingClub.Entity.Blog blog, string? requestedSlug = null)
-        {
-            var tr = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "tr");
-            var de = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "de");
-            var baseSlug = FirstNonEmpty(blog.Slug, blog.Url, requestedSlug);
-            var trSlug = tr != null ? FirstNonEmpty(tr.Slug, baseSlug) : de == null ? baseSlug : null;
-            var deSlug = de != null ? FirstNonEmpty(de.Slug, baseSlug) : null;
-            return (string.IsNullOrEmpty(trSlug) ? null : $"/yazilar/{trSlug}",
-                    string.IsNullOrEmpty(deSlug) ? null : $"/beitraege/{deSlug}");
-        }
+        // Helper: the URL paths a post exists at (SeoHelper.BlogPaths; the e-mails use it too)
+        private static (string? TrPath, string? DePath) BlogPaths(SpeakingClub.Entity.Blog blog, string? requestedSlug = null) =>
+            SeoHelper.BlogPaths(blog, requestedSlug);
 
         // Helper: a post as a card in the current language (falls back to the language it exists in)
         private BlogCardModel BuildBlogCard(SpeakingClub.Entity.Blog blog)
@@ -163,6 +157,14 @@ namespace SpeakingClub.Controllers
                 CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
                 new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
             );
+
+            // A signed-in member's e-mails follow the language they choose
+            if (User.Identity?.IsAuthenticated == true && await _userManager.GetUserAsync(User) is { } member
+                && member.PreferredCulture != culture)
+            {
+                member.PreferredCulture = culture;
+                await _userManager.UpdateAsync(member);
+            }
 
             var targetUrl = await MapUrlToTargetCultureAsync(returnUrl, culture);
             return LocalRedirect(targetUrl);
@@ -519,55 +521,15 @@ namespace SpeakingClub.Controllers
             var email = contact.Email;
             var message = contact.Message;
 
-            // Administrator's email address.
-            string adminEmail = "almancakonus.info@gmail.com";
-
-            // Define file paths for your templates.
-            // Adjust the paths if your EmailTemplates folder is in a different location.
-            string adminTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "AdminNotification.html");
-            // Determine the current culture (for example,   "de-DE", or "tr-TR")
-            var currentCulture = CultureInfo.CurrentCulture.Name; // or use RequestCulture if available
-
-            string userTemplatePath;
-            if (currentCulture.StartsWith("de", StringComparison.OrdinalIgnoreCase))
-            {
-                userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserNotification_de.html");
-            }
-            else
-            {
-                userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserNotification_tr.html");
-            }
-
-            // Read the HTML template content from files.
-            string adminEmailBodyTemplate = await System.IO.File.ReadAllTextAsync(adminTemplatePath);
-            string userEmailBodyTemplate = await System.IO.File.ReadAllTextAsync(userTemplatePath);
-
-            // Strip HTML tags from message (remove CKEditor HTML) and escape for security
-            string plainMessage = StripHtmlTags(message);
-
-            // Replace placeholders in the admin template.
-            string adminEmailBody = adminEmailBodyTemplate
-                .Replace("{UserName}", System.Net.WebUtility.HtmlEncode(name))
-                .Replace("{UserEmail}", System.Net.WebUtility.HtmlEncode(email))
-                .Replace("{UserMessage}", System.Net.WebUtility.HtmlEncode(plainMessage));
-
-            // For the user email template, you might not need to replace placeholders if it’s static.
-            string userEmailBody = userEmailBodyTemplate;
-
-            // Set subjects (you can hardcode these or load from configuration)
-            string adminSubject = "New Contact Message Received";
-            string userSubject = "Thank You for Your Message";
-
+            // To Suna (Reply-To: the visitor) and a short receipt to the visitor, through the e-mail queue. The message
+            // is not kept once it is delivered (privacy page); CKEditor HTML is reduced to plain text first.
             try
             {
-                // Send email to the administrator.
-                await _emailSender.SendEmailAsync(adminEmail, adminSubject, adminEmailBody);
-                // Send automatic response email to the user.
-                await _emailSender.SendEmailAsync(email, userSubject, userEmailBody);
+                await _mail.QueueContactAsync(_emailOptions.ContactTo, name, email, StripHtmlTags(message), UserLanguage.Current);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Contact form email sending failed.");
+                _logger.LogError(ex, "Contact form message could not be queued.");
                 TempData["ContactError"] = "An error occurred while sending your message. Please try again later.";
                 return Redirect(GetLocalizedPath("/hakkimizda", "/ueber-uns", "/hakkimizda"));
             }

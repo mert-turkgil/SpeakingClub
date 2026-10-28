@@ -31,31 +31,20 @@ builder.Configuration
     .AddUserSecrets<Program>(optional: true)
     .AddEnvironmentVariables();
 Console.WriteLine("ENV: " + builder.Environment.EnvironmentName);
-// Configure EmailSender settings
-var emailSettings = config.GetSection("EmailSender");
-var port = emailSettings.GetValue<int>("Port");
-var host = emailSettings.GetValue<string>("SMTPMail") ?? "localhost";
-var enablessl = true;
-var username = emailSettings.GetValue<string>("Username") ?? "dummy@example.com";
-var password = emailSettings.GetValue<string>("Password") ?? "dummy-password";
-var fromEmail = emailSettings.GetValue<string>("FromEmail") ?? username;
-var fromName = emailSettings.GetValue<string>("FromName") ?? "Speaking Club";
-var replyToEmail = emailSettings.GetValue<string>("ReplyToEmail");
 var provider = new FileExtensionContentTypeProvider();
 // If .glb is not mapped, add it:
 provider.Mappings[".glb"] = "model/gltf-binary";
 
-// Only validate email settings if not in Development mode and settings are actually configured
-if (!builder.Environment.IsDevelopment() && !string.IsNullOrEmpty(emailSettings.GetValue<string>("SMTPMail")))
+// E-mail (Services/Email): the mail server comes from the "EmailSender" section, the pace from "Email".
+// In Production a missing server or password stops the start, as before; problems that still let mail go out
+// are logged by EmailOutboxService and shown on Admin → E-postalar.
+var smtpCheck = config.GetSection(SpeakingClub.Services.Email.SmtpOptions.Section).Get<SpeakingClub.Services.Email.SmtpOptions>() ?? new();
+if (!builder.Environment.IsDevelopment() && !string.IsNullOrEmpty(smtpCheck.Host))
 {
-    if (string.IsNullOrEmpty(host))
-        throw new ArgumentNullException(nameof(host), "SMTP host cannot be null or empty.");
-    if (port <= 0)
-        throw new ArgumentOutOfRangeException(nameof(port), "SMTP port must be a positive number.");
-    if (string.IsNullOrEmpty(username))
-        throw new ArgumentNullException(nameof(username), "SMTP username cannot be null or empty.");
-    if (string.IsNullOrEmpty(password))
-        throw new ArgumentNullException(nameof(password), "SMTP password cannot be null or empty.");
+    if (smtpCheck.Port <= 0)
+        throw new ArgumentOutOfRangeException("EmailSender:Port", "SMTP port must be a positive number.");
+    if (string.IsNullOrEmpty(smtpCheck.Username) || string.IsNullOrEmpty(smtpCheck.Password))
+        throw new ArgumentNullException("EmailSender:Username", "SMTP username and password cannot be empty.");
 }
 #endregion
 
@@ -77,15 +66,21 @@ Console.WriteLine("Data Protection Keys: stored in database table [DataProtectio
 #endregion
 
 #region DbContext Registration
+// Both contexts empty the report cache after saves that change results, quizzes or accounts
+builder.Services.AddSingleton<SpeakingClub.Services.Reports.ReportCache>();
+builder.Services.AddSingleton<SpeakingClub.Services.Reports.ReportCacheInterceptor>();
+
 // Register SpeakingClubContext (your domain entities)
-builder.Services.AddDbContext<SpeakingClubContext>(options =>
+builder.Services.AddDbContext<SpeakingClubContext>((services, options) =>
     options.UseSqlServer(config.GetConnectionString("DefaultConnection"))
+        .AddInterceptors(services.GetRequiredService<SpeakingClub.Services.Reports.ReportCacheInterceptor>())
     // options.UseSqlite(config.GetConnectionString("DefaultConnection")) // Use SQLite when needed.
 );
 
 // Register ApplicationDbContext (for Identity)
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContext<ApplicationDbContext>((services, options) =>
     options.UseSqlServer(config.GetConnectionString("DefaultConnection"))
+        .AddInterceptors(services.GetRequiredService<SpeakingClub.Services.Reports.ReportCacheInterceptor>())
 );
 #endregion
 
@@ -222,9 +217,15 @@ builder.Services.AddAntiforgery(options =>
 #region Additional Services
 // Register UnitOfWork extension (repositories accessible via IUnitOfWork)
 builder.Services.AddUnitOfWork();
-// Configure Email Sender
-builder.Services.AddScoped<IEmailSender, SmtpEmailSender>(sp =>
-    new SmtpEmailSender(host!, port, enablessl, username!, password!, fromEmail!, fromName!, replyToEmail!));
+// E-mail: queue (EmailQueue) → worker (EmailOutboxService) → MailKit; every send is logged (EmailLog)
+builder.Services.Configure<SpeakingClub.Services.Email.SmtpOptions>(config.GetSection(SpeakingClub.Services.Email.SmtpOptions.Section));
+builder.Services.Configure<SpeakingClub.Services.Email.EmailOptions>(config.GetSection(SpeakingClub.Services.Email.EmailOptions.Section));
+builder.Services.AddSingleton<SpeakingClub.Services.Email.EmailSignal>();
+builder.Services.AddSingleton<SpeakingClub.Services.Email.IMailTransport, SpeakingClub.Services.Email.MailKitEmailSender>();
+builder.Services.AddScoped<SpeakingClub.Services.Email.EmailRenderer>();   // scoped: views may inject scoped services
+builder.Services.AddScoped<SpeakingClub.Services.Email.EmailQueue>();
+builder.Services.AddScoped<SpeakingClub.Services.Email.EmailService>();
+builder.Services.AddHostedService<SpeakingClub.Services.Email.EmailOutboxService>();
 
 // Register resource services and file provider for localization/resources.
 var resourcesPath = Path.Combine(builder.Environment.ContentRootPath, "Resources");
@@ -232,6 +233,9 @@ builder.Services.AddSingleton<AliveResourceService>(p => new AliveResourceServic
 builder.Services.AddSingleton<IManageResourceService>(sp => new ManageResourceService(resourcesPath));
 builder.Services.AddSingleton<LanguageService>();
 builder.Services.AddScoped<SpeakingClub.Services.ExamService>();
+// Admin reports (Services/Reports): one cache for the whole site, the queries per request
+builder.Services.AddScoped<SpeakingClub.Services.Reports.ExamReportService>();
+builder.Services.AddScoped<SpeakingClub.Services.Reports.MemberReportService>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 // Dictionary page: our words → DeepL → PONS (Services/DictionaryLookupService.cs).
 // Short timeouts and quick retries: a visitor is waiting for the page.

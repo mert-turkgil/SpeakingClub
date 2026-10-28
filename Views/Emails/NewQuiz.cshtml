@@ -1,0 +1,31 @@
+@model SpeakingClub.Services.Email.NewQuizEmail
+@* Announcement of a new quiz (promotional: only to members who want it). An EmailCampaign started by QuizCreate/QuizEdit. *@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    ViewData["Subject"] = T($"Yeni sınav: {Model.Title}", $"Neue Prüfung: {Model.Title}");
+    ViewData["Preheader"] = string.IsNullOrEmpty(Model.Summary) ? T("Kendinizi denemek ister misiniz?", "Lust, sich zu testen?") : Model.Summary;
+    ViewData["Promotional"] = true;
+    var facts = new List<string>();
+    if (Model.Level != null) facts.Add(T("Seviye ", "Niveau ") + Model.Level);
+    if (Model.Questions > 0) facts.Add(T($"{Model.Questions} soru", $"{Model.Questions} Fragen"));
+    if (Model.TimeLimitMinutes is { } minutes) facts.Add(T($"{minutes} dakika", $"{minutes} Minuten"));
+}
+<p style="margin:0 0 14px; font-size:17px; color:#2B2220;">@T($"Merhaba {Model.Name},", $"Hallo {Model.Name},")</p>
+<p style="margin:0 0 18px;">@T("sizin için yeni bir sınav hazırladım:", "ich habe eine neue Prüfung für Sie vorbereitet:")</p>
+@if (Model.ImageUrl != null)
+{
+    <a href="@Model.Url" style="text-decoration:none;"><img src="@Model.ImageUrl" alt="" width="506" style="display:block; width:100%; max-width:506px; height:auto; margin:0 0 16px; border-radius:12px; border:0;"></a>
+}
+<h1 style="margin:0 0 6px; font-family:Georgia, 'Times New Roman', serif; font-size:23px; line-height:1.3; color:#2B2220;">@Model.Title</h1>
+@if (facts.Count > 0) { <p style="margin:0 0 12px; font-size:14px; color:#85766F;">@string.Join(" · ", facts)</p> }
+@if (!string.IsNullOrEmpty(Model.Summary)) { <p style="margin:0 0 16px;">@Model.Summary</p> }
+<p style="margin:0 0 20px;">@T("Sonucunuzu bitirir bitirmez ekranda görürsünüz; ayrıca e-postayla da gönderirim.", "Ihr Ergebnis sehen Sie sofort am Ende; ich schicke es Ihnen auch per E-Mail.")</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 22px;">
+    <tr>
+        <td style="border-radius:999px; background:#C2413F;">
+            <a href="@Model.Url" style="display:inline-block; padding:12px 24px; color:#FFFFFF; font-weight:bold; text-decoration:none; border-radius:999px;">@T("Sınava başla", "Prüfung starten")</a>
+        </td>
+    </tr>
+</table>
+<p style="margin:0;">@T("Başarılar,", "Viel Erfolg,")<br>Suna</p>

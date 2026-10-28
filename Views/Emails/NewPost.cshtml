@@ -1,0 +1,25 @@
+@model SpeakingClub.Services.Email.NewPostEmail
+@* Announcement of a new post (promotional: only to members who want it). An EmailCampaign started by BlogCreate/BlogEdit. *@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    ViewData["Subject"] = T($"Yeni yazı: {Model.Title}", $"Neuer Beitrag: {Model.Title}");
+    ViewData["Preheader"] = Model.Summary;
+    ViewData["Promotional"] = true;
+}
+<p style="margin:0 0 14px; font-size:17px; color:#2B2220;">@T($"Merhaba {Model.Name},", $"Hallo {Model.Name},")</p>
+<p style="margin:0 0 18px;">@T("sitede yeni bir yazı paylaştım:", "ich habe einen neuen Beitrag veröffentlicht:")</p>
+@if (Model.ImageUrl != null)
+{
+    <a href="@Model.Url" style="text-decoration:none;"><img src="@Model.ImageUrl" alt="" width="506" style="display:block; width:100%; max-width:506px; height:auto; margin:0 0 16px; border-radius:12px; border:0;"></a>
+}
+<h1 style="margin:0 0 10px; font-family:Georgia, 'Times New Roman', serif; font-size:23px; line-height:1.3; color:#2B2220;"><a href="@Model.Url" style="color:#2B2220; text-decoration:none;">@Model.Title</a></h1>
+@if (!string.IsNullOrEmpty(Model.Summary)) { <p style="margin:0 0 20px;">@Model.Summary</p> }
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 22px;">
+    <tr>
+        <td style="border-radius:999px; background:#C2413F;">
+            <a href="@Model.Url" style="display:inline-block; padding:12px 24px; color:#FFFFFF; font-weight:bold; text-decoration:none; border-radius:999px;">@T("Yazıyı oku", "Beitrag lesen")</a>
+        </td>
+    </tr>
+</table>
+<p style="margin:0;">@T("Keyifli okumalar,", "Viel Freude beim Lesen,")<br>Suna</p>

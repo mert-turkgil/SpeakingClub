@@ -4,4 +4,7 @@
     <Project Path=".github/tools/DbBackup/DbBackup.csproj" />
   </Folder>
   <Project Path="SpeakingClub.csproj" />
+  <Folder Name="/tests/">
+    <Project Path="tests/SpeakingClub.Tests/SpeakingClub.Tests.csproj" />
+  </Folder>
 </Solution>

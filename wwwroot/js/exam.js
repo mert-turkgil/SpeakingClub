@@ -190,6 +190,17 @@
         state.questionStartedAt = Date.now();
     }
 
+    // Seconds per question including the one on screen now, without resetting its clock (sent with the autosave,
+    // so an attempt collected after the deadline still has its timings)
+    function timesSnapshot() {
+        const t = Object.assign({}, state.times);
+        if (state.phase === 'active') {
+            const q = questions[state.index].dataset.q;
+            t[q] = (t[q] || 0) + Math.round((Date.now() - state.questionStartedAt) / 1000);
+        }
+        return t;
+    }
+
     function show(i, direction, focus) {
         if (i < 0 || i >= total) return;
         recordTime();
@@ -259,7 +270,7 @@
                 signal: controller ? controller.signal : undefined,
                 keepalive: !!(options && options.final),
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
-                body: JSON.stringify({ attemptId: attemptId, answers: state.answers, events: events })
+                body: JSON.stringify({ attemptId: attemptId, answers: state.answers, times: timesSnapshot(), events: events })
             });
             if (!response.ok) throw new Error('HTTP ' + response.status);
             const data = await response.json();

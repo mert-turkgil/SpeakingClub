@@ -44,14 +44,24 @@ namespace SpeakingClub.Data
         public DbSet<SlideShow> Slide { get; set; }
         public DbSet<DownloadLog> DownloadLogs { get; set; }
 
+        // E-mails (Entity/EmailEntities.cs, Services/Email)
+        public DbSet<EmailLog> EmailLogs { get; set; }
+        public DbSet<EmailOutbox> EmailOutbox { get; set; }
+        public DbSet<EmailCampaign> EmailCampaigns { get; set; }
+
+        // Read-only (Entity/ReportProjections.cs)
+        public DbSet<ReportUser> ReportUsers { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
             // Ignore the navigation property so that only the foreign key is used in this context.
             // modelBuilder.Entity<QuizSubmission>().Ignore(qs => qs.User);            
+            // 450 = the length of an Identity user id; nvarchar(max) could not be indexed
             modelBuilder.Entity<QuizSubmission>()
                 .Property(qs => qs.UserId)
-                .IsRequired();
+                .IsRequired()
+                .HasMaxLength(450);
             modelBuilder.Entity<QuizSubmission>()
                 .Property(qs => qs.EndReason)
                 .HasMaxLength(20);
@@ -60,6 +70,84 @@ namespace SpeakingClub.Data
                 .HasIndex(qs => qs.AttemptId)
                 .IsUnique()
                 .HasFilter("[AttemptId] IS NOT NULL");
+            // Reports filter by date first (Services/Reports): this index covers the result list and its statistics
+            modelBuilder.Entity<QuizSubmission>()
+                .HasIndex(qs => qs.SubmissionDate)
+                .IncludeProperties(qs => new { qs.QuizId, qs.UserId, qs.Score, qs.DurationSeconds, qs.ViolationCount, qs.EndReason, qs.AttemptNumber });
+            modelBuilder.Entity<QuizSubmission>()
+                .HasIndex(qs => new { qs.QuizId, qs.SubmissionDate })
+                .IncludeProperties(qs => new { qs.UserId, qs.Score, qs.AttemptNumber });
+            modelBuilder.Entity<QuizSubmission>()
+                .HasIndex(qs => new { qs.UserId, qs.QuizId, qs.SubmissionDate })
+                .IncludeProperties(qs => qs.Score);
+            modelBuilder.Entity<QuizResponse>()
+                .HasIndex(r => r.QuestionId);
+            // Question statistics read every response of a set of submissions: the columns they need come with the index
+            modelBuilder.Entity<QuizResponse>()
+                .HasIndex(r => r.QuizSubmissionId)
+                .IncludeProperties(r => new { r.QuestionId, r.QuizAnswerId, r.IsCorrect, r.TimeTakenSeconds });
+            // The background sweep that collects attempts whose time ran out
+            modelBuilder.Entity<QuizAttempt>()
+                .HasIndex(a => new { a.SubmittedAt, a.ExpiresAt });
+            // Students' names for the exam report (Entity/ReportProjections.cs): read-only, not in migrations
+            modelBuilder.Entity<ReportUser>()
+                .HasNoKey()
+                .ToTable((string?)null)   // read through the query below only: no table, no migration
+                .ToSqlQuery("SELECT Id AS UserId, FirstName, LastName, Email FROM AspNetUsers");
+            modelBuilder.Entity<DownloadLog>()
+                .HasIndex(dl => new { dl.UserId, dl.DownloadedAt });
+
+            // E-mails: the outbox is read by "what is due next", the log by date and status (Admin → E-postalar)
+            modelBuilder.Entity<EmailOutbox>(e =>
+            {
+                e.Property(x => x.DedupeKey).HasMaxLength(200);
+                e.Property(x => x.Template).HasMaxLength(50);
+                e.Property(x => x.RecipientEmail).HasMaxLength(256);
+                e.Property(x => x.UserId).HasMaxLength(450);
+                e.Property(x => x.Culture).HasMaxLength(10);
+                e.Property(x => x.LastError).HasMaxLength(1000);
+                e.Property(x => x.RelatedType).HasMaxLength(30);
+                e.HasIndex(x => x.DedupeKey).IsUnique();
+                e.HasIndex(x => new { x.Category, x.NextAttemptAt }).HasFilter("[ProcessedAt] IS NULL");
+                e.HasIndex(x => x.CampaignId);
+                e.HasIndex(x => x.UserId);
+            });
+            modelBuilder.Entity<EmailLog>(e =>
+            {
+                e.Property(x => x.Template).HasMaxLength(50);
+                e.Property(x => x.RecipientEmail).HasMaxLength(256);
+                e.Property(x => x.UserId).HasMaxLength(450);
+                e.Property(x => x.Subject).HasMaxLength(300);
+                e.Property(x => x.Error).HasMaxLength(1000);
+                e.Property(x => x.RelatedType).HasMaxLength(30);
+                e.HasIndex(x => x.CreatedAt);
+                e.HasIndex(x => new { x.Status, x.CreatedAt });
+                e.HasIndex(x => x.SentAt);
+                e.HasIndex(x => x.CampaignId);
+                e.HasIndex(x => x.UserId);
+            });
+            modelBuilder.Entity<EmailCampaign>(e =>
+            {
+                e.Property(x => x.Kind).HasMaxLength(20);
+                e.Property(x => x.Title).HasMaxLength(300);
+                e.Property(x => x.CreatedBy).HasMaxLength(450);
+                e.Property(x => x.Cursor).HasMaxLength(450);
+                e.HasIndex(x => new { x.Kind, x.EntityId }).IsUnique();
+            });
+
+            // Identity.User is also mapped here (a separate "User" table, through the Comment/Rating/UserQuiz
+            // navigations). The member fields belong to AspNetUsers only (ApplicationDbContext), so this context
+            // ignores them and its model stays unchanged.
+            modelBuilder.Entity<User>(user =>
+            {
+                user.Ignore(u => u.CreatedAt);
+                user.Ignore(u => u.LastLoginAt);
+                user.Ignore(u => u.PreferredCulture);
+                user.Ignore(u => u.EmailOptOuts);
+                user.Ignore(u => u.PromoConsentAt);
+                user.Ignore(u => u.PromoConsentSource);
+                user.Ignore(u => u.EmailPreferencesToken);
+            });
 
             modelBuilder.Entity<QuizAttempt>(attempt =>
             {

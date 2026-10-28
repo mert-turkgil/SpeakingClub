@@ -32,6 +32,7 @@ namespace SpeakingClub.Models
         public string? MetaKeywordsDe { get; init; }
         public string? TeacherId { get; init; }
         public bool IsAnonymous { get; init; }
+        public bool AnnounceByEmail { get; init; }
         public List<int> SelectedTagIds { get; init; } = new();
         public List<int> SelectedWordIds { get; init; } = new();
         public IEnumerable<SelectListItem> Categories { get; init; } = Enumerable.Empty<SelectListItem>();
@@ -59,6 +60,7 @@ namespace SpeakingClub.Models
             MetaKeywordsDe = m.MetaKeywordsDe,
             TeacherId = m.TeacherId,
             IsAnonymous = m.IsAnonymous,
+            AnnounceByEmail = m.AnnounceByEmail,
             SelectedTagIds = m.SelectedTagIds ?? new(),
             SelectedWordIds = m.SelectedWordIds ?? new(),
             Categories = m.Categories ?? Enumerable.Empty<SelectListItem>(),
@@ -90,6 +92,7 @@ namespace SpeakingClub.Models
             MetaKeywordsDe = m.MetaKeywordsDe,
             TeacherId = m.TeacherId,
             IsAnonymous = m.IsAnonymous,
+            AnnounceByEmail = m.AnnounceByEmail,
             SelectedTagIds = m.SelectedTagIds ?? new(),
             SelectedWordIds = m.SelectedWordIds ?? new(),
             Categories = m.Categories,

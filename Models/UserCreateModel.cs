@@ -9,9 +9,11 @@ namespace SpeakingClub.Models
    public class UserCreateModel
     {
         [Required]
+        [StringLength(SpeakingClub.Identity.User.NameMaxLength)]
         public required string FirstName { get; set; }
 
         [Required]
+        [StringLength(SpeakingClub.Identity.User.NameMaxLength)]
         public required string LastName { get; set; }
 
         [Required]

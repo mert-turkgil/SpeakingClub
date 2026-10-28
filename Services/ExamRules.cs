@@ -16,6 +16,9 @@ namespace SpeakingClub.Services
         // Answers posted this long after the deadline are still accepted (network latency, slow devices)
         public const int GraceSeconds = 60;
 
+        // A score (percentage) from which an attempt counts as passed: reports, result e-mails, the student's pages
+        public const int PassScore = 50;
+
         // Event types the exam room reports; the ones in ViolationTypes count against MaxViolations
         public static readonly HashSet<string> EventTypes = new(StringComparer.Ordinal)
         {

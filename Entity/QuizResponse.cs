@@ -23,5 +23,9 @@ namespace SpeakingClub.Entity
         // For open-text responses, you might store the answer text.
         public string AnswerText { get; set; }
         public int TimeTakenSeconds { get; internal set; }
+
+        // Whether the chosen answer was correct when the attempt was graded (null: graded before this was stored).
+        // Kept so later edits to the answer options can't rewrite past results or the question statistics.
+        public bool? IsCorrect { get; set; }
     }
 }

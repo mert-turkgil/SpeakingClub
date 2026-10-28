@@ -17,7 +17,7 @@ namespace SpeakingClub.Data.Migrations.IdentityMigrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -155,6 +155,35 @@ namespace SpeakingClub.Data.Migrations.IdentityMigrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("SpeakingClub.Entity.MemberActivity", b =>
+                {
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int");
+
+                    b.Property<double?>("AverageScore")
+                        .HasColumnType("float");
+
+                    b.Property<int?>("BestScore")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("FirstExamAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastExamAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Quizzes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.ToTable((string)null);
+
+                    b.ToSqlQuery("SELECT UserId, COUNT(*) AS Attempts, COUNT(DISTINCT QuizId) AS Quizzes,\r\n       AVG(CAST(Score AS float)) AS AverageScore, MAX(Score) AS BestScore,\r\n       MIN(SubmissionDate) AS FirstExamAt, MAX(SubmissionDate) AS LastExamAt\r\nFROM QuizSubmissions GROUP BY UserId");
+                });
+
             modelBuilder.Entity("SpeakingClub.Identity.User", b =>
                 {
                     b.Property<string>("Id")
@@ -170,6 +199,9 @@ namespace SpeakingClub.Data.Migrations.IdentityMigrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -177,11 +209,23 @@ namespace SpeakingClub.Data.Migrations.IdentityMigrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<int>("EmailOptOuts")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EmailPreferencesToken")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<string>("FirstName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("LastName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -206,6 +250,17 @@ namespace SpeakingClub.Data.Migrations.IdentityMigrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("PreferredCulture")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<DateTime?>("PromoConsentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PromoConsentSource")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -217,6 +272,12 @@ namespace SpeakingClub.Data.Migrations.IdentityMigrations
                         .HasColumnType("nvarchar(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("EmailPreferencesToken")
+                        .IsUnique()
+                        .HasFilter("[EmailPreferencesToken] IS NOT NULL");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");

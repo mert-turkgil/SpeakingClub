@@ -6,14 +6,11 @@ using SpeakingClub.Entity;
 
 namespace SpeakingClub.Data.Abstract
 {
+    // Reports over many students go through Services/Reports (projections in SQL), never through this repository:
+    // the old "load every submission with its answers" methods made the results page slower with every visitor.
     public interface IQuizSubmissionRepository : IGenericRepository<QuizSubmission>
     {
-        Task<List<QuizSubmission>> GetAllWithIncludesAsync();
         Task<IEnumerable<QuizSubmission>> GetSubmissionsByUserIdAsync(string userId);
-        Task<double> GetAverageScoreByUserAsync(string userId);
-        Task<IEnumerable<QuizSubmission>> GetSubmissionsByQuizIdAsync(int quizId);
-
-        Task<IEnumerable<QuizSubmission>> GetAllAtOnceAsync();
 
         Task<QuizSubmission?> GetLatestSubmissionByUserAndQuiz(string userId, int quizId);
 

@@ -1,0 +1,70 @@
+@model SpeakingClub.Services.Email.ExamResultEmail
+@* The result of an exam (transactional: every student gets it). Queued by ExamService.FinalizeAttemptAsync. *@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var m = Model;
+    ViewData["Subject"] = T($"Sınav sonucunuz: {m.QuizTitle} – {m.Score} puan", $"Ihr Ergebnis: {m.QuizTitle} – {m.Score} Punkte");
+    ViewData["Preheader"] = m.Passed
+        ? T($"Tebrikler, geçtiniz! {m.Correct}/{m.Total} doğru.", $"Glückwunsch, bestanden! {m.Correct}/{m.Total} richtig.")
+        : T($"{m.Correct}/{m.Total} doğru. Cevaplarınıza bakıp tekrar deneyebilirsiniz.", $"{m.Correct}/{m.Total} richtig. Schauen Sie sich Ihre Antworten an und versuchen Sie es erneut.");
+    var tone = m.Passed ? "#2E8B57" : "#C2413F";
+    var toneSoft = m.Passed ? "#E7F4EC" : "#FFE3E1";
+    var wrong = m.Answered - m.Correct;
+    var empty = m.Total - m.Answered;
+    string Clock(int s) => $"{s / 60}:{s % 60:00}";
+}
+<p style="margin:0 0 14px; font-size:17px; color:#2B2220;">@T($"Merhaba {m.Name},", $"Hallo {m.Name},")</p>
+<p style="margin:0 0 18px;">@T($"“{m.QuizTitle}” sınavını bitirdiniz. İşte sonucunuz:", $"Sie haben die Prüfung „{m.QuizTitle}“ beendet. Hier ist Ihr Ergebnis:")</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px; background:@toneSoft; border-radius:14px;">
+    <tr>
+        <td style="padding:18px 20px;">
+            <div style="font-size:40px; line-height:1; font-weight:bold; color:@tone;">@m.Score<span style="font-size:18px; font-weight:normal;"> / 100</span></div>
+            <div style="margin-top:6px; font-weight:bold; color:@tone;">
+                @if (m.Passed) { @T("Geçtiniz, tebrikler!", "Bestanden, herzlichen Glückwunsch!") }
+                else { @T($"Bu sefer olmadı: geçmek için {m.PassScore} puan gerekiyor.", $"Diesmal nicht: Zum Bestehen braucht es {m.PassScore} Punkte.") }
+            </div>
+            @if (m.Level != null) { <div style="margin-top:4px; font-size:13px; color:#4A3F3B;">@T("Seviye", "Niveau"): @m.Level</div> }
+        </td>
+    </tr>
+</table>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px; font-size:15px;">
+    <tr><td style="padding:3px 18px 3px 0; color:#85766F;">@T("Doğru", "Richtig")</td><td style="padding:3px 0; color:#2B2220; font-weight:bold;">@m.Correct / @m.Total</td></tr>
+    @if (wrong > 0) { <tr><td style="padding:3px 18px 3px 0; color:#85766F;">@T("Yanlış", "Falsch")</td><td style="padding:3px 0; color:#2B2220;">@wrong</td></tr> }
+    @if (empty > 0) { <tr><td style="padding:3px 18px 3px 0; color:#85766F;">@T("Boş", "Leer")</td><td style="padding:3px 0; color:#2B2220;">@empty</td></tr> }
+    <tr><td style="padding:3px 18px 3px 0; color:#85766F;">@T("Süre", "Dauer")</td><td style="padding:3px 0; color:#2B2220;">@Clock(m.DurationSeconds) @T("dk", "Min.")</td></tr>
+    @if (m.AttemptNumber > 1) { <tr><td style="padding:3px 18px 3px 0; color:#85766F;">@T("Deneme", "Versuch")</td><td style="padding:3px 0; color:#2B2220;">@T($"{m.AttemptNumber}.", $"{m.AttemptNumber}.")</td></tr> }
+</table>
+
+@if (m.PreviousBest is { } best)
+{
+    <p style="margin:0 0 16px;">
+        @if (m.Score > best) { @T($"Önceki en iyi sonucunuz {best} puandı: {m.Score - best} puan ilerlediniz, bu sizin en iyi sonucunuz!", $"Ihr bisher bestes Ergebnis waren {best} Punkte: {m.Score - best} Punkte mehr, Ihr bestes Ergebnis!") }
+        else if (m.Score == best) { @T($"Önceki en iyi sonucunuzla aynı: {best} puan.", $"Genauso gut wie Ihr bisher bestes Ergebnis: {best} Punkte.") }
+        else { @T($"Bu sınavdaki en iyi sonucunuz {best} puan. Bir dahaki sefere!", $"Ihr bestes Ergebnis in dieser Prüfung sind {best} Punkte. Beim nächsten Mal!") }
+    </p>
+}
+@if (m.EndReason == "timeout")
+{
+    <p style="margin:0 0 16px;">@T("Süre dolduğu için sınav o ana kadar verdiğiniz cevaplarla teslim edildi.", "Die Zeit war abgelaufen; die Prüfung wurde mit Ihren bis dahin gegebenen Antworten abgegeben.")</p>
+}
+else if (m.EndReason == "violations")
+{
+    <p style="margin:0 0 16px;">@T("Sınav, kurallar birkaç kez ihlal edildiği için (ör. sekme değiştirme) sonlandırıldı.", "Die Prüfung wurde beendet, weil mehrfach gegen die Regeln verstoßen wurde (z. B. Tab-Wechsel).")</p>
+}
+@if (wrong + empty > 0)
+{
+    <p style="margin:0 0 20px;">@T("En hızlı öğrenme yolu, yanlış ya da boş bıraktığınız sorulara bakıp doğrusunu görmektir.", "Am schnellsten lernt man, wenn man sich die falschen oder leeren Fragen und die richtige Lösung ansieht.")</p>
+}
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 22px;">
+    <tr>
+        <td style="border-radius:999px; background:#C2413F;">
+            <a href="@m.ReviewUrl" style="display:inline-block; padding:12px 24px; color:#FFFFFF; font-weight:bold; text-decoration:none; border-radius:999px;">@T("Cevaplarıma bak", "Meine Antworten ansehen")</a>
+        </td>
+    </tr>
+</table>
+<p style="margin:0 0 18px; font-size:14px;"><a href="@m.QuizzesUrl" style="color:#C2413F;">@T("Diğer sınavlar", "Weitere Prüfungen")</a></p>
+<p style="margin:0;">@T("Sevgiler,", "Herzliche Grüße,")<br>Suna</p>

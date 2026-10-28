@@ -432,6 +432,7 @@
                     <span class="adm-toggle__track" aria-hidden="true"></span>
                     <span class="adm-toggle__text"><strong>@T("Ana sayfada göster", "Auf der Startseite zeigen")</strong><small>@T("Yazı ana sayfadaki öne çıkanlar arasına girer.", "Der Beitrag erscheint unter den Highlights der Startseite.")</small></span>
                 </label>
+                @await Component.InvokeAsync("AnnounceBox", new { kind = SpeakingClub.Services.Email.EmailTemplates.NewPost, entityId = edit?.BlogId ?? 0, isChecked = Model.AnnounceByEmail })
                 <button type="submit" class="adm-btn adm-btn--primary adm-btn--lg"><i class="fa-solid fa-check" aria-hidden="true"></i>@(isEdit ? T("Değişiklikleri kaydet", "Änderungen speichern") : T("Yazıyı kaydet", "Beitrag speichern"))</button>
             </div>
         </section>

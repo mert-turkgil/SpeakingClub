@@ -24,6 +24,10 @@ namespace SpeakingClub.Entity
         // Autosaved answers: JSON object { "questionId": answerId }
         public string AnswersJson { get; set; }
 
+        // Autosaved seconds spent per question: JSON object { "questionId": seconds }. Lets an attempt that is
+        // collected after its deadline keep its timings (used by the response-time statistics).
+        public string TimesJson { get; set; }
+
         // Integrity monitoring: number of violations and a JSON array of { type, at } events
         public int ViolationCount { get; set; }
         public string IntegrityLog { get; set; }

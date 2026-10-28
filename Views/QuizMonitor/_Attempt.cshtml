@@ -1,0 +1,123 @@
+@model SpeakingClub.Models.Reports.AttemptDetail
+@using SpeakingClub.Services
+@*
+    One attempt in detail: shown in the side panel of Admin → Sınav sonuçları (fetched with ?panel=true) and as a
+    page of its own (Attempt.cshtml). Per question: the answer, the right answer, the time against the class average
+    and a rapid-guess mark; then the integrity events on a timeline.
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
+    string Clock(int seconds) => $"{seconds / 60}:{seconds % 60:00}";
+    var passed = Model.Score >= ExamRules.PassScore;
+    var correct = Model.Answers.Count(a => a.IsCorrect == true);
+    var skipped = Model.Answers.Count(a => a.Skipped);
+    var eventNames = new Dictionary<string, string>
+    {
+        ["fullscreen-exit"] = T("Tam ekrandan çıktı", "Vollbild verlassen"),
+        ["tab-hidden"] = T("Başka sekmeye geçti", "Tab gewechselt"),
+        ["window-blur"] = T("Pencereden ayrıldı", "Fenster verlassen"),
+        ["copy"] = T("Kopyaladı", "Kopiert"),
+        ["paste"] = T("Yapıştırdı", "Eingefügt"),
+        ["cut"] = T("Kesti", "Ausgeschnitten"),
+        ["contextmenu"] = T("Sağ tık menüsü", "Kontextmenü"),
+        ["print"] = T("Yazdırmayı denedi", "Drucken versucht"),
+        ["devtools-key"] = T("Geliştirici araçları kısayolu", "Entwicklerwerkzeuge-Taste"),
+        ["resume"] = T("Sınava geri döndü", "Zur Prüfung zurückgekehrt")
+    };
+}
+
+<div class="rp-attempt">
+    <header class="rp-attempt__head">
+        <div>
+            <h2>@Model.StudentName</h2>
+            @if (Model.Email != null && Model.Email != Model.StudentName) { <p class="rp-muted">@Model.Email</p> }
+            <p>@Model.QuizTitle @if (Model.Level != null) { <span class="adm-badge adm-badge--plain">@Model.Level</span> } · @T($"{Model.Attempt}. deneme", $"{Model.Attempt}. Versuch")</p>
+            <p class="rp-muted"><time datetime="@Model.SubmittedLocal.ToString("s")">@Model.SubmittedLocal.ToString("d MMMM yyyy, HH:mm", culture)</time> (@T("Türkiye saati", "türkische Zeit"))</p>
+        </div>
+        <div class="rp-attempt__score @(passed ? "is-pass" : "is-fail")">
+            <strong>@Model.Score</strong><span>@T("puan", "Punkte")</span>
+            <em>@(passed ? T("Geçti", "Bestanden") : T("Kaldı", "Nicht bestanden"))</em>
+        </div>
+    </header>
+
+    <ul class="rp-attempt__facts">
+        <li><i class="fa-solid fa-check" aria-hidden="true"></i>@T($"{correct} doğru, {Model.Answers.Count - correct - skipped} yanlış, {skipped} boş", $"{correct} richtig, {Model.Answers.Count - correct - skipped} falsch, {skipped} leer")</li>
+        <li><i class="fa-regular fa-clock" aria-hidden="true"></i>@Clock(Model.DurationSeconds)@if (Model.TimeLimitSeconds is { } limit) { <span class="rp-muted"> / @Clock(limit)</span> }</li>
+        <li>
+            <i class="fa-solid fa-flag-checkered" aria-hidden="true"></i>
+            @(Model.EndReason switch { "timeout" => T("Süre doldu, otomatik gönderildi", "Zeit abgelaufen, automatisch abgegeben"), "violations" => T("3 uyarıda otomatik bitti", "Nach 3 Warnungen beendet"), _ => T("Öğrenci gönderdi", "Selbst abgegeben") })
+        </li>
+        <li class="@(Model.Violations > 0 ? "is-warn" : "")"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>@T($"{Model.Violations} uyarı", $"{Model.Violations} Warnungen")</li>
+        @if (Model.Rte is { } rte)
+        {
+            <li class="@(rte < 0.9 ? "is-warn" : "")" title="@T("Cevapların ne kadarı okumaya yetecek sürede verildi (Wise & Kong).", "Anteil der Antworten mit genug Zeit zum Lesen (Wise & Kong).")">
+                <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>@T($"Çaba: cevapların %{rte * 100:0}'i dikkatli verildi", $"Sorgfalt: {rte * 100:0} % der Antworten mit Bedacht")
+            </li>
+        }
+    </ul>
+    @if (!Model.TimesRecorded)
+    {
+        <p class="adm-hint">@T("Bu denemede soru başına süreler kaydedilmemiş (eski bir deneme ya da süresi dolmadan önce kaydedilemedi).", "Für diesen Versuch wurden keine Zeiten pro Frage gespeichert (älterer Versuch).")</p>
+    }
+
+    <h3>@T("Cevaplar (öğrencinin gördüğü sırayla)", "Antworten (in der Reihenfolge der Lernenden)")</h3>
+    <ol class="rp-answers">
+        @foreach (var a in Model.Answers)
+        {
+            var state = a.Skipped ? "skip" : a.IsCorrect == true ? "ok" : a.IsCorrect == false ? "bad" : "unknown";
+            <li class="rp-answer is-@state">
+                <span class="rp-answer__mark" aria-hidden="true">@(state == "ok" ? "✓" : state == "bad" ? "✗" : state == "skip" ? "–" : "?")</span>
+                <div class="rp-answer__body">
+                    <p class="rp-answer__q"><span class="rp-muted">@a.Position.</span> @a.Question</p>
+                    <p class="rp-answer__a">
+                        @if (a.Skipped)
+                        {
+                            <span class="rp-muted">@T("Boş bıraktı", "Nicht beantwortet")</span>
+                        }
+                        else
+                        {
+                            <span><span class="adm-sr">@T("Cevabı:", "Antwort:")</span>@(a.Chosen ?? T("(şık silinmiş)", "(Antwort gelöscht)"))</span>
+                        }
+                        @if (a.IsCorrect != true && a.CorrectAnswers.Count > 0)
+                        {
+                            <span class="rp-answer__right">@T("Doğrusu:", "Richtig:") @string.Join(" / ", a.CorrectAnswers)</span>
+                        }
+                    </p>
+                    <p class="rp-answer__meta">
+                        @if (Model.TimesRecorded)
+                        {
+                            <span class="rp-time" title="@T("Bu sorudaki süresi; çizgi tüm öğrencilerin ortalaması", "Zeit für diese Frage; der Strich ist der Durchschnitt aller")">
+                                <i class="fa-regular fa-clock" aria-hidden="true"></i>@Clock(a.Seconds)
+                                @if (a.ClassMeanSeconds is { } mean) { <span class="rp-muted"> (@T("ort.", "Ø") @Clock((int)Math.Round(mean)))</span> }
+                            </span>
+                        }
+                        @if (a.Rapid) { <span class="adm-badge adm-badge--amber"><i class="fa-solid fa-bolt" aria-hidden="true"></i>@T("çok hızlı, tahmin olabilir", "sehr schnell, vielleicht geraten")</span> }
+                        @if (a.ClassP is { } p) { <span class="rp-muted">@T($"Sınıfın %{p * 100:0}'i doğru yaptı", $"{p * 100:0} % der Klasse richtig")</span> }
+                    </p>
+                </div>
+            </li>
+        }
+    </ol>
+
+    <h3>@T("Sınav sırasındaki olaylar", "Ereignisse während der Prüfung")</h3>
+    @if (Model.Events.Count == 0)
+    {
+        <p class="rp-muted">@T("Hiçbir olay kaydedilmedi.", "Keine Ereignisse aufgezeichnet.")</p>
+    }
+    else
+    {
+        <ol class="rp-events">
+            @foreach (var e in Model.Events)
+            {
+                <li class="@(e.Violation ? "is-warn" : "")">
+                    <time>@Clock(e.SecondsFromStart)</time>
+                    <span>@(eventNames.TryGetValue(e.Type, out var name) ? name : e.Type)</span>
+                    @if (e.Violation) { <span class="adm-badge adm-badge--red">@T("uyarı", "Warnung")</span> }
+                </li>
+            }
+        </ol>
+        <p class="rp-help">@T("Süre, sınavın başlangıcından itibaren dk:sn. \"Pencereden ayrıldı\" ve \"Sınava geri döndü\" uyarı sayılmaz.", "Zeit ab Beginn in min:s. „Fenster verlassen“ und „Zurückgekehrt“ zählen nicht als Warnung.")</p>
+    }
+</div>

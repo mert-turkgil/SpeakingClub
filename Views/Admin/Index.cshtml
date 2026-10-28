@@ -9,7 +9,8 @@
     ViewData["Title"] = T("Ana sayfa", "Übersicht");
     ViewData["AdminSection"] = "dashboard";
     var culture = System.Globalization.CultureInfo.CurrentCulture;
-    var hour = DateTime.Now.Hour;
+    var now = SpeakingClub.Services.Reports.ReportTime.ToLocal(DateTime.UtcNow);   // Turkish time, whatever the server clock says
+    var hour = now.Hour;
     var greeting = hour < 12 ? T("Günaydın", "Guten Morgen") : hour < 18 ? T("İyi günler", "Guten Tag") : T("İyi akşamlar", "Guten Abend");
     string ScoreClass(int score) => score >= 70 ? "is-good" : score >= 50 ? "is-mid" : "is-low";
     var tiles = new List<(string Icon, string Title, string Text, string Href, string Tone)>
@@ -29,7 +30,7 @@
 }
 
 <section class="adm-hello">
-    <span class="adm-hello__date"><i class="fa-regular fa-calendar" aria-hidden="true"></i>@DateTime.Now.ToString("dddd, d MMMM yyyy", culture)</span>
+    <span class="adm-hello__date"><i class="fa-regular fa-calendar" aria-hidden="true"></i>@now.ToString("dddd, d MMMM yyyy", culture)</span>
     <h1>@greeting@(string.IsNullOrWhiteSpace(Model.FirstName) ? "" : ", " + Model.FirstName)!</h1>
     <p>@T("Bugün ne yapmak istersiniz? Aşağıdaki büyük düğmelerden birine basmanız yeterli. Her sayfada, ne yapacağınızı adım adım anlatan sarı bir yardım kutusu bulunur.",
           "Was möchten Sie heute tun? Klicken Sie einfach auf eine der großen Schaltflächen unten. Auf jeder Seite erklärt ein gelber Hilfekasten Schritt für Schritt, was zu tun ist.")</p>

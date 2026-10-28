@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -11,15 +13,18 @@ namespace SpeakingClub.Services
     {
         private readonly ILogger<TempFileCleanupService> _logger;
         private readonly IWebHostEnvironment _env;
+        private readonly IServiceScopeFactory _scopes;
         private readonly TimeSpan _cleanupInterval = TimeSpan.FromHours(1); // Run every hour
         private readonly TimeSpan _fileMaxAge = TimeSpan.FromHours(24); // Delete files older than 24 hours
 
         public TempFileCleanupService(
             ILogger<TempFileCleanupService> logger,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            IServiceScopeFactory scopes)
         {
             _logger = logger;
             _env = env;
+            _scopes = scopes;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -100,7 +105,28 @@ namespace SpeakingClub.Services
             }
 
             CleanupOldLogs();
-            return Task.CompletedTask;
+            return CleanupEmailRecordsAsync();
+        }
+
+        // E-mail records (privacy page): the send log is kept for 180 days; sent outbox rows (they hold the e-mail's
+        // content for rendering) for 30 days. Unsent ones stay until they are sent or given up.
+        private async Task CleanupEmailRecordsAsync()
+        {
+            try
+            {
+                using var scope = _scopes.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<SpeakingClub.Data.SpeakingClubContext>();
+                var logCutoff = DateTime.UtcNow.AddDays(-180);
+                var outboxCutoff = DateTime.UtcNow.AddDays(-30);
+                var logs = await db.EmailLogs.Where(l => l.CreatedAt < logCutoff).ExecuteDeleteAsync();
+                var outbox = await db.EmailOutbox.Where(o => o.ProcessedAt != null && o.ProcessedAt < outboxCutoff).ExecuteDeleteAsync();
+                if (logs + outbox > 0)
+                    _logger.LogInformation("E-mail records cleaned up: {Logs} log rows, {Outbox} outbox rows", logs, outbox);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error during e-mail record cleanup");
+            }
         }
 
         // Server logs (logs/stdout_*.log written by IIS) can contain IP addresses. The privacy policy says they are

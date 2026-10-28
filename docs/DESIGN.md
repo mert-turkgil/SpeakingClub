@@ -32,6 +32,8 @@ decisions behind it, so you can change things later without breaking them.
 17. [Performance checklist](#17-performance-checklist)
 18. [Recipes](#18-recipes)
 19. [File map](#19-file-map)
+20. [Admin reports and exam analytics](#20-admin-reports-and-exam-analytics)
+21. [E-mails](#21-e-mails)
 
 ---
 
@@ -1091,8 +1093,9 @@ counters). Pages describe what they need. They don't ship their own scripts for 
 
 ### 15.4 Roles
 
-Teachers can manage content (posts, quizzes, questions, words, slides, categories, tags) and see exam results.
-Users, roles, site texts and download logs are limited to Admin/Root, both in the menu and on the server
+Teachers can manage content (posts, quizzes, questions, words, slides, categories, tags) and see exam results with
+all their analysis. Users (the member report), roles, site texts, download logs and e-mails are limited to
+Admin/Root, both in the menu and on the server
 (`[Authorize(Roles = "Admin,Root")]`).
 
 ---
@@ -1231,5 +1234,129 @@ value to `DictionarySource` and a step to the pipeline in `Words.cshtml`.
 | Clinical German pages | `clinical.css` | n/a | Doctors / nurses |
 | Privacy, terms | `legal.css` | `legal.js` | Shared frame `_LegalLayout.cshtml` |
 | Admin panel | `admin.css` | `admin.js`, `admin-blog.js`, `admin-quiz.js`, `admin-texts.js`, `ckeditor.js` | Guides in `AdminNav.cs` |
+| Admin reports (exam results, members) | `admin.css` (Reports) | `admin-reports.js`, `lib/echarts` | Section 20 |
+| E-mails | inline styles in `Views/Emails/` | n/a | Section 21 |
 | Older global layers | `custom.css` (brand utility classes only, from `custom.scss`), `site.css`, `universe.css`, `dark-mode.css` | | Loaded site-wide; new pages don't depend on them |
 | Not in use | `splash.css` | `splash.js`, `anime.js` | Early experiments, not referenced by any view |
+
+---
+
+## 20. Admin reports and exam analytics
+
+*Files: `Services/Reports/` (ExamReportService, MemberReportService, ItemAnalysis, ItemStatistics, ReportCache),
+`Controllers/QuizMonitorController.cs`, `Controllers/AdminController.Members.cs`, `Views/QuizMonitor/`,
+`Views/Admin/Members.cshtml`, `Views/Admin/Member.cshtml`, `wwwroot/js/admin-reports.js`.*
+
+### 20.1 Read only what is shown
+
+The old results page loaded every submission with every answer (millions of SQL rows) and filtered in the browser.
+Now every view is a query:
+
+- **Filters live in the address** (`ExamReportFilter`, `MemberReportFilter`): period presets in Turkish time
+  (Europe/Istanbul, converted to UTC for the query), bookmarkable, back button works. Exam results default to the
+  last 30 days, members to everyone (newest first).
+- **Indexes** (migration `ReportIndexes`): `QuizSubmissions.UserId` is `nvarchar(450)` so it can be indexed;
+  covering indexes on `SubmissionDate`, `(QuizId, SubmissionDate)` and `(UserId, QuizId, SubmissionDate)`.
+- **One page at a time.** Tables are paged on the server (25/50/100). The member list pages in two steps: the
+  sorted ids first, then those rows. Sorting whole rows made SQL Server reserve a large memory grant, and on a busy
+  server a query *waits* for its grant (the first visit took 20 s on a machine short of memory). For the same
+  reason first and last names are `nvarchar(100)` (migration `MemberNameLength`), and the CSV exports read ids
+  first, then rows in batches of 500.
+- **Cross-context reads without migrations.** Both contexts share one database; `ReportUser` and `MemberActivity`
+  (`Entity/ReportProjections.cs`) are keyless `ToSqlQuery` projections with `.ToTable((string?)null)`, so they never
+  appear in migrations. Hand-written SQL never says `dbo.`: production tables may live in the login's schema.
+- **Charts load when their tab opens** (JSON from `Stats`/`UserStats`), cached in `ReportCache`. Every key carries a
+  version that `ReportCacheInterceptor` (an EF save interceptor on both contexts) bumps after any save touching
+  results, quizzes, questions, answers, categories, tags or accounts: warm requests take a few milliseconds and a
+  new result shows at once.
+
+### 20.2 What the exam analysis measures
+
+Classical test theory, as in Moodle's quiz statistics and Canvas item analysis. Pure functions in
+`ItemStatistics`/`ItemAnalysis`, unit-tested in `tests/SpeakingClub.Tests` (CI and the deploy run them).
+
+| Figure | Meaning | Thresholds shown to teachers |
+|---|---|---|
+| Difficulty *p* | share who answered correctly | 30–70 % ideal; under 30 % "very hard", over 90 % "very easy" |
+| Discrimination | corrected point-biserial: the item against the rest of the test | 0.25 or more is good; 0 or less "separates the wrong way" |
+| Upper–lower D | correct rate in the best 27 % minus the weakest 27 % | shown per question |
+| Distractors | share choosing each option, overall and in both groups | a wrong option chosen more than the key, or attracting strong students: "check the answer key"; under 5 %: "nobody believes it" |
+| KR-20, SEM | reliability of the whole quiz and the measurement error of a score (a negative KR-20 counts as 0) | 0.8 good, 0.7 acceptable |
+| Rapid guessing | an answer faster than max(3 s, 10 % of the item's mean time) (Wise & Kong 2005; Wise & Ma 2012) | over 20 % of answers flags the item; "leave out rushed attempts" drops attempts with response-time effort under 0.9 |
+| Guttman errors | per student: harder items right while easier ones wrong | high values may mean guessing or copying, never proof |
+
+With fewer than 10 attempts the page says the numbers can still change instead of flagging anything. By default
+each student's **first** attempt counts (repeaters may know the questions).
+
+### 20.3 Tabs and charts
+
+Apache ECharts 6 (SVG renderer, vendored in `wwwroot/lib/echarts`, colours from the admin tokens, redrawn on theme
+change); every chart has a "show as table" switch. Exam results: results table with an attempt drawer, overview
+(histogram, trend with IQR band, box plot per quiz), question analysis (difficulty × discrimination map, question
+table with distractors), student × question matrix, progress (by attempt, attempts to pass, first vs best
+dumbbell), when (weekday × hour heatmap, transposed on phones), rules (event types, warnings per attempt). Members:
+list with KPIs, growth (sign-ups and first exams, a sign-up → passed funnel), cohorts (sign-up month × months later).
+
+Two traps handled in `admin-reports.js`: axis labels get the font family explicitly (otherwise ECharts measures with
+its default font and clips long labels), and charts in hidden tabs are resized when their tab opens.
+
+---
+
+## 21. E-mails
+
+*Files: `Services/Email/`, `Entity/EmailEntities.cs`, `Views/Emails/`, `Controllers/AdminController.Emails.cs`,
+`Controllers/EmailPreferencesController.cs`, `Controllers/DevEmailsController.cs`. Modelled on The VI House.*
+
+### 21.1 The pipeline
+
+```
+EmailQueue (inside the request)  →  EmailOutbox row (model as JSON, dedupe key)
+EmailOutboxService (every 10 s, or woken at once)  →  EmailService.DeliverAsync
+    renders Views/Emails/{Template}.cshtml in the recipient's language  →  MailKit  →  EmailLog row
+```
+
+- Pages never wait for the mail server and never fail because of it. The dedupe key (`result:{submissionId}`,
+  `campaign:{id}:{userId}`) makes queueing idempotent.
+- **Pace:** exam results, sign-up confirmations and contact messages go out immediately. Announcements go out at
+  `Email:PerMinute` (default 6, spread as one every 10 s) and stop for the day at `Email:DailyCap` (default 400,
+  counting everything sent that Turkish day; a personal Gmail account allows about 500).
+- **Retries:** after 1 min, 5 min, 15 min, 1 h and 3 h; after `Email:MaxAttempts` (6) the e-mail is logged as failed
+  with its rendered body, so Admin → E-postalar can send it again byte for byte. Sent e-mails keep only address,
+  subject and date; contact messages are removed from the outbox once delivered.
+- **Retention:** `TempFileCleanupService` deletes log rows after 180 days and sent outbox rows after 30. Deleting an
+  account blanks its address in the log and removes its outbox rows.
+- The worker also **collects exams whose time ran out** every 5 minutes (`ExamService.FinalizeAllExpiredAsync`), so
+  their result e-mail goes out even if the student never comes back.
+- IIS stops an idle site, and the worker with it: queued announcements continue with the next visit. An uptime ping
+  (README, Deployment) keeps it awake.
+
+### 21.2 Kinds of e-mail
+
+| Template | Kind | Sent when |
+|---|---|---|
+| `ExamResult` | transactional, always | `ExamService.FinalizeAttemptAsync` |
+| `ConfirmEmail` | transactional | registration |
+| `ContactMessage`, `ContactReceipt` | transactional | contact form (Reply-To on Suna's copy is the visitor) |
+| `NewPost`, `NewQuiz` | announcement | "Abonelere e-postayla duyur" on the post/quiz form starts one `EmailCampaign` per post or quiz; the worker adds the recipients 200 at a time, each in their own language |
+| `Test` | | Admin → E-postalar |
+
+Announcements reach members with a confirmed e-mail who are not locked and did not switch the topic off
+(`User.EmailOptOuts`). Members who existed before the e-mails started count as subscribed (source `legacy`, the site
+owner's decision; `Email:IncludeLegacyOptIns=false` limits announcements to explicit yeses). New sign-ups opt in
+with an unchecked checkbox; Google sign-ups start opted out and the account page asks them. A running announcement
+can be stopped on Admin → E-postalar.
+
+### 21.3 Unsubscribing
+
+Every announcement carries `List-Unsubscribe` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click` (RFC 8058,
+required by Gmail and Yahoo). The link is `/eposta/{token}` or `/e-mail/{token}`: a settings page that needs no
+sign-in. A POST with `List-Unsubscribe=One-Click` (what the mail provider sends) switches all announcements off
+without an antiforgery token; the random 32-byte token is the key. Members can also change it on the account page.
+Exam results cannot be switched off.
+
+### 21.4 Writing templates
+
+Tables and inline styles only (e-mail clients ignore stylesheets), system fonts, readable without images. The texts
+are Suna's own voice ("yeni bir sınav hazırladım"), never a company's. Each template sets `ViewData["Subject"]` and
+`["Preheader"]`; announcements set `["Promotional"] = true` for the footer with the unsubscribe links. A plain-text
+copy is generated from the HTML. Preview every template in both languages at `/dev/emails` (Development only).

@@ -1,0 +1,56 @@
+@model SpeakingClub.Controllers.EmailPreferencesController.PreferencesPage
+@*
+    E-mail settings from the link in an announcement (EmailPreferencesController), without signing in.
+    Same look as the sign-in pages (auth.css).
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    ViewData["Title"] = T("E-posta ayarları", "E-Mail-Einstellungen");
+    var action = (isGerman ? "/e-mail/" : "/eposta/") + Model.Token;
+}
+@section Css {
+    <script>document.documentElement.classList.add('bp-js');</script>
+    <link rel="stylesheet" href="~/css/blog.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+}
+<div class="site-page auth auth--login">
+    <div class="auth__shell">
+        <partial name="~/Views/Account/_AuthBrand.cshtml" />
+        <section class="auth__panel">
+            <div class="auth__card">
+                <h1 class="auth__title">@T("E-posta ayarları", "E-Mail-Einstellungen")</h1>
+                @if (!Model.Found)
+                {
+                    <p class="auth__lead">@T("Bu bağlantı artık geçerli değil. Giriş yapıp Hesabım sayfasından e-posta tercihlerinizi değiştirebilirsiniz.",
+                        "Dieser Link gilt nicht mehr. Nach der Anmeldung können Sie Ihre E-Mail-Einstellungen auf der Seite „Mein Konto“ ändern.")</p>
+                    <a class="auth-submit" href="/Account/Account">@T("Hesabım", "Mein Konto")<i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                }
+                else
+                {
+                    <p class="auth__lead">@T($"Merhaba {Model.Name}, hangi duyuruları almak istediğinizi seçin ({Model.Email}).",
+                        $"Hallo {Model.Name}, wählen Sie, welche Ankündigungen Sie erhalten möchten ({Model.Email}).")</p>
+                    @if (Model.Saved)
+                    {
+                        <div class="auth-alert auth-alert--ok" role="status"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span>@T("Kaydedildi.", "Gespeichert.")</span></div>
+                    }
+                    <form method="post" action="@action" class="auth-form">
+                        <label class="auth-check auth-check--consent">
+                            <input type="checkbox" name="newPosts" value="true" checked="@Model.NewPosts" />
+                            <span class="auth-check__box" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                            <span>@T("Yeni yazılar", "Neue Beiträge")<small>@T("Yeni bir yazı paylaştığımda haber veririm.", "Ich sage Bescheid, wenn ich einen neuen Beitrag veröffentliche.")</small></span>
+                        </label>
+                        <label class="auth-check auth-check--consent">
+                            <input type="checkbox" name="newQuizzes" value="true" checked="@Model.NewQuizzes" />
+                            <span class="auth-check__box" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+                            <span>@T("Yeni sınavlar", "Neue Prüfungen")<small>@T("Yeni bir sınav hazırladığımda haber veririm.", "Ich sage Bescheid, wenn es eine neue Prüfung gibt.")</small></span>
+                        </label>
+                        <p class="auth__lead" style="font-size:0.85rem; margin:0;">@T("Sınav sonuçlarınız ve hesabınızla ilgili e-postalar her zaman gelir.", "Prüfungsergebnisse und E-Mails zu Ihrem Konto kommen immer.")</p>
+                        <button type="submit" class="auth-submit">@T("Kaydet", "Speichern")<i class="fa-solid fa-check" aria-hidden="true"></i></button>
+                        <button type="submit" name="all" value="off" class="auth-link-button">@T("Hiçbir duyuru almak istemiyorum", "Ich möchte keine Ankündigungen")</button>
+                    </form>
+                }
+            </div>
+        </section>
+    </div>
+</div>

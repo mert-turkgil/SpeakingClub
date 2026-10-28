@@ -16,5 +16,7 @@ namespace SpeakingClub.Data.Abstract
         void Update(T entity);
         void Remove(T entity);
         Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate);
+        // Counted in SQL: use this instead of GetAllAsync().Count()
+        Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null);
     }
 }

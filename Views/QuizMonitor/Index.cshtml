@@ -1,11 +1,12 @@
-@model IEnumerable<SpeakingClub.Models.QuizMonitorViewModel>
-@using Newtonsoft.Json
+@model SpeakingClub.Models.Reports.ExamReportPage
+@using Microsoft.AspNetCore.Http
+@using SpeakingClub.Services
+@using SpeakingClub.Services.Reports
 @*
-    Admin → Sınav sonuçları (QuizMonitor): every submission with filters, live updates (SignalR), charts,
-    Excel/PDF export and a detail window per attempt.
-    Fixes: the data was written into the page unescaped (@Html.Raw of plain JSON) and names/answers went
-    into the table and the detail window as HTML, so a student name like "</script><script>…" ran in the
-    teacher's browser. The JSON now escapes HTML and every value is inserted as text.
+    Admin → Sınav sonuçları (QuizMonitorController). Rendered on the server with only the current page of results;
+    the filters live in the address (bookmarkable, back button works). The analysis tabs fetch their figures as JSON
+    when first opened and are drawn by wwwroot/js/admin-reports.js (Apache ECharts, served from wwwroot/lib).
+    Every number has a plain-language explanation: teachers are not statisticians.
 *@
 @{
     Layout = "_AdminLayout";
@@ -14,415 +15,532 @@
     var section = AdminNav.Find("results", isGerman)!;
     ViewData["Title"] = section.Title;
     ViewData["AdminSection"] = section.Key;
-    var rows = Model.ToList();
-    var users = rows.Select(x => x.UserName).Distinct().OrderBy(x => x).ToList();
-    var quizzes = rows.Select(x => x.QuizTitle).Distinct().OrderBy(x => x).ToList();
-    var passCount = rows.Count(x => x.Score >= 50);
-    var weekAgo = DateTime.Now.AddDays(-7);
+    var f = Model.Filter;
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
     var adminHeader = new AdminHeader(section.Key, section.Title, section.Lead, Guide: section.Guide);
-    var json = JsonConvert.SerializeObject(rows, new JsonSerializerSettings { StringEscapeHandling = StringEscapeHandling.EscapeHtml });
+
+    string Link(ExamReportFilter filter) => Url.Action("Index")! + QueryString.Create(filter.ToQuery());
+    string StatsUrl(string tab) => Url.Action("Stats", new { tab })! + QueryString.Create(f.With(x => { x.Page = 1; x.Sort = null; }).ToQuery());
+    string Duration(double? seconds) => seconds is { } s ? $"{(int)s / 60}:{(int)s % 60:00}" : "–";
+    string Pct(double? rate) => rate is { } r ? (r * 100).ToString("0", culture) + "%" : "–";
+    string Num(double? value, string format = "0") => value is { } v ? v.ToString(format, culture) : "–";
+
+    var periods = new (string Key, string Label)[]
+    {
+        ("7", T("7 gün", "7 Tage")), ("30", T("30 gün", "30 Tage")), ("90", T("90 gün", "90 Tage")),
+        ("365", T("1 yıl", "1 Jahr")), ("all", T("Tümü", "Alle")), ("custom", T("Tarih seç", "Zeitraum"))
+    };
+    var selectedQuiz = Model.Quizzes.FirstOrDefault(q => q.Id == f.Quiz);
+    var periodLabel = f.Period == "custom"
+        ? $"{f.From?.ToString("d MMM yyyy", culture) ?? "…"} – {f.To?.ToString("d MMM yyyy", culture) ?? "…"}"
+        : periods.First(p => p.Key == f.Period).Label;
+    var previousLabel = T("önceki dönem", "Vorperiode");
+
+    // Delta against the previous period: arrow + words (never colour alone)
+    Microsoft.AspNetCore.Html.IHtmlContent Delta(double? now, double? before, bool higherIsBetter, double scale = 1, string unit = "")
+    {
+        if (Model.Previous == null || now is not { } n || before is not { } b)
+            return Microsoft.AspNetCore.Html.HtmlString.Empty;
+        var diff = (n - b) * scale;
+        if (Math.Abs(diff) < 0.5)
+            return new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"rp-delta\">{T("önceki dönemle aynı", "wie in der Vorperiode")}</span>");
+        var good = diff > 0 == higherIsBetter;
+        var text = (diff > 0 ? "+" : "−") + Math.Abs(diff).ToString("0", culture) + unit;
+        var arrow = diff > 0 ? "fa-arrow-up" : "fa-arrow-down";
+        return new Microsoft.AspNetCore.Html.HtmlString(
+            $"<span class=\"rp-delta {(good ? "is-good" : "is-bad")}\"><i class=\"fa-solid {arrow}\" aria-hidden=\"true\"></i>{System.Net.WebUtility.HtmlEncode(text)} <span class=\"rp-delta__vs\">{previousLabel}</span></span>");
+    }
+
+    string SortLink(string key, string? descKey = null)
+    {
+        var next = f.Sort == key && descKey != null ? descKey : key;
+        return Link(f.With(x => { x.Sort = next; x.Page = 1; }));
+    }
+
     var strings = new
     {
-        passed = T("Geçti", "Bestanden"),
-        failed = T("Kaldı", "Nicht bestanden"),
-        live = T("Şimdi", "Live"),
-        history = T("Geçmiş", "Verlauf"),
-        terminated = T("Kural ihlaliyle bitti", "Wegen Verstößen beendet"),
-        timeUp = T("Süre doldu", "Zeit abgelaufen"),
-        warnings = T("Uyarı", "Warnungen"),
-        details = T("Ayrıntılar", "Details"),
-        student = T("Öğrenci", "Lernende"),
-        quiz = T("Sınav", "Prüfung"),
+        loading = T("Yükleniyor…", "Wird geladen…"),
+        failed = T("Bu bölüm yüklenemedi. Sayfayı yenileyip tekrar deneyin.", "Dieser Bereich konnte nicht geladen werden. Bitte laden Sie die Seite neu."),
+        empty = T("Bu filtrelerle sonuç yok.", "Keine Ergebnisse mit diesen Filtern."),
+        attempts = T("deneme", "Versuche"),
+        students = T("öğrenci", "Lernende"),
         score = T("Puan", "Punkte"),
-        maxScore = T("En yüksek puan", "Höchstpunktzahl"),
-        attempt = T("Deneme", "Versuch"),
-        age = T("Yaş", "Alter"),
-        time = T("Süre", "Dauer"),
-        status = T("Durum", "Status"),
-        submitted = T("Gönderilme", "Abgegeben"),
-        question = T("Soru", "Frage"),
-        answer = T("Cevap", "Antwort"),
-        correct = T("Doğru mu?", "Richtig?"),
-        yes = T("Evet", "Ja"),
-        no = T("Hayır", "Nein"),
-        seconds = T("Süre (sn)", "Zeit (s)"),
-        noAnswers = T("Bu deneme için cevap kaydı yok.", "Für diesen Versuch sind keine Antworten gespeichert."),
-        scoresChart = T("Deneme başına puan", "Punkte pro Versuch"),
-        trendChart = T("Zaman içinde puan", "Punkte im Zeitverlauf"),
-        avgChart = T("Sınav başına ortalama", "Durchschnitt pro Prüfung"),
-        passChart = T("Geçen / kalan", "Bestanden / nicht bestanden"),
-        attemptsChart = T("Öğrenci başına deneme", "Versuche pro Lernende"),
-        report = T("Sınav sonuçları raporu", "Bericht Prüfungsergebnisse"),
-        submissions = T("Gönderilen sınavlar", "Abgegebene Prüfungen"),
-        sheet = T("Sınav sonuçları", "Prüfungsergebnisse")
-    };
-    var tableLanguage = isGerman
-        ? new { search = "Suchen:", lengthMenu = "_MENU_ pro Seite", info = "_START_–_END_ von _TOTAL_", infoEmpty = "Keine Einträge", zeroRecords = "Keine passenden Einträge", emptyTable = "Noch keine Ergebnisse", paginate = new { previous = "Zurück", next = "Weiter" } }
-        : new { search = "Ara:", lengthMenu = "Sayfada _MENU_ kayıt", info = "_TOTAL_ kayıttan _START_–_END_", infoEmpty = "Kayıt yok", zeroRecords = "Uygun kayıt bulunamadı", emptyTable = "Henüz sonuç yok", paginate = new { previous = "Önceki", next = "Sonraki" } };
-}
-
-@section Css {
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
-    <style>
-        .qm-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem; margin-bottom: 1rem; }
-        .qm-filters .form-select { width: auto; min-width: min(200px, 100%); }
-        .qm-scroll { overflow-x: auto; }
-        /* min(100%, 420px): on a phone the charts and tables take one full-width column instead of a 420 px one */
-        .qm-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 1rem; margin-top: 1.1rem; }
-        .qm-charts .adm-card { margin: 0; min-width: 0; }
-        .qm-charts h3 { margin: 0 0 0.6rem; font-size: 0.95rem; font-weight: 600; }
-        .qm-charts canvas { max-height: 320px; max-width: 100%; }
-        .qm-tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 1rem; margin-top: 1.1rem; }
-        .qm-tables .adm-card { margin: 0; min-width: 0; }
-        .dataTables_wrapper .row { --bs-gutter-x: 0; row-gap: 0.5rem; }
-        .badge-live { background: var(--a-red) !important; color: #fff !important; }
-        .dataTables_wrapper .dataTables_filter input, .dataTables_wrapper .dataTables_length select { border-radius: 10px; border: 1px solid var(--a-hairline-strong); background: var(--a-surface); color: var(--a-ink); min-height: 38px; padding: 0.3rem 0.6rem; }
-        .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter { color: var(--a-muted); font-size: 0.86rem; }
-        @@media (max-width: 599.98px) {
-            .qm-filters .form-select { width: 100%; }
-            .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter { text-align: left !important; }
-            .dataTables_wrapper .dataTables_filter input { width: 100%; margin-left: 0 !important; }
+        mean = T("Ortalama", "Durchschnitt"),
+        median = T("Ortanca", "Median"),
+        passLine = T("Geçme sınırı", "Bestehensgrenze"),
+        count = T("Sayı", "Anzahl"),
+        showTable = T("Tablo olarak göster", "Als Tabelle zeigen"),
+        hideTable = T("Grafiği göster", "Diagramm zeigen"),
+        weekdays = isGerman ? new[] { "Mo", "Di", "Mi", "Do", "Fr", "Sa", "So" } : new[] { "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz" },
+        newResults = T("Yeni sonuç geldi — yenilemek için tıklayın", "Neue Ergebnisse — zum Aktualisieren klicken"),
+        close = T("Kapat", "Schließen"),
+        tooFew = T("Güvenilir yorum için en az {0} deneme gerekir (şu an {1}).", "Für eine verlässliche Aussage braucht es mindestens {0} Versuche (jetzt {1})."),
+        flags = new Dictionary<string, string>
+        {
+            ["few"] = T("Az veri", "Wenig Daten"),
+            ["hard"] = T("Çok zor", "Sehr schwer"),
+            ["easy"] = T("Çok kolay", "Sehr leicht"),
+            ["negative"] = T("Ters ayırt ediyor", "Trennt verkehrt"),
+            ["weak"] = T("Zayıf ayırt ediyor", "Trennt schwach"),
+            ["miskey"] = T("Cevap anahtarını kontrol edin", "Lösung prüfen"),
+            ["strong-distractor"] = T("Bir yanlış şık iyi öğrencileri çekiyor", "Ein falscher Ausweg lockt starke Lernende"),
+            ["dead-distractor"] = T("Kimsenin seçmediği şık var", "Eine Antwort wählt fast niemand"),
+            ["rapid"] = T("Çok hızlı geçiliyor", "Wird oft überflogen")
+        },
+        flagHelp = new Dictionary<string, string>
+        {
+            ["few"] = T("Bu soruya henüz çok az öğrenci cevap verdi; rakamlar değişebilir.", "Erst wenige haben geantwortet; die Zahlen können sich noch ändern."),
+            ["hard"] = T("Öğrencilerin %30'undan azı doğru yaptı. Soru çok zor ya da kafa karıştırıcı olabilir.", "Weniger als 30 % antworten richtig. Die Frage ist vielleicht zu schwer oder unklar."),
+            ["easy"] = T("Neredeyse herkes doğru yaptı; bu soru seviyeyi ölçmekte pek işe yaramıyor.", "Fast alle antworten richtig; die Frage sagt wenig über das Niveau."),
+            ["negative"] = T("Sınavı iyi geçenler bu soruyu daha sık yanlış yapıyor. Soru ya da cevap anahtarı hatalı olabilir.", "Wer insgesamt gut ist, liegt hier öfter falsch. Frage oder Lösung prüfen."),
+            ["weak"] = T("İyi ve zayıf öğrenciler bu soruda pek farklı değil; soruyu netleştirmeyi düşünün.", "Starke und schwächere Lernende unterscheiden sich hier kaum; Frage eventuell schärfen."),
+            ["miskey"] = T("Bir yanlış şık doğru cevaptan daha çok seçiliyor ya da iyi öğrencileri çekiyor. Doğru cevap yanlış işaretlenmiş olabilir.", "Eine falsche Antwort wird öfter gewählt als die richtige oder zieht starke Lernende an. Ist die Lösung richtig markiert?"),
+            ["strong-distractor"] = T("İyi öğrenciler bir yanlış şıkkı da seçiyor; o şık belki de doğru sayılabilir ya da yanıltıcı.", "Starke Lernende wählen auch eine falsche Antwort; sie ist vielleicht auch richtig oder irreführend."),
+            ["dead-distractor"] = T("Bir yanlış şıkkı öğrencilerin %5'inden azı seçiyor; daha inandırıcı bir şıkla değiştirilebilir.", "Eine falsche Antwort wählen unter 5 %; eine glaubwürdigere Alternative hilft."),
+            ["rapid"] = T("Cevapların %20'den fazlası okumaya yetmeyecek kadar hızlı verilmiş (tahmin).", "Über 20 % der Antworten kamen zu schnell zum Lesen (geraten).")
+        },
+        ends = new Dictionary<string, string>
+        {
+            ["submitted"] = T("Gönderildi", "Abgegeben"),
+            ["timeout"] = T("Süre doldu", "Zeit abgelaufen"),
+            ["violations"] = T("Kural ihlaliyle bitti", "Wegen Verstößen beendet")
+        },
+        events = new Dictionary<string, string>
+        {
+            ["fullscreen-exit"] = T("Tam ekrandan çıktı", "Vollbild verlassen"),
+            ["tab-hidden"] = T("Başka sekmeye geçti", "Tab gewechselt"),
+            ["window-blur"] = T("Pencereden ayrıldı", "Fenster verlassen"),
+            ["copy"] = T("Kopyaladı", "Kopiert"),
+            ["paste"] = T("Yapıştırdı", "Eingefügt"),
+            ["cut"] = T("Kesti", "Ausgeschnitten"),
+            ["contextmenu"] = T("Sağ tık menüsü", "Kontextmenü"),
+            ["print"] = T("Yazdırmayı denedi", "Drucken versucht"),
+            ["devtools-key"] = T("Geliştirici araçları kısayolu", "Entwicklerwerkzeuge-Taste"),
+            ["resume"] = T("Sınava geri döndü", "Zur Prüfung zurückgekehrt")
         }
-    </style>
+    };
 }
 
+@* Styles: admin.css → "Reports" *@
 <partial name="_AdminHeader" model="adminHeader" />
 
-<div class="adm-stats">
+@* ---------------- Live line ---------------- *@
+<div class="rp-live" data-report-live>
+    @if (Model.ActiveNow > 0)
+    {
+        <span class="adm-badge adm-badge--red"><i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i>@T($"Şu anda {Model.ActiveNow} kişi sınavda", $"Gerade {(Model.ActiveNow == 1 ? "ist 1 Person" : $"sind {Model.ActiveNow} Personen")} in einer Prüfung")</span>
+    }
+    <a class="adm-btn adm-btn--sm rp-live__new" href="@Link(f)" data-report-new hidden><i class="fa-solid fa-rotate" aria-hidden="true"></i><span data-report-new-text>@strings.newResults</span></a>
+</div>
+
+@* ---------------- Filters (GET: every view has its own address) ---------------- *@
+<form class="adm-card rp-filter" method="get" action="@Url.Action("Index")" data-report-filter>
+    <fieldset class="rp-filter__period">
+        <legend>@T("Dönem", "Zeitraum")</legend>
+        <div class="adm-choices rp-seg">
+            @foreach (var p in periods)
+            {
+                <label class="adm-choice"><input type="radio" name="period" value="@p.Key" checked="@(f.Period == p.Key)" data-report-period /><span>@p.Label</span></label>
+            }
+        </div>
+        <div class="rp-filter__dates" data-report-dates hidden="@(f.Period != "custom")">
+            <label>@T("Başlangıç", "Von")<input type="date" class="adm-input" name="from" value="@f.From?.ToString("yyyy-MM-dd")" /></label>
+            <label>@T("Bitiş", "Bis")<input type="date" class="adm-input" name="to" value="@f.To?.ToString("yyyy-MM-dd")" /></label>
+        </div>
+    </fieldset>
+
+    <div class="rp-filter__grid">
+        <label class="rp-field">
+            <span>@T("Sınav", "Prüfung")</span>
+            <select name="quiz" class="adm-input" data-report-autosubmit>
+                <option value="">@T("Tüm sınavlar", "Alle Prüfungen")</option>
+                @foreach (var q in Model.Quizzes)
+                {
+                    <option value="@q.Id" selected="@(f.Quiz == q.Id)">@ExamReportService.QuizTitle(q)@(q.Level != null ? $" ({q.Level})" : "")</option>
+                }
+            </select>
+        </label>
+        <label class="rp-field">
+            <span>@T("Seviye", "Niveau")</span>
+            <select name="level" class="adm-input" data-report-autosubmit>
+                <option value="">@T("Tümü", "Alle")</option>
+                @foreach (var level in new[] { "A1", "A2", "B1", "B2", "C1", "C2" })
+                {
+                    <option selected="@(f.Level == level)">@level</option>
+                }
+            </select>
+        </label>
+        @if (Model.Categories.Count > 0)
+        {
+            <label class="rp-field">
+                <span>@T("Kategori", "Kategorie")</span>
+                <select name="category" class="adm-input" data-report-autosubmit>
+                    <option value="">@T("Tümü", "Alle")</option>
+                    @foreach (var c in Model.Categories)
+                    {
+                        <option value="@c.Id" selected="@(f.Category == c.Id)">@c.Name</option>
+                    }
+                </select>
+            </label>
+        }
+        <label class="rp-field rp-field--search">
+            <span>@T("Öğrenci", "Lernende")</span>
+            <span class="adm-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" name="q" value="@f.Q" placeholder="@T("Ad veya e-posta", "Name oder E-Mail")" autocomplete="off" />
+            </span>
+        </label>
+    </div>
+
+    <details class="rp-more" open="@(f.Status != null || f.End != null || f.First || f.Warn)">
+        <summary>@T("Daha fazla filtre", "Weitere Filter")</summary>
+        <div class="rp-more__body">
+            <div class="adm-choices rp-seg" role="group" aria-label="@T("Sonuç", "Ergebnis")">
+                <label class="adm-choice"><input type="radio" name="status" value="" checked="@(f.Status == null)" data-report-autosubmit /><span>@T("Hepsi", "Alle")</span></label>
+                <label class="adm-choice"><input type="radio" name="status" value="pass" checked="@(f.Status == "pass")" data-report-autosubmit /><span>@T($"Geçenler ({ExamRules.PassScore}+)", $"Bestanden ({ExamRules.PassScore}+)")</span></label>
+                <label class="adm-choice"><input type="radio" name="status" value="fail" checked="@(f.Status == "fail")" data-report-autosubmit /><span>@T("Kalanlar", "Nicht bestanden")</span></label>
+            </div>
+            <label class="rp-field rp-field--inline">
+                <span>@T("Nasıl bitti", "Wie beendet")</span>
+                <select name="end" class="adm-input" data-report-autosubmit>
+                    <option value="">@T("Hepsi", "Alle")</option>
+                    @foreach (var e in strings.ends)
+                    {
+                        <option value="@e.Key" selected="@(f.End == e.Key)">@e.Value</option>
+                    }
+                </select>
+            </label>
+            <div class="adm-choices">
+                <label class="adm-choice"><input type="checkbox" name="first" value="true" checked="@f.First" data-report-autosubmit /><span>@T("Yalnızca ilk denemeler", "Nur erste Versuche")</span></label>
+                <label class="adm-choice"><input type="checkbox" name="warn" value="true" checked="@f.Warn" data-report-autosubmit /><span>@T("Yalnızca uyarı alanlar", "Nur mit Warnungen")</span></label>
+            </div>
+        </div>
+    </details>
+
+    @if (f.Sort != null) { <input type="hidden" name="sort" value="@f.Sort" /> }
+    @if (f.Size != 25) { <input type="hidden" name="size" value="@f.Size" /> }
+    <div class="rp-filter__actions">
+        <button type="submit" class="adm-btn adm-btn--primary"><i class="fa-solid fa-filter" aria-hidden="true"></i>@T("Uygula", "Anwenden")</button>
+        @if (f.HasFilters || f.Period != "30")
+        {
+            <a class="adm-btn adm-btn--ghost" href="@Url.Action("Index")"><i class="fa-solid fa-xmark" aria-hidden="true"></i>@T("Filtreleri temizle", "Filter zurücksetzen")</a>
+        }
+        <span class="rp-filter__summary">@periodLabel · @T("Türkiye saatiyle", "Uhrzeit: Türkei")</span>
+    </div>
+</form>
+
+@* ---------------- Headline figures ---------------- *@
+<div class="adm-stats rp-kpis">
     <div class="adm-stat" style="--i:0">
         <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-pen-to-square"></i></span>
-        <span><span class="adm-stat__num">@rows.Count</span><span class="adm-stat__label">@T("toplam deneme", "Versuche insgesamt")</span></span>
+        <span><span class="adm-stat__num">@Model.Kpis.Attempts.ToString("N0", culture)</span><span class="adm-stat__label">@T("deneme", "Versuche")</span>@Delta(Model.Kpis.Attempts, Model.Previous?.Attempts, true)</span>
     </div>
     <div class="adm-stat tone-blue" style="--i:1">
         <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-user-graduate"></i></span>
-        <span><span class="adm-stat__num">@users.Count</span><span class="adm-stat__label">@T("öğrenci", "Lernende")</span></span>
+        <span><span class="adm-stat__num">@Model.Kpis.Students.ToString("N0", culture)</span><span class="adm-stat__label">@T("farklı öğrenci", "verschiedene Lernende")</span>@Delta(Model.Kpis.Students, Model.Previous?.Students, true)</span>
     </div>
-    <div class="adm-stat tone-green" style="--i:2">
-        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span>
-        <span><span class="adm-stat__num">@(rows.Count == 0 ? 0 : passCount * 100 / rows.Count)%</span><span class="adm-stat__label">@T("geçme oranı (50+ puan)", "Bestehensquote (50+ Punkte)")</span></span>
-    </div>
-    <div class="adm-stat tone-amber" style="--i:3">
-        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-calendar-week"></i></span>
-        <span><span class="adm-stat__num">@rows.Count(x => x.SubmissionDate >= weekAgo)</span><span class="adm-stat__label">@T("bu hafta", "diese Woche")</span></span>
-    </div>
-</div>
-
-<div class="adm-card">
-    <div class="qm-filters">
-        <select id="userSelect" class="form-select" aria-label="@T("Öğrenciye göre", "Nach Lernenden")">
-            <option value="">@T("Tüm öğrenciler", "Alle Lernenden")</option>
-            @foreach (var u in users)
-            {
-                <option>@u</option>
-            }
-        </select>
-        <select id="quizSelect" class="form-select" aria-label="@T("Sınava göre", "Nach Prüfung")">
-            <option value="">@T("Tüm sınavlar", "Alle Prüfungen")</option>
-            @foreach (var q in quizzes)
-            {
-                <option>@q</option>
-            }
-        </select>
-        <label class="adm-choice"><input type="checkbox" id="showFailed" /><span>@T("Yalnızca kalanlar", "Nur nicht bestandene")</span></label>
-        <span id="livePulse" class="adm-badge adm-badge--red" hidden><i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i>@T("Şu anda sınav çözülüyor", "Gerade läuft eine Prüfung")</span>
-        <span class="adm-toolbar__end">
-            <button type="button" class="adm-btn adm-btn--sm" id="exportExcel"><i class="fa-solid fa-file-excel" style="color: var(--a-green)" aria-hidden="true"></i>Excel</button>
-            <button type="button" class="adm-btn adm-btn--sm" id="exportPdf"><i class="fa-solid fa-file-pdf" style="color: var(--a-red)" aria-hidden="true"></i>PDF</button>
+    <div class="adm-stat tone-amber" style="--i:2">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-chart-simple"></i></span>
+        <span>
+            <span class="adm-stat__num">@Num(Model.Kpis.Mean)</span>
+            <span class="adm-stat__label">@T("ortalama puan", "Durchschnittspunkte") · @T("ortanca", "Median") @Num(Model.Kpis.Median)</span>
+            @Delta(Model.Kpis.Mean, Model.Previous?.Mean, true, 1, T(" puan", " Punkte"))
         </span>
     </div>
-    <div class="qm-scroll">
-        <table id="monitorTable" class="table table-hover align-middle" style="width:100%">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>@strings.student</th>
-                    <th>@strings.quiz</th>
-                    <th>@strings.score</th>
-                    <th>@strings.attempt</th>
-                    <th>@strings.age</th>
-                    <th>@strings.time</th>
-                    <th>@strings.status</th>
-                    <th>@strings.submitted</th>
-                    <th><span class="adm-sr">@strings.details</span></th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+    <div class="adm-stat tone-green" style="--i:3">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span>
+        <span><span class="adm-stat__num">@Pct(Model.Kpis.PassRate)</span><span class="adm-stat__label">@T($"geçti ({ExamRules.PassScore}+ puan)", $"bestanden ({ExamRules.PassScore}+ Punkte)")</span>@Delta(Model.Kpis.PassRate, Model.Previous?.PassRate, true, 100, T(" puan", " Pkt."))</span>
+    </div>
+    <div class="adm-stat" style="--i:4">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-regular fa-clock"></i></span>
+        <span><span class="adm-stat__num">@Duration(Model.Kpis.MedianDuration)</span><span class="adm-stat__label">@T("tipik süre (dk:sn)", "typische Dauer (min:s)")</span></span>
+    </div>
+    <div class="adm-stat tone-red" style="--i:5">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span>
+        <span><span class="adm-stat__num">@Pct(Model.Kpis.WarningRate)</span><span class="adm-stat__label">@T("uyarı aldı", "mit Warnungen") · @T("süresi doldu", "Zeit abgelaufen") @Pct(Model.Kpis.TimeoutRate)</span>@Delta(Model.Kpis.WarningRate, Model.Previous?.WarningRate, false, 100, T(" puan", " Pkt."))</span>
     </div>
 </div>
 
-<div class="qm-charts">
-    <section class="adm-card"><h3>@strings.trendChart</h3><canvas id="trendChart" height="220"></canvas></section>
-    <section class="adm-card"><h3>@strings.passChart</h3><canvas id="successPieChart" height="220"></canvas></section>
-    <section class="adm-card"><h3>@strings.avgChart</h3><canvas id="avgScoreChart" height="220"></canvas></section>
-    <section class="adm-card"><h3>@strings.attemptsChart</h3><canvas id="attemptsBarChart" height="220"></canvas></section>
-    <section class="adm-card" style="grid-column: 1 / -1"><h3>@strings.scoresChart</h3><canvas id="scoresChart" height="260"></canvas></section>
+@* ---------------- Tabs ---------------- *@
+<div class="adm-tabs rp-tabs" role="tablist" data-tabs aria-label="@T("Rapor bölümleri", "Bereiche des Berichts")">
+    <button type="button" class="adm-tab" role="tab" id="tab-results" aria-controls="panel-results"><i class="fa-solid fa-list" aria-hidden="true"></i>@T("Sonuçlar", "Ergebnisse")</button>
+    <button type="button" class="adm-tab" role="tab" id="tab-overview" aria-controls="panel-overview"><i class="fa-solid fa-chart-column" aria-hidden="true"></i>@T("Genel bakış", "Überblick")</button>
+    <button type="button" class="adm-tab" role="tab" id="tab-items" aria-controls="panel-items"><i class="fa-solid fa-microscope" aria-hidden="true"></i>@T("Soru analizi", "Fragenanalyse")</button>
+    <button type="button" class="adm-tab" role="tab" id="tab-matrix" aria-controls="panel-matrix"><i class="fa-solid fa-table-cells" aria-hidden="true"></i>@T("Öğrenci × soru", "Lernende × Frage")</button>
+    <button type="button" class="adm-tab" role="tab" id="tab-progress" aria-controls="panel-progress"><i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i>@T("Gelişim", "Fortschritt")</button>
+    <button type="button" class="adm-tab" role="tab" id="tab-activity" aria-controls="panel-activity"><i class="fa-regular fa-calendar" aria-hidden="true"></i>@T("Ne zaman", "Wann")</button>
+    <button type="button" class="adm-tab" role="tab" id="tab-integrity" aria-controls="panel-integrity"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>@T("Kurallar", "Regeln")</button>
 </div>
 
-<div class="qm-tables">
-    <section class="adm-card">
-        <div class="adm-card__head"><h2>@T("Öğrenci bazında", "Pro Lernende")</h2></div>
-        <div class="qm-scroll">
-            <table id="studentHistoryTable" class="table table-sm">
-                <thead><tr><th>@strings.student</th><th>@strings.quiz</th><th>@T("Deneme", "Versuche")</th><th>@T("En iyi", "Beste")</th><th>@T("Ortalama", "Schnitt")</th></tr></thead>
-                <tbody>
-                    @foreach (var g in rows.GroupBy(x => x.UserName))
-                    {
-                        <tr>
-                            <td>@g.Key</td>
-                            <td>@string.Join(", ", g.Select(x => x.QuizTitle).Distinct())</td>
-                            <td>@g.Count()</td>
-                            <td>@g.Max(x => x.Score)</td>
-                            <td>@g.Average(x => x.Score).ToString("0.#")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </section>
-    <section class="adm-card">
-        <div class="adm-card__head"><h2>@T("Sınav bazında", "Pro Prüfung")</h2></div>
-        <div class="qm-scroll">
-            <table id="quizAnalysisTable" class="table table-sm">
-                <thead><tr><th>@strings.quiz</th><th>@T("Deneme", "Versuche")</th><th>@T("En iyi", "Beste")</th><th>@T("Ortalama", "Schnitt")</th><th>@T("Geçen", "Bestanden")</th></tr></thead>
-                <tbody>
-                    @foreach (var g in rows.GroupBy(x => x.QuizTitle))
-                    {
-                        var total = g.Count();
-                        <tr>
-                            <td>@g.Key</td>
-                            <td>@total</td>
-                            <td>@g.Max(x => x.Score)</td>
-                            <td>@g.Average(x => x.Score).ToString("0.#")</td>
-                            <td>@(total > 0 ? g.Count(x => x.Score >= 50) * 100 / total : 0)%</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </section>
-    <section class="adm-card">
-        <div class="adm-card__head"><h2>@T("En iyi denemeler (90+)", "Beste Versuche (90+)")</h2></div>
-        <div class="qm-scroll">
-            <table id="topAttemptsTable" class="table table-sm">
-                <thead><tr><th>@strings.student</th><th>@strings.quiz</th><th>@strings.score</th><th>@strings.attempt</th><th>@strings.submitted</th></tr></thead>
-                <tbody>
-                    @foreach (var s in rows.Where(x => x.Score >= 90).OrderByDescending(x => x.Score))
-                    {
-                        <tr><td>@s.UserName</td><td>@s.QuizTitle</td><td>@s.Score</td><td>@s.AttemptNumber</td><td>@s.SubmissionTimeFormatted</td></tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </section>
-    <section class="adm-card">
-        <div class="adm-card__head"><h2>@T("Son 20 deneme", "Letzte 20 Versuche")</h2></div>
-        <div class="qm-scroll">
-            <table id="recentAttemptsTable" class="table table-sm">
-                <thead><tr><th>@strings.student</th><th>@strings.quiz</th><th>@strings.score</th><th>@strings.attempt</th><th>@strings.submitted</th></tr></thead>
-                <tbody>
-                    @foreach (var s in rows.OrderByDescending(x => x.SubmissionDate).Take(20))
-                    {
-                        <tr><td>@s.UserName</td><td>@s.QuizTitle</td><td>@s.Score</td><td>@s.AttemptNumber</td><td>@s.SubmissionTimeFormatted</td></tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </section>
-</div>
-
-<div class="modal fade" id="attemptDetailModal" tabindex="-1" aria-labelledby="attemptDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="attemptDetailModalLabel"><i class="fa-solid fa-list-check me-2" style="color: var(--a-coral-deep)" aria-hidden="true"></i>@T("Deneme ayrıntıları", "Details des Versuchs")</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@T("Kapat", "Schließen")"></button>
+@* ---- Results ---- *@
+<section class="adm-tabpanel" id="panel-results" role="tabpanel" aria-labelledby="tab-results">
+    <div class="adm-card">
+        <div class="rp-table-head">
+            <p class="rp-count">@T($"{Model.TotalRows:N0} sonuç", $"{Model.TotalRows:N0} Ergebnisse")@(Model.TotalRows > 0 ? T($" · sayfa {f.Page}/{Model.TotalPages}", $" · Seite {f.Page}/{Model.TotalPages}") : "")</p>
+            <div class="rp-table-head__actions">
+                <a class="adm-btn adm-btn--sm" href="@(Url.Action("ExportCsv") + QueryString.Create(f.With(x => x.Page = 1).ToQuery()))"><i class="fa-solid fa-file-csv" style="color: var(--a-green)" aria-hidden="true"></i>@T("Excel için indir (CSV)", "Für Excel herunterladen (CSV)")</a>
+                <button type="button" class="adm-btn adm-btn--sm" data-report-print><i class="fa-solid fa-print" aria-hidden="true"></i>@T("Yazdır / PDF", "Drucken / PDF")</button>
             </div>
-            <div class="modal-body"><div id="attemptDetailBody"></div></div>
         </div>
+
+        @if (Model.Rows.Count == 0)
+        {
+            <div class="adm-empty">
+                <span class="adm-empty__icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass-chart"></i></span>
+                <h2>@T("Bu filtrelerle sonuç yok", "Keine Ergebnisse mit diesen Filtern")</h2>
+                <p>@T("Daha uzun bir dönem seçin ya da bazı filtreleri kaldırın.", "Wählen Sie einen längeren Zeitraum oder entfernen Sie Filter.")</p>
+            </div>
+        }
+        else
+        {
+            <div class="adm-table-wrap">
+                <table class="adm-table rp-results">
+                    <caption class="adm-sr">@T("Sınav sonuçları", "Prüfungsergebnisse"), @periodLabel</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col" aria-sort="@(f.Sort == "student" ? "ascending" : null)"><a href="@SortLink("student")">@T("Öğrenci", "Lernende")</a></th>
+                            <th scope="col" aria-sort="@(f.Sort == "quiz" ? "ascending" : null)"><a href="@SortLink("quiz")">@T("Sınav", "Prüfung")</a></th>
+                            <th scope="col" aria-sort="@(f.Sort == null ? "descending" : f.Sort == "date_asc" ? "ascending" : null)"><a href="@SortLink(f.Sort == null ? "date_asc" : "date")">@T("Tarih", "Datum")</a></th>
+                            <th scope="col" class="is-num" aria-sort="@(f.Sort == "score" ? "descending" : f.Sort == "score_asc" ? "ascending" : null)"><a href="@SortLink(f.Sort == "score" ? "score_asc" : "score")">@T("Puan", "Punkte")</a></th>
+                            <th scope="col" class="is-num">@T("Doğru", "Richtig")</th>
+                            <th scope="col" class="is-num" aria-sort="@(f.Sort == "duration" ? "descending" : null)"><a href="@SortLink("duration")">@T("Süre", "Dauer")</a></th>
+                            <th scope="col" aria-sort="@(f.Sort == "warnings" ? "descending" : null)"><a href="@SortLink("warnings")">@T("Durum", "Status")</a></th>
+                            <th scope="col"><span class="adm-sr">@T("Ayrıntı", "Details")</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.Rows)
+                        {
+                            var passed = r.Score >= ExamRules.PassScore;
+                            <tr>
+                                <td class="is-primary" data-label="@T("Öğrenci", "Lernende")">
+                                    <span class="adm-cell-title"><strong>@r.StudentName</strong>@if (r.Email != null && r.Email != r.StudentName) { <small>@r.Email</small> }</span>
+                                </td>
+                                <td class="rp-quiz-cell" data-label="@T("Sınav", "Prüfung")">
+                                    <span class="rp-stack">
+                                        <span class="rp-quiz">@r.QuizTitle @if (r.Level != null) { <span class="adm-badge adm-badge--plain rp-level">@r.Level</span> }</span>
+                                        @if (r.Attempt > 1) { <small class="rp-muted">@T($"{r.Attempt}. deneme", $"{r.Attempt}. Versuch")</small> }
+                                    </span>
+                                </td>
+                                <td data-label="@T("Tarih", "Datum")"><time class="rp-when" datetime="@r.SubmittedLocal.ToString("s")">@r.SubmittedLocal.ToString("d MMM yyyy", culture) <small class="rp-muted">@r.SubmittedLocal.ToString("HH:mm", culture)</small></time></td>
+                                <td class="is-num" data-label="@T("Puan", "Punkte")">
+                                    <span class="rp-score @(passed ? "is-pass" : "is-fail")" style="--v: @r.Score">
+                                        <span class="rp-score__bar" aria-hidden="true"></span><strong>@r.Score</strong>
+                                        <span class="adm-sr">@(passed ? T("geçti", "bestanden") : T("kaldı", "nicht bestanden"))</span>
+                                    </span>
+                                </td>
+                                <td class="is-num" data-label="@T("Doğru", "Richtig")">@r.Correct/@r.Total@if (r.Answered < r.Total) { <small class="rp-muted" title="@T("boş bırakılan", "unbeantwortet")"> · @(r.Total - r.Answered) @T("boş", "leer")</small> }</td>
+                                <td class="is-num" data-label="@T("Süre", "Dauer")"><span class="rp-nowrap">@Duration(r.DurationSeconds)@if (r.TimeLimitSeconds is { } limit) { <small class="rp-muted rp-inline"> / @Duration(limit)</small> }</span></td>
+                                <td data-label="@T("Durum", "Status")">
+                                    <span class="rp-badges">
+                                    @if (r.EndReason == "violations")
+                                    {
+                                        <span class="adm-badge adm-badge--red">@strings.ends["violations"]</span>
+                                    }
+                                    else if (r.EndReason == "timeout")
+                                    {
+                                        <span class="adm-badge adm-badge--amber">@strings.ends["timeout"]</span>
+                                    }
+                                    else if (passed)
+                                    {
+                                        <span class="adm-badge adm-badge--green">@T("Geçti", "Bestanden")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="adm-badge adm-badge--plain">@T("Kaldı", "Nicht bestanden")</span>
+                                    }
+                                    @if (r.Violations > 0)
+                                    {
+                                        <span class="adm-badge adm-badge--coral" title="@T("Tam ekrandan çıkma, sekme değiştirme, kopyalama…", "Vollbild verlassen, Tab gewechselt, Kopieren…")"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>@r.Violations @T("uyarı", "Warn.")</span>
+                                    }
+                                    </span>
+                                </td>
+                                <td class="is-actions">
+                                    <a class="adm-btn adm-btn--sm" href="@Url.Action("Attempt", new { id = r.SubmissionId })" data-report-attempt="@r.SubmissionId"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>@T("Ayrıntı", "Details")</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="rp-pager">
+                @if (Model.TotalPages > 1)
+                {
+                    <nav aria-label="@T("Sayfalar", "Seiten")">
+                        <ul class="pagination flex-wrap gap-1">
+                            @if (f.Page > 1)
+                            {
+                                <li class="page-item"><a class="page-link" href="@Link(f.With(x => x.Page = f.Page - 1))" aria-label="@T("Önceki sayfa", "Vorherige Seite")"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a></li>
+                            }
+                            @for (var p = Math.Max(1, f.Page - 3); p <= Math.Min(Model.TotalPages, f.Page + 3); p++)
+                            {
+                                var pageNumber = p;
+                                <li class="page-item @(pageNumber == f.Page ? "active" : "")"><a class="page-link" href="@Link(f.With(x => x.Page = pageNumber))" aria-current="@(pageNumber == f.Page ? "page" : null)">@pageNumber</a></li>
+                            }
+                            @if (f.Page < Model.TotalPages)
+                            {
+                                <li class="page-item"><a class="page-link" href="@Link(f.With(x => x.Page = f.Page + 1))" aria-label="@T("Sonraki sayfa", "Nächste Seite")"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+                            }
+                        </ul>
+                    </nav>
+                }
+                <label class="rp-pager__size">@T("Sayfada", "Pro Seite")
+                    <select class="adm-input" data-report-size>
+                        @foreach (var size in ExamReportFilter.PageSizes)
+                        {
+                            <option value="@Link(f.With(x => { x.Size = size; x.Page = 1; }))" selected="@(f.Size == size)">@size</option>
+                        }
+                    </select>
+                </label>
+            </div>
+        }
     </div>
-</div>
+</section>
+
+@* ---- Overview ---- *@
+<section class="adm-tabpanel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-report-tab="overview" data-url="@StatsUrl("overview")">
+    <div class="rp-grid">
+        <article class="adm-card rp-chart-card">
+            <h2>@T("Puan dağılımı", "Verteilung der Punkte")</h2>
+            <p class="rp-help">@T("Her sütun, o puan aralığında kaç deneme olduğunu gösterir. Çan şeklinde, ortada toplanan bir dağılım seviyeye uygun bir sınava işaret eder; sola yığılma sınavın zor, sağa yığılma kolay olduğunu gösterir.", "Jede Säule zeigt, wie viele Versuche in diesem Punktebereich liegen. Eine Glocke in der Mitte passt zum Niveau; links gehäuft heißt schwer, rechts gehäuft leicht.")</p>
+            <div class="rp-chart" data-chart="histogram"></div>
+        </article>
+        <article class="adm-card rp-chart-card">
+            <h2>@T("Zaman içinde", "Im Zeitverlauf")</h2>
+            <p class="rp-help">@T("Çizgi ortalama puanı, gölgeli alan öğrencilerin ortadaki yarısını (çeyrekler arası), sütunlar o gün/haftadaki deneme sayısını gösterir.", "Die Linie zeigt den Durchschnitt, die Fläche die mittlere Hälfte der Lernenden, die Säulen die Zahl der Versuche.")</p>
+            <div class="rp-chart" data-chart="trend"></div>
+        </article>
+        <article class="adm-card rp-chart-card rp-span">
+            <h2>@T("Sınavlara göre", "Nach Prüfung")</h2>
+            <p class="rp-help">@T("Kutu, öğrencilerin ortadaki yarısının puanlarını; içindeki çizgi ortancayı; uçlar en düşük ve en yüksek puanı gösterir. Kısa bir kutu, öğrencilerin benzer sonuç aldığını gösterir.", "Die Box zeigt die Punkte der mittleren Hälfte, der Strich darin den Median, die Enden das Minimum und Maximum. Eine kurze Box heißt: ähnliche Ergebnisse.")</p>
+            <div class="rp-chart rp-chart--tall" data-chart="boxes"></div>
+            <div class="rp-table" data-table="quizzes"></div>
+        </article>
+    </div>
+</section>
+
+@* ---- Question analysis ---- *@
+<section class="adm-tabpanel" id="panel-items" role="tabpanel" aria-labelledby="tab-items" data-report-tab="items" data-url="@StatsUrl("items")">
+    @if (selectedQuiz == null)
+    {
+        <div class="adm-card rp-pick">
+            <h2>@T("Bir sınav seçin", "Wählen Sie eine Prüfung")</h2>
+            <p>@T("Soru analizi tek bir sınavın sorularını inceler: hangi soru çok kolay ya da çok zor, hangisi iyi öğrenciyi zayıftan ayırıyor, hangi yanlış şık kimseyi yanıltmıyor.", "Die Fragenanalyse prüft die Fragen einer Prüfung: welche zu leicht oder zu schwer ist, welche starke von schwächeren Lernenden trennt, welche falsche Antwort niemanden täuscht.")</p>
+            <div class="rp-pick__list">
+                @foreach (var q in Model.Quizzes.Where(q => q.Questions > 0))
+                {
+                    <a class="adm-btn adm-btn--sm" href="@(Link(f.With(x => { x.Quiz = q.Id; x.Page = 1; })))#items">@ExamReportService.QuizTitle(q)@(q.Level != null ? $" · {q.Level}" : "")</a>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="adm-card rp-items-head">
+            <div>
+                <h2>@ExamReportService.QuizTitle(selectedQuiz)</h2>
+                <p class="rp-help">@T("Varsayılan olarak her öğrencinin ilk denemesi incelenir: tekrar eden öğrenciler soruları ezberlemiş olabilir.", "Standardmäßig zählt der erste Versuch jeder Person: bei Wiederholungen sind Fragen vielleicht schon bekannt.")</p>
+            </div>
+            <div class="adm-choices rp-seg" role="group" aria-label="@T("Hangi denemeler", "Welche Versuche")">
+                <label class="adm-choice"><input type="radio" name="items-mode" value="first" checked data-report-option="mode" /><span>@T("İlk deneme", "Erster Versuch")</span></label>
+                <label class="adm-choice"><input type="radio" name="items-mode" value="best" data-report-option="mode" /><span>@T("En iyi deneme", "Bester Versuch")</span></label>
+                <label class="adm-choice"><input type="radio" name="items-mode" value="all" data-report-option="mode" /><span>@T("Tüm denemeler", "Alle Versuche")</span></label>
+                <label class="adm-choice"><input type="checkbox" name="items-effort" value="true" data-report-option="effort" /><span>@T("Aceleyle çözülenleri çıkar", "Überflogene Versuche weglassen")</span></label>
+            </div>
+        </div>
+        <div class="rp-items" data-items></div>
+    }
+</section>
+
+@* ---- Student × question ---- *@
+<section class="adm-tabpanel" id="panel-matrix" role="tabpanel" aria-labelledby="tab-matrix" data-report-tab="matrix" data-url="@StatsUrl("items")">
+    @if (selectedQuiz == null)
+    {
+        <div class="adm-card rp-pick">
+            <h2>@T("Bir sınav seçin", "Wählen Sie eine Prüfung")</h2>
+            <p>@T("Bu tablo, seçilen sınavda her öğrencinin her soruyu doğru mu yanlış mı yaptığını tek bakışta gösterir.", "Diese Tabelle zeigt für die gewählte Prüfung auf einen Blick, wer welche Frage richtig oder falsch hatte.")</p>
+            <div class="rp-pick__list">
+                @foreach (var q in Model.Quizzes.Where(q => q.Questions > 0))
+                {
+                    <a class="adm-btn adm-btn--sm" href="@(Link(f.With(x => { x.Quiz = q.Id; x.Page = 1; })))#matrix">@ExamReportService.QuizTitle(q)@(q.Level != null ? $" · {q.Level}" : "")</a>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="adm-card">
+            <h2>@T("Öğrenci × soru", "Lernende × Frage")</h2>
+            <p class="rp-help">@T("Satırlar öğrenciler (puana göre), sütunlar sorular (kolaydan zora). ✓ doğru, ✗ yanlış, – boş. Normalde bir öğrenci kolay soruları doğru, zorları yanlış yapar; bu sıranın çok bozulduğu satırlar (\"Tutarsızlık\" yüksek) tahmin ya da kopya ihtimaline işaret edebilir — kesin kanıt değildir.", "Zeilen sind Lernende (nach Punkten), Spalten Fragen (von leicht nach schwer). ✓ richtig, ✗ falsch, – leer. Meist sind leichte Fragen richtig und schwere falsch; Zeilen mit hoher „Inkonsistenz“ können auf Raten oder Abschreiben deuten — kein Beweis.")</p>
+            <div class="rp-matrix" data-matrix></div>
+        </div>
+    }
+</section>
+
+@* ---- Progress ---- *@
+<section class="adm-tabpanel" id="panel-progress" role="tabpanel" aria-labelledby="tab-progress" data-report-tab="progress" data-url="@StatsUrl("progress")">
+    <div class="rp-grid">
+        <article class="adm-card rp-chart-card">
+            <h2>@T("Kaçıncı denemede", "Nach Versuch")</h2>
+            <p class="rp-help">@T("Aynı sınavı 1., 2., 3.… kez çözenlerin ortalama puanı. Not: Tekrar eden öğrenciler genellikle ilk seferde düşük alanlardır, bu yüzden artışın bir kısmı bundan kaynaklanır.", "Durchschnitt beim 1., 2., 3.… Versuch derselben Prüfung. Hinweis: Wer wiederholt, hatte meist zuerst wenig Punkte; ein Teil des Anstiegs kommt daher.")</p>
+            <div class="rp-chart" data-chart="byAttempt"></div>
+        </article>
+        <article class="adm-card rp-chart-card">
+            <h2>@T("Geçmek için gereken deneme", "Versuche bis zum Bestehen")</h2>
+            <div class="rp-chart" data-chart="toPass"></div>
+            <p class="rp-help" data-progress-summary></p>
+        </article>
+        <article class="adm-card rp-chart-card rp-span">
+            <h2>@T("En çok gelişenler: ilk ve en iyi puan", "Größter Fortschritt: erster und bester Versuch")</h2>
+            <div class="rp-chart rp-chart--tall" data-chart="dumbbell"></div>
+        </article>
+    </div>
+</section>
+
+@* ---- When ---- *@
+<section class="adm-tabpanel" id="panel-activity" role="tabpanel" aria-labelledby="tab-activity" data-report-tab="activity" data-url="@StatsUrl("activity")">
+    <article class="adm-card rp-chart-card">
+        <h2>@T("Öğrenciler ne zaman sınava giriyor?", "Wann schreiben die Lernenden Prüfungen?")</h2>
+        <p class="rp-help">@T("Haftanın günü ve saate göre deneme sayısı (Türkiye saati). Koyu kareler yoğun saatlerdir: yeni bir sınavı ya da duyuruyu bu saatlerden hemen önce yayınlamak işe yarayabilir.", "Versuche nach Wochentag und Stunde (türkische Zeit). Dunkle Felder sind Stoßzeiten: neue Prüfungen kurz davor zu veröffentlichen kann helfen.")</p>
+        <div class="rp-chart rp-chart--tall" data-chart="activity"></div>
+    </article>
+</section>
+
+@* ---- Integrity ---- *@
+<section class="adm-tabpanel" id="panel-integrity" role="tabpanel" aria-labelledby="tab-integrity" data-report-tab="integrity" data-url="@StatsUrl("integrity")">
+    <div class="rp-grid">
+        <article class="adm-card rp-chart-card">
+            <h2>@T("Uyarı türleri", "Arten von Warnungen")</h2>
+            <p class="rp-help">@T("Sınav sırasında kaydedilen olaylar. Kırmızı olanlar uyarı sayılır; 3 uyarıda sınav biter. \"Pencereden ayrıldı\" bir bildirimden de olabilir, tek başına kopya anlamına gelmez.", "Ereignisse während der Prüfung. Rote zählen als Warnung; bei 3 Warnungen endet die Prüfung. „Fenster verlassen“ kann auch eine Benachrichtigung sein und heißt allein nichts.")</p>
+            <div class="rp-chart" data-chart="eventTypes"></div>
+        </article>
+        <article class="adm-card rp-chart-card">
+            <h2>@T("Deneme başına uyarı", "Warnungen pro Versuch")</h2>
+            <div class="rp-chart" data-chart="warnDistribution"></div>
+            <p class="rp-help" data-integrity-summary></p>
+        </article>
+        <article class="adm-card rp-span">
+            <h2>@T("En çok uyarı alan denemeler", "Versuche mit den meisten Warnungen")</h2>
+            <div class="rp-table" data-table="flagged"></div>
+        </article>
+    </div>
+</section>
+
+@* ---------------- Attempt panel ---------------- *@
+<dialog class="rp-drawer" id="attemptDrawer" aria-labelledby="attemptTitle">
+    <div class="rp-drawer__bar">
+        <strong id="attemptTitle">@T("Deneme ayrıntısı", "Versuchsdetails")</strong>
+        <a class="adm-btn adm-btn--sm adm-btn--ghost" href="#" target="_blank" rel="noopener" data-drawer-open><i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i>@T("Yeni sekmede aç", "In neuem Tab")</a>
+        <button type="button" class="adm-btn adm-btn--sm" data-drawer-close aria-label="@strings.close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="rp-drawer__body" data-drawer-body></div>
+</dialog>
+
+<script type="application/json" id="report-strings">@Json.Serialize(strings)</script>
 
 @section Scripts {
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
-    <script>
-        (function () {
-            const allData = @Html.Raw(json);
-            const L = @Html.Raw(JsonConvert.SerializeObject(strings, new JsonSerializerSettings { StringEscapeHandling = StringEscapeHandling.EscapeHtml }));
-            const tableLanguage = @Html.Raw(JsonConvert.SerializeObject(tableLanguage, new JsonSerializerSettings { StringEscapeHandling = StringEscapeHandling.EscapeHtml }));
-            let filtered = [...allData];
-            let dataTable;
-
-            // Everything from the database goes into the page as text
-            const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-            // Question text is editor HTML; show it as plain text (DOMParser documents run no scripts)
-            const plain = (html) => new DOMParser().parseFromString(String(html ?? ''), 'text/html').body.textContent.trim();
-            const isLive = (x) => new Date(x.SubmissionDate) > new Date(Date.now() - 5 * 60000);
-            const duration = (s) => s ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : '—';
-
-            const css = getComputedStyle(document.body);
-            const color = (name) => css.getPropertyValue(name).trim();
-            const palette = { coral: color('--a-coral-deep'), blue: color('--a-blue'), green: color('--a-green'), amber: color('--a-amber'), red: color('--a-red'), ink: color('--a-muted') };
-            if (window.Chart) {
-                Chart.defaults.font.family = "'Poppins', system-ui, sans-serif";
-                Chart.defaults.color = palette.ink;
-                Chart.defaults.borderColor = color('--a-hairline');
-            }
-            function safeDestroy(chart) { if (chart && typeof chart.destroy === 'function') chart.destroy(); }
-
-            function updateCharts(data) {
-                if (!window.Chart) return;
-                ['scoresChart', 'trendChart', 'avgScoreChart', 'successPieChart', 'attemptsBarChart'].forEach((id) => safeDestroy(window[id]));
-                const ordered = [...data].sort((a, b) => new Date(a.SubmissionDate) - new Date(b.SubmissionDate));
-
-                window.scoresChart = new Chart(document.getElementById('scoresChart'), {
-                    type: 'bar',
-                    data: { labels: ordered.map((x) => x.UserName + ' · ' + x.QuizTitle + ' #' + x.AttemptNumber), datasets: [{ label: L.score, data: ordered.map((x) => x.Score), backgroundColor: ordered.map((x) => x.Score >= 50 ? palette.green : palette.red), borderRadius: 6 }] },
-                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 } } }
-                });
-                window.trendChart = new Chart(document.getElementById('trendChart'), {
-                    type: 'line',
-                    data: { labels: ordered.map((x) => x.SubmissionTimeFormatted), datasets: [{ label: L.score, data: ordered.map((x) => x.Score), borderColor: palette.coral, backgroundColor: palette.coral, tension: 0.3, pointRadius: 3 }] },
-                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 } } }
-                });
-                const byQuiz = {};
-                data.forEach((x) => { (byQuiz[x.QuizTitle] = byQuiz[x.QuizTitle] || []).push(x.Score); });
-                const quizNames = Object.keys(byQuiz);
-                window.avgScoreChart = new Chart(document.getElementById('avgScoreChart'), {
-                    type: 'bar',
-                    data: { labels: quizNames, datasets: [{ label: L.score, data: quizNames.map((q) => +(byQuiz[q].reduce((a, b) => a + b, 0) / byQuiz[q].length).toFixed(1)), backgroundColor: palette.amber, borderRadius: 6 }] },
-                    options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { min: 0, max: 100 } } }
-                });
-                const passed = data.filter((x) => x.Score >= 50).length;
-                window.successPieChart = new Chart(document.getElementById('successPieChart'), {
-                    type: 'doughnut',
-                    data: { labels: [L.passed, L.failed], datasets: [{ data: [passed, data.length - passed], backgroundColor: [palette.green, palette.red], borderWidth: 0 }] },
-                    options: { responsive: true, cutout: '62%', plugins: { legend: { position: 'bottom' } } }
-                });
-                const perStudent = {};
-                data.forEach((x) => { perStudent[x.UserName] = (perStudent[x.UserName] || 0) + 1; });
-                const students = Object.keys(perStudent);
-                window.attemptsBarChart = new Chart(document.getElementById('attemptsBarChart'), {
-                    type: 'bar',
-                    data: { labels: students, datasets: [{ label: L.attempt, data: students.map((s) => perStudent[s]), backgroundColor: palette.blue, borderRadius: 6 }] },
-                    options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { precision: 0 } } } }
-                });
-            }
-
-            function statusCell(x) {
-                let html = isLive(x) ? '<span class="adm-badge adm-badge--red">' + esc(L.live) + '</span> ' : '';
-                html += x.Score >= 50 ? '<span class="adm-badge adm-badge--green">' + esc(L.passed) + '</span>' : '<span class="adm-badge adm-badge--red">' + esc(L.failed) + '</span>';
-                if (x.EndReason === 'violations') html += ' <span class="adm-badge adm-badge--red">' + esc(L.terminated) + '</span>';
-                else if (x.EndReason === 'timeout') html += ' <span class="adm-badge adm-badge--blue">' + esc(L.timeUp) + '</span>';
-                if (x.ViolationCount > 0) html += ' <span class="adm-badge adm-badge--amber" title="' + esc(L.warnings) + '">&#9888; ' + esc(x.ViolationCount) + '</span>';
-                return html;
-            }
-
-            function filterAndRedraw() {
-                const user = $('#userSelect').val();
-                const quiz = $('#quizSelect').val();
-                const failedOnly = $('#showFailed').is(':checked');
-                filtered = allData.filter((x) => (!user || x.UserName === user) && (!quiz || x.QuizTitle === quiz) && (!failedOnly || x.Score < 50));
-                dataTable.clear().rows.add(filtered.map((x, i) => [
-                    String(i + 1),
-                    esc(x.UserName),
-                    esc(x.QuizTitle),
-                    '<b>' + esc(x.Score) + '</b>',
-                    esc(x.AttemptNumber),
-                    esc(x.Age || '—'),
-                    duration(x.DurationSeconds),
-                    statusCell(x),
-                    '<span data-order="' + esc(x.SubmissionDate) + '">' + esc(x.SubmissionTimeFormatted) + '</span>',
-                    '<button type="button" class="adm-btn adm-btn--sm adm-btn--icon show-details" data-row-idx="' + i + '" aria-label="' + esc(L.details) + '"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>'
-                ])).draw();
-                updateCharts(filtered);
-            }
-
-            $(function () {
-                dataTable = $('#monitorTable').DataTable({
-                    order: [[8, 'desc']],
-                    columnDefs: [{ targets: 9, orderable: false }, { targets: 8, type: 'string' }],
-                    pageLength: 25,
-                    language: tableLanguage
-                });
-                $('#studentHistoryTable, #quizAnalysisTable, #topAttemptsTable, #recentAttemptsTable').DataTable({ paging: false, searching: false, info: false, language: tableLanguage });
-                filterAndRedraw();
-                $('#userSelect, #quizSelect, #showFailed').on('change', filterAndRedraw);
-
-                const exportRows = () => filtered.map((x, i) => [i + 1, x.UserName, x.QuizTitle, x.Score, x.AttemptNumber, x.Age, duration(x.DurationSeconds), x.Score >= 50 ? L.passed : L.failed, x.SubmissionTimeFormatted]);
-                const exportHead = [['#', L.student, L.quiz, L.score, L.attempt, L.age, L.time, L.status, L.submitted]];
-
-                $('#exportExcel').on('click', () => {
-                    const ws = XLSX.utils.aoa_to_sheet([...exportHead, ...exportRows()]);
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, L.sheet.slice(0, 31));
-                    XLSX.writeFile(wb, 'sinav-sonuclari.xlsx');
-                });
-
-                $('#exportPdf').on('click', () => {
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF({ orientation: 'landscape', unit: 'px', format: 'a4' });
-                    doc.setFontSize(22);
-                    doc.text(L.report, 35, 40);
-                    const charts = ['trendChart', 'successPieChart', 'avgScoreChart', 'attemptsBarChart'];
-                    charts.forEach((id, i) => {
-                        const canvas = document.getElementById(id);
-                        if (!canvas) return;
-                        const x = 35 + (i % 2) * 300;
-                        const y = 60 + Math.floor(i / 2) * 150;
-                        doc.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, 280, 135);
-                    });
-                    doc.autoTable({
-                        head: exportHead,
-                        body: exportRows(),
-                        startY: 370,
-                        theme: 'striped',
-                        headStyles: { fillColor: [227, 100, 100] },
-                        styles: { fontSize: 10, cellPadding: 3 },
-                        margin: { left: 35, right: 35 }
-                    });
-                    doc.save('sinav-sonuclari.pdf');
-                });
-
-                $('#monitorTable tbody').on('click', '.show-details', function (e) {
-                    e.stopPropagation();
-                    const row = filtered[$(this).data('row-idx')];
-                    if (!row) return;
-                    let html = '<dl class="row mb-3">' +
-                        '<dt class="col-sm-3">' + esc(L.student) + '</dt><dd class="col-sm-9">' + esc(row.UserName) + '</dd>' +
-                        '<dt class="col-sm-3">' + esc(L.quiz) + '</dt><dd class="col-sm-9">' + esc(row.QuizTitle) + '</dd>' +
-                        '<dt class="col-sm-3">' + esc(L.score) + '</dt><dd class="col-sm-9"><b>' + esc(row.Score) + '</b> / ' + esc(row.MaxScore) + ' · ' + statusCell(row) + '</dd>' +
-                        '<dt class="col-sm-3">' + esc(L.submitted) + '</dt><dd class="col-sm-9">' + esc(row.SubmissionTimeFormatted) + ' · ' + esc(L.attempt) + ' ' + esc(row.AttemptNumber) + '</dd>' +
-                        '</dl>';
-                    if (row.Responses && row.Responses.length) {
-                        html += '<div class="qm-scroll"><table class="table table-sm align-middle"><thead><tr><th>' + esc(L.question) + '</th><th>' + esc(L.answer) + '</th><th>' + esc(L.correct) + '</th></tr></thead><tbody>';
-                        row.Responses.forEach((r) => {
-                            html += '<tr><td>' + esc(plain(r.Question)) + '</td><td>' + esc(r.Answer || '—') + '</td><td>' +
-                                (r.IsCorrect ? '<span class="adm-badge adm-badge--green">' + esc(L.yes) + '</span>' : '<span class="adm-badge adm-badge--red">' + esc(L.no) + '</span>') + '</td></tr>';
-                        });
-                        html += '</tbody></table></div>';
-                    } else {
-                        html += '<p class="adm-hint">' + esc(L.noAnswers) + '</p>';
-                    }
-                    document.getElementById('attemptDetailBody').innerHTML = html;
-                    bootstrap.Modal.getOrCreateInstance(document.getElementById('attemptDetailModal')).show();
-                });
-
-                const pulse = document.getElementById('livePulse');
-                setInterval(() => { pulse.hidden = !filtered.some(isLive); }, 3000);
-
-                if (window.signalR) {
-                    const connection = new signalR.HubConnectionBuilder().withUrl('/quizMonitorHub').withAutomaticReconnect().build();
-                    connection.on('ReceiveSubmission', (submission) => { allData.push(submission); filterAndRedraw(); });
-                    connection.start().catch((err) => console.error(err));
-                }
-            });
-        })();
-    </script>
+    <script src="~/lib/echarts/echarts.min.js" asp-append-version="true" defer></script>
+    <script src="~/lib/microsoft-signalr/signalr.min.js" asp-append-version="true" defer></script>
+    <script src="~/js/admin-reports.js" asp-append-version="true" defer></script>
 }

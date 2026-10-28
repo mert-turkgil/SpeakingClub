@@ -16,6 +16,10 @@ namespace SpeakingClub.Models
         public bool CanDelete { get; set; }    // Root and Admin accounts cannot be deleted from here
         public bool HasPassword { get; set; }  // false for accounts created with Google
         public bool GoogleLinked { get; set; }
+        // Announcement e-mails (exam results are always sent)
+        public bool NewPostEmails { get; set; }
+        public bool NewQuizEmails { get; set; }
+        public bool EmailChoicePending { get; set; }   // signed up with Google and has not chosen yet
 
         // Quiz progress
         public int TotalAttempts { get; set; }

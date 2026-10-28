@@ -46,12 +46,12 @@
                 <div class="adm-row">
                     <div class="adm-field">
                         <label asp-for="FirstName">@T("Ad", "Vorname") <span class="adm-req">@T("Zorunlu", "Pflicht")</span></label>
-                        <input asp-for="FirstName" class="adm-input" data-val-required="@T("Lütfen adı yazın.", "Bitte Vornamen eingeben.")" />
+                        <input asp-for="FirstName" maxlength="100" class="adm-input" data-val-required="@T("Lütfen adı yazın.", "Bitte Vornamen eingeben.")" />
                         <span asp-validation-for="FirstName"></span>
                     </div>
                     <div class="adm-field">
                         <label asp-for="LastName">@T("Soyad", "Nachname") <span class="adm-req">@T("Zorunlu", "Pflicht")</span></label>
-                        <input asp-for="LastName" class="adm-input" data-val-required="@T("Lütfen soyadı yazın.", "Bitte Nachnamen eingeben.")" />
+                        <input asp-for="LastName" maxlength="100" class="adm-input" data-val-required="@T("Lütfen soyadı yazın.", "Bitte Nachnamen eingeben.")" />
                         <span asp-validation-for="LastName"></span>
                     </div>
                 </div>

@@ -282,6 +282,10 @@ html[data-bs-theme="dark"] .auth-rules li.is-met { color: #7BD3A2; }
 .auth-check:hover .auth-check__box { border-color: var(--bp-coral); }
 .auth-check input:checked + .auth-check__box { background: var(--bp-coral-deep); border-color: var(--bp-coral-deep); color: #fff; transform: scale(1.08); }
 .auth-check input:focus-visible + .auth-check__box { outline: 3px solid var(--bp-coral); outline-offset: 2px; }
+/* Consent box on the sign-up form: the text wraps beside the box, with a short note under it */
+.auth-check--consent { position: relative; align-items: flex-start; line-height: 1.45; }
+.auth-check--consent .auth-check__box { flex: none; margin-top: 0.1rem; }
+.auth-check--consent small { display: block; margin-top: 0.2rem; color: var(--bp-muted); font-size: 0.78rem; }
 .auth-options { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; }
 .auth-options a { color: var(--bp-link); font-size: 0.85rem; font-weight: 600; text-decoration: none; }
 .auth-options a:hover { text-decoration: underline; }
@@ -329,3 +333,8 @@ html[data-bs-theme="dark"] .auth-rules li.is-met { color: #7BD3A2; }
 
 /* The field frame shows focus (.auth-input:focus-within); no second ring on the input itself */
 .auth-input input:focus-visible { outline: none !important; }
+
+/* E-mail settings page (Views/EmailPreferences): "no announcements at all" as a quiet text button */
+.auth-link-button { justify-self: center; margin-top: 0.25rem; padding: 0.35rem 0.5rem; border: 0; background: none; color: var(--bp-link, #C2413F); font: inherit; font-size: 0.88rem; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.auth-link-button:hover { color: var(--bp-ink); }
+.auth-link-button:focus-visible { outline: 3px solid var(--bp-coral); outline-offset: 2px; border-radius: 6px; }

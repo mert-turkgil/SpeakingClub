@@ -1,0 +1,245 @@
+@model SpeakingClub.Controllers.AdminController.EmailsPage
+@using SpeakingClub.Entity
+@using SpeakingClub.Services.Reports
+@* Admin → E-postalar (AdminController.Emails.cs). Styles: admin.css → "Reports" and "E-mails". *@
+@{
+    Layout = "_AdminLayout";
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var section = AdminNav.Find("emails", isGerman)!;
+    ViewData["Title"] = section.Title;
+    ViewData["AdminSection"] = section.Key;
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
+    var adminHeader = new AdminHeader(section.Key, section.Title, section.Lead, Guide: section.Guide);
+    string When(DateTime utc) => ReportTime.ToLocal(utc).ToString("d MMM yyyy, HH:mm", culture);
+    string TemplateName(string template) => template switch
+    {
+        "ExamResult" => T("Sınav sonucu", "Prüfungsergebnis"),
+        "NewPost" => T("Yeni yazı duyurusu", "Ankündigung Beitrag"),
+        "NewQuiz" => T("Yeni sınav duyurusu", "Ankündigung Prüfung"),
+        "ConfirmEmail" => T("Kayıt onayı", "Registrierung"),
+        "ContactMessage" => T("İletişim mesajı", "Kontaktnachricht"),
+        "ContactReceipt" => T("İletişim alındı", "Kontakt-Eingang"),
+        "Test" => T("Deneme", "Test"),
+        _ => template
+    };
+    var capShare = Model.Options.DailyCap > 0 ? Math.Min(100, Model.SentToday * 100 / Model.Options.DailyCap) : 0;
+    var chips = new[] { ("all", T("Tümü", "Alle")), ("sent", T("Gönderildi", "Gesendet")), ("queued", T("Sırada", "Wartend")), ("failed", T("Gönderilemedi", "Fehlgeschlagen")) };
+}
+
+<partial name="_AdminHeader" model="adminHeader" />
+
+<div class="rp-grid em-top">
+    @* ---- Mail server ---- *@
+    <section class="adm-card">
+        <div class="adm-card__head"><h2>@T("E-posta sunucusu", "Mailserver")</h2></div>
+        <dl class="rp-facts">
+            <dt>@T("Sunucu", "Server")</dt>
+            <dd>@(string.IsNullOrEmpty(Model.Smtp.Host) ? "–" : $"{Model.Smtp.Host}:{Model.Smtp.Port}")</dd>
+            <dt>@T("Gönderen", "Absender")</dt>
+            <dd>@Model.Smtp.FromName &lt;@Model.Smtp.Sender&gt;</dd>
+            <dt>@T("Yanıtlar", "Antworten an")</dt>
+            <dd>@(string.IsNullOrEmpty(Model.Smtp.ReplyToEmail) ? Model.Smtp.Sender : Model.Smtp.ReplyToEmail)</dd>
+            <dt>@T("Hız", "Tempo")</dt>
+            <dd>@T($"duyurular dakikada {Model.Options.PerMinute}, günde toplam en fazla {Model.Options.DailyCap}", $"Ankündigungen {Model.Options.PerMinute} pro Minute, höchstens {Model.Options.DailyCap} pro Tag insgesamt")</dd>
+        </dl>
+        @if (!Model.Options.Enabled)
+        {
+            <p class="adm-alert adm-alert--warn em-note">@T("Gönderim kapalı (Email:Enabled = false): e-postalar sırada bekliyor.", "Versand ist aus (Email:Enabled = false): E-Mails warten in der Warteschlange.")</p>
+        }
+        @if (Model.Problems.Count > 0)
+        {
+            <div class="adm-alert adm-alert--error em-note">
+                <strong>@T("Ayarlarda sorun var:", "Problem mit den Einstellungen:")</strong>
+                <ul>@foreach (var problem in Model.Problems) { <li>@problem</li> }</ul>
+            </div>
+        }
+        <form method="post" action="@Url.Action("EmailTest")" class="em-test">
+            @Html.AntiForgeryToken()
+            <label class="rp-field"><span>@T("Deneme e-postası", "Test-E-Mail")</span>
+                <input type="email" name="to" class="adm-input" placeholder="@T("Boş bırakırsanız kendi adresinize", "Leer lassen: an Ihre eigene Adresse")" autocomplete="email" />
+            </label>
+            <button type="submit" class="adm-btn"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i>@T("Deneme e-postası gönder", "Test-E-Mail senden")</button>
+        </form>
+    </section>
+
+    @* ---- Today ---- *@
+    <section class="adm-card">
+        <div class="adm-card__head"><h2>@T("Bugün", "Heute")</h2><span class="rp-muted">@T("Türkiye saatiyle", "türkische Zeit")</span></div>
+        <p class="em-quota"><strong>@Model.SentToday.ToString("N0", culture)</strong> / @Model.Options.DailyCap.ToString("N0", culture) @T("e-posta gönderildi", "E-Mails gesendet")</p>
+        <div class="em-bar @(capShare >= 90 ? "is-full" : "")" role="img" aria-label="@capShare%"><span style="width:@capShare%"></span></div>
+        <p class="rp-help">@T("Gmail kişisel hesaplar için günde yaklaşık 500 e-postaya izin verir. Sınır dolunca duyurular ertesi gün kaldığı yerden devam eder; sınav sonuçları ve kayıt e-postaları beklemez.",
+            "Gmail erlaubt privaten Konten etwa 500 E-Mails pro Tag. Ist die Grenze erreicht, gehen Ankündigungen am nächsten Tag weiter; Ergebnisse und Registrierungen warten nie.")</p>
+        <ul class="em-counts">
+            <li><span>@T("Sırada: sonuç, kayıt, iletişim", "Wartend: Ergebnisse, Registrierung, Kontakt")</span><strong>@Model.WaitingTransactional</strong></li>
+            <li><span>@T("Sırada: duyurular", "Wartend: Ankündigungen")</span><strong>@Model.WaitingPromotional</strong></li>
+            <li><span>@T("Son 7 günde gönderilemeyen", "In 7 Tagen fehlgeschlagen")</span><strong class="@(Model.FailedOpen > 0 ? "is-bad" : "")">@Model.FailedOpen</strong></li>
+        </ul>
+        @if (Model.FailedOpen > 0)
+        {
+            <form method="post" action="@Url.Action("EmailRetry")">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="adm-btn adm-btn--primary"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i>@T("Başarısız olanları tekrar dene", "Fehlgeschlagene erneut versuchen")</button>
+            </form>
+        }
+    </section>
+</div>
+
+@* ---- Announcements ---- *@
+@if (Model.Campaigns.Count > 0)
+{
+    <section class="adm-card em-campaigns">
+        <div class="adm-card__head"><h2>@T("Duyurular", "Ankündigungen")</h2></div>
+        <div class="adm-table-wrap">
+            <table class="adm-table rp-results">
+                <thead>
+                    <tr>
+                        <th scope="col">@T("Duyuru", "Ankündigung")</th>
+                        <th scope="col">@T("Başladı", "Gestartet")</th>
+                        <th scope="col" class="is-num">@T("Gönderildi", "Gesendet")</th>
+                        <th scope="col" class="is-num">@T("Sırada", "Wartend")</th>
+                        <th scope="col" class="is-num">@T("Hata", "Fehler")</th>
+                        <th scope="col"><span class="adm-sr">@T("İşlem", "Aktion")</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.Campaigns)
+                    {
+                        var running = c.Campaign.Status != CampaignStatus.Cancelled && (c.Campaign.Status == CampaignStatus.Queuing || c.Waiting > 0);
+                        <tr>
+                            <td class="is-primary" data-label="@T("Duyuru", "Ankündigung")">
+                                <span class="rp-stack">
+                                    <strong>@c.Campaign.Title</strong>
+                                    <small class="rp-muted">@TemplateName(c.Campaign.Kind) · @T($"{c.Campaign.Recipients} alıcı", $"{c.Campaign.Recipients} Empfänger")@(c.Campaign.Status == CampaignStatus.Cancelled ? T(" · durduruldu", " · angehalten") : "")</small>
+                                </span>
+                            </td>
+                            <td data-label="@T("Başladı", "Gestartet")"><span class="rp-when">@When(c.Campaign.CreatedAt)</span></td>
+                            <td class="is-num" data-label="@T("Gönderildi", "Gesendet")">@c.Sent</td>
+                            <td class="is-num" data-label="@T("Sırada", "Wartend")">@c.Waiting</td>
+                            <td class="is-num" data-label="@T("Hata", "Fehler")">@c.Failed</td>
+                            <td class="is-actions">
+                                @if (running)
+                                {
+                                    <form method="post" action="@Url.Action("EmailCampaignStop", new { id = c.Campaign.Id })"
+                                          data-confirm="@T("Duyuru durdurulsun mu?", "Ankündigung anhalten?")"
+                                          data-confirm-text="@T($"“{c.Campaign.Title}” duyurusunun henüz gönderilmemiş {c.Waiting} e-postası iptal edilecek.", $"Die {c.Waiting} noch nicht gesendeten E-Mails der Ankündigung „{c.Campaign.Title}“ werden verworfen.")"
+                                          data-confirm-ok="@T("Evet, durdur", "Ja, anhalten")">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="adm-btn adm-btn--sm"><i class="fa-solid fa-hand" aria-hidden="true"></i>@T("Durdur", "Anhalten")</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}
+
+@* ---- Log ---- *@
+<section class="adm-card em-log" id="log">
+    <div class="rp-table-head">
+        <div class="adm-choices rp-seg" role="group" aria-label="@T("Duruma göre", "Nach Status")">
+            @foreach (var (key, label) in chips)
+            {
+                <a class="adm-choice-link @(Model.Status == key ? "is-active" : "")" href="@Url.Action("Emails", new { status = key == "all" ? null : key })#log" aria-current="@(Model.Status == key ? "true" : null)">@label</a>
+            }
+        </div>
+    </div>
+
+    @if (Model.Status == "queued")
+    {
+        @if (Model.Waiting.Count == 0)
+        {
+            <p class="rp-empty">@T("Sırada bekleyen e-posta yok.", "Keine wartenden E-Mails.")</p>
+        }
+        else
+        {
+            <div class="adm-table-wrap">
+                <table class="adm-table rp-results">
+                    <thead><tr><th scope="col">@T("Tür", "Art")</th><th scope="col">@T("Alıcı", "Empfänger")</th><th scope="col">@T("Sıradaki deneme", "Nächster Versuch")</th><th scope="col">@T("Durum", "Status")</th></tr></thead>
+                    <tbody>
+                        @foreach (var o in Model.Waiting)
+                        {
+                            <tr>
+                                <td class="is-primary" data-label="@T("Tür", "Art")"><strong>@TemplateName(o.Template)</strong></td>
+                                <td data-label="@T("Alıcı", "Empfänger")"><span class="em-address">@o.RecipientEmail</span></td>
+                                <td data-label="@T("Sıradaki deneme", "Nächster Versuch")"><span class="rp-when">@When(o.NextAttemptAt)</span></td>
+                                <td data-label="@T("Durum", "Status")">
+                                    @if (o.Attempts == 0) { <span class="adm-badge adm-badge--plain">@T("Bekliyor", "Wartet")</span> }
+                                    else { <span class="adm-badge adm-badge--amber" title="@o.LastError">@T($"{o.Attempts}. deneme başarısız", $"{o.Attempts}. Versuch fehlgeschlagen")</span> }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+    else if (Model.Logs.Count == 0)
+    {
+        <p class="rp-empty">@T("Henüz e-posta yok.", "Noch keine E-Mails.")</p>
+    }
+    else
+    {
+        <div class="adm-table-wrap">
+            <table class="adm-table rp-results">
+                <thead>
+                    <tr>
+                        <th scope="col">@T("Tarih", "Datum")</th>
+                        <th scope="col">@T("E-posta", "E-Mail")</th>
+                        <th scope="col">@T("Alıcı", "Empfänger")</th>
+                        <th scope="col">@T("Durum", "Status")</th>
+                        <th scope="col"><span class="adm-sr">@T("İşlem", "Aktion")</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var l in Model.Logs)
+                    {
+                        <tr>
+                            <td data-label="@T("Tarih", "Datum")"><span class="rp-when">@When(l.SentAt ?? l.CreatedAt)</span></td>
+                            <td class="is-primary" data-label="@T("E-posta", "E-Mail")">
+                                <span class="rp-stack"><strong>@l.Subject</strong><small class="rp-muted">@TemplateName(l.Template)</small></span>
+                            </td>
+                            <td data-label="@T("Alıcı", "Empfänger")"><span class="em-address">@(string.IsNullOrEmpty(l.RecipientEmail) ? T("(silinmiş hesap)", "(gelöschtes Konto)") : l.RecipientEmail)</span></td>
+                            <td data-label="@T("Durum", "Status")">
+                                <span class="rp-stack">
+                                    @if (l.Status == EmailStatus.Sent) { <span class="adm-badge adm-badge--green">@T("Gönderildi", "Gesendet")</span> }
+                                    else if (l.Status == EmailStatus.Failed && l.ResentAt != null) { <span class="adm-badge adm-badge--plain">@T("Tekrar gönderildi", "Erneut gesendet")</span> }
+                                    else if (l.Status == EmailStatus.Failed) { <span class="adm-badge adm-badge--red">@T("Gönderilemedi", "Fehlgeschlagen")</span> }
+                                    else { <span class="adm-badge adm-badge--amber">@T("Gönderiliyor", "Wird gesendet")</span> }
+                                    @if (l.Error != null && l.ResentAt == null) { <small class="em-error">@l.Error</small> }
+                                </span>
+                            </td>
+                            <td class="is-actions">
+                                @if (l.Status == EmailStatus.Failed && l.ResentAt == null && l.Body != null)
+                                {
+                                    <form method="post" action="@Url.Action("EmailResend", new { id = l.Id })">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="adm-btn adm-btn--sm"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i>@T("Tekrar gönder", "Erneut senden")</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (Model.TotalPages > 1)
+    {
+        <div class="rp-pager">
+            <nav aria-label="@T("Sayfalar", "Seiten")">
+                <ul class="pagination flex-wrap gap-1">
+                    @for (var p = Math.Max(1, Model.Page - 3); p <= Math.Min(Model.TotalPages, Model.Page + 3); p++)
+                    {
+                        var pageNumber = p;
+                        <li class="page-item @(pageNumber == Model.Page ? "active" : "")"><a class="page-link" href="@Url.Action("Emails", new { status = Model.Status == "all" ? null : Model.Status, page = pageNumber })#log" aria-current="@(pageNumber == Model.Page ? "page" : null)">@pageNumber</a></li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    }
+</section>

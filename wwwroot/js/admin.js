@@ -158,11 +158,23 @@
     }
     document.addEventListener('submit', (e) => {
         const form = e.target;
-        if (!(form instanceof HTMLFormElement) || !form.dataset.confirm || form.dataset.confirmed === '1') return;
+        if (!(form instanceof HTMLFormElement) || form.dataset.confirmed === '1') return;
+        // One form shared by many rows (the member list): each row's button asks its own question
+        const button = e.submitter && e.submitter.dataset.confirm ? e.submitter : null;
+        const source = button || form;
+        if (!source.dataset.confirm) return;
         e.preventDefault();
-        ask(form, () => {
+        ask(source, () => {
             form.dataset.confirmed = '1';
             dirty.clear(form);
+            // form.submit() leaves out the clicked button's name/value (on the shared form: which member)
+            if (e.submitter && e.submitter.name) {
+                const field = document.createElement('input');
+                field.type = 'hidden';
+                field.name = e.submitter.name;
+                field.value = e.submitter.value;
+                form.append(field);
+            }
             HTMLFormElement.prototype.submit.call(form);
         });
     }, true);
@@ -380,7 +392,14 @@
                 panel(b)?.classList.toggle('is-active', on);
             });
             if (focus) button.focus();
+            // A tab bar that scrolls sideways on phones keeps the chosen tab in view
+            if (tabs.scrollWidth > tabs.clientWidth) {
+                const offset = button.getBoundingClientRect().left - tabs.getBoundingClientRect().left;
+                tabs.scrollBy({ left: offset - (tabs.clientWidth - button.offsetWidth) / 2 });
+            }
             store.set('adm-tab:' + location.pathname, button.id);
+            // Lets a page load a tab's content the first time it is shown (admin-reports.js)
+            panel(button)?.dispatchEvent(new CustomEvent('adm:tab-shown', { bubbles: true }));
         };
         buttons.forEach((b, i) => {
             b.addEventListener('click', () => select(b));

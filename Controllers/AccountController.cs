@@ -14,6 +14,7 @@ using SpeakingClub.Entity;
 using SpeakingClub.Identity;
 using SpeakingClub.Models;
 using SpeakingClub.Services;
+using SpeakingClub.Services.Email;
 using Quiz = SpeakingClub.Entity.Quiz;
 using Question = SpeakingClub.Entity.Question;
 using QuizAnswer = SpeakingClub.Entity.QuizAnswer;
@@ -30,7 +31,7 @@ namespace SpeakingClub.Controllers
         private readonly IConfiguration _configuration;
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
-        private readonly IEmailSender _emailSender;
+        private readonly EmailQueue _mail;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<AccountController> _logger;
         private readonly ExamService _examService;
@@ -42,7 +43,7 @@ namespace SpeakingClub.Controllers
             IMemoryCache memoryCache,
             UserManager<User> userManager,
             SignInManager<User> signInManager,
-            IEmailSender emailSender,
+            EmailQueue mail,
             ExamService examService)
         {
             _examService = examService;
@@ -51,7 +52,7 @@ namespace SpeakingClub.Controllers
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _signInManager = signInManager;
-            _emailSender = emailSender;
+            _mail = mail;
             _logger = logger;
         }
         #region Quiz
@@ -295,6 +296,8 @@ namespace SpeakingClub.Controllers
         {
             public Guid AttemptId { get; set; }
             public Dictionary<int, int>? Answers { get; set; }
+            // Seconds spent on each question so far (questionId → seconds)
+            public Dictionary<int, int>? Times { get; set; }
             public List<QuizEventRequest>? Events { get; set; }
         }
 
@@ -329,6 +332,15 @@ namespace SpeakingClub.Controllers
             var open = now <= attempt.ExpiresAt.AddSeconds(ExamRules.GraceSeconds);
             if (open && request!.Answers != null)
                 attempt.AnswersJson = JsonSerializer.Serialize(SanitizeAnswers(quiz, request.Answers));
+            if (open && request!.Times != null)
+            {
+                // Only this quiz's questions, never more than the time allowed
+                var limit = ExamRules.TimeLimitSeconds(quiz);
+                var questionIds = quiz.Questions.Select(q => q.Id).ToHashSet();
+                attempt.TimesJson = JsonSerializer.Serialize(request.Times
+                    .Where(t => questionIds.Contains(t.Key))
+                    .ToDictionary(t => t.Key, t => Math.Clamp(t.Value, 0, limit)));
+            }
 
             var log = ReadLog(attempt);
             foreach (var e in (request!.Events ?? new List<QuizEventRequest>()).Take(50))
@@ -513,6 +525,10 @@ namespace SpeakingClub.Controllers
                 CanDelete = !roles.Any(r => r is "Root" or "Admin"),
                 HasPassword = await _userManager.HasPasswordAsync(user),
                 GoogleLinked = (await _userManager.GetLoginsAsync(user)).Any(l => l.LoginProvider == "Google"),
+                NewPostEmails = !user.EmailOptOuts.HasFlag(EmailTopics.NewPosts),
+                NewQuizEmails = !user.EmailOptOuts.HasFlag(EmailTopics.NewQuizzes),
+                // Signed up with Google (no checkbox there) and never chose: the card asks
+                EmailChoicePending = user.PromoConsentSource == ConsentSource.Google,
                 TotalAttempts = submissions.Count,
                 DistinctQuizzes = submissions.Select(s => s.QuizId).Distinct().Count(),
                 ScoreHistory = submissions.TakeLast(12).Select(s => s.Score).ToList(),
@@ -554,6 +570,22 @@ namespace SpeakingClub.Controllers
 
             ViewData["Robots"] = "noindex, nofollow";
             return View(model);
+        }
+
+        // Account page → "E-posta bildirimleri": announcements of new posts and new quizzes (exam results always come)
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EmailPreferences(bool newPosts, bool newQuizzes)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction(nameof(Login));
+            user.EmailOptOuts = (newPosts ? EmailTopics.None : EmailTopics.NewPosts) | (newQuizzes ? EmailTopics.None : EmailTopics.NewQuizzes);
+            user.PromoConsentAt = DateTime.UtcNow;
+            user.PromoConsentSource = ConsentSource.Account;
+            await _userManager.UpdateAsync(user);
+            TempData["Success"] = T("E-posta tercihleriniz kaydedildi.", "Ihre E-Mail-Einstellungen wurden gespeichert.");
+            return Redirect(Url.Action(nameof(Account)) + "#email");
         }
 
         #endregion
@@ -618,6 +650,7 @@ namespace SpeakingClub.Controllers
                     _unitOfWork.GenericRepository<DownloadLog>().Update(download);
                 }
                 await _unitOfWork.SaveAsync();
+                await _mail.ForgetUserAsync(userId);   // e-mail log: address and any kept copy
 
                 await _signInManager.SignOutAsync();
                 return RedirectToAction("Index", "Home");
@@ -772,7 +805,8 @@ namespace SpeakingClub.Controllers
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     _logger.LogInformation("User logged in with session timeout.");
                 }
-                
+
+                await RecordSignInAsync(user);
                 return RedirectToLocal(returnUrl);
             }
             if (result.IsLockedOut)
@@ -865,13 +899,20 @@ namespace SpeakingClub.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
+            var now = DateTime.UtcNow;
             var user = new User
             {
                 UserName = model.Email,
                 Email = model.Email,
                 FirstName = model.FirstName,
                 LastName = model.LastName,
-                Age = model.Age
+                Age = model.Age,
+                CreatedAt = now,
+                PreferredCulture = UserLanguage.Current,
+                // Announcements only with the box ticked; results are sent either way
+                EmailOptOuts = model.PromoEmails ? EmailTopics.None : EmailTopics.All,
+                PromoConsentAt = model.PromoEmails ? now : null,
+                PromoConsentSource = ConsentSource.Register
             };
             var result = await _userManager.CreateAsync(user, model.Password);
 
@@ -887,44 +928,8 @@ namespace SpeakingClub.Controllers
                     new { userId = user.Id, token },
                     Request.Scheme);
 
-                // Determine user's current culture
-                var currentCulture = CultureInfo.CurrentCulture.Name; // or RequestCulture if applicable
-
-                // Define template path based on culture
-                string userTemplatePath;
-                if (currentCulture.StartsWith("de", StringComparison.OrdinalIgnoreCase))
-                {
-                    userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserConfirm_de.html");
-                }
-                else
-                {
-                    userTemplatePath = Path.Combine(Directory.GetCurrentDirectory(), "EmailTemplates", "UserConfirm_tr.html");
-                }
-
-                // Read HTML content from template file
-                string userEmailBodyTemplate = await System.IO.File.ReadAllTextAsync(userTemplatePath);
-
-                // Replace the placeholder with confirmation link
-                string userEmailBody = userEmailBodyTemplate.Replace("{{ConfirmationLink}}", confirmationLink);
-
-                // Email Subject (Localized)
-                string emailSubject = currentCulture.StartsWith("de")
-                    ? "Bitte bestätigen Sie Ihre E-Mail-Adresse"
-                    : currentCulture.StartsWith("tr")
-                        ? "Lütfen E-Posta Adresinizi Onaylayın"
-                        : "Please Confirm Your Email";
-
-                // Send email directly
-                try
-                {
-                    await _emailSender.SendEmailAsync(user.Email, emailSubject, userEmailBody);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error sending confirmation email.");
-                    ModelState.AddModelError(string.Empty, "Unable to send confirmation email. Please contact support.");
-                    return View(model);
-                }
+                // Sent by the e-mail worker (Services/Email) in the language of this page; logged on Admin → E-postalar
+                await _mail.QueueConfirmEmailAsync(user, confirmationLink!);
 
                 // Optionally, sign in user or redirect to a confirmation page
                 TempData["Success"] = "Kayıt başarılı! Lütfen e-postanızı kontrol edip hesabınızı onayladıktan sonra giriş yapın. Spam klasörüne bakmayı unutmayın.";
@@ -1034,7 +1039,12 @@ namespace SpeakingClub.Controllers
             // Someone who has signed in with this Google account before
             var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
             if (result.Succeeded)
+            {
+                var returning = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+                if (returning != null)
+                    await RecordSignInAsync(returning);
                 return RedirectToLocal(returnUrl);
+            }
             if (result.IsLockedOut)
                 return View("Lockout");
 
@@ -1055,8 +1065,13 @@ namespace SpeakingClub.Controllers
                     UserName = email,
                     Email = email,
                     EmailConfirmed = true,
-                    FirstName = info.Principal.FindFirstValue(ClaimTypes.GivenName),
-                    LastName = info.Principal.FindFirstValue(ClaimTypes.Surname)
+                    FirstName = Shorten(info.Principal.FindFirstValue(ClaimTypes.GivenName)),
+                    LastName = Shorten(info.Principal.FindFirstValue(ClaimTypes.Surname)),
+                    CreatedAt = DateTime.UtcNow,
+                    PreferredCulture = UserLanguage.Current,
+                    // No consent box on Google's screens: announcements stay off until chosen on the Account page
+                    EmailOptOuts = EmailTopics.All,
+                    PromoConsentSource = ConsentSource.Google
                 };
                 var created = await _userManager.CreateAsync(user);
                 if (!created.Succeeded)
@@ -1080,9 +1095,22 @@ namespace SpeakingClub.Controllers
             }
 
             await _signInManager.SignInAsync(user, isPersistent: false);
+            await RecordSignInAsync(user);
             return RedirectToLocal(returnUrl);
         }
         #endregion
+
+        // Last sign-in and the language the site was used in (member report, language of e-mails)
+        // Names from Google fit the column (SpeakingClub.Identity.User.NameMaxLength)
+        private static string? Shorten(string? name) =>
+            name is { Length: > SpeakingClub.Identity.User.NameMaxLength } ? name[..SpeakingClub.Identity.User.NameMaxLength] : name;
+
+        private async Task RecordSignInAsync(User user)
+        {
+            user.LastLoginAt = DateTime.UtcNow;
+            user.PreferredCulture = UserLanguage.Current;
+            await _userManager.UpdateAsync(user);
+        }
 
         private IActionResult RedirectToLocal(string? returnUrl)
         {

@@ -1,0 +1,351 @@
+@model SpeakingClub.Models.Reports.MemberReportPage
+@using Microsoft.AspNetCore.Http
+@using SpeakingClub.Services
+@using SpeakingClub.Services.Reports
+@*
+    Admin → Kullanıcılar (AdminController.Members.cs). Rendered on the server with one page of members; filters live in
+    the address like the exam report. The chart tabs fetch their figures when first opened (admin-reports.js).
+    One shared delete form: each row's button sends its id (admin.js adds it after the confirmation).
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var section = AdminNav.Find("users", isGerman)!;
+    ViewData["Title"] = section.Title;
+    ViewData["AdminSection"] = section.Key;
+    var f = Model.Filter;
+    var k = Model.Kpis;
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
+    var adminHeader = new AdminHeader(section.Key, section.Title, section.Lead, Url.Action("UserCreate"), section.CreateLabel, Guide: section.Guide);
+
+    string Link(MemberReportFilter filter) => Url.Action("Users")! + QueryString.Create(filter.ToQuery());
+    string StatsUrl(string tab) => Url.Action("UserStats", new { tab })! + QueryString.Create(f.With(x => { x.Page = 1; x.Sort = null; }).ToQuery());
+    string SortLink(string key) => Link(f.With(x => { x.Sort = key; x.Page = 1; }));
+    string Share(int part) => k.Members > 0 ? (part * 100.0 / k.Members).ToString("0", culture) + "%" : "–";
+    string Day(DateTime? d) => d?.ToString("d MMM yyyy", culture) ?? "–";
+    string RoleName(string role) => role switch { "Teacher" => T("Öğretmen", "Lehrkraft"), "User" => T("Öğrenci", "Lernende"), _ => role };
+    string RoleTone(string role) => role switch { "Root" => "adm-badge--red", "Admin" => "adm-badge--coral", "Teacher" => "adm-badge--blue", _ => "adm-badge--plain" };
+
+    var periods = new (string Key, string Label)[]
+    {
+        ("7", T("7 gün", "7 Tage")), ("30", T("30 gün", "30 Tage")), ("90", T("90 gün", "90 Tage")),
+        ("365", T("1 yıl", "1 Jahr")), ("all", T("Tümü", "Alle")), ("custom", T("Tarih seç", "Zeitraum"))
+    };
+    var periodLabel = f.Period == "custom"
+        ? $"{f.From?.ToString("d MMM yyyy", culture) ?? "…"} – {f.To?.ToString("d MMM yyyy", culture) ?? "…"}"
+        : periods.First(p => p.Key == f.Period).Label;
+
+    var strings = new
+    {
+        loading = T("Yükleniyor…", "Wird geladen…"),
+        failed = T("Bu bölüm yüklenemedi. Sayfayı yenileyip tekrar deneyin.", "Dieser Bereich konnte nicht geladen werden. Bitte laden Sie die Seite neu."),
+        empty = T("Bu filtrelerle kimse yok.", "Niemand passt zu diesen Filtern."),
+        count = T("Sayı", "Anzahl"),
+        showTable = T("Tablo olarak göster", "Als Tabelle zeigen"),
+        hideTable = T("Grafiği göster", "Diagramm zeigen"),
+        close = T("Kapat", "Schließen"),
+        signups = T("Yeni üye", "Neue Mitglieder"),
+        firstExams = T("İlk sınavı", "Erste Prüfung"),
+        total = T("Toplam üye", "Mitglieder gesamt"),
+        funnel = new[] { T("Kayıt oldu", "Registriert"), T("E-postasını onayladı", "E-Mail bestätigt"), T("Bir sınava girdi", "Eine Prüfung geschrieben"), T("İki ya da daha fazla", "Zwei oder mehr"), T($"Birini geçti ({ExamRules.PassScore}+)", $"Eine bestanden ({ExamRules.PassScore}+)") },
+        cohortMonth = T("Kayıt ayı", "Registriert im"),
+        cohortSize = T("Kişi", "Personen"),
+        monthsLater = T("ay sonra", "Monate später"),
+        unknownDates = T("{0} hesabın kayıt tarihi bilinmiyor (bu bilgi tutulmaya başlamadan açılmış ve hiç sınava girmemiş); grafikte yoklar.", "Bei {0} Konten ist das Registrierungsdatum unbekannt (vor der Erfassung angelegt, nie eine Prüfung); sie fehlen im Diagramm.")
+    };
+}
+
+@* Styles: admin.css → "Reports" *@
+<partial name="_AdminHeader" model="adminHeader" />
+
+@* ---------------- Filters ---------------- *@
+<form class="adm-card rp-filter" method="get" action="@Url.Action("Users")" data-report-filter data-default-period="all">
+    <fieldset class="rp-filter__period">
+        <legend>@T("Kayıt tarihi", "Registriert")</legend>
+        <div class="adm-choices rp-seg">
+            @foreach (var p in periods)
+            {
+                <label class="adm-choice"><input type="radio" name="period" value="@p.Key" checked="@(f.Period == p.Key)" data-report-period /><span>@p.Label</span></label>
+            }
+        </div>
+        <div class="rp-filter__dates" data-report-dates hidden="@(f.Period != "custom")">
+            <label>@T("Başlangıç", "Von")<input type="date" class="adm-input" name="from" value="@f.From?.ToString("yyyy-MM-dd")" /></label>
+            <label>@T("Bitiş", "Bis")<input type="date" class="adm-input" name="to" value="@f.To?.ToString("yyyy-MM-dd")" /></label>
+        </div>
+    </fieldset>
+
+    <div class="rp-filter__grid">
+        <label class="rp-field rp-field--search">
+            <span>@T("Kişi", "Person")</span>
+            <span class="adm-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" name="q" value="@f.Q" placeholder="@T("Ad, e-posta veya kullanıcı adı", "Name, E-Mail oder Benutzername")" autocomplete="off" />
+            </span>
+        </label>
+        <label class="rp-field">
+            <span>@T("Rol", "Rolle")</span>
+            <select name="role" class="adm-input" data-report-autosubmit>
+                <option value="">@T("Herkes", "Alle")</option>
+                <option value="student" selected="@(f.Role == "student")">@T("Öğrenciler", "Lernende")</option>
+                <option value="teacher" selected="@(f.Role == "teacher")">@T("Öğretmenler", "Lehrkräfte")</option>
+                <option value="admin" selected="@(f.Role == "admin")">@T("Yöneticiler", "Administratoren")</option>
+            </select>
+        </label>
+        <label class="rp-field">
+            <span>@T("Sınav etkinliği", "Prüfungsaktivität")</span>
+            <select name="activity" class="adm-input" data-report-autosubmit>
+                <option value="">@T("Hepsi", "Alle")</option>
+                <option value="exams" selected="@(f.Activity == "exams")">@T("Sınava girenler", "Mit Prüfungen")</option>
+                <option value="none" selected="@(f.Activity == "none")">@T("Hiç sınava girmeyenler", "Noch nie geprüft")</option>
+                <option value="active" selected="@(f.Activity == "active")">@T($"Son {MemberReportFilter.ActiveDays} günde sınava girenler", $"Prüfung in den letzten {MemberReportFilter.ActiveDays} Tagen")</option>
+                <option value="dormant" selected="@(f.Activity == "dormant")">@T($"{MemberReportFilter.DormantDays} gündür sınava girmeyenler", $"Seit {MemberReportFilter.DormantDays} Tagen keine Prüfung")</option>
+            </select>
+        </label>
+        <label class="rp-field">
+            <span>@T("Hesap", "Konto")</span>
+            <select name="account" class="adm-input" data-report-autosubmit>
+                <option value="">@T("Hepsi", "Alle")</option>
+                <option value="unconfirmed" selected="@(f.Account == "unconfirmed")">@T("E-postası onaylanmamış", "E-Mail nicht bestätigt")</option>
+                <option value="locked" selected="@(f.Account == "locked")">@T("Kilitli", "Gesperrt")</option>
+                <option value="google" selected="@(f.Account == "google")">@T("Google ile giriş yapanlar", "Anmeldung mit Google")</option>
+            </select>
+        </label>
+        <label class="rp-field">
+            <span>@T("Duyuru e-postaları", "Ankündigungen per E-Mail")</span>
+            <select name="promo" class="adm-input" data-report-autosubmit>
+                <option value="">@T("Hepsi", "Alle")</option>
+                <option value="in" selected="@(f.Promo == "in")">@T("Alıyor", "Erhalten")</option>
+                <option value="out" selected="@(f.Promo == "out")">@T("Kapatmış", "Abbestellt")</option>
+            </select>
+        </label>
+    </div>
+
+    @if (f.Sort != null) { <input type="hidden" name="sort" value="@f.Sort" /> }
+    @if (f.Size != 25) { <input type="hidden" name="size" value="@f.Size" /> }
+    <div class="rp-filter__actions">
+        <button type="submit" class="adm-btn adm-btn--primary"><i class="fa-solid fa-filter" aria-hidden="true"></i>@T("Uygula", "Anwenden")</button>
+        @if (f.HasFilters || f.Period != "all")
+        {
+            <a class="adm-btn adm-btn--ghost" href="@Url.Action("Users")"><i class="fa-solid fa-xmark" aria-hidden="true"></i>@T("Filtreleri temizle", "Filter zurücksetzen")</a>
+        }
+        <span class="rp-filter__summary">@T("Kayıt", "Registriert"): @periodLabel</span>
+    </div>
+</form>
+
+@* ---------------- Headline figures ---------------- *@
+<div class="adm-stats rp-kpis">
+    <div class="adm-stat" style="--i:0">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-user-group"></i></span>
+        <span><span class="adm-stat__num">@k.Members.ToString("N0", culture)</span><span class="adm-stat__label">@T("üye", "Mitglieder") · @T("son 30 günde", "letzte 30 Tage") +@k.New30.ToString("N0", culture)</span></span>
+    </div>
+    <div class="adm-stat tone-blue" style="--i:1">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-envelope-circle-check"></i></span>
+        <span><span class="adm-stat__num">@Share(k.Confirmed)</span><span class="adm-stat__label">@T("e-postasını onayladı", "E-Mail bestätigt")</span></span>
+    </div>
+    <div class="adm-stat tone-amber" style="--i:2">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-pen-to-square"></i></span>
+        <span><span class="adm-stat__num">@Share(k.Activated)</span><span class="adm-stat__label">@T("en az bir sınava girdi", "mindestens eine Prüfung")</span></span>
+    </div>
+    <div class="adm-stat tone-green" style="--i:3">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-bolt"></i></span>
+        <span><span class="adm-stat__num">@k.Active30.ToString("N0", culture)</span><span class="adm-stat__label">@T("son 30 günde sınava girdi", "Prüfung in den letzten 30 Tagen")</span></span>
+    </div>
+    <div class="adm-stat" style="--i:4">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-circle-check"></i></span>
+        <span><span class="adm-stat__num">@Share(k.Passed)</span><span class="adm-stat__label">@T($"en az bir sınavı geçti ({ExamRules.PassScore}+)", $"mindestens eine bestanden ({ExamRules.PassScore}+)")</span></span>
+    </div>
+    <div class="adm-stat tone-red" style="--i:5">
+        <span class="adm-stat__icon" aria-hidden="true"><i class="fa-solid fa-bullhorn"></i></span>
+        <span><span class="adm-stat__num">@Share(k.PromoIn)</span><span class="adm-stat__label">@T("duyuru e-postası alıyor", "erhält Ankündigungen")</span></span>
+    </div>
+</div>
+
+@* ---------------- Tabs ---------------- *@
+<div class="adm-tabs rp-tabs" role="tablist" data-tabs aria-label="@T("Rapor bölümleri", "Bereiche des Berichts")">
+    <button type="button" class="adm-tab" role="tab" id="tab-members" aria-controls="panel-members"><i class="fa-solid fa-list" aria-hidden="true"></i>@T("Üyeler", "Mitglieder")</button>
+    <button type="button" class="adm-tab" role="tab" id="tab-growth" aria-controls="panel-growth"><i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i>@T("Büyüme", "Wachstum")</button>
+    <button type="button" class="adm-tab" role="tab" id="tab-cohort" aria-controls="panel-cohort"><i class="fa-solid fa-table-cells" aria-hidden="true"></i>@T("Geri gelenler", "Wer wiederkommt")</button>
+</div>
+
+@* ---- Members ---- *@
+<section class="adm-tabpanel" id="panel-members" role="tabpanel" aria-labelledby="tab-members">
+    <div class="adm-card">
+        <div class="rp-table-head">
+            <p class="rp-count">@T($"{Model.TotalRows:N0} kişi", $"{Model.TotalRows:N0} Personen")@(Model.TotalRows > 0 ? T($" · sayfa {f.Page}/{Model.TotalPages}", $" · Seite {f.Page}/{Model.TotalPages}") : "")</p>
+            <div class="rp-table-head__actions">
+                <a class="adm-btn adm-btn--sm" href="@(Url.Action("UsersExport") + QueryString.Create(f.With(x => x.Page = 1).ToQuery()))"><i class="fa-solid fa-file-csv" style="color: var(--a-green)" aria-hidden="true"></i>@T("Excel için indir (CSV)", "Für Excel herunterladen (CSV)")</a>
+            </div>
+        </div>
+
+        @if (Model.Rows.Count == 0)
+        {
+            <div class="adm-empty">
+                <span class="adm-empty__icon" aria-hidden="true"><i class="fa-solid fa-user-slash"></i></span>
+                <h2>@T("Bu filtrelerle kimse yok", "Niemand passt zu diesen Filtern")</h2>
+                <p>@T("Aramayı kısaltın ya da bazı filtreleri kaldırın.", "Kürzen Sie die Suche oder entfernen Sie Filter.")</p>
+            </div>
+        }
+        else
+        {
+            <form id="memberDelete" method="post" action="@Url.Action("UserDelete")" hidden>@Html.AntiForgeryToken()</form>
+            <div class="adm-table-wrap">
+                <table class="adm-table rp-results rp-members">
+                    <caption class="adm-sr">@T("Kullanıcılar", "Benutzer")</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col" aria-sort="@(f.Sort == "name" ? "ascending" : null)"><a href="@SortLink("name")">@T("Kişi", "Person")</a></th>
+                            <th scope="col" aria-sort="@(f.Sort == null ? "descending" : f.Sort == "oldest" ? "ascending" : null)"><a href="@Link(f.With(x => { x.Sort = f.Sort == null ? "oldest" : null; x.Page = 1; }))">@T("Kayıt", "Registriert")</a></th>
+                            <th scope="col" class="is-num" aria-sort="@(f.Sort == "exams" || f.Sort == "score" ? "descending" : null)">
+                                <span class="rp-th-pair"><a href="@SortLink("exams")" class="@(f.Sort == "exams" ? "is-sorted" : null)">@T("Sınavlar", "Prüfungen")</a><a href="@SortLink("score")" class="@(f.Sort == "score" ? "is-sorted" : null)" title="@T("Ortalama puana göre sırala", "Nach Durchschnitt sortieren")">@T("Puan", "Punkte")</a></span>
+                            </th>
+                            <th scope="col" aria-sort="@(f.Sort == "activity" ? "descending" : null)"><a href="@SortLink("activity")">@T("Son etkinlik", "Zuletzt aktiv")</a></th>
+                            <th scope="col">@T("Durum", "Status")</th>
+                            <th scope="col"><span class="adm-sr">@T("İşlemler", "Aktionen")</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var m in Model.Rows)
+                        {
+                            var can = Model.Permissions.GetValueOrDefault(m.Id) ?? new SpeakingClub.Models.Reports.MemberPermissions(false, false, false);
+                            var initials = string.Concat(m.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpper(p[0], culture)));
+                            var lastLogin = m.LastLoginLocal;
+                            var lastSeen = m.LastExamLocal is { } exam && (lastLogin == null || exam > lastLogin) ? m.LastExamLocal : lastLogin;
+                            <tr>
+                                <td class="is-primary" data-label="@T("Kişi", "Person")">
+                                    <div class="adm-cell-title">
+                                        <span class="adm-avatar" aria-hidden="true">@initials</span>
+                                        <span class="rp-person">
+                                            <span class="rp-person__line">
+                                                <a class="rp-person__name" href="@Url.Action("Member", new { id = m.Id })"><strong>@m.Name</strong></a>
+                                                @foreach (var role in m.Roles.Where(r => r != "User"))
+                                                {
+                                                    <span class="adm-badge @RoleTone(role)">@RoleName(role)</span>
+                                                }
+                                                @if (can.IsSelf) { <span class="adm-badge adm-badge--plain">@T("siz", "Sie")</span> }
+                                            </span>
+                                            <small>@m.Email</small>
+                                        </span>
+                                    </div>
+                                </td>
+                                <td data-label="@T("Kayıt", "Registriert")"><span class="rp-when">@Day(m.CreatedLocal)</span></td>
+                                <td class="is-num" data-label="@T("Sınavlar", "Prüfungen")">
+                                    @if (m.AverageScore is { } avg)
+                                    {
+                                        <span class="rp-stack">
+                                            <span class="rp-score @(avg >= ExamRules.PassScore ? "is-pass" : "is-fail")" style="--v: @((int)Math.Round(avg))" title="@T("ortalama puan", "Durchschnitt")">
+                                                <span class="rp-score__bar" aria-hidden="true"></span><strong>@((int)Math.Round(avg))</strong>
+                                            </span>
+                                            <small class="rp-muted">@T($"{m.Attempts} deneme · en iyi {m.BestScore}", $"{m.Attempts} Versuche · bester {m.BestScore}")</small>
+                                        </span>
+                                    }
+                                    else { <span class="rp-muted">@T("henüz yok", "noch keine")</span> }
+                                </td>
+                                <td data-label="@T("Son etkinlik", "Zuletzt aktiv")">
+                                    @if (lastSeen is { } seen)
+                                    {
+                                        <span class="rp-stack">
+                                            <span class="rp-when">@seen.ToString("d MMM yyyy", culture)</span>
+                                            <small class="rp-muted">@(seen == m.LastExamLocal ? T("sınav", "Prüfung") : T("giriş", "Anmeldung"))</small>
+                                        </span>
+                                    }
+                                    else { <span class="rp-muted">–</span> }
+                                </td>
+                                <td data-label="@T("Durum", "Status")">
+                                    <span class="rp-badges">
+                                        @if (m.Locked) { <span class="adm-badge adm-badge--red">@T("Kilitli", "Gesperrt")</span> }
+                                        else if (!m.EmailConfirmed) { <span class="adm-badge adm-badge--amber" title="@T("Kişi e-postasındaki onay bağlantısına henüz tıklamadı; giriş yapamaz.", "Die Person hat den Bestätigungslink noch nicht geöffnet und kann sich nicht anmelden.")">@T("E-posta onaysız", "E-Mail unbestätigt")</span> }
+                                        else { <span class="adm-badge adm-badge--green">@T("Aktif", "Aktiv")</span> }
+                                        @if (m.Google) { <span class="adm-badge adm-badge--plain"><i class="fa-brands fa-google" aria-hidden="true"></i>Google</span> }
+                                        @if (!m.PromoEmails) { <span class="adm-badge adm-badge--plain" title="@T("Yeni yazı ve sınav duyurularını almıyor; sınav sonuçları yine gider.", "Erhält keine Ankündigungen; Prüfungsergebnisse kommen trotzdem.")"><i class="fa-solid fa-bell-slash" aria-hidden="true"></i>@T("Duyuru yok", "Keine Ankündigungen")</span> }
+                                    </span>
+                                </td>
+                                <td class="is-actions">
+                                    <div class="adm-row-actions">
+                                        <a class="adm-btn adm-btn--sm adm-btn--icon" href="@Url.Action("Member", new { id = m.Id })" title="@T("Ayrıntı", "Details")" aria-label="@T("Ayrıntı", "Details"): @m.Name"><i class="fa-solid fa-id-card" aria-hidden="true"></i></a>
+                                        @if (can.CanEdit)
+                                        {
+                                            <a class="adm-btn adm-btn--sm adm-btn--ghost" href="@Url.Action("UserEdit", new { id = m.Id })" aria-label="@T("Düzenle", "Bearbeiten"): @m.Name"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>
+                                        }
+                                        @if (can.CanDelete)
+                                        {
+                                            <button type="submit" form="memberDelete" name="id" value="@m.Id" class="adm-btn adm-btn--danger adm-btn--sm adm-btn--icon"
+                                                    title="@T("Sil", "Löschen")" aria-label="@T("Sil", "Löschen"): @m.Name"
+                                                    data-confirm="@T("Bu kullanıcı silinsin mi?", "Diesen Benutzer löschen?")"
+                                                    data-confirm-text="@T($"{m.Name} ({m.Email}) hesabı kalıcı olarak silinecek. Kişi artık giriş yapamaz.", $"Das Konto von {m.Name} ({m.Email}) wird endgültig gelöscht. Die Person kann sich nicht mehr anmelden.")"
+                                                    data-confirm-note="@T("Sadece geçici olarak durdurmak istiyorsanız silmek yerine düzenleyip “Hesabı kilitle”yi seçin.", "Wenn Sie die Person nur vorübergehend sperren möchten, bearbeiten Sie das Konto und wählen Sie „Konto sperren“.")"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="rp-pager">
+                @if (Model.TotalPages > 1)
+                {
+                    <nav aria-label="@T("Sayfalar", "Seiten")">
+                        <ul class="pagination flex-wrap gap-1">
+                            @if (f.Page > 1)
+                            {
+                                <li class="page-item"><a class="page-link" href="@Link(f.With(x => x.Page = f.Page - 1))" aria-label="@T("Önceki sayfa", "Vorherige Seite")"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a></li>
+                            }
+                            @for (var p = Math.Max(1, f.Page - 3); p <= Math.Min(Model.TotalPages, f.Page + 3); p++)
+                            {
+                                var pageNumber = p;
+                                <li class="page-item @(pageNumber == f.Page ? "active" : "")"><a class="page-link" href="@Link(f.With(x => x.Page = pageNumber))" aria-current="@(pageNumber == f.Page ? "page" : null)">@pageNumber</a></li>
+                            }
+                            @if (f.Page < Model.TotalPages)
+                            {
+                                <li class="page-item"><a class="page-link" href="@Link(f.With(x => x.Page = f.Page + 1))" aria-label="@T("Sonraki sayfa", "Nächste Seite")"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a></li>
+                            }
+                        </ul>
+                    </nav>
+                }
+                <label class="rp-pager__size">@T("Sayfada", "Pro Seite")
+                    <select class="adm-input" data-report-size>
+                        @foreach (var size in MemberReportFilter.PageSizes)
+                        {
+                            <option value="@Link(f.With(x => { x.Size = size; x.Page = 1; }))" selected="@(f.Size == size)">@size</option>
+                        }
+                    </select>
+                </label>
+            </div>
+        }
+    </div>
+</section>
+
+@* ---- Growth ---- *@
+<section class="adm-tabpanel" id="panel-growth" role="tabpanel" aria-labelledby="tab-growth" data-report-tab="growth" data-url="@StatsUrl("growth")">
+    <div class="rp-grid">
+        <article class="adm-card rp-chart-card rp-span">
+            <h2>@T("Yeni üyeler ve ilk sınavlar", "Neue Mitglieder und erste Prüfungen")</h2>
+            <p class="rp-help">@T("Sütunlar her dönemde kaç kişinin kayıt olduğunu ve kaç kişinin ilk sınavına girdiğini, çizgi toplam üye sayısını gösterir. Bir duyurudan ya da yeni bir sınavdan sonraki sıçramalar burada görünür.", "Die Säulen zeigen neue Registrierungen und erste Prüfungen pro Zeitraum, die Linie die Gesamtzahl. Sprünge nach einer Ankündigung oder neuen Prüfung sieht man hier.")</p>
+            <div class="rp-chart rp-chart--tall" data-chart="signups"></div>
+            <p class="rp-help" data-growth-note></p>
+        </article>
+        <article class="adm-card rp-chart-card rp-span">
+            <h2>@T("Kayıttan başarıya", "Von der Registrierung zum Erfolg")</h2>
+            <p class="rp-help">@T("Kayıt olanların kaçı e-postasını onaylıyor, sınava giriyor, tekrar geliyor ve bir sınavı geçiyor? En büyük düşüşün olduğu adım, en çok ilgilenilmesi gereken yerdir.", "Wie viele Registrierte bestätigen die E-Mail, schreiben eine Prüfung, kommen wieder und bestehen eine? Der größte Abfall zeigt, wo Hilfe am meisten bringt.")</p>
+            <div class="rp-chart" data-chart="funnel"></div>
+        </article>
+    </div>
+</section>
+
+@* ---- Cohorts ---- *@
+<section class="adm-tabpanel" id="panel-cohort" role="tabpanel" aria-labelledby="tab-cohort" data-report-tab="cohort" data-url="@StatsUrl("cohort")">
+    <article class="adm-card rp-chart-card">
+        <h2>@T("Üyeler geri geliyor mu?", "Kommen die Mitglieder wieder?")</h2>
+        <p class="rp-help">@T("Her satır bir ayda kayıt olanlar. Kareler, o kişilerin yüzde kaçının kayıttan 0, 1, 2… ay sonra sınava girdiğini gösterir. Koyu kareler sağa doğru devam ediyorsa öğrenciler siteye geri dönüyor demektir.", "Jede Zeile sind die in einem Monat Registrierten. Die Felder zeigen, wie viel Prozent 0, 1, 2… Monate später eine Prüfung schrieben. Dunkle Felder weit nach rechts heißen: Die Lernenden kommen wieder.")</p>
+        <div class="rp-chart rp-chart--tall" data-chart="cohort"></div>
+        <p class="rp-help" data-cohort-note></p>
+    </article>
+</section>
+
+<script type="application/json" id="report-strings">@Json.Serialize(strings)</script>
+
+@section Scripts {
+    <script src="~/lib/echarts/echarts.min.js" asp-append-version="true" defer></script>
+    <script src="~/js/admin-reports.js" asp-append-version="true" defer></script>
+}

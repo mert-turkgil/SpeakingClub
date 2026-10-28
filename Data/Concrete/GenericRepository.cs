@@ -54,6 +54,11 @@ namespace SpeakingClub.Data.Concrete
             return await _dbSet.AnyAsync(predicate);
         }
 
+        public virtual Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null)
+        {
+            return predicate == null ? _dbSet.CountAsync() : _dbSet.CountAsync(predicate);
+        }
+
         public virtual Task<T?> GetAsync(int id)
         {
             return _dbSet.FindAsync(id).AsTask();

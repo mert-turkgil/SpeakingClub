@@ -214,10 +214,21 @@
                 </select>
                 <label class="adm-toggle">
                     <input type="checkbox" name="IsAnonymous" value="true" @(Model.IsAnonymous ? "checked" : "") data-anonymous />
-                    <input type="hidden" name="IsAnonymous" value="false" />
                     <span class="adm-toggle__track" aria-hidden="true"></span>
                     <span class="adm-toggle__text"><strong>@T("Öğretmen adı gösterilmesin", "Ohne Namen der Lehrkraft")</strong><small>@T("Sınav sayfasında öğretmen adı yazmaz.", "Auf der Prüfungsseite steht kein Name.")</small></span>
                 </label>
+                @* After the box and outside the label: the switch styles use "input + track" *@
+                <input type="hidden" name="IsAnonymous" value="false" />
+            </div>
+        </section>
+
+        <section class="adm-panel" style="--i:3">
+            <div class="adm-panel__head">
+                <span class="adm-panel__num"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i></span>
+                <div><h2>@T("Duyuru", "Ankündigung")</h2></div>
+            </div>
+            <div class="adm-panel__body adm-panel__body--tight">
+                @await Component.InvokeAsync("AnnounceBox", new { kind = SpeakingClub.Services.Email.EmailTemplates.NewQuiz, entityId = Model.IsEdit ? Model.QuizId : 0, isChecked = Model.AnnounceByEmail })
             </div>
         </section>
 

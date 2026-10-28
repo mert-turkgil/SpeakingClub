@@ -1,0 +1,13 @@
+@model SpeakingClub.Services.Email.TestEmail
+@* Admin → E-postalar → "Deneme e-postası gönder": checks the mail server settings. *@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    ViewData["Subject"] = T("Deneme e-postası – Almanca Konuş", "Test-E-Mail – Almanca Konuş");
+    ViewData["Preheader"] = T("E-posta gönderimi çalışıyor.", "Der E-Mail-Versand funktioniert.");
+}
+<p style="margin:0 0 14px; font-size:17px; color:#2B2220;">@T("E-posta gönderimi çalışıyor.", "Der E-Mail-Versand funktioniert.")</p>
+<p style="margin:0 0 14px;">@T($"Bu deneme e-postasını {Model.SentBy} yönetim panelinden gönderdi. Bunu okuyabiliyorsanız sitenin e-posta ayarları doğru.",
+    $"Diese Test-E-Mail hat {Model.SentBy} aus dem Verwaltungsbereich geschickt. Wenn Sie sie lesen, stimmen die E-Mail-Einstellungen der Website.")</p>
+<p style="margin:0; font-size:14px; color:#85766F;">@T("Spam klasörüne düştüyse, “Spam değil” olarak işaretlemek sonraki e-postaların gelen kutusuna gitmesine yardım eder.",
+    "Falls sie im Spam-Ordner gelandet ist: Als „Kein Spam“ markieren hilft, dass die nächsten im Posteingang ankommen.")</p>

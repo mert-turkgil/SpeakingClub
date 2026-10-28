@@ -5,7 +5,9 @@
   "description": "Front-end libraries for Almanca Konuş. Not needed to build or run the site: wwwroot/lib already contains the files. Use this only to refresh a vendored library (npm install, then npm run copy:libs) or to compile custom.scss (npm run build:css).",
   "dependencies": {
     "@fortawesome/fontawesome-free": "6.7.2",
+    "@microsoft/signalr": "8.0.7",
     "bootstrap": "5.2.3",
+    "echarts": "6.0.0",
     "jquery": "3.7.1",
     "jquery-validation": "1.21.0",
     "jquery-validation-unobtrusive": "4.0.0",
@@ -16,7 +18,7 @@
     "sass": "^1.106.1"
   },
   "scripts": {
-    "copy:libs": "copyfiles -u 2 \"node_modules/bootstrap/dist/**/*\" wwwroot/lib/bootstrap && copyfiles -u 2 \"node_modules/three/build/**/*\" \"node_modules/three/examples/jsm/**/*\" wwwroot/lib/three && copyfiles -u 4 \"node_modules/@fortawesome/fontawesome-free/css/*.min.css\" wwwroot/lib/fontawesome/css && copyfiles -u 4 \"node_modules/@fortawesome/fontawesome-free/webfonts/*\" wwwroot/lib/fontawesome/webfonts && echo \"Font Awesome changed: run python .github/tools/frontend/fa_subset.py\"",
+    "copy:libs": "copyfiles -u 2 \"node_modules/bootstrap/dist/**/*\" wwwroot/lib/bootstrap && copyfiles -u 2 \"node_modules/three/build/**/*\" \"node_modules/three/examples/jsm/**/*\" wwwroot/lib/three && copyfiles -u 4 \"node_modules/@fortawesome/fontawesome-free/css/*.min.css\" wwwroot/lib/fontawesome/css && copyfiles -u 4 \"node_modules/@fortawesome/fontawesome-free/webfonts/*\" wwwroot/lib/fontawesome/webfonts && echo \"Font Awesome changed: run python .github/tools/frontend/fa_subset.py\" && copyfiles -u 3 \"node_modules/echarts/dist/echarts.min.js\" wwwroot/lib/echarts && copyfiles -u 5 \"node_modules/@microsoft/signalr/dist/browser/signalr.min.js\" wwwroot/lib/microsoft-signalr",
     "build:css": "sass --no-source-map wwwroot/css/custom.scss wwwroot/css/custom.css"
   }
 }

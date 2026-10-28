@@ -1,0 +1,239 @@
+@model SpeakingClub.Models.Reports.MemberDetail
+@using SpeakingClub.Services
+@using SpeakingClub.Services.Email
+@*
+    Admin → Kullanıcılar → one member (AdminController.Members.cs): account, e-mail consent, every exam with a score
+    trend, downloads. An exam opens in the same side panel as on the exam report (QuizMonitor/attempt/{id}).
+*@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var section = AdminNav.Find("users", isGerman)!;
+    var m = Model.Member;
+    ViewData["Title"] = m.Name;
+    ViewData["AdminSection"] = section.Key;
+    var culture = System.Globalization.CultureInfo.CurrentCulture;
+    var adminHeader = new AdminHeader(section.Key, m.Name, m.Email ?? m.UserName ?? "",
+        Model.Permissions.CanEdit ? Url.Action("UserEdit", new { id = m.Id }) : null, T("Düzenle", "Bearbeiten"), "fa-solid fa-pen",
+        ParentTitle: section.Title, ParentHref: Url.Action("Users"));
+
+    string Day(DateTime? d, bool time = false) => d?.ToString(time ? "d MMMM yyyy, HH:mm" : "d MMMM yyyy", culture) ?? "–";
+    string Clock(int seconds) => $"{seconds / 60}:{seconds % 60:00}";
+    string RoleName(string role) => role switch { "Teacher" => T("Öğretmen", "Lehrkraft"), "User" => T("Öğrenci", "Lernende"), _ => role };
+    string RoleTone(string role) => role switch { "Root" => "adm-badge--red", "Admin" => "adm-badge--coral", "Teacher" => "adm-badge--blue", _ => "adm-badge--plain" };
+    string ConsentSourceText(string? source) => source switch
+    {
+        ConsentSource.Legacy => T("Duyurular başlamadan önce kayıt olmuştu (açık sayıldı)", "Vor Beginn der Ankündigungen registriert (gilt als eingeschaltet)"),
+        ConsentSource.Register => T("Kayıt olurken kendisi seçti", "Bei der Registrierung selbst gewählt"),
+        ConsentSource.Google => T("Google ile kayıt oldu", "Mit Google registriert"),
+        ConsentSource.Account => T("Hesap sayfasından değiştirdi", "Auf der Kontoseite geändert"),
+        ConsentSource.Admin => T("Yönetici tarafından açılan hesap", "Von der Verwaltung angelegt"),
+        ConsentSource.Unsubscribe => T("E-postadaki bağlantıyla abonelikten çıktı", "Über den Link in einer E-Mail abbestellt"),
+        _ => "–"
+    };
+    var languageName = Model.PreferredCulture switch { "de-DE" => "Deutsch", "tr-TR" => "Türkçe", _ => "–" };
+    var trend = new
+    {
+        pass = ExamRules.PassScore,
+        points = Model.Exams.Select(e => new { date = e.Local.ToString("yyyy-MM-ddTHH:mm"), e.Score, quiz = e.QuizTitle })
+    };
+    var strings = new
+    {
+        loading = T("Yükleniyor…", "Wird geladen…"),
+        failed = T("Bu bölüm yüklenemedi. Sayfayı yenileyip tekrar deneyin.", "Dieser Bereich konnte nicht geladen werden. Bitte laden Sie die Seite neu."),
+        empty = T("Henüz sınav yok.", "Noch keine Prüfungen."),
+        score = T("Puan", "Punkte"),
+        passLine = T("Geçme sınırı", "Bestehensgrenze"),
+        date = T("Tarih", "Datum"),
+        quiz = T("Sınav", "Prüfung"),
+        showTable = T("Tablo olarak göster", "Als Tabelle zeigen"),
+        hideTable = T("Grafiği göster", "Diagramm zeigen"),
+        close = T("Kapat", "Schließen")
+    };
+}
+
+<partial name="_AdminHeader" model="adminHeader" />
+
+<div class="rp-member">
+    <div>
+        @* ---- Exams ---- *@
+        <section class="adm-card">
+            <div class="adm-card__head"><h2>@T("Sınavlar", "Prüfungen")</h2></div>
+            @if (Model.Exams.Count == 0)
+            {
+                <p class="rp-muted">@T("Bu kişi henüz bir sınava girmedi.", "Diese Person hat noch keine Prüfung geschrieben.")</p>
+            }
+            else
+            {
+                <div class="adm-stats rp-kpis rp-kpis--small">
+                    <div class="adm-stat"><span><span class="adm-stat__num">@m.Attempts</span><span class="adm-stat__label">@T($"deneme · {m.Quizzes} farklı sınav", $"Versuche · {m.Quizzes} Prüfungen")</span></span></div>
+                    <div class="adm-stat"><span><span class="adm-stat__num">@m.AverageScore?.ToString("0", culture)</span><span class="adm-stat__label">@T("ortalama puan", "Durchschnitt") · @T("en iyi", "bester") @m.BestScore</span></span></div>
+                    <div class="adm-stat"><span><span class="adm-stat__num">@(Model.HighestPassedLevel ?? "–")</span><span class="adm-stat__label">@T("geçtiği en yüksek seviye", "höchstes bestandenes Niveau")</span></span></div>
+                </div>
+                <div data-report-inline="memberTrend">
+                    <div class="rp-chart" data-chart="trend"></div>
+                    <script type="application/json">@Json.Serialize(trend)</script>
+                </div>
+            }
+        </section>
+    </div>
+
+    <div>
+        @* ---- Account ---- *@
+        <section class="adm-card">
+            <div class="adm-card__head"><h2>@T("Hesap", "Konto")</h2></div>
+            <dl class="rp-facts">
+                <dt>@T("Rol", "Rolle")</dt>
+                <dd>
+                    <span class="adm-chips">
+                        @foreach (var role in m.Roles.Where(r => r != "User")) { <span class="adm-badge @RoleTone(role)">@RoleName(role)</span> }
+                        @if (!m.IsStaff) { <span class="adm-badge adm-badge--plain">@T("Öğrenci", "Lernende")</span> }
+                        @if (Model.Permissions.IsSelf) { <span class="adm-badge adm-badge--plain">@T("siz", "Sie")</span> }
+                    </span>
+                </dd>
+                <dt>@T("Kayıt", "Registriert")</dt>
+                <dd>@(m.CreatedLocal is { } created ? Day(created) : T("bilinmiyor (eski hesap)", "unbekannt (älteres Konto)"))</dd>
+                <dt>@T("Son giriş", "Letzte Anmeldung")</dt>
+                <dd>@(m.LastLoginLocal is { } login ? Day(login, true) : T("kayıt yok", "nicht erfasst"))</dd>
+                <dt>@T("E-posta", "E-Mail")</dt>
+                <dd>
+                    @m.Email
+                    @if (m.EmailConfirmed) { <span class="adm-badge adm-badge--green">@T("onaylı", "bestätigt")</span> }
+                    else { <span class="adm-badge adm-badge--amber">@T("onaysız: giriş yapamaz", "unbestätigt: keine Anmeldung")</span> }
+                </dd>
+                <dt>@T("Giriş yolu", "Anmeldung")</dt>
+                <dd>@(m.Google ? T("Google ve/veya şifre", "Google und/oder Passwort") : T("E-posta ve şifre", "E-Mail und Passwort"))</dd>
+                <dt>@T("Dil", "Sprache")</dt>
+                <dd>@languageName</dd>
+                @if (Model.LockoutEnd is { } lockedUntil)
+                {
+                    <dt>@T("Kilitli", "Gesperrt")</dt>
+                    <dd><span class="adm-badge adm-badge--red">@(lockedUntil.Year > 3000 ? T("süresiz", "unbefristet") : T("şu tarihe kadar: ", "bis ") + Day(SpeakingClub.Services.Reports.ReportTime.ToLocal(lockedUntil.UtcDateTime), true))</span></dd>
+                }
+            </dl>
+        </section>
+
+        @* ---- E-mail ---- *@
+        <section class="adm-card">
+            <div class="adm-card__head"><h2>@T("E-posta bildirimleri", "E-Mail-Benachrichtigungen")</h2></div>
+            <dl class="rp-facts">
+                <dt>@T("Yeni yazılar", "Neue Beiträge")</dt>
+                <dd>@(Model.EmailOptOuts.HasFlag(EmailTopics.NewPosts) ? T("kapalı", "aus") : T("açık", "an"))</dd>
+                <dt>@T("Yeni sınavlar", "Neue Prüfungen")</dt>
+                <dd>@(Model.EmailOptOuts.HasFlag(EmailTopics.NewQuizzes) ? T("kapalı", "aus") : T("açık", "an"))</dd>
+                <dt>@T("Sınav sonuçları", "Prüfungsergebnisse")</dt>
+                <dd>@T("her zaman gönderilir", "werden immer gesendet")</dd>
+                <dt>@T("Kaynak", "Herkunft")</dt>
+                <dd>@ConsentSourceText(Model.PromoConsentSource)@if (Model.PromoConsentLocal is { } consent) { <small class="rp-muted"> · @Day(consent)</small> }</dd>
+            </dl>
+        </section>
+
+        @* ---- Downloads ---- *@
+        <section class="adm-card">
+            <div class="adm-card__head"><h2>@T("İndirdiği dosyalar", "Heruntergeladene Dateien")</h2><span class="rp-muted">@Model.DownloadCount</span></div>
+            @if (Model.Downloads.Count == 0)
+            {
+                <p class="rp-muted">@T("Henüz dosya indirmedi.", "Noch keine Downloads.")</p>
+            }
+            else
+            {
+                <ul class="rp-list">
+                    @foreach (var d in Model.Downloads)
+                    {
+                        <li><span title="@d.FileName">@d.FileName</span><time class="rp-muted rp-when" datetime="@d.Local.ToString("s")">@d.Local.ToString("d MMM yyyy", culture)</time></li>
+                    }
+                </ul>
+            }
+        </section>
+
+        @if (Model.Permissions.CanDelete)
+        {
+            <section class="adm-card rp-danger">
+                <div class="adm-card__head"><h2>@T("Hesabı sil", "Konto löschen")</h2></div>
+                <p class="rp-help">@T("Kişi artık giriş yapamaz; sınav sonuçları raporlarda “Silinmiş hesap” olarak kalır. Geçici olarak durdurmak için silmek yerine düzenleyip hesabı kilitleyin.", "Die Person kann sich nicht mehr anmelden; ihre Ergebnisse bleiben als „Gelöschtes Konto“ in den Berichten. Zum vorübergehenden Sperren lieber bearbeiten und sperren.")</p>
+                <form method="post" action="@Url.Action("UserDelete")"
+                      data-confirm="@T("Bu kullanıcı silinsin mi?", "Diesen Benutzer löschen?")"
+                      data-confirm-text="@T($"{m.Name} ({m.Email}) hesabı kalıcı olarak silinecek. Kişi artık giriş yapamaz.", $"Das Konto von {m.Name} ({m.Email}) wird endgültig gelöscht. Die Person kann sich nicht mehr anmelden.")">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@m.Id" />
+                    <button type="submit" class="adm-btn adm-btn--danger adm-btn--sm"><i class="fa-solid fa-trash-can" aria-hidden="true"></i>@T("Hesabı sil", "Konto löschen")</button>
+                </form>
+            </section>
+        }
+    </div>
+</div>
+
+@if (Model.Exams.Count > 0)
+{
+    <section class="adm-card rp-member__exams">
+        <div class="adm-card__head"><h2>@T("Tüm denemeler", "Alle Versuche")</h2><span class="rp-muted">@Model.Exams.Count</span></div>
+        <div class="adm-table-wrap">
+            <table class="adm-table rp-results">
+                <caption class="adm-sr">@T("Sınavlar", "Prüfungen")</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">@T("Tarih", "Datum")</th>
+                        <th scope="col">@T("Sınav", "Prüfung")</th>
+                        <th scope="col" class="is-num">@T("Puan", "Punkte")</th>
+                        <th scope="col" class="is-num">@T("Süre", "Dauer")</th>
+                        <th scope="col">@T("Durum", "Status")</th>
+                        <th scope="col"><span class="adm-sr">@T("Ayrıntı", "Details")</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in Model.Exams)
+                    {
+                        var passed = e.Score >= ExamRules.PassScore;
+                        <tr>
+                            <td data-label="@T("Tarih", "Datum")"><time class="rp-when" datetime="@e.Local.ToString("s")">@e.Local.ToString("d MMM yyyy", culture) <small class="rp-muted">@e.Local.ToString("HH:mm", culture)</small></time></td>
+                            <td class="rp-quiz-cell" data-label="@T("Sınav", "Prüfung")">
+                                <span class="rp-stack">
+                                    <span class="rp-quiz">@e.QuizTitle @if (e.Level != null) { <span class="adm-badge adm-badge--plain rp-level">@e.Level</span> }</span>
+                                    @if (e.Attempt > 1) { <small class="rp-muted">@T($"{e.Attempt}. deneme", $"{e.Attempt}. Versuch")</small> }
+                                </span>
+                            </td>
+                            <td class="is-num" data-label="@T("Puan", "Punkte")">
+                                <span class="rp-score @(passed ? "is-pass" : "is-fail")" style="--v: @e.Score"><span class="rp-score__bar" aria-hidden="true"></span><strong>@e.Score</strong>
+                                    <span class="adm-sr">@(passed ? T("geçti", "bestanden") : T("kaldı", "nicht bestanden"))</span></span>
+                            </td>
+                            <td class="is-num" data-label="@T("Süre", "Dauer")">@Clock(e.DurationSeconds)</td>
+                            <td data-label="@T("Durum", "Status")">
+                                <span class="rp-badges">
+                                    @if (e.EndReason == "violations") { <span class="adm-badge adm-badge--red">@T("Kural ihlaliyle bitti", "Wegen Verstößen beendet")</span> }
+                                    else if (e.EndReason == "timeout") { <span class="adm-badge adm-badge--amber">@T("Süre doldu", "Zeit abgelaufen")</span> }
+                                    else if (passed) { <span class="adm-badge adm-badge--green">@T("Geçti", "Bestanden")</span> }
+                                    else { <span class="adm-badge adm-badge--plain">@T("Kaldı", "Nicht bestanden")</span> }
+                                    @if (e.Violations > 0) { <span class="adm-badge adm-badge--coral"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>@e.Violations @T("uyarı", "Warn.")</span> }
+                                </span>
+                            </td>
+                            <td class="is-actions">
+                                <a class="adm-btn adm-btn--sm" href="@Url.Action("Attempt", "QuizMonitor", new { id = e.SubmissionId })" data-report-attempt="@e.SubmissionId"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>@T("Ayrıntı", "Details")</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.Exams.Count >= 500)
+        {
+            <p class="rp-help">@T("En yeni 500 deneme gösteriliyor.", "Die neuesten 500 Versuche werden gezeigt.")</p>
+        }
+    </section>
+}
+
+@* Attempt side panel (same as the exam report) *@
+<dialog class="rp-drawer" id="attemptDrawer" aria-labelledby="attemptTitle">
+    <div class="rp-drawer__bar">
+        <strong id="attemptTitle">@T("Deneme ayrıntısı", "Versuchsdetails")</strong>
+        <a class="adm-btn adm-btn--sm adm-btn--ghost" href="#" target="_blank" rel="noopener" data-drawer-open><i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i>@T("Yeni sekmede aç", "In neuem Tab")</a>
+        <button type="button" class="adm-btn adm-btn--sm" data-drawer-close aria-label="@strings.close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="rp-drawer__body" data-drawer-body></div>
+</dialog>
+
+<script type="application/json" id="report-strings">@Json.Serialize(strings)</script>
+
+@section Scripts {
+    <script src="~/lib/echarts/echarts.min.js" asp-append-version="true" defer></script>
+    <script src="~/js/admin-reports.js" asp-append-version="true" defer></script>
+}

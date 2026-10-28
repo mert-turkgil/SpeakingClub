@@ -1,0 +1,13 @@
+@model SpeakingClub.Services.Email.ContactReceiptEmail
+@* To the visitor who used the contact form: it arrived (the message itself is not repeated). *@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    ViewData["Subject"] = T("Mesajınız bana ulaştı", "Ihre Nachricht ist angekommen");
+    ViewData["Preheader"] = T("En kısa sürede size yazacağım.", "Ich melde mich so bald wie möglich.");
+}
+<p style="margin:0 0 14px; font-size:17px; color:#2B2220;">@T($"Merhaba {Model.Name},", $"Hallo {Model.Name},")</p>
+<p style="margin:0 0 14px;">@T("mesajınız için teşekkür ederim, bana ulaştı. En kısa sürede size dönmeye çalışacağım; derslerin arasında bazen bir iki gün sürebiliyor.",
+    "vielen Dank für Ihre Nachricht, sie ist bei mir angekommen. Ich melde mich so bald wie möglich; zwischen den Unterrichtsstunden kann es manchmal ein, zwei Tage dauern.")</p>
+<p style="margin:0 0 18px;">@T("Bu e-postayı yanıtlayarak bana doğrudan da yazabilirsiniz.", "Sie können mir auch direkt antworten, indem Sie auf diese E-Mail antworten.")</p>
+<p style="margin:0;">@T("Sevgiler,", "Herzliche Grüße,")<br>Suna</p>

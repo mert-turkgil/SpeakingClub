@@ -33,7 +33,7 @@
         Title: T("Gizlilik Politikası", "Datenschutzerklärung"),
         Lead: T("Almanca Konuş'u kullanırken hangi bilgilerinizin işlendiğini, neden işlendiğini ve bunlar üzerinde hangi haklara sahip olduğunuzu açık bir dille anlatıyoruz.",
                 "Hier erklären wir verständlich, welche Daten bei der Nutzung von Almanca Konuş verarbeitet werden, warum, und welche Rechte Sie haben."),
-        Updated: T("26 Ekim 2026", "26. Oktober 2026"),
+        Updated: T("27 Ekim 2026", "27. Oktober 2026"),
         Sections: sections,
         OtherTitle: T("Kullanım Koşulları", "Nutzungsbedingungen"),
         OtherText: T("Hesap, sınavlar, sözlük ve içeriklerle ilgili kurallar", "Regeln zu Konto, Prüfungen, Wörterbuch und Inhalten"),
@@ -99,8 +99,17 @@
           "Zum Herunterladen von Dateien aus Beiträgen müssen Sie angemeldet sein. Wir speichern, welche Datei Sie wann heruntergeladen haben, zusammen mit Ihrem Namen und Ihrer E-Mail-Adresse – so sehen wir, welche Materialien helfen, und verhindern Missbrauch.")</p>
 
     <h3><i class="fa-solid fa-envelope" aria-hidden="true"></i>@T("İletişim formunu kullandığınızda", "Beim Kontaktformular")</h3>
-    <p>@T("Adınız, e-posta adresiniz ve mesajınız bize e-posta olarak iletilir ve size bir alındı e-postası gönderilir. Mesajlar sitenin veritabanına kaydedilmez; yalnızca yazışma için gerektiği sürece e-posta kutumuzda kalır.",
-          "Name, E-Mail-Adresse und Nachricht werden uns per E-Mail zugestellt, und Sie erhalten eine Eingangsbestätigung. Nachrichten werden nicht in der Datenbank der Website gespeichert; sie bleiben nur so lange in unserem Postfach, wie es für die Korrespondenz nötig ist.")</p>
+    <p>@T("Adınız, e-posta adresiniz ve mesajınız bize e-posta olarak iletilir ve size bir alındı e-postası gönderilir. Mesaj, e-posta gönderilene kadar (genellikle birkaç saniye) sitenin e-posta kuyruğunda bekler ve gönderilince silinir; sonrasında yalnızca yazışma için gerektiği sürece e-posta kutumuzda kalır.",
+          "Name, E-Mail-Adresse und Nachricht werden uns per E-Mail zugestellt, und Sie erhalten eine Eingangsbestätigung. Die Nachricht wartet nur bis zum Versand (meist wenige Sekunden) in der E-Mail-Warteschlange der Website und wird dann dort gelöscht; danach bleibt sie nur so lange in unserem Postfach, wie es für die Korrespondenz nötig ist.")</p>
+
+    <h3><i class="fa-solid fa-paper-plane" aria-hidden="true"></i>@T("Size gönderdiğimiz e-postalar", "E-Mails, die wir Ihnen schicken")</h3>
+    <ul>
+        <li><strong>@T("Hesap ve sınav e-postaları:", "Konto- und Prüfungs-E-Mails:")</strong> @T("kayıt onayı ve bitirdiğiniz her sınavın sonucu. Bunlar hesabınızın bir parçasıdır ve her zaman gönderilir.", "Bestätigung der Registrierung und das Ergebnis jeder Prüfung, die Sie beenden. Sie gehören zu Ihrem Konto und werden immer verschickt.")</li>
+        <li><strong>@T("Duyurular:", "Ankündigungen:")</strong> @T("yeni bir yazı ya da sınav yayınladığımda kısa bir haber. Kayıt olurken işaretlerseniz alırsınız; bu e-postalar başlamadan önce üye olanlara da gönderilir. Her duyurudaki “Duyurulardan çık” bağlantısıyla (Gmail'in “Abonelikten çık” düğmesiyle de) ya da Hesabım sayfasından tek tıkla vazgeçebilirsiniz.",
+              "eine kurze Nachricht, wenn ich einen neuen Beitrag oder eine neue Prüfung veröffentliche. Sie erhalten sie, wenn Sie das bei der Registrierung ankreuzen; wer schon vor Beginn dieser E-Mails registriert war, erhält sie ebenfalls. Mit dem Link „Ankündigungen abbestellen“ in jeder Ankündigung (auch mit der Gmail-Schaltfläche „Abbestellen“) oder auf der Seite „Mein Konto“ melden Sie sich mit einem Klick ab.")</li>
+        <li><strong>@T("Gönderim kaydı:", "Versandprotokoll:")</strong> @T("her e-posta için alıcı adresi, konu, tarih ve gönderilip gönderilemediği kaydedilir; içerik saklanmaz (yalnızca gönderilemeyen bir e-posta, tekrar gönderilene kadar). E-postalar Gmail üzerinden gönderilir.",
+              "Zu jeder E-Mail werden Empfängeradresse, Betreff, Datum und Zustellstatus gespeichert, der Inhalt nicht (nur bei einer nicht zugestellten E-Mail, bis sie erneut gesendet ist). Die E-Mails werden über Gmail versendet.")</li>
+    </ul>
 
     <h3><i class="fa-solid fa-book-open" aria-hidden="true"></i>@T("Sözlüğü kullandığınızda", "Beim Wörterbuch")</h3>
     <p>@T("Aradığınız kelime önce kendi sözlüğümüzde aranır. Bulunamazsa yalnızca kelimenin kendisi çeviri için DeepL'e, gerekirse PONS'a gönderilir; hesabınız veya IP adresiniz bu hizmetlere iletilmez. Aynı kelime tekrar sorulduğunda hızlı cevap vermek için sonuç en fazla 12 saat sunucunun belleğinde tutulur.",
@@ -121,6 +130,7 @@
             <tbody>
                 <tr><td>@T("Hesap, sınavlar, dosya indirme", "Konto, Prüfungen, Downloads")</td><td>@T("Sözleşmenin kurulması ve ifası (md. 5/2-c)", "Vertragserfüllung (Art. 5 Abs. 2 lit. c)")</td><td>Art. 6 Abs. 1 lit. b</td></tr>
                 <tr><td>@T("İletişim formu ve e-postalar", "Kontaktformular und E-Mails")</td><td>@T("Sözleşme öncesi talebiniz (md. 5/2-c)", "Vorvertragliche Anfrage (Art. 5 Abs. 2 lit. c)")</td><td>Art. 6 Abs. 1 lit. b</td></tr>
+                <tr><td>@T("Yeni yazı ve sınav duyuruları", "Ankündigungen neuer Beiträge und Prüfungen")</td><td>@T("Açık rıza ve meşru menfaat; her zaman geri alınabilir (md. 5/1, md. 5/2-f)", "Einwilligung bzw. berechtigtes Interesse; jederzeit widerrufbar (Art. 5 Abs. 1, Art. 5 Abs. 2 lit. f)")</td><td>@T("Art. 6 Abs. 1 lit. a / f", "Art. 6 Abs. 1 lit. a / f")</td></tr>
                 <tr><td>@T("Güvenlik, robot koruması, kayıtlar, anonim istatistik", "Sicherheit, Bot-Schutz, Protokolle, anonyme Statistik")</td><td>@T("Meşru menfaat (md. 5/2-f)", "Berechtigtes Interesse (Art. 5 Abs. 2 lit. f)")</td><td>Art. 6 Abs. 1 lit. f</td></tr>
                 <tr><td>@T("Google ile giriş, yurt dışındaki hizmetlere aktarım", "Anmeldung mit Google, Übermittlung ins Ausland")</td><td>@T("Açık rıza (md. 5/1, md. 9)", "Ausdrückliche Einwilligung (Art. 5 Abs. 1, Art. 9)")</td><td>@T("Art. 6 Abs. 1 lit. a / b, Art. 44 vd.", "Art. 6 Abs. 1 lit. a / b, Art. 44 ff.")</td></tr>
             </tbody>
@@ -159,7 +169,7 @@
     <ul class="legal-providers">
         <li><strong>@T("Barındırma (hosting)", "Hosting")</strong> – @T("web sunucusu ve veritabanı; hesap, sınav ve indirme verileri burada saklanır.", "Webserver und Datenbank; hier liegen Konto-, Prüfungs- und Download-Daten.")</li>
         <li><strong>Cloudflare, Inc. (@T("ABD", "USA"))</strong> – @T("sitenin önünde çalışan ağ ve güvenlik hizmeti, robot koruması (Turnstile), çerezsiz ziyaretçi istatistiği. Her istek Cloudflare üzerinden geçer.", "Netzwerk- und Sicherheitsdienst vor der Website, Bot-Schutz (Turnstile), cookiefreie Besucherstatistik. Jede Anfrage läuft über Cloudflare.")</li>
-        <li><strong>Google (@T("Google ile giriş, Gmail", "Anmeldung mit Google, Gmail"))</strong> – @T("Google ile girişi seçerseniz kimlik doğrulama; sitenin gönderdiği e-postalar (onay e-postası, iletişim formu) Gmail üzerinden iletilir.", "Anmeldung, falls Sie \"Mit Google anmelden\" wählen; die E-Mails der Website (Bestätigung, Kontaktformular) werden über Gmail versendet.")</li>
+        <li><strong>Google (@T("Google ile giriş, Gmail", "Anmeldung mit Google, Gmail"))</strong> – @T("Google ile girişi seçerseniz kimlik doğrulama; sitenin gönderdiği e-postalar (onay, sınav sonucu, duyurular, iletişim formu) Gmail üzerinden iletilir.", "Anmeldung, falls Sie \"Mit Google anmelden\" wählen; die E-Mails der Website (Bestätigung, Prüfungsergebnisse, Ankündigungen, Kontaktformular) werden über Gmail versendet.")</li>
         <li><strong>YouTube (Google)</strong> – @T("ana sayfadaki kısa videoların önizleme resimleri YouTube'dan yüklenir; video ancak siz tıkladığınızda oynatılır (youtube-nocookie.com). Yazılara ve sorulara eklenen videolar YouTube oynatıcısıyla gösterilir.", "Die Vorschaubilder der Kurzvideos auf der Startseite werden von YouTube geladen; das Video startet erst nach Ihrem Klick (youtube-nocookie.com). In Beiträge und Fragen eingebettete Videos zeigt der YouTube-Player.")</li>
         <li><strong>DeepL SE (@T("Almanya", "Deutschland")), PONS GmbH (@T("Almanya", "Deutschland"))</strong> – @T("sözlükte yalnızca aranan kelime.", "im Wörterbuch nur das gesuchte Wort.")</li>
         <li><strong>CKSource (cdn.ckeditor.com), unpkg.com</strong> – @T("iletişim formundaki metin editörünün ve klinik Almanca sayfalarındaki animasyonların dosyaları bu sunuculardan yüklenir; bu sırada IP adresiniz onlara ulaşır.", "Dateien des Texteditors im Kontaktformular und der Animationen auf den Seiten zum klinischen Deutsch werden von diesen Servern geladen; dabei erreicht sie Ihre IP-Adresse.")</li>
@@ -189,6 +199,7 @@
         <li><strong>@T("Sınav sonuçları:", "Prüfungsergebnisse:")</strong> @T("hesabınız durduğu sürece. Hesabınızı silerseniz sonuçlar istatistik için adınız olmadan, size bağlanamayacak şekilde kalır.", "solange Ihr Konto besteht. Löschen Sie Ihr Konto, bleiben die Ergebnisse für Statistiken ohne Namen und nicht mehr Ihnen zuordenbar erhalten.")</li>
         <li><strong>@T("İndirme kayıtları:", "Download-Protokoll:")</strong> @T("hesabınızı sildiğinizde adınız ve e-postanız kayıtlardan silinir.", "beim Löschen Ihres Kontos werden Name und E-Mail-Adresse daraus entfernt.")</li>
         <li><strong>@T("İletişim mesajları:", "Kontaktnachrichten:")</strong> @T("yazışma bitene kadar, e-posta kutumuzda.", "bis die Korrespondenz abgeschlossen ist, in unserem Postfach.")</li>
+        <li><strong>@T("E-posta gönderim kaydı:", "E-Mail-Versandprotokoll:")</strong> @T("180 gün; gönderilmiş e-postaların kuyruk kayıtları 30 gün. Hesabınızı silerseniz adresiniz kayıtlardan hemen silinir.", "180 Tage; Warteschlangen-Einträge versendeter E-Mails 30 Tage. Löschen Sie Ihr Konto, wird Ihre Adresse sofort entfernt.")</li>
         <li><strong>@T("Sunucu kayıtları:", "Server-Protokolle:")</strong> @T("en fazla 30 gün.", "höchstens 30 Tage.")</li>
         <li><strong>@T("Deneme sınırları ve sözlük önbelleği:", "Versuchszähler und Wörterbuch-Cache:")</strong> @T("birkaç dakikadan 12 saate kadar, yalnızca bellekte.", "wenige Minuten bis 12 Stunden, nur im Arbeitsspeicher.")</li>
     </ul>

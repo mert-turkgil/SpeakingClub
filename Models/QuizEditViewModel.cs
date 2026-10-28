@@ -86,6 +86,9 @@ namespace SpeakingClub.Models
     [Display(Name = "Anonymous")] 
     public bool IsAnonymous { get; set; } = false;
 
+    // "Abonelere e-postayla duyur": a quiz not announced yet can be announced from its edit page
+    public bool AnnounceByEmail { get; set; }
+
         // Available options
         public IEnumerable<SelectListItem> Categories { get; set; } = new List<SelectListItem>();
         public IEnumerable<SelectListItem> Tags { get; set; } = new List<SelectListItem>();

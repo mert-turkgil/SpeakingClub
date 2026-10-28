@@ -63,9 +63,11 @@ In Development the app applies the migrations and creates the users from `Data:U
 
 ```text
 Controllers/   HomeController (public site), AccountController (sign-in, exams, profile),
-               AdminController (admin panel), QuizMonitorController (live results), SitemapController
+               AdminController (admin panel; .Members.cs and .Emails.cs hold the member report and e-mails),
+               QuizMonitorController (exam results and analysis), EmailPreferencesController, SitemapController
 Services/      Business logic that is shared or testable: ExamRules / ExamService (timing, grading),
-               DictionaryLookupService (our words → DeepL → PONS), LanguageService (site texts)
+               DictionaryLookupService (our words → DeepL → PONS), LanguageService (site texts),
+               Reports/ (exam and member reports, item statistics), Email/ (queue, worker, MailKit, templates)
 Data/          EF Core contexts, repositories (Abstract/ + Concrete/) and UnitOfWork
 Models/        View models. Models/AdminNav.cs lists every admin section and its step-by-step guide
 Views/         Razor views; Views/Shared/_Layout.cshtml (site) and _AdminLayout.cshtml (admin)
@@ -74,6 +76,11 @@ wwwroot/js/    One script per area, no framework
 DESIGN.md      The design system: tokens, components and voice (start here for anything visual)
 docs/          DESIGN.md explains the techniques behind it, with code
 ```
+
+**Reports and lists never load whole tables.** Count, page and aggregate in SQL (projections, `CountAsync`,
+`Skip`/`Take`), and use the report services in `Services/Reports` for anything about results or members; sort by
+narrow columns (sorting `nvarchar(max)` makes SQL Server reserve a lot of memory). E-mails go through `EmailQueue`,
+never straight to SMTP from a controller (docs/DESIGN.md, sections 20 and 21).
 
 Request flow: controller → service (if there is real logic) → `IUnitOfWork` repositories → EF Core. Repository
 methods such as `AddAsync`, `Update` and `Remove` don't save; call `_unitOfWork.SaveAsync()` once at the end.
@@ -189,8 +196,8 @@ dotnet ef migrations add AddWordLevel \
 
 ## Checking your change
 
-There is no automated test suite yet (tests are a great first contribution!). Before opening a pull request,
-please check by hand:
+The report statistics have unit tests: `dotnet test tests/SpeakingClub.Tests` (CI and the deploy run them; more
+tests are a great contribution). Before opening a pull request, please also check by hand:
 
 - [ ] `dotnet build -c Release` → **0 warnings, 0 errors**
 - [ ] The page works in **Turkish and German**
@@ -198,8 +205,8 @@ please check by hand:
 - [ ] It works at **390 px** wide (DevTools device mode) without sideways scrolling
 - [ ] It can be used with the **keyboard** (Tab, Shift+Tab, Enter, Esc) and focus is visible
 - [ ] Nothing new in the browser console
-- [ ] For admin pages: a **Teacher** account sees only what it should (users, roles, site texts and download logs
-  are admin-only)
+- [ ] For admin pages: a **Teacher** account sees only what it should (users, roles, site texts, download logs and
+  e-mails are admin-only)
 
 ## Pull requests
 

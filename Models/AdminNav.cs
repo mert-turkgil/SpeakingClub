@@ -138,24 +138,26 @@ namespace SpeakingClub.Models
 
                 new("results", GroupPeople, "QuizMonitor", "Index", "fa-solid fa-chart-column",
                     T("Sınav sonuçları", "Prüfungsergebnisse"),
-                    T("Öğrencilerin sınav sonuçları, kural ihlalleri ve canlı takip.", "Die Ergebnisse der Lernenden, Regelverstöße und Live-Verfolgung."),
+                    T("Öğrencilerin sınav sonuçları, soruların kalitesi, gelişim ve kural ihlalleri.", "Ergebnisse der Lernenden, Qualität der Fragen, Fortschritt und Regelverstöße."),
                     null, null, false,
                     new(T("Sonuçlar nasıl okunur?", "Wie lese ich die Ergebnisse?"), new[]
                     {
-                        T("Üstteki kutulardan bir öğrenci veya sınav seçerek listeyi daraltın.", "Wählen Sie oben eine Lernende oder eine Prüfung, um die Liste einzugrenzen."),
-                        T("Bir satıra tıklayarak o denemenin ayrıntılarını açın.", "Klicken Sie auf eine Zeile, um die Details dieses Versuchs zu öffnen."),
-                        T("<b>Excel</b> veya <b>PDF</b> düğmeleriyle listeyi bilgisayarınıza indirin.", "Laden Sie die Liste mit <b>Excel</b> oder <b>PDF</b> herunter.")
-                    })),
+                        T("Bir <b>dönem</b> seçin (varsayılan son 30 gün); sınav, seviye ya da öğrenci adıyla listeyi daraltın.", "Wählen Sie einen <b>Zeitraum</b> (sonst die letzten 30 Tage) und grenzen Sie nach Prüfung, Niveau oder Name ein."),
+                        T("<b>Ayrıntı</b> düğmesi o denemeyi soru soru açar: hangi cevabı verdi, ne kadar sürdü, hangi uyarıları aldı.", "<b>Details</b> öffnet den Versuch Frage für Frage: gewählte Antwort, Zeit und Warnungen."),
+                        T("<b>Soru analizi</b> sekmesinde bir sınav seçin: çok kolay, çok zor ya da cevap anahtarı şüpheli sorular işaretlenir.", "Wählen Sie im Reiter <b>Fragenanalyse</b> eine Prüfung: zu leichte, zu schwere oder verdächtige Fragen werden markiert."),
+                        T("<b>Excel için indir</b> filtrelenmiş listeyi indirir; <b>Yazdır / PDF</b> sayfayı yazdırır.", "<b>Für Excel herunterladen</b> lädt die gefilterte Liste; <b>Drucken / PDF</b> druckt die Seite.")
+                    }, T("Adres çubuğundaki bağlantı seçtiğiniz filtreleri saklar: yer imi olarak kaydedebilir ya da paylaşabilirsiniz.",
+                         "Der Link in der Adressleiste enthält Ihre Filter: Sie können ihn als Lesezeichen speichern oder teilen."))),
 
                 new("users", GroupPeople, "Admin", "Users", "fa-solid fa-user-group",
                     T("Kullanıcılar", "Benutzer"),
-                    T("Siteye kayıtlı öğrenciler ve öğretmenler.", "Die registrierten Lernenden und Lehrkräfte."),
+                    T("Siteye kayıtlı öğrenciler ve öğretmenler: kim ne zaman katıldı, kim sınavlara giriyor.", "Die registrierten Lernenden und Lehrkräfte: wer wann dazukam und wer Prüfungen schreibt."),
                     "UserCreate", T("Yeni kullanıcı", "Neuer Benutzer"), true,
                     new(T("Bir kullanıcıyı nasıl bulur ve düzenlerim?", "Wie finde und bearbeite ich einen Benutzer?"), new[]
                     {
-                        T("Arama kutusuna kişinin adını veya e-postasını yazın.", "Geben Sie Namen oder E-Mail der Person in das Suchfeld ein."),
-                        T("<b>Düzenle</b> düğmesiyle bilgilerini, rolünü veya şifresini değiştirin.", "Mit <b>Bearbeiten</b> ändern Sie Angaben, Rolle oder Passwort."),
-                        T("<b>Yeni kullanıcı</b> ile elle hesap açabilirsiniz. <b>Şifre oluştur</b> düğmesi güvenli bir şifre üretir.", "Mit <b>Neuer Benutzer</b> legen Sie selbst ein Konto an. <b>Passwort erzeugen</b> erstellt ein sicheres Passwort.")
+                        T("Arama kutusuna kişinin adını veya e-postasını yazın; rol, sınav etkinliği ve hesap durumuna göre daraltın.", "Geben Sie Namen oder E-Mail ein und grenzen Sie nach Rolle, Prüfungsaktivität oder Kontostatus ein."),
+                        T("Bir kişinin adına tıklayın: sınavları, puan gelişimi, indirdiği dosyalar ve e-posta izinleri tek sayfada.", "Klicken Sie auf einen Namen: Prüfungen, Punkteverlauf, Downloads und E-Mail-Einstellungen auf einer Seite."),
+                        T("<b>Düzenle</b> ile bilgilerini, rolünü veya şifresini değiştirin. <b>Yeni kullanıcı</b> ile elle hesap açabilirsiniz.", "Mit <b>Bearbeiten</b> ändern Sie Angaben, Rolle oder Passwort. Mit <b>Neuer Benutzer</b> legen Sie selbst ein Konto an.")
                     }, T("Bir öğrenciyi geçici olarak durdurmak için silmek yerine düzenleme sayfasındaki <b>Hesabı kilitle</b> seçeneğini kullanın.",
                          "Um jemanden vorübergehend zu sperren, nutzen Sie statt Löschen <b>Konto sperren</b> auf der Bearbeiten-Seite."))),
 
@@ -181,6 +183,22 @@ namespace SpeakingClub.Models
                         T("Bir kişiyi veya dosyayı bulmak için arama kutusuna yazın.", "Geben Sie in das Suchfeld eine Person oder Datei ein."),
                         T("Sıralamayı değiştirmek için yandaki seçimden birini seçin ve <b>Filtrele</b>ye basın.", "Wählen Sie daneben eine Sortierung und klicken Sie auf <b>Filtern</b>.")
                     })),
+
+                new("emails", GroupSite, "Admin", "Emails", "fa-solid fa-envelope",
+                    T("E-postalar", "E-Mails"),
+                    T("Sitenin gönderdiği e-postalar: sınav sonuçları, kayıt onayları, yeni yazı ve sınav duyuruları.",
+                      "Die E-Mails der Website: Prüfungsergebnisse, Registrierungen, Ankündigungen neuer Beiträge und Prüfungen."),
+                    null, null, true,
+                    new(T("E-postalar nasıl takip edilir?", "Wie behalte ich die E-Mails im Blick?"), new[]
+                    {
+                        T("Üstteki kutu e-posta sunucusunun ayarlarını ve bugün kaç e-posta gittiğini gösterir. Emin olmak için <b>Deneme e-postası gönder</b>e basın.",
+                          "Oben sehen Sie die Einstellungen des Mailservers und wie viele E-Mails heute verschickt wurden. Zur Sicherheit <b>Test-E-Mail senden</b> klicken."),
+                        T("Gönderilemeyen bir e-postanın yanındaki <b>Tekrar gönder</b> düğmesine basın; hepsi için <b>Başarısız olanları tekrar dene</b>.",
+                          "Bei einer nicht zugestellten E-Mail auf <b>Erneut senden</b> klicken; für alle auf <b>Fehlgeschlagene erneut versuchen</b>."),
+                        T("Duyurular günde en fazla belli sayıda gider; kalanlar ertesi gün kendiliğinden devam eder.",
+                          "Ankündigungen gehen bis zu einer Tageszahl hinaus; der Rest folgt am nächsten Tag von selbst.")
+                    }, T("Bir duyuruyu yanlışlıkla başlattıysanız <b>Durdur</b> ile henüz gönderilmemiş e-postaları iptal edebilirsiniz.",
+                         "Wurde eine Ankündigung versehentlich gestartet, stoppt <b>Anhalten</b> die noch nicht verschickten E-Mails."))),
 
                 new("texts", GroupSite, "Admin", "Texts", "fa-solid fa-language",
                     T("Site metinleri", "Website-Texte"),

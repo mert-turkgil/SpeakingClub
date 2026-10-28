@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using SpeakingClub.Data;
 using SpeakingClub.Data.Abstract;
 using SpeakingClub.Identity;
 
@@ -16,11 +18,13 @@ namespace SpeakingClub.ViewComponents
     {
         private readonly IUnitOfWork _uow;
         private readonly UserManager<User> _userManager;
+        private readonly SpeakingClubContext _db;
 
-        public GenericListViewComponent(IUnitOfWork uow, UserManager<User> userManager)
+        public GenericListViewComponent(IUnitOfWork uow, UserManager<User> userManager, SpeakingClubContext db)
         {
             _uow = uow;
             _userManager = userManager;
+            _db = db;
         }
 
         public async Task<IViewComponentResult> InvokeAsync(string entityType)
@@ -37,9 +41,12 @@ namespace SpeakingClub.ViewComponents
                     return View("BlogList", (await _uow.Blogs.GetAllAsync()).OrderByDescending(b => b.Date).ToList());
 
                 case "quizzes":
-                    // How many results each quiz has: deleting a quiz deletes them too, and the dialog says so
-                    ViewData["SubmissionCounts"] = (await _uow.QuizSubmissions.GetAllAsync())
-                        .GroupBy(s => s.QuizId).ToDictionary(g => g.Key, g => g.Count());
+                    // How many results each quiz has: deleting a quiz deletes them too, and the dialog says so.
+                    // Counted in SQL: the results table is the one that keeps growing.
+                    ViewData["SubmissionCounts"] = await _db.QuizSubmissions
+                        .GroupBy(s => s.QuizId)
+                        .Select(g => new { g.Key, Count = g.Count() })
+                        .ToDictionaryAsync(g => g.Key, g => g.Count);
                     return View("QuizList", (await _uow.Quizzes.GetAllAsync()).OrderBy(q => q.Title).ToList());
 
                 case "questions":

@@ -26,7 +26,6 @@
     case "categories": @await Component.InvokeAsync("GenericList", new { entityType = "Categories" }) break;
     case "tags": @await Component.InvokeAsync("GenericList", new { entityType = "Tags" }) break;
     case "words": @await Component.InvokeAsync("WordList") break;
-    case "users": @await Component.InvokeAsync("UserManagement") break;
     case "roles": @await Component.InvokeAsync("RoleManagement") break;
     case "texts": @await Component.InvokeAsync("ResourceManagement") break;
 }

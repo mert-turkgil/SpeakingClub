@@ -95,6 +95,9 @@ namespace SpeakingClub.Models
         [Display(Name = "Published")]
         public bool IsPublished { get; set; } = true;
 
+        // "Abonelere e-postayla duyur": announce the post when it is (first) published (Services/Email, EmailCampaign)
+        public bool AnnounceByEmail { get; set; } = true;
+
         [Display(Name = "Associated Quiz Question")]
         public int? SelectedQuestionId { get; set; }
 

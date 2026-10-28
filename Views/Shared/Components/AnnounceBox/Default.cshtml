@@ -1,0 +1,38 @@
+@model SpeakingClub.ViewComponents.AnnounceBoxViewComponent.Model
+@using SpeakingClub.Entity
+@* The announce switch of the post and quiz forms (ViewComponents/AnnounceBoxViewComponent.cs). *@
+@{
+    var isGerman = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "de";
+    string T(string tr, string de) => isGerman ? de : tr;
+    var isPost = Model.Kind == SpeakingClub.Services.Email.EmailTemplates.NewPost;
+    var c = Model.Campaign;
+}
+@if (c != null)
+{
+    <div class="adm-announce">
+        <i class="fa-solid fa-envelope-circle-check" aria-hidden="true"></i>
+        <span>
+            <strong>@(c.Campaign.Status == CampaignStatus.Cancelled ? T("Duyuru durduruldu", "Ankündigung angehalten") : T("E-postayla duyuruldu", "Per E-Mail angekündigt"))</strong>
+            <small>@T($"{c.Sent} kişiye gitti", $"an {c.Sent} gesendet")@(c.Waiting > 0 ? T($", {c.Waiting} sırada", $", {c.Waiting} wartend") : "")@(c.Failed > 0 ? T($", {c.Failed} gönderilemedi", $", {c.Failed} fehlgeschlagen") : "").
+                @if (User.IsInRole("Admin") || User.IsInRole("Root")) { <a href="@Url.Action("Emails", "Admin")">@T("Ayrıntılar", "Details")</a> }</small>
+        </span>
+    </div>
+}
+else
+{
+    <label class="adm-toggle">
+        <input type="checkbox" name="AnnounceByEmail" value="true" checked="@Model.Checked" />
+        <span class="adm-toggle__track" aria-hidden="true"></span>
+        <span class="adm-toggle__text">
+            <strong>@T("Abonelere e-postayla duyur", "Abonnenten per E-Mail informieren")</strong>
+            <small>
+                @T($"Şu an {Model.Recipients} kişi duyuru alıyor.", $"Derzeit erhalten {Model.Recipients} Personen Ankündigungen.")
+                @(isPost ? T(" Yazı yayına alındığında bir kez gönderilir.", " Wird einmal verschickt, sobald der Beitrag veröffentlicht ist.")
+                         : T(" Kaydettiğinizde bir kez gönderilir.", " Wird beim Speichern einmal verschickt."))
+                @T($" E-postalar dakikada birkaç tane gider.", " Die E-Mails gehen nach und nach hinaus.")
+            </small>
+        </span>
+    </label>
+    @* After the box (the model binder takes the first value), outside the label (the switch styles use input + track) *@
+    <input type="hidden" name="AnnounceByEmail" value="false" />
+}

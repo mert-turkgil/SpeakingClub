@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text;
 using SpeakingClub.Entity;
 
@@ -15,6 +16,24 @@ namespace SpeakingClub.Services
         /// points at a redirect makes Google drop both URLs from the index.
         /// </summary>
         public const string SiteUrl = "https://www.almanca-konus.com";
+
+        /// <summary>
+        /// The URL paths a post exists at. A language has a URL only when the post is translated into it; a post
+        /// without translations is served from its base fields at the Turkish URL. (Pages, the sitemap and the
+        /// announcement e-mails use the same paths.)
+        /// </summary>
+        public static (string? TrPath, string? DePath) BlogPaths(Blog blog, string? requestedSlug = null)
+        {
+            static string FirstNonEmpty(params string?[] values) =>
+                Array.Find(values, v => !string.IsNullOrWhiteSpace(v))?.Trim() ?? string.Empty;
+            var tr = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "tr");
+            var de = blog.Translations?.FirstOrDefault(t => t.LanguageCode == "de");
+            var baseSlug = FirstNonEmpty(blog.Slug, blog.Url, requestedSlug);
+            var trSlug = tr != null ? FirstNonEmpty(tr.Slug, baseSlug) : de == null ? baseSlug : null;
+            var deSlug = de != null ? FirstNonEmpty(de.Slug, baseSlug) : null;
+            return (string.IsNullOrEmpty(trSlug) ? null : $"/yazilar/{trSlug}",
+                    string.IsNullOrEmpty(deSlug) ? null : $"/beitraege/{deSlug}");
+        }
 
         /// <summary>
         /// Generates JSON-LD structured data for a blog article

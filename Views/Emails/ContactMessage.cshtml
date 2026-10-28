@@ -1,0 +1,14 @@
+@model SpeakingClub.Services.Email.ContactMessageEmail
+@* To Suna: a message from the contact form (always Turkish). "Reply" answers the visitor directly (Reply-To). *@
+@{
+    ViewData["Subject"] = $"Siteden yeni mesaj: {Model.SenderName}";
+    ViewData["Preheader"] = Model.Message.Length > 90 ? Model.Message[..90] + "…" : Model.Message;
+}
+<p style="margin:0 0 16px; font-size:17px; color:#2B2220;">İletişim formundan yeni bir mesaj geldi.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px; font-size:15px;">
+    <tr><td style="padding:3px 18px 3px 0; color:#85766F;">Ad</td><td style="padding:3px 0; color:#2B2220; font-weight:bold;">@Model.SenderName</td></tr>
+    <tr><td style="padding:3px 18px 3px 0; color:#85766F;">E-posta</td><td style="padding:3px 0;"><a href="mailto:@Model.SenderEmail" style="color:#C2413F;">@Model.SenderEmail</a></td></tr>
+    <tr><td style="padding:3px 18px 3px 0; color:#85766F;">Sayfanın dili</td><td style="padding:3px 0; color:#2B2220;">@(Model.Language == "de-DE" ? "Almanca" : "Türkçe")</td></tr>
+</table>
+<div style="margin:0 0 18px; padding:14px 16px; background:#FFFAF3; border:1px solid #F0E0D2; border-radius:12px; color:#2B2220; white-space:pre-wrap;">@Model.Message</div>
+<p style="margin:0; font-size:14px; color:#85766F;">“Yanıtla” dediğinizde cevabınız doğrudan @Model.SenderEmail adresine gider. Mesaj sitede saklanmaz.</p>
