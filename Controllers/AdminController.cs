@@ -1056,16 +1056,18 @@ namespace SpeakingClub.Controllers
                 // Handle cover image
                 if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
-                    blog.Image = await SaveBlogCoverImageAsync(model.ImageFile);
-                    if (blog.Image != null)
+                    var (cover, coverError, coverDenied) = await SaveBlogCoverImageAsync(model.ImageFile);
+                    blog.Image = cover!;
+                    if (cover != null)
                     {
                         blog.OgImage = $"{SeoHelper.SiteUrl}{blog.Image}";
                     }
                     else
                     {
                         // An unsupported file used to give the post the bare site address as its share image
-                        TempData["WarningMessage"] = T("Kapak resmi kullanılamadı (JPG, PNG, GIF veya WEBP olmalı). Yazıyı düzenleyip yeni bir resim seçebilirsiniz.",
-                                                       "Das Titelbild wurde nicht angenommen (JPG, PNG, GIF oder WEBP). Sie können beim Bearbeiten ein neues wählen.");
+                        // A permission problem is the server's fault, not the file's: red, like any other error
+                        TempData[coverDenied ? "ErrorMessage" : "WarningMessage"] = T("Kapak resmi kullanılamadı: ", "Das Titelbild wurde nicht übernommen: ") + coverError
+                            + T(" Yazıyı düzenleyip yeni bir resim seçebilirsiniz.", " Sie können beim Bearbeiten ein neues wählen.");
                     }
                 }
 
@@ -1354,7 +1356,7 @@ namespace SpeakingClub.Controllers
                 string? replacedCover = null;
                 if (model.ImageFile != null && model.ImageFile.Length > 0)
                 {
-                    var newCover = await SaveBlogCoverImageAsync(model.ImageFile);
+                    var (newCover, coverError, coverDenied) = await SaveBlogCoverImageAsync(model.ImageFile);
                     if (newCover != null)
                     {
                         if (!string.IsNullOrEmpty(blog.Image) && blog.Image != newCover) replacedCover = blog.Image;
@@ -1362,8 +1364,7 @@ namespace SpeakingClub.Controllers
                     }
                     else
                     {
-                        TempData["WarningMessage"] = T("Yeni kapak resmi kullanılamadı (JPG, PNG, GIF veya WEBP olmalı); eski resim duruyor.",
-                                                       "Das neue Titelbild wurde nicht angenommen (JPG, PNG, GIF oder WEBP); das alte bleibt.");
+                        TempData[coverDenied ? "ErrorMessage" : "WarningMessage"] = T("Yeni kapak resmi kullanılamadı, eski resim duruyor. ", "Das neue Titelbild wurde nicht übernommen, das alte bleibt. ") + coverError;
                     }
                 }
                 if (!string.IsNullOrEmpty(blog.Image))
@@ -1938,69 +1939,95 @@ namespace SpeakingClub.Controllers
                 string tempUrl = $"/temp/{fileName}";
                 return Json(new { uploaded = true, url = tempUrl });
             }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogError(ex, "No write permission for editor uploads");
+                return Json(new { uploaded = false, error = new { message = PermissionMessage("wwwroot/temp") } });
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error uploading file");
-                return Json(new { uploaded = false, error = new { message = "Upload failed: " + ex.Message } });
+                return Json(new { uploaded = false, error = new { message = T("Yükleme başarısız: ", "Hochladen fehlgeschlagen: ") + ex.Message } });
             }
         }
+
+        // Shown when the site may not write to a folder (IIS/Plesk permissions); says where to fix it
+        private static string PermissionMessage(string folder) =>
+            T($"Erişim reddedildi: sunucu {folder} klasörüne yazamıyor. Plesk → Dosyalar → bu klasör → İzinler bölümünden site kullanıcısına yazma izni verin.",
+              $"Zugriff verweigert: Der Server darf nicht in {folder} schreiben. In Plesk → Dateien → Ordner → Berechtigungen dem Website-Benutzer Schreibrechte geben.");
 
         /// <summary>
         /// Saves a blog cover image with hash-based deduplication
         /// </summary>
-        private async Task<string?> SaveBlogCoverImageAsync(IFormFile file)
+        /// <summary>
+        /// Saves a cover image under /blog/img (or /blog/gif) by content hash. The type is read from the file's first
+        /// bytes, not its name: Windows saves many photos as .jfif and some tools write .JPEG or no extension at all,
+        /// which used to be refused although the picture was a normal JPEG. Error is a sentence for the admin.
+        /// </summary>
+        private async Task<(string? Path, string? Error, bool Denied)> SaveBlogCoverImageAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
-                return null;
+                return (null, T("Dosya boş.", "Die Datei ist leer."), false);
+
+            string? extension;
+            await using (var head = file.OpenReadStream())
+            {
+                var bytes = new byte[12];
+                var read = await head.ReadAsync(bytes.AsMemory(0, bytes.Length));
+                extension = ImageExtensionOf(bytes.AsSpan(0, read));
+            }
+            if (extension == null)
+            {
+                _logger.LogWarning("Cover image {Name} ({Type}) is not JPEG/PNG/GIF/WEBP", file.FileName, file.ContentType);
+                var named = Path.GetExtension(file.FileName).ToLowerInvariant();
+                return (null, named is ".heic" or ".heif"
+                    ? T("Bu bir iPhone HEIC fotoğrafı. Telefonda paylaşırken JPG seçin ya da fotoğrafı JPG olarak kaydedip tekrar deneyin.",
+                        "Das ist ein iPhone-HEIC-Foto. Bitte als JPG teilen oder speichern und erneut versuchen.")
+                    : T($"Dosya bir JPG, PNG, GIF veya WEBP resmi değil ({file.FileName}).",
+                        $"Die Datei ist kein JPG-, PNG-, GIF- oder WEBP-Bild ({file.FileName})."), false);
+            }
 
             try
             {
-                // Validate
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
-                var extension = Path.GetExtension(file.FileName).ToLower();
-                
-                if (!allowedExtensions.Contains(extension))
-                {
-                    _logger.LogWarning("Invalid cover image extension: {Extension}", extension);
-                    return null;
-                }
-
-                // Calculate hash
                 string fileHash = await CalculateFileHashAsync(file);
                 string fileName = $"{fileHash}{extension}";
-                
-                // Determine directory (gif vs img)
                 string subDir = extension == ".gif" ? "gif" : "img";
                 string dirPath = Path.Combine(_env.WebRootPath, "blog", subDir);
                 Directory.CreateDirectory(dirPath);
-
                 string filePath = Path.Combine(dirPath, fileName);
                 string relativePath = $"/blog/{subDir}/{fileName}";
 
-                // Save only if doesn't exist
+                // Stored once per content: the same picture used twice is one file
                 if (!System.IO.File.Exists(filePath))
                 {
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    using (var input = file.OpenReadStream())
-                    {
-                        if (input.CanSeek)
-                            input.Seek(0, SeekOrigin.Begin);
-                        await input.CopyToAsync(fileStream);
-                    }
+                    await using var fileStream = new FileStream(filePath, FileMode.Create);
+                    await using var input = file.OpenReadStream();
+                    await input.CopyToAsync(fileStream);
                     _logger.LogInformation("Saved blog cover image: {Path}", relativePath);
                 }
-                else
-                {
-                    _logger.LogDebug("Cover image already exists: {Path}", relativePath);
-                }
-
-                return relativePath;
+                return (relativePath, null, false);
             }
-            catch (Exception ex)
+            catch (UnauthorizedAccessException ex)
             {
-                _logger.LogError(ex, "Error saving blog cover image");
-                return null;
+                _logger.LogError(ex, "No write permission for blog cover images");
+                return (null, PermissionMessage("wwwroot/blog"), true);
             }
+            catch (IOException ex)
+            {
+                _logger.LogError(ex, "Could not write blog cover image");
+                return (null, T($"Sunucu resmi kaydedemedi: {ex.Message}", $"Der Server konnte das Bild nicht speichern: {ex.Message}"), false);
+            }
+        }
+
+        // JPEG, PNG, GIF and WEBP by their signature; null for anything else
+        private static string? ImageExtensionOf(ReadOnlySpan<byte> b)
+        {
+            if (b.Length >= 3 && b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF) return ".jpg";
+            if (b.Length >= 8 && b[0] == 0x89 && b[1] == 0x50 && b[2] == 0x4E && b[3] == 0x47) return ".png";
+            if (b.Length >= 6 && b[0] == 0x47 && b[1] == 0x49 && b[2] == 0x46 && b[3] == 0x38) return ".gif";
+            if (b.Length >= 12 && b[0] == 0x52 && b[1] == 0x49 && b[2] == 0x46 && b[3] == 0x46
+                && b[8] == 0x57 && b[9] == 0x45 && b[10] == 0x42 && b[11] == 0x50) return ".webp";
+            return null;
         }
 
         /// <summary>
