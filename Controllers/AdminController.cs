@@ -1367,6 +1367,13 @@ namespace SpeakingClub.Controllers
                         TempData[coverDenied ? "ErrorMessage" : "WarningMessage"] = T("Yeni kapak resmi kullanılamadı, eski resim duruyor. ", "Das neue Titelbild wurde nicht übernommen, das alte bleibt. ") + coverError;
                     }
                 }
+                else if (model.RemoveCover && !string.IsNullOrEmpty(blog.Image))
+                {
+                    // "Kapak resmini kaldır": the file goes after the save below, unless another post uses the same picture
+                    replacedCover = blog.Image;
+                    if (blog.OgImage == $"{SeoHelper.SiteUrl}{blog.Image}") blog.OgImage = string.Empty;
+                    blog.Image = string.Empty;
+                }
                 if (!string.IsNullOrEmpty(blog.Image))
                 {
                     blog.OgImage = $"{SeoHelper.SiteUrl}{blog.Image}";

@@ -75,6 +75,9 @@ namespace SpeakingClub.Models
         [Display(Name = "Cover Image")]
         public IFormFile? ImageFile { get; set; }
 
+        // "Kapak resmini kaldır" on the edit page: the post loses its cover and the file is deleted unless another post uses it
+        public bool RemoveCover { get; set; }
+
         [Required(ErrorMessage = "Author name is required")]
         [MaxLength(100, ErrorMessage = "Author name cannot exceed 100 characters")]
         [Display(Name = "Author")]

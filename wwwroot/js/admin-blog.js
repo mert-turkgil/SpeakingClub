@@ -77,6 +77,23 @@
     setInterval(updateMeter, 1500);
     updateMeter();
 
+    // "Kapak resmini kaldır": the current cover fades out and the checklist counts no cover; a new file cancels it
+    const coverRemove = form.querySelector('[data-cover-remove]');
+    if (coverRemove) {
+        const hadCover = form.dataset.hasCover;
+        coverRemove.addEventListener('change', () => {
+            form.querySelector('[data-cover-current]')?.classList.toggle('is-removing', coverRemove.checked);
+            form.dataset.hasCover = coverRemove.checked ? 'false' : hadCover;
+            updateMeter();
+        });
+        coverInput?.addEventListener('change', () => {
+            if (coverInput.files.length > 0 && coverRemove.checked) {
+                coverRemove.checked = false;
+                coverRemove.dispatchEvent(new Event('change'));
+            }
+        });
+    }
+
     // ------------------------------------------------------------------
     // Quiz → its questions
     // ------------------------------------------------------------------

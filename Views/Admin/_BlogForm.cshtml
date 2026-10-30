@@ -194,9 +194,15 @@
                 <div class="adm-panel__body">
                     @if (!string.IsNullOrEmpty(cover))
                     {
-                        <div class="adm-current">
+                        <div class="adm-current" data-cover-current>
                             <img src="@Img(cover)" alt="" />
                             <small>@T("Şu anki kapak resmi. Yeni bir resim seçerseniz yerini alır.", "Aktuelles Titelbild. Ein neues Bild ersetzt es.")</small>
+                            @* Removes the cover on save; the file is deleted too unless another post uses the same picture *@
+                            <label class="adm-remove">
+                                <input type="checkbox" name="RemoveCover" value="true" data-cover-remove />
+                                <span><i class="fa-solid fa-trash-can" aria-hidden="true"></i>@T("Kapak resmini kaldır", "Titelbild entfernen")</span>
+                            </label>
+                            <small class="adm-remove__note">@T("Kaydettiğinizde kapak yazıdan kalkar ve resim dosyası sunucudan silinir.", "Beim Speichern wird das Titelbild entfernt und die Bilddatei vom Server gelöscht.")</small>
                         </div>
                     }
                     <label class="adm-drop">
